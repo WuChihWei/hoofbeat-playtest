@@ -1,0 +1,397 @@
+/* App pages: layout only (grid, sizes, positions). Colours, type, radii and every component look come from
+   ../ui/ui.css (HOOFBEAT UI Guideline v1, docs/UI_FRAMEWORK.md). Numbers are px on a 390-wide phone × var(--u). */
+html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}
+#app{display:flex;justify-content:center;align-items:center;background:#0e110c}
+.home-shell{position:relative;isolation:isolate;width:min(100vw,56.25dvh);height:min(100dvh,216.67vw);   /* 9:16 on wide screens, full height on phones up to 9:19.5 (the mockups) */
+  flex:none;display:grid;grid-template-rows:auto 1fr auto;
+  overflow:hidden;overflow:clip;   /* clip: never scrolls (the stable's decor layer is wider than the frame) */
+  container-type:size;background:#2a2016 url(../assets/stable/bg.webp) 50% 45%/cover no-repeat}   /* full-bleed scene: the barn */
+.home-shell::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(rgb(8 10 6 / .2),rgb(8 10 6 / .45));pointer-events:none}
+.page-body{overflow-y:auto;min-height:0;padding:var(--ui-s2) var(--ui-margin) var(--ui-s6);display:flex;flex-direction:column;gap:var(--ui-s4);scrollbar-width:none}
+.page-body::-webkit-scrollbar{display:none}
+.page-body>*{flex-shrink:0}   /* the body scrolls; scrollers inside it (carousels) must not be squeezed */
+.page-body>.ui-eyebrow,.page-body>.ui-section{margin-top:var(--ui-s2)}
+
+/* ---- home (mock): the chosen city's far backdrop, rider pill, tagline, three cards ---- */
+.page-home{grid-template-rows:auto auto 1fr auto auto}
+.home-scene{position:absolute;inset:0;z-index:-2;background:#6d8a5a 50% 0/auto 100% no-repeat}
+.page-home::before{background:linear-gradient(rgb(8 10 6 / .05),rgb(8 10 6 / 0) 35%,rgb(8 10 6 / .45))}
+.home-rider{justify-self:start;display:flex;align-items:center;gap:var(--ui-s3);margin:var(--ui-s4) var(--ui-margin) 0;height:calc(46 * var(--u));padding:0 var(--ui-s8) 0 calc(5 * var(--u));border-radius:var(--ui-r-pill);text-align:left}
+.home-rider .ui-avatar{width:calc(36 * var(--u));height:calc(36 * var(--u));background:#fff}
+.home-rider span{display:flex;flex-direction:column;gap:1px}.home-rider b{font-weight:600;font-size:calc(15 * var(--u))}.home-rider small{font-size:calc(12 * var(--u));color:var(--ui-text-2)}
+.home-tag{align-self:center;margin:0 var(--ui-margin);font-weight:600;font-size:calc(30 * var(--u));line-height:1.2;text-shadow:var(--ui-on-scene)}
+.home-cards{display:grid;gap:var(--ui-s3);padding:0 var(--ui-margin) var(--ui-s4)}
+.home-card{display:flex;align-items:center;gap:var(--ui-s4);height:calc(84 * var(--u));padding:0 var(--ui-s4) 0 calc(8 * var(--u));box-sizing:border-box;text-align:left;border-radius:var(--ui-r-md);
+  background:var(--ui-glass-deep)}
+.home-card .thumb{position:relative;flex:none;width:calc(78 * var(--u));height:calc(68 * var(--u));border-radius:var(--ui-r-sm);overflow:hidden;background:#2b2e21}
+.home-card .thumb>*{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.home-card .thumb .cut{inset:auto 0 0 auto;width:auto;height:92%;object-fit:contain}
+.home-card .copy{flex:1;display:flex;flex-direction:column;gap:var(--ui-s1)}
+.home-card .copy b{font-weight:700;font-size:calc(24 * var(--u));line-height:1.1}.home-card .copy small{font-size:calc(13 * var(--u));color:var(--ui-text-2)}
+
+/* ---- race setup ---- */
+.city-row{display:flex;gap:var(--ui-s3);overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1 * var(--ui-margin));padding:2px var(--ui-margin);scrollbar-width:none}
+.city-row .ui-card{flex:none;width:calc(168 * var(--u));scroll-snap-align:center}.city-row .art{aspect-ratio:16/10}
+.race-facts{margin:0;padding:var(--ui-s4);border-radius:var(--ui-r-md);font-size:var(--ui-t-label);line-height:1.55;color:var(--ui-text-2)}
+.horse-row{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ui-s3)}
+.horse-row .ui-card{align-items:center;text-align:center}.horse-row .art{width:100%;aspect-ratio:1}
+.relay-row .leg{display:flex;flex-direction:column;gap:var(--ui-s2);min-width:0}.relay-row .leg>.art{aspect-ratio:16/10;border-radius:var(--ui-r-sm);overflow:hidden}
+.relay-row .leg>.art canvas{width:100%;height:100%;display:block}.relay-row .ui-label{text-align:center;color:var(--ui-text-2)}
+.relay-row .ui-card{position:relative;align-items:center;text-align:center}.relay-row .ui-chip{position:absolute;top:6px;right:6px;height:auto;padding:2px 8px;font-size:calc(12 * var(--u))}.relay-row .ui-chip.best{background:var(--ui-lime);color:#1b1f14}
+.relay-head{display:flex;align-items:center;justify-content:space-between}.relay-head .ui-chip{height:calc(28 * var(--u));border:1px solid var(--ui-edge);color:var(--ui-text);font-weight:600}
+.card-tray{display:flex;gap:var(--ui-s2);overflow-x:auto;margin:0 calc(-1 * var(--ui-margin));padding:2px var(--ui-margin);scrollbar-width:none;scroll-snap-type:x proximity}
+.horse-card{position:relative;flex:none;width:calc(104 * var(--u));align-items:center;text-align:center;scroll-snap-align:start;padding:var(--ui-s2)}
+.horse-card .art{width:calc(64 * var(--u));aspect-ratio:1}.horse-card .art img{width:100%;height:100%;object-fit:cover;border-radius:var(--ui-r-sm)}
+.horse-card .ui-badge{position:absolute;top:4px;left:4px;font-size:calc(10 * var(--u))}
+.horse-card .fits{display:flex;gap:3px;margin-top:2px}.horse-card .fits i{font-style:normal;font-size:calc(10 * var(--u));padding:1px 4px;border-radius:6px;background:rgb(255 255 255 / .08);color:var(--ui-text-2)}
+.horse-card .fits i.best{background:var(--ui-lime);color:#1b1f14}
+.page-race .ui-btn.primary{margin-top:auto}
+
+/* ---- tracks (mock): map card with the name over the map, tagline under it; the course page ---- */
+.track-carousel{display:flex;gap:var(--ui-s4);overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1 * var(--ui-margin));padding:2px var(--ui-margin);scrollbar-width:none}
+.track-card{flex:none;width:calc(342 * var(--u));box-sizing:border-box;scroll-snap-align:center;padding:0 0 var(--ui-s4);border-radius:var(--ui-r-lg);overflow:hidden;display:flex;flex-direction:column;gap:var(--ui-s3)}
+.track-card .map{position:relative;border-radius:var(--ui-r-lg);overflow:hidden}.track-card canvas{display:block;width:100%}
+.track-card .map::after{content:'';position:absolute;inset:55% 0 0;background:linear-gradient(transparent,rgb(8 10 6 / .6));pointer-events:none}   /* reads the name over the map*/
+.track-card h2{z-index:1}
+.track-card .ui-chip{position:absolute;left:var(--ui-s4);top:var(--ui-s4)}
+.track-card h2{position:absolute;left:var(--ui-s4);bottom:var(--ui-s3);margin:0;font-weight:700;font-size:calc(30 * var(--u));text-shadow:0 2px 12px rgb(0 0 0 / .55)}
+.track-card p{margin:0 var(--ui-s4);font-size:calc(14 * var(--u));color:var(--ui-text-2)}
+.course-map{border-radius:var(--ui-r-lg);overflow:hidden}.course-map canvas{display:block;width:100%}
+.know{padding:var(--ui-s4) var(--ui-s4) var(--ui-s2);border-radius:var(--ui-r-lg)}.know .ui-facts{padding:0;margin-top:var(--ui-s2)}
+.know dt{color:var(--ui-text-2)}.know dd{max-width:60%;text-align:right}
+
+/* ---- horses (mock card, 3 columns): portrait, name + Lv, one bar ---- */
+.horses-head{display:flex;justify-content:space-between}
+.horse-filter{display:flex;align-items:center;justify-content:space-between;height:calc(40 * var(--u));padding:0 var(--ui-s4);border-radius:var(--ui-r-pill);font-weight:500;font-size:calc(15 * var(--u))}
+.horse-filter button{border:0;background:none;padding:0;color:var(--ui-text-2);font-size:calc(14 * var(--u))}
+.horse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ui-s3)}
+.horse-grid .ui-card{padding:calc(6 * var(--u)) calc(6 * var(--u)) var(--ui-s3);gap:var(--ui-s2);background:var(--ui-glass-deep)}
+.horse-grid .art{aspect-ratio:1;border-radius:calc(12 * var(--u));background:#3a2c1e}.horse-grid .art img{object-position:50% 30%}
+.horse-grid .name{display:flex;flex-direction:column;gap:1px;padding:0 var(--ui-s1);min-width:0}   /* name over Lv: full names fit a third of the width */
+.horse-grid .name b{font-size:calc(15 * var(--u));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.horse-grid .name small{flex:none;color:var(--ui-text-2);font-size:calc(11 * var(--u))}
+.horse-grid .ui-bar{margin:0 var(--ui-s1);height:calc(6 * var(--u))}
+.horse-grid .ui-card.is-selected{background:var(--ui-glass-deep)}
+.horse-grid .locked{align-items:center;justify-content:center;gap:var(--ui-s2);opacity:.7}.horse-grid .locked svg{width:calc(28 * var(--u));height:calc(28 * var(--u));color:var(--ui-muted)}
+
+/* ---- shop: 2 columns; the card is the button ---- */
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--ui-s3)}
+.shop-grid .ui-section,.shop-grid .shop-note{grid-column:1/-1;margin:var(--ui-s2) 0 calc(-1 * var(--ui-s1))}
+.shop-card{gap:var(--ui-s1);padding:var(--ui-s3) var(--ui-s4) var(--ui-s4);background:var(--ui-glass-deep)}
+.shop-card .art{display:grid;place-items:center;aspect-ratio:1.55;margin-bottom:var(--ui-s2)}
+.shop-card .art img{height:100%;width:auto;max-width:80%;object-fit:contain}
+.shop-card b{font-size:calc(19 * var(--u))}.shop-card small{font-size:calc(13 * var(--u));color:var(--ui-text-2);min-height:2lh}
+.shop-card .foot{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:var(--ui-s2)}
+.shop-card .own{font-size:var(--ui-t-label);color:var(--ui-muted)}
+.shop-card.postcard .art{aspect-ratio:auto}.shop-card.postcard .art img{width:100%;aspect-ratio:auto;border-radius:var(--ui-r-xs)}
+.shop-card.postcard .foot{display:none}
+.shop-card.locked .art img{filter:grayscale(1) brightness(.7);opacity:.6}
+.buy-sheet{display:flex;flex-direction:column;gap:var(--ui-s2);text-align:center}
+.buy-sheet>header{margin-bottom:0;text-align:left}
+.buy-art{width:50%;align-self:center;aspect-ratio:1;object-fit:contain;margin:var(--ui-s2) 0}
+.buy-sheet p{margin:0}
+.buy-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:var(--ui-s3);margin-top:var(--ui-s4)}
+.buy-actions .ui-coin{width:calc(20 * var(--u));height:calc(20 * var(--u))}
+.page-shop .ui-toast{bottom:calc(112 * var(--u))}
+
+/* ---- settings (mock) ---- */
+.rider-card{display:flex;align-items:center;gap:var(--ui-s4);padding:var(--ui-s4);border-radius:var(--ui-r-lg)}
+.rider-card .ui-avatar{width:calc(66 * var(--u));height:calc(66 * var(--u));background:#fff}
+.rider-card div{flex:1;display:flex;flex-direction:column;gap:var(--ui-s1);min-width:0}
+.rider-name{font:inherit;font-weight:700;font-size:calc(26 * var(--u));color:var(--ui-text);background:none;border:0;border-bottom:1px solid transparent;padding:0;min-width:0}
+.rider-name:focus{outline:none;border-bottom-color:var(--ui-lime)}
+.rider-card small{font-size:calc(14 * var(--u))}.rider-card .ui-bar{margin-top:var(--ui-s2)}
+.page-settings .ui-list{border-radius:var(--ui-r-lg)}.page-settings .ui-list>li{min-height:calc(58 * var(--u));font-size:calc(17 * var(--u))}
+.controls li{min-height:0!important;padding:var(--ui-s3) 0;font-size:var(--ui-t-body)!important}.controls b{font-weight:600}
+
+/* ---- stable: the barn plate and the 3D pair; glass over it without blur (.ui-live) ---- */
+.page-stable{display:block;background:#5a3a22;--acts-h:calc(80 * var(--u));--acts-b:max(var(--ui-s3),env(safe-area-inset-bottom))}
+.page-stable::before{display:none}
+.st-bg{position:absolute;inset:0;background:#6b4526 url(../assets/stable/bg.webp) var(--bg-x,82%) 45%/cover no-repeat}   /* x follows the camera (stable-view.js) */
+.page-stable .view{position:absolute;inset:0}
+.page-stable .stage-loading{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-weight:600;text-shadow:var(--ui-on-scene)}
+.st-top,.st-sheet,.st-acts{position:absolute;z-index:3}
+.st-top{top:0;left:0;right:0;padding-left:var(--ui-s4);padding-right:var(--ui-s4);align-items:flex-start}
+.st-title{display:flex;align-items:center;gap:var(--ui-s2);margin-right:auto}.st-title h1{margin:0;font-weight:700;font-size:calc(24 * var(--u));text-shadow:var(--ui-on-scene)}
+.st-right{display:grid;gap:var(--ui-s2)}.st-wallets{display:flex;gap:var(--ui-s2)}   /* the buddy card takes the pills' width */
+.st-buddy{width:0;min-width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:calc(6 * var(--u));padding:calc(6 * var(--u));border-radius:var(--ui-r-md)}
+.st-buddy .who{display:flex;align-items:center;gap:var(--ui-s2)}
+.st-buddy img{width:calc(38 * var(--u));height:calc(38 * var(--u));flex:none;border-radius:calc(12 * var(--u));object-fit:cover;background:radial-gradient(circle at 50% 40%,#f1cf92,#a8743f)}
+.st-buddy .who>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.st-buddy b{font-weight:700;font-size:calc(15 * var(--u));line-height:1.1}.st-buddy small{font-size:calc(11 * var(--u));color:var(--ui-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-buddy .ui-icon-btn{flex:none;width:calc(30 * var(--u));height:calc(30 * var(--u));padding:calc(7 * var(--u))}.st-buddy .ui-icon-btn svg{width:100%;height:100%}
+.st-buddy [aria-expanded=true]{background:var(--ui-lime);color:var(--ui-on-lime)}
+.st-scrim{z-index:3}.st-pop{z-index:4}
+.st-pop>header small{font-weight:600;font-size:var(--ui-t-section);color:var(--ui-muted)}
+.st-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--ui-s2)}
+.st-grid .ui-card{padding:var(--ui-s1);align-items:center;background:rgb(255 255 255 / .05)}
+.st-grid img{width:100%;aspect-ratio:1;display:block}
+.st-grid.items b{position:absolute;right:var(--ui-s2);bottom:var(--ui-s1);font-size:var(--ui-t-label);text-shadow:0 1px 2px #000}
+.st-sec{display:flex;align-items:baseline;gap:var(--ui-s2);margin:var(--ui-s4) 0 var(--ui-s2);font-size:calc(15 * var(--u));font-weight:700}.st-pop>header+.st-sec{margin-top:0}
+.st-sec small{font-size:calc(12 * var(--u));font-weight:500;color:var(--ui-muted)}
+.st-pop .ui-btn{margin-top:var(--ui-s4)}
+/* bottom: the actions (big Feed · Brush, small Buddies · Items) */
+.st-stats{display:grid;grid-template-columns:1fr 1fr;gap:calc(5 * var(--u)) var(--ui-s3);padding:calc(2 * var(--u)) calc(4 * var(--u))}   /* in the horse's card, 2 × 2 */
+.st-stat{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:calc(5 * var(--u));min-width:0}
+.st-stat svg{width:calc(14 * var(--u));height:calc(14 * var(--u));color:var(--c)}
+.st-stat .ui-bar{height:calc(6 * var(--u))}
+.st-buddy small svg{width:calc(10 * var(--u));height:calc(10 * var(--u));margin:0 2px 0 0;vertical-align:-1px;color:var(--ui-lime)}
+.st-acts{left:var(--ui-s4);right:var(--ui-s4);bottom:var(--acts-b);height:var(--acts-h);display:flex;justify-content:center;align-items:flex-end;gap:var(--ui-s6)}
+.st-acts button{display:flex;flex-direction:column;align-items:center;gap:var(--ui-s1);border:0;background:none;padding:0;color:var(--ui-text);font-weight:600;font-size:calc(12 * var(--u));text-shadow:var(--ui-on-scene)}
+.st-acts .side .ui-icon-btn{width:calc(46 * var(--u));height:calc(46 * var(--u));padding:calc(12 * var(--u));pointer-events:none}
+.st-acts .side[aria-expanded=true] .ui-icon-btn{background:var(--ui-lime);color:var(--ui-on-lime);border-color:transparent}
+.st-acts .big>span{position:relative;display:grid;place-items:center;width:calc(60 * var(--u));height:calc(60 * var(--u));border-radius:50%;background:var(--ui-lime);color:var(--ui-on-lime);box-shadow:var(--ui-shadow)}
+.st-acts .big svg{width:calc(26 * var(--u));height:calc(26 * var(--u))}
+.st-acts button:active>span{transform:scale(.94)}
+.st-food{position:absolute;right:calc(-10 * var(--u));top:calc(-6 * var(--u));display:flex;align-items:center;gap:1px;padding:1px calc(6 * var(--u)) 1px 1px;border-radius:var(--ui-r-pill);background:var(--ui-glass-deep);border:1px solid var(--ui-edge);color:var(--ui-text);text-shadow:none}
+.st-food img{width:calc(20 * var(--u));height:calc(20 * var(--u))}.st-food b{font-size:calc(11 * var(--u))}
+.st-heart{position:absolute;left:46%;top:29%;width:calc(36 * var(--u));height:calc(36 * var(--u));opacity:0;pointer-events:none;z-index:2;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z' fill='%23ef3b56' stroke='%23fff' stroke-width='1.6'/%3E%3C/svg%3E") center/contain no-repeat}
+.st-heart.pop{animation:st-heart 1.3s ease-out}
+@keyframes st-heart{0%{opacity:0;transform:translateY(2cqh) scale(.5)}18%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-9cqh) scale(1)}}
+@media (prefers-reduced-motion:reduce){.st-heart.pop{animation-duration:.01s}}
+.page-stable .ui-toast{bottom:calc(var(--acts-b) + var(--acts-h) + var(--ui-s4))}
+.st-sheet>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--ui-s2)}.st-sheet>header b{font-size:calc(14 * var(--u))}
+.st-sheet{left:var(--ui-s4);right:var(--ui-s4);bottom:calc(var(--acts-b) + var(--acts-h) + var(--ui-s3));padding:var(--ui-s3) var(--ui-s3) var(--ui-s1);border-radius:var(--ui-r-md)}   /* Gear: just above the actions */
+.st-sheet .parts{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--ui-s1)}
+.st-sheet .parts button{display:flex;flex-direction:column;align-items:center;gap:var(--ui-s1);border:1px solid transparent;border-radius:var(--ui-r-sm);background:rgb(255 255 255 / .06);color:var(--ui-text-2);font-size:calc(12 * var(--u));padding:var(--ui-s2) 0}
+.st-sheet .parts i{width:calc(18 * var(--u));height:calc(18 * var(--u));border-radius:50%;border:2px solid rgb(255 255 255 / .5)}
+.st-sheet .parts [aria-selected=true]{border:2px solid var(--ui-lime);color:var(--ui-text)}
+.swatches{display:flex;justify-content:center;gap:var(--ui-s3);margin:var(--ui-s3) 0}.swatches button{width:calc(36 * var(--u));height:calc(36 * var(--u));border-radius:50%;border:2px solid rgb(255 255 255 / .3)}
+.swatches [aria-checked=true]{border-color:var(--ui-lime);box-shadow:0 0 0 2px var(--ui-lime)}
+
+/* Stable decorations: a layer the size of bg.webp as `cover` draws it (full height, 1122/1402 wide), slid like the
+   plate (--bg-f = the plate's x position 0..1, set by stable-view.js), so stickers stay put on the painted wall. */
+.st-decor{position:absolute;top:0;height:100%;aspect-ratio:1122/1402;left:calc((100cqw - 100cqh * 1122 / 1402) * var(--bg-f,.82));pointer-events:none}
+.st-decor i{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center}
+.st-decor img{width:100%;display:block;filter:drop-shadow(0 .4cqw .5cqw #2a18097a)}
+.st-decor b{position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);font:700 2.2cqw var(--ui-font);color:#fff3dc;text-shadow:0 1px 0 #3a2210,0 0 3px #3a2210;white-space:nowrap}
+.ui-modal.cal:not([hidden]){display:grid;gap:var(--ui-s3)}.cal .cal-tap{min-height:calc(96 * var(--u));font-size:calc(20 * var(--u));touch-action:manipulation}.cal-out{margin:0;min-height:1.4em;text-align:center}
+.ui-modal.plog:not([hidden]){display:grid;gap:var(--ui-s3)}   /* not over [hidden]: ✕ must still close it */.plog-sum{margin:0;font-weight:600}.plog a.ui-btn{text-decoration:none;justify-content:center}
+.home-card .thumb>svg.icon{inset:22%;width:56%;height:56%;color:var(--ui-lime)}
+.page-missions .locked{display:flex;flex-direction:column;align-items:center;gap:var(--ui-s2);padding:var(--ui-s6);opacity:.7}.page-missions .locked svg{width:calc(28 * var(--u));height:calc(28 * var(--u))}
+.page-race section:not([hidden]){display:contents}   /* Relay | Solo blocks: laid out as the page's own rows */
+.page-race .relay-head .ui-label{color:var(--ui-muted)}
+
+/* ---- Home: the level map (five cities up a winding road), what comes next, and the "next race" card. ---- */
+.page-home{grid-template-rows:auto auto 1fr auto auto auto}
+.wallets{display:flex;gap:var(--ui-s2)}
+.level-map{position:relative;margin:var(--ui-s2) var(--ui-margin);min-height:0}
+.level-map .road{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.level-map .road polyline{fill:none;stroke:#fff;stroke-opacity:.8;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1 11;vector-effect:non-scaling-stroke}
+.level{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;padding:0;border:0;background:none;color:var(--ui-text);text-shadow:var(--ui-on-scene)}
+.level .dot{position:relative;display:grid;place-items:center;width:calc(66 * var(--u));height:calc(66 * var(--u));border-radius:50%;overflow:hidden;border:calc(3 * var(--u)) solid #fff;box-shadow:0 4px 12px #0006;background:#2b2e21}
+.level .dot canvas{position:absolute;inset:0;width:100%;height:100%}.level .dot svg{position:relative;width:40%;height:40%;color:#fff}
+.level b{font-weight:700;font-size:calc(13 * var(--u))}.level small{font-size:calc(12 * var(--u));color:var(--ui-text-2)}
+.level.locked .dot{border-color:#ffffff80}.level.locked .dot canvas{filter:grayscale(1) brightness(.5)}
+.level.is-selected .dot{border-color:var(--ui-lime);box-shadow:0 0 0 calc(4 * var(--u)) rgb(217 255 79 / .35),0 4px 12px #0006}
+.level.is-next .dot{animation:level-pulse 1.2s ease-in-out infinite alternate}@keyframes level-pulse{to{transform:scale(1.07)}}
+@media(prefers-reduced-motion:reduce){.level.is-next .dot{animation:none}}
+.stars{display:inline-flex;gap:1px;font-style:normal}.stars i{font-style:normal;font-size:calc(14 * var(--u));line-height:1;color:#ffffff66;text-shadow:none}.stars i.on{color:var(--ui-yellow);text-shadow:0 1px 3px #0009}
+.next-goal{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:var(--ui-s1) var(--ui-s3);margin:0 var(--ui-margin) var(--ui-s2);padding:var(--ui-s2) var(--ui-s4) var(--ui-s2) var(--ui-s2);border-radius:var(--ui-r-md);font-size:var(--ui-t-label)}
+.next-goal[hidden]{display:none}.next-goal .ui-bar{height:calc(5 * var(--u))}
+.next-goal>img,.next-goal>svg{grid-row:span 2;width:calc(34 * var(--u));height:calc(34 * var(--u));border-radius:50%;object-fit:cover;object-position:50% 25%;color:var(--ui-yellow)}
+.next-race{display:flex;align-items:center;gap:var(--ui-s2);margin:0 var(--ui-margin) var(--ui-s3);padding:var(--ui-s3) var(--ui-s3) var(--ui-s3) var(--ui-s4);border-radius:var(--ui-r-lg)}
+.next-race .copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.next-race small{font-size:calc(12 * var(--u));color:var(--ui-text-2)}.next-race b{font-weight:700;font-size:calc(16 * var(--u));line-height:1.25}
+.next-race .ui-btn{flex:none;min-height:calc(56 * var(--u));padding:0 var(--ui-s6)}.next-race .ui-btn svg{width:1.1em;height:1.1em}
+/* Race step 2: the horse (one shown large, its numbers as bars, a row of heads; locked ones greyed with a lock). */
+.steps{display:flex;align-items:center;gap:var(--ui-s2);margin:0;font-size:var(--ui-t-label);color:var(--ui-muted)}.steps i{font-style:normal}.steps b{color:var(--ui-text)}.steps .on{color:var(--ui-lime);font-weight:700}
+.ui-tabs button:disabled{opacity:.6}.ui-tabs button svg{width:1em;height:1em;vertical-align:-.12em;margin-right:.3em}
+.pick{display:grid;grid-template-columns:auto 1fr;gap:var(--ui-s3) var(--ui-s4);align-items:center;padding:var(--ui-s4);border-radius:var(--ui-r-lg)}
+.pick-art{width:calc(112 * var(--u));height:calc(112 * var(--u));border-radius:var(--ui-r-md);object-fit:cover;object-position:50% 25%;background:#3a2c1e}.pick-art.locked{filter:grayscale(.8) brightness(.7)}
+.pick-copy h2{margin:0;font-weight:700;font-size:var(--ui-t-name)}.pick-copy p{margin:var(--ui-s1) 0 0;font-size:var(--ui-t-label);color:var(--ui-text-2);line-height:1.4}
+.pick-stats{grid-column:1/-1;display:grid;gap:var(--ui-s2);margin:0}
+.pick-stats div{display:grid;grid-template-columns:5.2em 3.8em 1fr;align-items:center;gap:var(--ui-s2);font-size:var(--ui-t-label)}
+.pick-stats dt{color:var(--ui-text-2)}.pick-stats dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums}
+.pick-best{grid-column:1/-1;margin:0;display:flex;align-items:center;gap:.3em}.pick-best .ui-coin{width:1.3em;height:1.3em;font-size:.75em}
+.card-tray.dots{gap:var(--ui-s3);padding-top:5px;padding-bottom:5px}
+.horse-dot{position:relative;flex:none;width:calc(60 * var(--u));height:calc(60 * var(--u));padding:0;border-radius:50%;border:2px solid transparent;background:#3a2c1e;overflow:hidden}
+.horse-dot img{width:100%;height:100%;object-fit:cover;object-position:50% 25%}.horse-dot.is-selected{border-color:var(--ui-lime);box-shadow:0 0 0 3px rgb(217 255 79 / .3)}
+.horse-dot.locked img{filter:grayscale(1) brightness(.5)}.horse-dot svg{position:absolute;inset:30%;width:40%;height:40%;color:#fff}
+.go-row .ui-btn svg{width:1.1em;height:1.1em}
+.buy-actions .ui-btn:has(small){flex-direction:column;gap:2px}.buy-actions .ui-btn small{font-size:calc(11 * var(--u));font-weight:500}.buy-actions .gem{display:inline-grid;width:1.1em;height:1.1em}
+.horse-grid .to-unlock .art{position:relative}.horse-grid .to-unlock img{filter:grayscale(1) brightness(.55)}.horse-grid .to-unlock .art svg{position:absolute;inset:34%;width:32%;height:32%;color:#fff}
+.horse-grid .to-unlock small{display:flex;align-items:center;gap:.25em}.horse-grid .to-unlock .ui-coin{width:1.25em;height:1.25em;font-size:.7em}
+.page-race .page-body{display:flex;flex-direction:column}.page-race [data-for]{flex:1;display:flex;flex-direction:column;gap:var(--ui-s4)}.page-race [data-for][hidden]{display:none}.page-race .go-row{margin-top:auto}
+.page-race section.buy-sheet{display:flex}.page-race section.buy-sheet[hidden]{display:none}   /* the page's own sections are display:contents; the unlock sheet is a modal */
+.shop-card .own .gem{display:inline-grid;width:1.1em;height:1.1em;vertical-align:-.15em;margin-right:.15em;color:#6fd3ff}.page-shop .shop-card .art img{object-position:50% 25%}
+.shop-grid>.ui-section{grid-column:1/-1;margin:var(--ui-s2) 0 0}.hair-card .art svg{width:46%;height:46%;margin:auto;color:var(--ui-text-2)}.hair-card .art{display:grid;place-items:center}.hair-card.is-selected{box-shadow:inset 0 0 0 2px var(--ui-lime)}
+
+/* 2026-10-04: the horse's level in place of its racing numbers on the pick page. */
+.pick-level{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:var(--ui-s2);font-size:var(--ui-t-label)}
+.pick-level b{font-size:calc(18 * var(--u));font-weight:800}.pick-level small{color:var(--ui-text-2)}
+.pick-best .gem{flex:none;display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em;color:#6fd3ff}.pick-best .gem svg{width:100%;height:100%}
+
+/* 2026-10-04, the shop tidied (the user: pictures cut off, text too big, gaps too wide; at least six goods in view at
+   once): three to a row, small cards. The picture sits whole in a framed square (a bust portrait ends at the frame, not
+   in mid-air), then a one-line name, a short note and the price. */
+.shop-grid{grid-template-columns:repeat(3,1fr);gap:var(--ui-s2)}
+.shop-card{gap:calc(2 * var(--u));padding:var(--ui-s2);border-radius:var(--ui-r-sm)}
+.shop-card .art{aspect-ratio:1.12;margin-bottom:calc(4 * var(--u));border-radius:var(--ui-r-xs);background:#ffffff0f;overflow:hidden}
+.shop-card .art img,.page-shop .shop-card .art img{width:100%;height:100%;max-width:none;object-fit:contain;object-position:50% 100%}
+.shop-card b{max-width:100%;font-size:calc(13 * var(--u));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shop-card small{font-size:calc(10 * var(--u));line-height:1.25;min-height:1lh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+/* English runs longer than Chinese: a card's name and note may take two lines there (the row grows with them). */
+:lang(en) .shop-card :is(b,small){white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.shop-card .foot{gap:calc(3 * var(--u));margin-top:calc(4 * var(--u));min-height:calc(20 * var(--u))}
+.shop-card .own{font-size:calc(10 * var(--u))}
+.shop-card .ui-price{font-size:calc(11 * var(--u));padding:calc(2 * var(--u)) calc(6 * var(--u)) calc(2 * var(--u)) calc(3 * var(--u));gap:calc(3 * var(--u))}
+.shop-card .ui-price .ui-coin{width:calc(14 * var(--u));height:calc(14 * var(--u));font-size:calc(8 * var(--u))}
+.shop-card.postcard .art{aspect-ratio:auto;background:none}
+/* A buddy's three numbers, now / full (2026-10-04): the bar is on one scale for every buddy (bright: what it uses now,
+   dim: its own top), so buddies and levels compare at a glance. */
+.buddy-stats{grid-column:1/-1;display:grid;gap:calc(5 * var(--u));width:100%;font-size:var(--ui-t-label)}
+.buddy-stats>div{display:grid;grid-template-columns:calc(34 * var(--u)) 1fr auto;align-items:center;gap:var(--ui-s2)}
+.buddy-stats span{color:var(--ui-text-2);white-space:nowrap}.buddy-stats b{font-weight:700;font-variant-numeric:tabular-nums;min-width:calc(52 * var(--u));text-align:right}
+.buddy-stats small{font-weight:500;color:var(--ui-text-2)}
+.buddy-stats i{height:calc(6 * var(--u));border-radius:99px;background:linear-gradient(90deg,var(--ui-lime) var(--now),rgb(255 255 255 / .34) var(--now),rgb(255 255 255 / .34) var(--full),rgb(255 255 255 / .1) var(--full))}
+:lang(en) .buddy-stats>div{grid-template-columns:calc(52 * var(--u)) 1fr auto}
+.buy-sheet .buddy-stats{margin:var(--ui-s1) 0 var(--ui-s2);text-align:left}
+.relay-stats{margin:calc(-1 * var(--ui-s2)) 0 0;text-align:center;color:var(--ui-text-2)}
+/* Relay cards: how the buddy suits each leg, as a dot (lime: good at it, grey: fine, hollow: hard going). */
+.horse-card .fits i{width:calc(9 * var(--u));height:calc(9 * var(--u));padding:0;border-radius:50%;background:rgb(255 255 255 / .45)}
+.horse-card .fits i.weak{background:none;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .4)}
+.buy-actions.one{grid-template-columns:1fr}
+/* The stable's look sheet: this buddy's mane and tail style, then the gear colours. */
+.st-sheet .parts{grid-template-columns:repeat(7,1fr)}.st-sheet .parts button{font-size:calc(11 * var(--u))}
+.st-sheet .parts i.mane{border-radius:calc(5 * var(--u));background:#ffffff14 center/cover no-repeat}
+.manes{display:flex;justify-content:center;gap:var(--ui-s3);margin:var(--ui-s3) 0}
+.manes button{display:flex;flex-direction:column;align-items:center;gap:var(--ui-s1);width:calc(92 * var(--u));padding:var(--ui-s2);border:2px solid transparent;border-radius:var(--ui-r-sm);background:rgb(255 255 255 / .06);color:var(--ui-text-2);font-size:calc(11 * var(--u))}
+.manes img{width:calc(56 * var(--u));height:calc(56 * var(--u));object-fit:contain}.manes [aria-checked=true]{border-color:var(--ui-lime);color:var(--ui-text)}
+/* Relay setup on one screen (the facts, the three legs, the buddy now on the picked leg, the buddies to put on it, 出發):
+   the tray keeps its height (it used to be squeezed flat when the rows above grew). */
+.page-race .page-body{gap:var(--ui-s3)}.page-race .race-facts{padding:var(--ui-s3) var(--ui-s4)}
+.relay-row .leg>.art{aspect-ratio:16/7}
+.page-race [data-for=relay] .card-tray{flex:none}
+.horse-card{width:calc(84 * var(--u));padding:var(--ui-s2) var(--ui-s1);gap:calc(3 * var(--u))}.horse-card .art{width:calc(46 * var(--u))}.horse-card b{font-size:calc(12 * var(--u))}
+/* A diamond inside a line of text is the size of the text, wherever it is written (a bare one filled its card). */
+i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem svg{width:100%;height:100%}
+.horse-grid .gem{color:#6fd3ff;margin-right:.2em}
+
+/* ---- UI v2 (2026-10-04, docs/UI_GUIDELINE_V2.md; look: ../ui/ui-v2.css). The scene behind every page is the chosen
+   city's far backdrop (frame() sets the picture): its lawn at the bottom of the frame, dimmed a fifth so white text
+   reads on the glass. The ranch keeps its own scene. ---- */
+.home-shell{background:#8fc4ee 50% 100%/auto 122% no-repeat}
+.home-shell:not(.page-home)::before{background:rgb(6 22 12 / .2)}
+/* shop: a segmented control, three columns of glass tiles, the price a white tag, the confirm sheet a black card */
+.shop-card{border-radius:var(--ui-r-md)}.shop-card .art{border-radius:var(--ui-r-sm)}
+.shop-card .own .gem{color:inherit}
+.horse-grid .ui-card.is-selected{box-shadow:none;animation:none}   /* My Buddies (the user, 2026-10-04): no green frame on the relay three; "Leg N" under the name says it */
+
+/* Home (2026-10-04): the stages side by side, the chosen one in the middle and its neighbours peeking in; dots; one
+   black card (the course, what to beat next, the button). */
+.page-home{grid-template-rows:auto 1fr auto auto auto}
+.stage-row{display:flex;align-items:center;min-height:0;padding:0 26%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.stage-row::-webkit-scrollbar{display:none}
+.stage{flex:none;width:100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:calc(8 * var(--u));padding:0;border:0;background:none;color:#fff;text-shadow:var(--ui-on-scene);
+  opacity:.6;transform:scale(.7);transition:transform .2s var(--ui-ease),opacity .2s}
+.stage.is-selected{opacity:1;transform:none}
+.stage .dot{position:relative;display:grid;place-items:center;width:calc(150 * var(--u));height:calc(150 * var(--u));box-sizing:border-box;border:calc(4 * var(--u)) solid #fff;border-radius:50%;overflow:hidden;background:#2b2e21}
+.stage .dot canvas{position:absolute;inset:0;width:100%;height:100%}.stage .dot svg{position:relative;width:26%;height:26%}
+.stage.locked .dot canvas{filter:grayscale(1) brightness(.5)}
+.stage b{font-weight:600;font-size:var(--ui-t-page)}.stage .stars i{font-size:calc(20 * var(--u))}.stage .ui-tag{text-shadow:none}
+.page-home .ui-dots{margin:var(--ui-s2) 0 var(--ui-s4)}
+.next-race{display:block;margin:0 var(--ui-margin) var(--ui-gap);padding:calc(20 * var(--u)) var(--ui-pad)}
+.next-race .ui-card-head{margin-bottom:calc(4 * var(--u))}.next-race .ui-card-head span{font-weight:400;color:var(--ui-grey)}
+.next-race p{margin:0 0 calc(16 * var(--u));color:var(--ui-text-2)}
+.next-race .acts{display:flex;gap:var(--ui-gap)}.next-race .acts .ui-btn{flex:1;min-height:var(--ui-h);padding:0 var(--ui-pad)}
+/* shop: the whole picture shows, with air round it (the user: pictures cut off) */
+.shop-card .art{position:relative}
+.shop-card:not(.postcard) .art img,.page-shop .shop-card:not(.postcard) .art img{position:absolute;inset:9%;width:82%;height:82%;object-fit:contain;object-position:50% 50%}
+
+/* Home map (the user's sketch, 2026-10-04): stages alternate up and down along a dotted lane; 2.5 in view. */
+.page-home{grid-template-rows:auto 1fr auto auto}
+.stage-row{position:relative;padding:0 var(--ui-margin);scroll-snap-type:none}
+.stage-row .road{position:absolute;left:0;top:0;height:100%;overflow:visible;pointer-events:none}
+.stage-row .road path{fill:none;stroke:#fff;stroke-width:calc(5 * var(--u));stroke-linecap:round;stroke-dasharray:calc(1 * var(--u)) calc(12 * var(--u))}
+.stage{position:relative;width:calc(144 * var(--u));top:calc(46 * var(--u));opacity:1;transform:none}
+.stage:nth-of-type(even){top:calc(-46 * var(--u))}
+.stage .dot{width:calc(124 * var(--u));height:calc(124 * var(--u))}
+.stage.is-selected .dot{border-color:var(--ui-green)}
+.stage b{font-size:var(--ui-t-name)}
+/* the user (2026-10-04): the stage pictures bigger, rounded squares, using the empty height */
+.stage{width:calc(184 * var(--u));top:calc(74 * var(--u))}.stage:nth-of-type(even){top:calc(-74 * var(--u))}
+.stage .dot{width:calc(168 * var(--u));height:calc(168 * var(--u));border-radius:calc(40 * var(--u))}
+.stage.is-selected .dot{border-color:#fff;box-shadow:0 0 0 calc(4 * var(--u)) var(--ui-green)}
+.stage:not(.is-selected) .dot{border-color:rgb(255 255 255 / .7)}
+/* the user's second sketch (2026-10-04): wide rounded cards in two rows, each starting at the middle of the one before,
+   a solid lane between them, the name inside the card: more stages in view */
+.stage{width:calc(196 * var(--u));margin-right:calc(-84 * var(--u));top:calc(92 * var(--u))}.stage:nth-of-type(even){top:calc(-92 * var(--u))}.stage:last-of-type{margin-right:0}
+.stage .dot{width:100%;height:calc(150 * var(--u));border-radius:calc(30 * var(--u))}.stage .dot canvas{object-fit:cover}
+.stage .dot::after{content:'';position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgb(0 0 0 / .6))}
+.stage b,.stage .stars,.stage .ui-tag{position:absolute;bottom:calc(14 * var(--u))}.stage b{left:calc(16 * var(--u))}.stage .stars,.stage .ui-tag{right:calc(14 * var(--u))}
+.stage .stars i{font-size:calc(15 * var(--u))}.stage .dot svg{width:20%;height:20%;margin-bottom:12%}
+.stage-row .road path{stroke-width:calc(12 * var(--u));stroke-dasharray:none;stroke-opacity:.85}
+/* the user's third sketch (2026-10-04): the course card pinned on top; the stages a list of wide cards, stage 1 first,
+   scrolling up beneath it */
+.page-home{grid-template-rows:auto auto 1fr auto}
+.next-race{position:relative;z-index:1;margin-bottom:0}
+.stage-row{display:flex;flex-direction:column;align-items:stretch;gap:var(--ui-s3);overflow:hidden auto;margin-top:calc(-28 * var(--u));padding:calc(28 * var(--u) + var(--ui-s3)) var(--ui-margin) var(--ui-s3)}
+.stage,.stage:nth-of-type(even){top:0;width:100%;margin:0}
+.stage .dot{height:calc(158 * var(--u))}
+.stage .dot{height:calc(176 * var(--u))}
+/* the user: the course card is pinned at the bottom (over the nav); the list slides beneath it */
+.page-home{grid-template-rows:auto 1fr auto auto}
+.next-race{margin-bottom:var(--ui-gap)}
+.stage-row{margin-top:0;margin-bottom:calc(-28 * var(--u));padding:var(--ui-s2) var(--ui-margin) calc(28 * var(--u) + var(--ui-s3))}
+
+/* ---- pick a buddy, UI v2 (2026-10-04; mock-up docs/ui-kit.html #a2 / #a6) ---- */
+.page-race .page-body{gap:calc(14 * var(--u));padding-bottom:max(calc(18 * var(--u)),env(safe-area-inset-bottom))}
+.ctr{display:flex;justify-content:center}
+.buddy-tray{display:flex;align-items:center;gap:calc(8 * var(--u));margin:0 calc(-1 * var(--ui-margin));padding:calc(4 * var(--u)) var(--ui-margin);overflow-x:auto;scrollbar-width:none}.buddy-tray::-webkit-scrollbar{display:none}
+.buddy-tray>:first-child{margin-left:auto}.buddy-tray>:last-child{margin-right:auto}
+.buddy-tray .ui-marker{width:calc(62 * var(--u));height:calc(62 * var(--u))}.ui-marker img{object-position:50% 25%}
+.buddy-tray .ui-tag{flex:none;height:calc(28 * var(--u));padding:0 calc(12 * var(--u));border:0;font-size:var(--ui-t-label)}
+.stack{display:flex;flex-direction:column;gap:var(--ui-gap);margin-top:auto}
+.cond{display:flex;align-items:center;gap:var(--ui-s4);padding-top:calc(18 * var(--u));padding-bottom:calc(18 * var(--u))}.cond>div{flex:1}.cond b{font-weight:600}
+.cond p{margin:calc(8 * var(--u)) 0 0;display:flex;gap:calc(18 * var(--u))}.cond>svg{flex:none;width:calc(34 * var(--u));height:calc(34 * var(--u))}
+.pickcard.ui-card-body,.team.ui-card-body{padding-top:calc(22 * var(--u));padding-bottom:calc(22 * var(--u))}.pickcard .ui-card-head,.team .ui-card-head{margin-bottom:calc(16 * var(--u))}.pickcard .ui-data+.ui-data{margin-top:calc(16 * var(--u))}
+.pickprice{margin:calc(16 * var(--u)) 0 0;display:flex;align-items:center;gap:calc(5 * var(--u));flex-wrap:wrap;color:#fff}
+.legs{display:flex;justify-content:center;gap:calc(12 * var(--u))}.legs>div{display:grid;justify-items:center;gap:calc(6 * var(--u))}
+.ui-marker.big{width:calc(98 * var(--u));height:calc(98 * var(--u))}
+.ui-data.team{grid-template-columns:1fr auto auto auto;column-gap:calc(16 * var(--u))}.ui-data.team>b,.ui-data.team>b+b{color:#fff}.ui-data.team>.who{color:var(--ui-grey)}
+.ui-data.team>.fit{color:var(--ui-green)}.ui-data.team>.fit.mid{color:#fff}.ui-data.team>.fit.warn{color:var(--ui-yellow)}
+
+/* look sheet: a mane style or a colour not opened yet (progress.mjs PERKS) */
+.st-sheet [data-mane]:disabled,.st-sheet [data-color]:disabled{opacity:.35}
+.look-note{display:flex;align-items:center;gap:calc(4 * var(--u));margin:var(--ui-s2) 0 0}.look-note svg{width:calc(12 * var(--u));height:calc(12 * var(--u))}
+
+/* relay pick: 推薦 stays in view at the right edge when the row of heads is longer than the screen */
+.buddy-tray [data-best]{position:sticky;right:0;margin-left:auto;box-shadow:0 0 0 calc(6 * var(--u)) rgb(6 22 12 / .0)}
+
+/* ---- Ranch, UI v2 (2026-10-05; mock-up docs/ui-kit.html #a8–#a10). Top: the header and a row of heads (the buddies
+   owned). Bottom, one column over the thumbs (.st-foot): the look sheet or the care card, then the actions. ---- */
+.st-top{align-items:center;padding-left:var(--ui-margin);padding-right:var(--ui-margin)}.st-top h1{text-shadow:var(--ui-on-scene)}
+.st-tray{position:absolute;z-index:3;left:0;right:0;top:calc(max(calc(20 * var(--u)),calc(env(safe-area-inset-top) + 6 * var(--u))) + 62 * var(--u));margin:0}
+.st-tray .ui-marker svg{width:calc(20 * var(--u));height:calc(20 * var(--u))}
+.st-foot{position:absolute;z-index:3;left:var(--ui-margin);right:var(--ui-margin);bottom:max(calc(14 * var(--u)),env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:calc(10 * var(--u))}
+.st-foot .st-sheet,.st-foot .st-acts{position:static;height:auto}
+.st-sheet:not([hidden])+.st-buddy{display:none}   /* the look sheet takes the card's place: the buddy stays in view */
+.st-buddy{width:auto;min-width:0;display:block;padding:calc(16 * var(--u)) calc(22 * var(--u)) calc(18 * var(--u));border-radius:var(--ui-r-lg)}
+.st-buddy .ui-card-head{margin-bottom:calc(12 * var(--u))}.st-buddy .ui-card-head b{font-size:var(--ui-t-name);font-weight:600;line-height:1.4}
+.st-stats{grid-template-columns:repeat(4,1fr);gap:calc(14 * var(--u));padding:0}
+.st-stat{display:flex;gap:calc(6 * var(--u))}.st-stat svg{flex:none;color:#fff}.st-stat .ui-bar{flex:1}
+.st-acts{gap:calc(22 * var(--u))}
+.st-acts .side .ui-icon-btn{width:var(--ui-h);height:var(--ui-h);padding:calc(15 * var(--u))}
+.st-acts .side[aria-expanded=true] .ui-icon-btn{background:#fff;color:#000}   /* its sheet is open: white, as every chosen thing; green stays for the two actions */
+.st-acts .big>span{box-shadow:none}
+.st-food{right:calc(-14 * var(--u));border:0;background:#fff;color:#000}.st-food b{font-weight:500}
+.page-stable .ui-toast{bottom:auto;top:calc(max(calc(20 * var(--u)),calc(env(safe-area-inset-top) + 6 * var(--u))) + 140 * var(--u))}
+/* the look sheet: the parts as round dots of the colour worn, the colours under them; a white ring on what is chosen */
+.st-sheet{padding:calc(16 * var(--u)) calc(16 * var(--u)) calc(18 * var(--u));border-radius:var(--ui-r-lg)}
+.st-sheet>header{margin-bottom:calc(12 * var(--u))}.st-sheet>header b{font-size:var(--ui-t-name);font-weight:600}
+.st-sheet .parts{gap:calc(2 * var(--u))}
+.st-sheet .parts button{gap:calc(5 * var(--u));padding:0;border:0;background:none;color:var(--ui-grey);font-size:calc(11 * var(--u))}
+.st-sheet .parts i,.st-sheet .parts i.mane{width:calc(36 * var(--u));height:calc(36 * var(--u));border:0;border-radius:50%;background-color:#2b2b2b}
+.st-sheet .parts [aria-selected=true]{border:0;color:#fff}
+.st-sheet .parts [aria-selected=true] i,.swatches [aria-checked=true]{box-shadow:0 0 0 calc(2 * var(--u)) #000,0 0 0 calc(4.5 * var(--u)) #fff}
+.swatches{gap:calc(14 * var(--u));margin:calc(18 * var(--u)) 0 calc(4 * var(--u))}.swatches button{width:calc(40 * var(--u));height:calc(40 * var(--u));border:0}.swatches [aria-checked=true]{border:0}
+/* the items sheet: black, at the bottom, three tabs, a grid of lit tiles with the count as a tag */
+.st-scrim{z-index:4}.st-pop{z-index:5;top:auto;bottom:max(calc(18 * var(--u)),env(safe-area-inset-bottom));transform:none;animation:ui-enter .22s var(--ui-ease);padding:calc(20 * var(--u))}
+.st-pop .ctr{margin:0 0 calc(14 * var(--u))}.st-pop .ui-tabs{background:rgb(255 255 255 / .12)}
+.st-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.st-grid .ui-card,.st-grid .ui-card[aria-pressed=true]{aspect-ratio:1;min-width:0;padding:calc(6 * var(--u));border-radius:calc(16 * var(--u));background:rgb(255 255 255 / .08);-webkit-backdrop-filter:none;backdrop-filter:none}
+.st-grid .ui-card[aria-pressed=true]{box-shadow:0 0 0 calc(3 * var(--u)) #fff}
+.st-grid img{height:100%;object-fit:contain}
+.st-grid.items b{right:calc(4 * var(--u));bottom:calc(4 * var(--u));display:flex;align-items:center;height:calc(16 * var(--u));padding:0 calc(5 * var(--u));border-radius:99px;background:#fff;color:#000;font-weight:500;font-size:var(--ui-t-tag);text-shadow:none}
+.st-hint{margin:calc(12 * var(--u)) 0 0;text-align:center}.st-pop .ui-btn{margin-top:calc(12 * var(--u))}
+.manes{gap:calc(8 * var(--u));margin:calc(18 * var(--u)) 0 calc(4 * var(--u))}.manes button{border:0;border-radius:calc(16 * var(--u));background:rgb(255 255 255 / .08);color:var(--ui-grey)}
+.manes [aria-checked=true]{border:0;color:#fff;box-shadow:0 0 0 calc(3 * var(--u)) #fff}
+.st-stat.low svg{color:var(--ui-yellow)}.st-food b{font-style:normal}

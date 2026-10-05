@@ -1,0 +1,159 @@
+/* HOOFBEAT UI v2 (docs/UI_GUIDELINE_V2.md): the components of ui.css in the reference's language (a golf UI concept
+   the user chose, 2026-10-04): a bright full-bleed scene, black data cards, dark and light glass, one yellow and one
+   green, fully round pills, 42dot Sans. Loaded AFTER ui.css: the same tokens with new values, the same classes
+   restyled, and the new components the language needs. Numbers are px on a 390-wide phone, measured from the
+   reference (393 wide): calc(N * var(--u)).
+   Loaded by the game since r219 (index.html, after ui.css); pages move over one at a time: docs/UI_GUIDELINE_V2.md §6. */
+@font-face{font-family:"42dot Sans";src:url(../assets/fonts/42dotSans-latin.woff2) format("woff2");font-weight:300 800;font-display:swap}   /* latin only (SIL OFL 1.1): Chinese falls through to the system font */
+:root{
+  /* palette: the reference's five, each with one job */
+  --ui-green:#27eb62;   /* go: the main action, the selected segment, on, the current target */
+  --ui-yellow:#ffcc00;  /* where you are / what you chose: selectors, the current nav item, units, highlights, coins, caution */
+  --ui-black:#000;      /* data: cards, markers */
+  --ui-grey:#888687;    /* the reference value beside yours, secondary text on black, off */
+  --ui-white:#fff;      /* text on dark and glass; the two or three key facts of a screen (pill rows), labels on a map */
+  --ui-lime:var(--ui-green);--ui-on-lime:#000;--ui-cyan:#fff;--ui-danger:var(--ui-yellow);   /* v1 names, kept so pages follow */
+  /* surfaces: black is solid; dark glass darkens and blurs the scene; light glass veils it */
+  /* glass, measured on the reference (its Weather card, round buttons, nav): the scene behind blurred until only its
+     colours are left, more saturated, and darkened by a tenth to a third. The glass takes its colour from the scene. */
+  --ui-glass:#000;--ui-glass-dark:rgb(10 20 6 / .32);--ui-glass-2:var(--ui-glass-dark);--ui-glass-deep:var(--ui-glass-dark);
+  --ui-glass-veil:rgb(10 20 6 / .2);--ui-glass-light:rgb(255 255 255 / .24);   /* veil: thinner still (stat discs, things not open yet); light: the lit disc on top of it */
+  --ui-blur:blur(calc(28 * var(--u))) saturate(1.6);--ui-blur-2:var(--ui-blur);--ui-blur-deep:var(--ui-blur);--ui-blur-light:blur(calc(14 * var(--u))) saturate(1.4);
+  --ui-edge:transparent;--ui-hair:transparent;--ui-shadow:none;--ui-scrim:rgb(0 0 0 / .45);   /* no strokes, no shadows */
+  --ui-text:#fff;--ui-text-2:rgb(255 255 255 / .74);--ui-muted:#888687;
+  /* shape */
+  --ui-r-xs:calc(8 * var(--u));--ui-r-sm:calc(12 * var(--u));--ui-r-md:calc(20 * var(--u));--ui-r-lg:calc(28 * var(--u));
+  --ui-h:calc(50 * var(--u));--ui-h-sm:calc(36 * var(--u));--ui-h-tag:calc(20 * var(--u));   /* every control is 50 high; the small ones 36; a tag 20 */
+  --ui-margin:calc(20 * var(--u));--ui-gap:calc(6 * var(--u));--ui-pad:calc(28 * var(--u));   /* screen edge; between stacked surfaces; inside a card */
+  /* type: one family, one text size, weight for hierarchy */
+  --ui-font:"42dot Sans","PingFang TC","Noto Sans TC",-apple-system,"Segoe UI",Roboto,"Microsoft JhengHei",sans-serif;
+  --ui-t-hero:calc(34 * var(--u));--ui-t-stat:calc(24 * var(--u));--ui-t-page:calc(17 * var(--u));--ui-t-name:calc(15 * var(--u));
+  --ui-t-section:calc(14 * var(--u));--ui-t-body:calc(14 * var(--u));--ui-t-label:calc(12 * var(--u));--ui-t-tag:calc(10 * var(--u));
+  --ui-on-scene:0 0 calc(10 * var(--u)) rgb(0 0 0 / .3);
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge long paragraphs by themselves (the course facts came out three times the size) */
+.ui-root{font-size:var(--ui-t-body);line-height:1.4}
+:where(.ui-root) :focus-visible{outline-color:var(--ui-white)}
+
+/* ---- surfaces ---- */
+.ui-panel{background:var(--ui-black);border:0;border-radius:var(--ui-r-lg);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}   /* the black data card */
+.ui-panel.soft,.ui-panel.deep,.ui-glass{background:var(--ui-glass-dark);-webkit-backdrop-filter:var(--ui-blur);backdrop-filter:var(--ui-blur)}   /* dark glass: conditions, nav, bars */
+.ui-glass.veil{background:var(--ui-glass-veil);-webkit-backdrop-filter:var(--ui-blur-light);backdrop-filter:var(--ui-blur-light)}
+.ui-card-body{padding:var(--ui-pad)}
+.ui-card,.ui-panel.soft,.ui-panel.deep,.ui-glass,.ui-pillrow.glass{--ui-muted:rgb(255 255 255 / .7)}   /* grey is for black cards: on glass the quiet text is white, thinner */
+/* over live 3D (ranch, race) glass is not blurred (phones), so it is denser to stay legible */
+.ui-live{--ui-blur-light:none;--ui-glass-dark:rgb(10 20 6 / .5);--ui-glass-2:var(--ui-glass-dark);--ui-glass-deep:var(--ui-glass-dark);--ui-glass-veil:rgb(10 20 6 / .34)}
+
+/* ---- type ---- */
+.ui-hero{font-size:var(--ui-t-hero);font-weight:700;letter-spacing:-.01em}
+.ui-page-title,.ui-header h1{font-size:var(--ui-t-page);font-weight:600;letter-spacing:0}
+.ui-name{font-size:var(--ui-t-name);font-weight:600}
+.ui-section{font-size:var(--ui-t-section);font-weight:600}
+.ui-stat{font-size:var(--ui-t-stat);font-weight:700}
+.ui-label{font-size:var(--ui-t-label);color:var(--ui-text-2)}
+.ui-eyebrow{font-size:var(--ui-t-label);font-weight:400;letter-spacing:0;text-transform:none;color:var(--ui-text-2)}   /* no caps, no tracking */
+
+/* ---- buttons: all 50 high, fully round; green = the action, yellow = a selector, glass = everything else ---- */
+.ui-btn,.ui-btn.block{min-height:var(--ui-h);padding:0 var(--ui-pad);border:0;background:var(--ui-glass-dark);-webkit-backdrop-filter:var(--ui-blur);backdrop-filter:var(--ui-blur);
+  font-weight:600;font-size:var(--ui-t-name)}
+.ui-btn.primary{background:var(--ui-green);color:#000;-webkit-backdrop-filter:none;backdrop-filter:none}
+.ui-btn.caps{text-transform:none;letter-spacing:0}
+.ui-btn.sm{min-height:var(--ui-h-sm);padding:0 var(--ui-s4);font-size:var(--ui-t-label)}
+.ui-btn.danger{color:var(--ui-yellow)}
+/* selector: says what is chosen and opens the choice ("第 1 關 Taipei ▾"): the label regular, the value bold */
+.ui-select{display:inline-flex;align-items:center;gap:calc(6 * var(--u));height:var(--ui-h);padding:0 var(--ui-pad);border:0;border-radius:var(--ui-r-pill);background:var(--ui-yellow);color:#000;
+  font:400 var(--ui-t-body)/1 var(--ui-font);white-space:nowrap}
+.ui-select b{font-weight:700}
+.ui-select::after,.ui-caret::after{content:'';margin-left:calc(4 * var(--u));border:calc(4 * var(--u)) solid transparent;border-top-color:currentColor;border-bottom:0}
+.ui-icon-btn{width:var(--ui-h);height:var(--ui-h);padding:calc(16 * var(--u));border:0;background:var(--ui-glass-dark)}
+.ui-icon-btn.sm{width:var(--ui-h-sm);height:var(--ui-h-sm);padding:calc(10 * var(--u))}
+.ui-icon-btn.plain{background:rgb(255 255 255 / .12)}
+.ui-icon-btn.go,.ui-fab{width:var(--ui-h);height:var(--ui-h);padding:calc(16 * var(--u));background:var(--ui-green);color:#000;-webkit-backdrop-filter:none;backdrop-filter:none}   /* FAB: the one action of a sheet (open, close, go) */
+
+/* ---- counters (coins, diamonds) ---- */
+.ui-coin{background:var(--ui-yellow);color:#000}
+.ui-wallet{height:var(--ui-h-sm);min-width:0;padding:0 calc(14 * var(--u)) 0 calc(8 * var(--u));border:0;background:var(--ui-glass-dark);font-weight:600;font-size:var(--ui-t-body)}
+.ui-wallet .gem{color:#fff}
+.ui-price{height:var(--ui-h-tag);padding:0 calc(8 * var(--u)) 0 calc(3 * var(--u));gap:calc(4 * var(--u));background:#fff;color:#000;font-weight:600;font-size:var(--ui-t-tag)}   /* a price is a white tag */
+.ui-price .ui-coin{width:calc(14 * var(--u));height:calc(14 * var(--u));font-size:calc(8 * var(--u))}
+.ui-price.short{background:var(--ui-glass-veil);color:#fff}.ui-price.short .ui-coin{background:var(--ui-grey);color:#000}
+
+/* ---- headers ---- */
+.ui-top,.ui-header{gap:var(--ui-gap);padding:max(calc(20 * var(--u)),calc(env(safe-area-inset-top) + 6 * var(--u))) var(--ui-margin) var(--ui-gap)}   /* the reference's 53 is its status bar: here the safe area gives it */
+.ui-header h1{margin-left:var(--ui-s2)}
+
+/* ---- navigation ---- */
+.ui-nav{gap:0;margin:0 var(--ui-margin) max(calc(18 * var(--u)),env(safe-area-inset-bottom));padding:0;border-radius:calc(16 * var(--u))}
+.ui-nav button{height:var(--ui-h);border-radius:calc(12 * var(--u));justify-self:center;width:var(--ui-h)}
+.ui-nav span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}   /* icons only: the label stays for screen readers */
+.ui-nav svg{width:calc(18 * var(--u));height:calc(18 * var(--u))}
+.ui-nav [aria-current]{background:var(--ui-yellow);color:#000}
+.ui-tabs{display:inline-grid;gap:0;padding:calc(6 * var(--u));background:var(--ui-glass-dark);-webkit-backdrop-filter:var(--ui-blur);backdrop-filter:var(--ui-blur)}
+.ui-tabs button{height:var(--ui-h-sm);padding:0 calc(18 * var(--u));font-weight:400;font-size:var(--ui-t-body);color:#fff;white-space:nowrap}
+.ui-tabs [aria-selected=true]{background:var(--ui-green);color:#000}
+.ui-rail [aria-expanded=true] .ui-icon-btn{background:var(--ui-green);color:#000}
+
+/* ---- cards and rows ---- */
+.ui-card{border:0;border-radius:var(--ui-r-md);background:var(--ui-glass-dark)}   /* a tile in a grid (shop, buddies) */
+.ui-card b{font-weight:600;font-size:var(--ui-t-body)}.ui-card small{font-size:var(--ui-t-tag);color:var(--ui-text-2)}
+.ui-card[aria-pressed=true],.ui-card[aria-checked=true],.ui-card.is-selected,.ui-row.is-selected{border:0;background:var(--ui-glass-dark);box-shadow:inset 0 0 0 calc(2 * var(--u)) var(--ui-green)}
+.ui-row{min-height:var(--ui-h);border:0;border-radius:var(--ui-r-pill);background:none}
+.ui-list{padding:calc(14 * var(--u)) var(--ui-pad);border-radius:var(--ui-r-lg)}
+.ui-list>li{min-height:calc(44 * var(--u));font-weight:400}.ui-list>li+li,.ui-facts>div+div{border-top:0}
+.ui-facts{padding:calc(14 * var(--u)) var(--ui-pad);border-radius:var(--ui-r-lg)}.ui-facts>div{min-height:calc(32 * var(--u))}.ui-facts dt{color:#fff}.ui-facts dd{font-weight:400}
+/* pill row: one fact, 50 high: white for the two or three that matter most on the screen, glass for the rest */
+.ui-pillrow{display:flex;align-items:center;gap:calc(10 * var(--u));height:var(--ui-h);padding:0 var(--ui-pad);box-sizing:border-box;border-radius:var(--ui-r-pill);background:#fff;color:#000}
+.ui-pillrow.glass{background:var(--ui-glass-dark);color:#fff;-webkit-backdrop-filter:var(--ui-blur);backdrop-filter:var(--ui-blur)}
+.ui-pillrow svg{flex:none;width:calc(16 * var(--u));height:calc(16 * var(--u))}.ui-pillrow span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ui-pillrow b{font-weight:500;font-variant-numeric:tabular-nums}
+/* data rows (in a black card): a section head "標題 • 單位", then label | yours | the reference (grey) */
+.ui-data{display:grid;grid-template-columns:1fr auto auto;column-gap:calc(22 * var(--u));row-gap:calc(1 * var(--u));margin:0}
+.ui-data+.ui-data{margin-top:calc(22 * var(--u))}
+.ui-data>h3{grid-column:1/-1;margin:0 0 calc(8 * var(--u));font-weight:400;font-size:var(--ui-t-body)}
+.ui-data>h3 i{font-style:normal;color:var(--ui-yellow)}.ui-data>h3 i::before{content:'•';margin:0 calc(7 * var(--u))}
+.ui-data>span{white-space:nowrap}.ui-data>b{font-weight:400;text-align:right;font-variant-numeric:tabular-nums}.ui-data>b+b{color:var(--ui-grey)}
+.ui-card-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 calc(22 * var(--u))}
+.ui-card-head b{font-weight:600;font-size:var(--ui-t-name)}.ui-card-head span{display:inline-flex;align-items:center;font-weight:600}
+
+/* ---- small parts ---- */
+.ui-chip,.ui-tag{display:inline-flex;align-items:center;gap:calc(3 * var(--u));height:var(--ui-h-tag);padding:0 calc(8 * var(--u));border-radius:var(--ui-r-pill);background:#fff;color:#000;
+  font-weight:500;font-size:var(--ui-t-tag);letter-spacing:0;text-transform:none;white-space:nowrap}   /* a label on the scene */
+.ui-tag.muted{background:var(--ui-glass-veil);color:#fff;-webkit-backdrop-filter:var(--ui-blur-light);backdrop-filter:var(--ui-blur-light)}   /* not reached yet / less important */
+.ui-tag.yellow,.ui-badge{height:var(--ui-h-tag);background:var(--ui-yellow);color:#000;font-weight:600;font-size:var(--ui-t-tag)}
+.ui-tag svg{width:calc(9 * var(--u));height:calc(9 * var(--u))}
+/* marker: a point on the scene (a stage, a rank, a runner): black = data, green = the target, light glass = locked */
+.ui-marker{display:grid;place-items:center;flex:none;width:var(--ui-h);height:var(--ui-h);padding:0;border:0;border-radius:50%;background:#000;color:#fff;font-weight:600;font-size:var(--ui-t-body);font-variant-numeric:tabular-nums}
+.ui-marker.sm{width:var(--ui-h-sm);height:var(--ui-h-sm)}.ui-marker.green{background:var(--ui-green);color:#000}
+.ui-marker.locked{background:var(--ui-glass-veil);-webkit-backdrop-filter:var(--ui-blur-light);backdrop-filter:var(--ui-blur-light)}
+.ui-marker svg{width:calc(16 * var(--u));height:calc(16 * var(--u))}.ui-marker img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.ui-marker.is-selected{box-shadow:0 0 0 calc(3 * var(--u)) #fff}   /* the user: a white ring, not green */
+.ui-bar{height:calc(6 * var(--u));background:rgb(255 255 255 / .22)}.ui-bar>i{background:var(--c,#fff)}
+.ui-switch:checked{background:var(--ui-green)}
+.ui-avatar{width:var(--ui-h);height:var(--ui-h)}
+.ui-dots i.on{background:#fff}
+.ui-toast{padding:0 var(--ui-s4);height:var(--ui-h-sm);display:flex;align-items:center;background:#fff;color:#000;border:0;font-weight:500}
+.ui-modal,.ui-modal.ui-panel{left:var(--ui-margin);right:var(--ui-margin);padding:var(--ui-pad);background:#000;border-radius:var(--ui-r-lg);-webkit-backdrop-filter:none;backdrop-filter:none;--ui-muted:#888687}   /* a dialog is a black card */
+.ui-modal>header h2{font-size:var(--ui-t-name);font-weight:600}
+.ui-modal .ui-btn:not(.primary){background:rgb(255 255 255 / .12);-webkit-backdrop-filter:none;backdrop-filter:none}   /* on a black card glass has nothing to show: a lit fill instead */
+
+/* ---- stat cluster: one number that matters in the middle, its parts round it (light glass on the scene) ---- */
+.ui-bubbles{position:relative;flex:none;width:calc(170 * var(--u));height:calc(170 * var(--u));color:#fff;text-align:center}
+.ui-bubbles>*{position:absolute;display:grid;place-content:center;border-radius:50%;line-height:1.15;font-variant-numeric:tabular-nums}
+.ui-bubbles>.mid{inset:27%;background:var(--ui-glass-light);z-index:1}
+.ui-bubbles>.mid b{font-size:var(--ui-t-stat);font-weight:700;line-height:1}.ui-bubbles small{font-size:var(--ui-t-tag)}
+.ui-bubbles>.mid small{color:#fff}
+.ui-bubbles>.n{top:0}.ui-bubbles>.s{bottom:0}.ui-bubbles>.n,.ui-bubbles>.s{left:27%;width:46%;height:27%}
+.ui-bubbles>.w{left:0}.ui-bubbles>.e{right:0}.ui-bubbles>.w,.ui-bubbles>.e{top:27%;width:27%;height:46%}
+.ui-bubbles.ring{background:var(--ui-glass-veil);border-radius:50%;-webkit-backdrop-filter:var(--ui-blur-light);backdrop-filter:var(--ui-blur-light)}   /* parts of a whole: one disc */
+.ui-bubbles.petals>.n,.ui-bubbles.petals>.s,.ui-bubbles.petals>.w,.ui-bubbles.petals>.e{width:46%;height:46%;background:var(--ui-glass-veil);-webkit-backdrop-filter:var(--ui-blur-light);backdrop-filter:var(--ui-blur-light);place-content:normal;padding:calc(9 * var(--u)) 0;box-sizing:border-box}   /* separate things: four discs */
+.ui-bubbles.petals>.n,.ui-bubbles.petals>.s{left:27%}.ui-bubbles.petals>.w,.ui-bubbles.petals>.e{top:27%}
+.ui-bubbles.petals>.s{align-content:end}.ui-bubbles.petals>.w{place-content:center start;padding:0 calc(9 * var(--u))}.ui-bubbles.petals>.e{place-content:center end;padding:0 calc(9 * var(--u))}
+
+/* ---- tick bar (in a black card): where a value falls between two ends, and what it is made of ---- */
+.ui-ticks{display:flex;align-items:center;gap:calc(3 * var(--u));height:calc(22 * var(--u));margin:calc(14 * var(--u)) 0 calc(18 * var(--u))}
+.ui-ticks>i{flex:var(--w,1);height:100%;border-radius:calc(4 * var(--u));background:#2b2b2b}
+.ui-ticks>i.ticks{background:repeating-linear-gradient(90deg,#3a3a3a 0 calc(2 * var(--u)),transparent 0 calc(6 * var(--u)));border-radius:0}
+.ui-ticks>i.hot{flex:none;width:calc(8 * var(--u));background:linear-gradient(90deg,var(--ui-yellow) 0 calc(3 * var(--u)),transparent 0 calc(5 * var(--u)),var(--ui-yellow) 0);height:120%;border-radius:calc(2 * var(--u))}
+.ui-ticks>i.end{background:var(--ui-grey)}
+.ui-legend{display:grid;grid-template-columns:auto 1fr auto;column-gap:calc(8 * var(--u));row-gap:calc(1 * var(--u));align-items:center}
+.ui-legend>i{width:calc(3 * var(--u));height:calc(11 * var(--u));border-radius:calc(2 * var(--u));background:var(--ui-grey)}.ui-legend>i.hot{background:var(--ui-yellow)}
+.ui-legend>b{font-weight:400;font-variant-numeric:tabular-nums}

@@ -1,0 +1,441 @@
+html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}.slice-shell{position:relative;width:100%;height:100dvh;isolation:isolate;background:#93c8da;color:var(--ui-text)}.slice-shell>canvas:first-child{display:block;width:100%;height:100%;touch-action:none}:where(.slice-shell) button{font:inherit;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none}.slice-hud{position:absolute;z-index:5;top:max(18px,env(safe-area-inset-top));left:20px;right:20px;display:flex;gap:16px;align-items:center}.slice-hud button{background:#fffdf0;border:0;border-radius:50%;width:44px;height:44px;font-size:23px}.slice-progress{flex:1;max-width:340px;font-size:11px;font-weight:800;letter-spacing:1px}.slice-progress progress{display:block;width:100%;height:7px;margin-top:7px;accent-color:#287964}.slice-hud>b{margin-left:auto;background:#fffdf0;padding:10px 14px;border-radius:24px;font-size:14px}.slice-controls{position:absolute;z-index:4;bottom:max(24px,env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;gap:clamp(22px,8vw,90px);align-items:center;pointer-events:none}.slice-pad{pointer-events:auto;border:3px solid #ffffffaa;border-radius:50%;width:clamp(74px,19vw,100px);height:clamp(74px,19vw,100px);box-shadow:0 5px 0 #244c4933;color:#193d35;font-size:30px!important;font-weight:800!important;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px}.slice-pad.left{background:#fff071}.slice-pad.right{background:#46dee2}.slice-pad.boost{background:#f9f8ee;width:80px;height:80px;font-size:12px!important}.slice-pad small{font-size:10px;letter-spacing:0}.slice-pad.pressed,.slice-pad.active{transform:scale(.95);box-shadow:0 0 20px #fff}.slice-pad:disabled{opacity:.58;cursor:default}.slice-pad.beat-ready{border-color:white;box-shadow:0 0 0 7px #ffffff55}#slice-feedback{position:absolute;z-index:5;top:25%;left:0;right:0;text-align:center;font-weight:900;font-size:28px;color:white;text-shadow:0 2px 8px #345e4c;pointer-events:none}#slice-jump-hint{position:absolute;z-index:5;bottom:145px;width:100%;text-align:center;font-weight:800;color:#fff;text-shadow:0 2px 5px #183c2b;pointer-events:none}
+/* Target race composition: portrait chase view with dominant L/R and secondary Boost. Full screen on phones (any
+   portrait shape from 9:16 up: no bars; the camera keeps its width and horizon line, the HUD and controls stay at their
+   fractions of the height, kept clear of the notch and home indicator); a 9:16 column on wider screens. */
+#app{display:flex;justify-content:center;align-items:center;background:#15100b}
+.slice-shell{width:min(100vw,56.25dvh);height:100vh;height:100dvh;flex:none;color:white}
+.slice-hud{inset:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);pointer-events:none;display:block}
+.slice-hud button{position:absolute;pointer-events:auto;left:4%;top:2%;width:36px;height:36px;border-radius:12px;background:var(--ui-glass);border:1px solid var(--ui-edge);color:var(--ui-text);font-size:25px}
+.hud-lap,.hud-position,.hud-coins{position:absolute;display:flex;align-items:center;justify-content:space-between;gap:9px;background:var(--ui-glass);border:1px solid var(--ui-edge);border-radius:12px;padding:7px 9px;box-sizing:border-box;color:var(--ui-text);box-shadow:var(--ui-shadow)}
+.hud-lap{left:4%;top:8%;min-width:23%}.hud-position{right:4%;top:8%;min-width:27%}
+.hud-lap span,.hud-position span{font-size:10px;font-weight:700}.hud-lap b,.hud-position b{font-size:18px;line-height:1}
+.hud-coins{right:4%;top:2%;height:36px;min-width:25%;padding:4px 10px 4px 5px;border-radius:22px}
+.hud-coins b{font-size:17px}.slice-progress{position:absolute;left:30%;right:33%;top:4.5%;max-width:none}
+.slice-progress progress{margin:0;height:7px;border:1px solid #fff6ca;border-radius:10px;overflow:hidden;background:#183e6d;width:100%;accent-color:#ffcf40}
+.slice-progress progress::-webkit-progress-bar{background:#183e6d}.slice-progress progress::-webkit-progress-value{background:#ffcf40}
+.slice-controls{position:absolute;inset:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);display:block;pointer-events:none}
+.slice-pad{position:absolute;top:80%;width:22%;height:auto;aspect-ratio:1;transform:translate(-50%,-50%);border:2px solid #fff8d9;border-radius:50%;font-size:clamp(30px,10vw,52px)!important;color:#fff;box-shadow:0 5px 0 #173e52a8,0 0 0 4px #b687164d,inset 0 0 0 3px #ffffff36;text-shadow:0 2px 0 #0f3f5345}
+.slice-pad.left{left:25%;background:linear-gradient(#ffe963,#ffbf26)}
+.slice-pad.right{left:75%;background:linear-gradient(#47eaff,#079bef);border-color:#a4ffff;box-shadow:0 5px 0 #173e52a8,0 0 0 4px #16b7f542,inset 0 0 0 3px #ffffff36}
+.slice-pad.boost{left:50%;top:91%;width:28%;height:6.5%;min-height:42px;max-height:58px;aspect-ratio:auto;border-radius:16px;border:1px solid #ffffff70;background:#294357ce;font-size:14px!important;box-shadow:0 3px 0 #102f4566;text-shadow:none;gap:5px}
+.slice-pad.boost progress{width:76%;height:6px;accent-color:#ffe56b}.slice-pad.boost progress::-webkit-progress-value{background:#ffe16a}.slice-pad.boost progress::-webkit-progress-bar{background:#ffffff30;border-radius:5px}
+.slice-pad.pressed,.slice-pad.active{transform:translate(-50%,-50%) scale(.95)}
+.slice-pad:disabled{opacity:.70}.slice-pad.beat-ready{box-shadow:0 0 0 5px #ffffff70,0 0 22px #fff6c0}
+#slice-feedback{top:16%;font-size:22px}#slice-jump-hint{top:44%;bottom:auto;font-size:14px}
+.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-height:600px){.slice-hud button{width:30px;height:30px}.hud-coins{height:30px}.hud-lap,.hud-position{top:9%;padding:5px 7px}.slice-pad.boost{min-height:36px}}
+
+/* Normalized anchors come from presentation-config.mjs through shared HUD markup. */
+.slice-shell{container-type:size}
+.slice-pad.left,.slice-pad.right{height:auto!important;font-size:12cqw!important}
+.slice-pad.boost{min-height:0;max-height:none;font-size:4cqw!important;border-radius:3cqw;gap:2px}
+.slice-pad.boost small{font-size:2.3cqw;line-height:1}.slice-pad.boost progress{height:5px}
+.slice-hud button{font-size:4.3cqw;border-radius:2cqw}
+.hud-lap,.hud-position{padding:3px 7px;border-radius:2cqw;gap:4px}
+.hud-lap span,.hud-position span{font-size:calc(12 * var(--u))}.hud-lap b,.hud-position b{font-size:calc(17 * var(--u))}
+.hud-coins{padding:2px 6px 2px 2px;gap:4px}.hud-coins i{width:5cqw;height:5cqw;font-size:2.8cqw;flex:none}.hud-coins b{font-size:4cqw}
+.slice-progress progress{height:100%}
+
+/* Measured target ranking footprint, populated by actual participants only. */
+.hud-ranking{position:absolute;display:flex;flex-direction:column;gap:1cqw;pointer-events:none}
+.ranking-row{flex:1;min-height:0;display:flex;align-items:center;gap:1cqw;padding:1cqw;background:var(--ui-glass);border:1px solid var(--ui-edge);border-radius:2cqw;font-size:calc(12 * var(--u))}
+.ranking-row b{font-size:calc(15 * var(--u))}.ranking-row span{flex:1}.ranking-row progress{width:3cqw;height:1cqw}.ranking-row.is-player{background:rgb(53 200 244 / .2);border:2px solid var(--ui-cyan);box-shadow:0 0 calc(12 * var(--u)) rgb(53 200 244 / .6)}   /* mock: you glow cyan */
+.ranking-row{position:relative}.ranking-row .race-gap{position:absolute;right:1cqw;bottom:.4cqw;font-size:calc(12 * var(--u));font-variant-numeric:tabular-nums;white-space:nowrap;color:#fff7d7}
+.ranking-row.is-close{border-color:#ffd053;box-shadow:0 0 8px #ffd05388}
+.hud-ranking.crowd .ranking-row{flex:none;display:grid;grid-template-columns:auto auto 1fr;align-items:center;column-gap:1cqw;padding:.5cqw 1cqw}
+.hud-ranking.crowd .ranking-row b{grid-row:span 2;font-size:calc(13 * var(--u))}.hud-ranking.crowd .ranking-row span{font-size:calc(10.5 * var(--u));line-height:1.1;overflow:hidden;text-overflow:ellipsis}
+.hud-ranking.crowd .race-gap{position:static;line-height:1.05;font-size:calc(10 * var(--u))}.hud-ranking.crowd .race-gap:empty,.hud-ranking.crowd progress{display:none}
+#slice-final-call{position:absolute;z-index:5;left:50%;top:23%;transform:translateX(-50%);padding:1cqw 2.4cqw;border:1px solid var(--ui-yellow);border-radius:99px;background:var(--ui-glass-deep);color:var(--ui-yellow);font:600 calc(13 * var(--u)) var(--ui-font);letter-spacing:.03em;white-space:nowrap;pointer-events:none;text-shadow:0 1px 3px #071b34;box-shadow:0 0 12px #ffc84770}
+#slice-final-call[hidden]{display:none}
+#slice-chase{position:absolute;z-index:5;left:50%;top:28%;transform:translateX(-50%);padding:.5cqw 1.5cqw;border-radius:99px;background:var(--ui-glass);color:var(--ui-text);font:600 calc(12 * var(--u)) var(--ui-font);white-space:nowrap;pointer-events:none;text-shadow:0 1px 3px #081d32}
+#slice-chase[hidden]{display:none}#slice-chase.is-closing{color:var(--ui-yellow)}
+
+.rhythm-foot{overflow:visible!important;--energy:0;--hoof-cut:#b88500;color:#fffbea!important;touch-action:none}
+.rhythm-foot.right{--hoof-cut:#087f9c;color:#ecffff!important}
+.hoof-symbol{width:53%;height:62%;display:block;margin:auto;filter:drop-shadow(0 2px 1px #0003)}
+.rhythm-foot.right .hoof-symbol{transform:scaleX(-1)}
+.rhythm-foot .hoof-symbol{position:absolute;left:18%;top:18%;width:64%!important;height:64%!important;margin:0;padding:0}
+
+#slice-speed{position:absolute;left:50%;top:91%;transform:translate(-50%,-50%);color:var(--ui-text);background:var(--ui-glass);border-radius:2cqw;padding:2cqw;font:900 3.4cqw var(--ui-font);pointer-events:none;white-space:nowrap}
+
+/* 2026-09-25 reference: four circular controls share one row; the two guides sit below. */
+.rhythm-foot{--hoof-cut:#9a370c;--hoof-highlight:#fff0a0;background:radial-gradient(circle at 44% 36%,#30455b,#15283b 72%)!important;color:#ffd64b!important;border:2px solid #ffc43d!important;box-shadow:0 0 0 2px #332715,0 0 18px #ffd44975,inset 0 0 0 2px #84611f!important}
+.rhythm-foot.right{--hoof-cut:#0671ac;--hoof-highlight:#a8f8ff;color:#40d9ff!important;border-color:#15d2ff!important;box-shadow:0 0 0 2px #102f4c,0 0 18px #38dfff85,inset 0 0 0 2px #157ca4!important}
+.rhythm-foot{z-index:1;transition:transform .16s cubic-bezier(.18,1.6,.35,1),translate .2s cubic-bezier(.3,1.5,.5,1),filter .12s,box-shadow .18s}
+.rhythm-foot.sliding{transition:transform .16s cubic-bezier(.18,1.6,.35,1),filter .12s,box-shadow .18s}   /* follows the thumb; springs back on release */
+.rhythm-foot.beat-ready{box-shadow:0 0 0 2px #fff8,0 0 12px 2px var(--hoof-highlight),inset 0 0 0 2px #ffffff55!important}
+.rhythm-foot.pressed{transform:translate(-50%,-50%) scale(.90)!important;filter:brightness(1.22)}
+.rhythm-foot .hit-wave{position:absolute;inset:-3%;border:2px solid #ffe253;border-radius:50%;pointer-events:none;animation:hoof-hit-wave .32s ease-out forwards;box-shadow:0 0 12px #ffe253}
+.rhythm-foot.right .hit-wave{border-color:#46eaff;box-shadow:0 0 12px #46eaff}
+.rhythm-foot .hit-wave.perfect{border-width:4px;animation-duration:.42s;box-shadow:0 0 22px 4px #ffe253}
+.rhythm-foot.right .hit-wave.perfect{box-shadow:0 0 22px 4px #46eaff}
+@keyframes hoof-hit-wave{from{transform:scale(.82);opacity:1}to{transform:scale(1.48);opacity:0}}
+.rhythm-foot.right .hoof-symbol{transform:none}
+.rhythm-foot .hoof-symbol{left:21%;top:19%;width:58%!important;height:62%!important;filter:drop-shadow(0 1px 3px currentColor)}
+.rhythm-foot::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:5cqw;background:#fff9;pointer-events:none}
+.control-guide{position:absolute;box-sizing:border-box;display:flex;justify-content:center;align-items:center;gap:1.5cqw;border:1px solid var(--ui-edge);border-radius:99px;background:var(--ui-glass);color:var(--ui-text);pointer-events:none;white-space:nowrap;font-weight:800;letter-spacing:.03em;font-size:2.8cqw;box-shadow:0 3px 8px #0a263850}
+.control-guide[hidden]{display:none}
+.control-guide .hoof-symbol{width:11%!important;height:70%!important;flex:none;margin:0;filter:drop-shadow(0 1px 3px currentColor)}
+.control-guide .guide-plus,.control-guide .guide-equals{font-size:3.5cqw;font-weight:500}.control-guide b{font-size:2.9cqw}
+#slice-speed.sr-only{width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}
+
+/* Slider tracks (the hoof is the knob: slide outward to change lane), the charge button and the lane dots. */
+.slide-track{position:absolute;box-sizing:border-box;display:flex;align-items:center;padding:0 4cqw;border-radius:99px;border:1px solid var(--ui-edge);background:var(--ui-glass-deep);pointer-events:auto;touch-action:none;box-shadow:inset 0 2px 8px #0006}
+.slide-track.right{justify-content:flex-end}
+.slide-track i{font:900 9cqw/1 var(--ui-font);font-style:normal;color:#fff;opacity:.55}
+.charge-btn{position:absolute;height:auto!important;aspect-ratio:1;padding:0;border-radius:50%;border:1px solid var(--ui-edge);background:radial-gradient(circle at 44% 36%,#3a3f2e,#171a12 72%);color:#9aa08e;pointer-events:auto;touch-action:none;box-shadow:0 3px 9px #14263877;transition:transform .16s cubic-bezier(.18,1.6,.35,1)}
+.charge-rings{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible;pointer-events:none}
+.charge-rings circle{fill:none}
+.charge-rings .segs circle{stroke:#ffffff26;stroke-width:6;stroke-linecap:round;transition:stroke .15s}.charge-rings .segs circle.on{stroke:var(--ui-lime);filter:drop-shadow(0 0 3px var(--ui-lime))}
+.charge-rings .inner-track{stroke:#ffffff1c;stroke-width:5}.charge-rings .inner-fill{stroke:#ffe253;stroke-width:5;stroke-linecap:round;stroke-dasharray:var(--part,0) 100;transition:stroke-dasharray .12s}
+.charge-bolt{position:absolute;left:30%;top:28%;width:40%;height:40%}
+.charge-count{position:absolute;right:22%;bottom:18%;font:800 3.4cqw/1 var(--ui-font);color:#fff}
+.charge-btn.ready{color:var(--ui-lime);border-color:var(--ui-lime);animation:charge-pulse .8s ease-in-out infinite alternate}
+.charge-btn.full .inner-fill{stroke:var(--ui-lime)}
+.charge-btn.drafting .inner-fill{stroke:#ffab40;stroke-width:7}   /* right behind a horse: charging faster */
+.charge-btn.sprinting{color:#fff;background:radial-gradient(circle at 44% 36%,#d9ff4f,#7a9a12 75%);box-shadow:0 0 18px #d9ff4f}
+.charge-btn.pressed{transform:translate(-50%,-50%) scale(.9)}
+@keyframes charge-pulse{from{box-shadow:0 0 2px #d9ff4f}to{box-shadow:0 0 16px #d9ff4f}}
+@media(prefers-reduced-motion:reduce){.charge-btn.ready{animation:none;box-shadow:0 0 10px #d9ff4f}}
+.lane-dots{position:absolute;display:flex;justify-content:center;align-items:center;gap:2cqw;pointer-events:none}
+.lane-dots i{width:2.2cqw;height:2.2cqw;border-radius:50%;background:#ffffff55;box-shadow:0 1px 3px #0006;transition:background .15s,transform .15s}.lane-dots i.on{background:#fff;transform:scale(1.35)}
+
+/* ---- start / pause cards and the results screen: UI Guideline v1 (../ui/ui.css) ---- */
+.slice-shell{font-family:var(--ui-font)}
+#slice-cover{position:absolute;inset:0;z-index:10;display:grid;place-items:center;padding:var(--ui-s4);box-sizing:border-box;background:var(--ui-scrim)}
+#slice-cover[hidden]{display:none}
+#slice-cover section{width:100%;box-sizing:border-box;padding:var(--ui-s6);border-radius:var(--ui-r-lg);text-align:center;background:var(--ui-glass-deep);border:1px solid var(--ui-edge);box-shadow:var(--ui-shadow);animation:ui-enter .22s var(--ui-ease)}
+#slice-cover small{font-weight:600;font-size:var(--ui-t-label);letter-spacing:.12em;color:var(--ui-text-2)}
+#slice-cover h1{margin:var(--ui-s3) 0;font-weight:700;font-size:var(--ui-t-page);line-height:1.2}
+#slice-cover p{margin:0 0 var(--ui-s3);font-size:var(--ui-t-body);line-height:1.6;color:var(--ui-text-2)}
+#slice-cover p:empty{display:none}
+#slice-cover .slice-keys{font-size:var(--ui-t-label);color:var(--ui-muted)}
+#slice-cover .slice-form{padding:var(--ui-s3) var(--ui-s4);border-radius:var(--ui-r-sm);background:rgb(255 255 255 / .06);color:var(--ui-text);font-size:var(--ui-t-label)}
+#slice-cover .cover-stats{display:grid;grid-template-columns:1fr 1fr;gap:var(--ui-s2);margin:0 0 var(--ui-s4)}#slice-cover .cover-stats[hidden]{display:none}
+#slice-cover .cover-stats div{padding:var(--ui-s3);border-radius:var(--ui-r-sm);background:rgb(255 255 255 / .06)}
+#slice-cover .cover-stats dt{font-size:var(--ui-t-label);color:var(--ui-muted)}
+#slice-cover .cover-stats dd{margin:var(--ui-s1) 0 0;font-weight:700;font-size:var(--ui-t-stat);font-variant-numeric:tabular-nums}
+#slice-cover .cover-actions{display:grid;gap:var(--ui-s3);margin-top:var(--ui-s2)}
+#slice-cover .ui-btn+.ui-btn{margin-top:var(--ui-s3)}#slice-cover .cover-actions .ui-btn+.ui-btn{margin-top:0}
+
+.slice-shell.is-result>:not(canvas):not(#slice-result):not(#slice-cover){display:none!important}
+#slice-result{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;gap:var(--ui-s3);padding:0 var(--ui-s4) max(var(--ui-s4),env(safe-area-inset-bottom));box-sizing:border-box;
+  background:linear-gradient(rgb(8 10 6 / .45),rgb(8 10 6 / 0) 32%,rgb(8 10 6 / .05) 45%,rgb(8 10 6 / .6))}
+#slice-result[hidden]{display:none}
+#slice-result .ui-top{padding-left:var(--ui-s2);padding-right:0}
+.res-head{margin:var(--ui-s2) var(--ui-s2) auto;text-shadow:var(--ui-on-scene)}   /* the finish scene shows between the title and the cards */
+.res-head .ui-hero{margin:var(--ui-s1) 0}.res-head sup{font-size:.5em;vertical-align:.8em;margin-right:.15em}
+.res-head .ui-sub b{color:var(--ui-lime);font-weight:600}
+.res-card{padding:var(--ui-s4);border-radius:var(--ui-r-lg)}
+.res-card .ui-section{margin-bottom:var(--ui-s3)}
+.res-metrics{display:grid;grid-template-columns:repeat(3,1fr)}
+.res-metrics>div{display:flex;flex-direction:column;gap:var(--ui-s1);min-width:0;padding:0 var(--ui-s3)}
+.res-metrics>div:first-child{padding-left:0}.res-metrics>div+div{border-left:1px solid var(--ui-hair)}
+.res-metrics .ui-label{display:flex;align-items:center;gap:var(--ui-s1);white-space:nowrap}
+.res-metrics .ui-label svg{width:calc(14 * var(--u));height:calc(14 * var(--u))}
+.res-metrics .ui-badge{align-self:flex-start}
+.res-board{list-style:none;margin:0;padding:var(--ui-s2);display:flex;flex-direction:column;gap:var(--ui-s1);border-radius:var(--ui-r-lg)}
+.res-board .ui-row{min-height:calc(56 * var(--u));gap:var(--ui-s3);padding:0 var(--ui-s4) 0 var(--ui-s3);background:none}
+.res-board .ui-row.is-selected{background:var(--ui-glass-2)}
+.res-board .rank{width:calc(16 * var(--u));font-weight:700;font-size:calc(17 * var(--u));color:var(--ui-muted);text-align:center}
+.res-board .is-selected .rank{color:var(--ui-lime)}
+.res-board .pair{position:relative;flex:none;width:calc(72 * var(--u));height:calc(40 * var(--u))}
+.res-board .ui-avatar{position:absolute;left:0;top:0;width:calc(40 * var(--u));height:calc(40 * var(--u));z-index:1}
+.res-board .horse{position:absolute;right:0;top:0;width:calc(44 * var(--u));height:calc(40 * var(--u));object-fit:cover;object-position:50% 30%;border-radius:var(--ui-r-xs);
+  -webkit-mask:linear-gradient(90deg,transparent,#000 35%);mask:linear-gradient(90deg,transparent,#000 35%)}
+.res-board .who{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res-board time{font-weight:600}
+.res-actions{display:grid;grid-template-columns:1.3fr 1fr;gap:var(--ui-s3)}
+.res-actions .ui-btn{min-height:calc(56 * var(--u))}
+
+
+/* Relay: the two handoffs marked on the race bar. */
+.slice-progress::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent calc(33.33% - 1px),#fff calc(33.33% - 1px) calc(33.33% + 1px),transparent calc(33.33% + 1px) calc(66.67% - 1px),#fff calc(66.67% - 1px) calc(66.67% + 1px),transparent calc(66.67% + 1px))}
+
+/* Start cover: how to play as picture cards (one every 2 s, slice-app HOW). */
+#slice-cover .how{position:relative;margin:var(--ui-s2) 0 var(--ui-s4);cursor:pointer}
+#slice-cover .how-card{display:none;flex-direction:column;align-items:center;gap:var(--ui-s2);padding:var(--ui-s4) var(--ui-s3);border-radius:var(--ui-r-md);background:rgb(255 255 255 / .06)}
+#slice-cover .how-card.on{display:flex;animation:how-in .3s ease-out}
+@keyframes how-in{from{opacity:0;transform:translateY(calc(6 * var(--u)))}}
+#slice-cover .how-card b{font-size:var(--ui-t-section);font-weight:700}#slice-cover .how-card small{letter-spacing:0;font-weight:500;color:var(--ui-text-2)}
+.how-art{display:flex;align-items:center;justify-content:center;gap:var(--ui-s2);height:calc(76 * var(--u))}
+.how-hoof{display:grid;place-items:center;width:calc(64 * var(--u));height:calc(64 * var(--u));border-radius:50%;--hoof-highlight:#fff8;--hoof-cut:#0003}
+.how-hoof.y{background:#fff071;color:#6b5a10}.how-hoof.b{background:#46dee2;color:#0d5557}.how-hoof svg{width:62%;height:62%}
+.how-plus{font-size:calc(24 * var(--u));font-weight:700;color:var(--ui-text-2)}
+.how-key{display:grid;place-items:center;width:calc(46 * var(--u));height:calc(46 * var(--u));border-radius:50%;background:var(--ui-glass-2);border:1px solid var(--ui-edge);font-style:normal;font-size:calc(22 * var(--u));font-weight:700}
+.how-legs{display:flex;gap:var(--ui-s2)}.how-legs i{display:flex;flex-direction:column;padding:var(--ui-s2) var(--ui-s3);border-radius:var(--ui-r-sm);background:var(--ui-glass-2);font-style:normal;font-weight:700;font-size:var(--ui-t-label)}
+.how-legs small{font-size:calc(11 * var(--u));color:var(--ui-muted)}
+#slice-cover .how-dots{display:flex;justify-content:center;gap:var(--ui-s2);margin-top:var(--ui-s3)}
+#slice-cover .how-dots button{width:calc(8 * var(--u));height:calc(8 * var(--u));padding:0;border:0;border-radius:50%;background:rgb(255 255 255 / .25)}
+#slice-cover .how-dots button.on{background:var(--ui-lime)}
+/* Chase hints: a tag over the nearest rival ahead; edge arrows for a rival closing from behind (clear of notes/pads). */
+#chase-tag{position:absolute;z-index:4;transform:translate(-50%,-100%);padding:calc(2 * var(--u)) var(--ui-s2);border-radius:var(--ui-r-pill);background:var(--ui-glass-deep);color:var(--ui-text);font:600 calc(11 * var(--u)) var(--ui-font);white-space:nowrap;pointer-events:none}
+#chase-tag[hidden],.chase-edge[hidden]{display:none}
+.chase-edge{position:absolute;z-index:4;top:54%;display:grid;place-items:center;width:calc(26 * var(--u));height:calc(44 * var(--u));background:var(--ui-glass-deep);color:var(--ui-yellow);font:700 calc(26 * var(--u))/1 var(--ui-font);font-style:normal;pointer-events:none}
+#chase-left{left:0;border-radius:0 var(--ui-r-sm) var(--ui-r-sm) 0}#chase-right{right:0;border-radius:var(--ui-r-sm) 0 0 var(--ui-r-sm)}
+#slice-coach{position:absolute;z-index:6;left:50%;top:calc(env(safe-area-inset-top) + 21%);transform:translateX(-50%);width:max-content;max-width:86%;padding:8px 14px;border-radius:14px;background:var(--ui-glass-deep);border:1px solid var(--ui-lime,#d8ff5a);color:var(--ui-text);font-size:15px;font-weight:700;line-height:1.35;text-align:center;pointer-events:none;box-shadow:var(--ui-shadow)}#slice-coach[hidden]{display:none}
+/* Race look: a warm vignette over the 3D view (under the note lanes and HUD), deeper toward the bottom corners. */
+.slice-shell::before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(125% 85% at 50% 36%,transparent 58%,rgb(52 28 10 / .3) 100%),linear-gradient(to bottom,transparent 64%,rgb(58 32 12 / .18) 100%)}
+.slice-shell.is-result::before{display:none}
+/* Race look HUD. Progress: the track map (race-hud drawMap: the lap, the flag at the line, the handoffs, the mud, a dot a
+   runner) when the course has a lap; else the bar: a knob at the runner's place (--p) and a chequered flag at the end. */
+.slice-progress{overflow:visible}.slice-progress .trackmap{display:none;position:absolute;left:0;top:50%;width:100%;height:calc(56 * var(--u));transform:translateY(-50%);overflow:visible;pointer-events:none;filter:drop-shadow(0 1px 1px #0005)}
+.slice-progress.has-map .trackmap{display:block}.slice-progress.has-map>progress,.slice-progress.has-map>.terrain,.slice-progress.has-map>.knob,.slice-progress.has-map>.flag,.slice-progress.has-map>.runner,.slice-progress.has-map>.marks,.slice-progress.has-map::after{display:none}
+.trackmap path{fill:none;stroke-linejoin:round;stroke-linecap:round}.trackmap .case{stroke:#10233fb0;stroke-width:4.6}.trackmap .road{stroke:#fff;stroke-width:2.4}.trackmap .mud{stroke:#8a5a34;stroke-width:2.4}
+.trackmap rect{stroke:none}.trackmap .hand{fill:#ffcf40;stroke:#10233f;stroke-width:.6}.trackmap .pole{stroke:#fff;stroke-width:.9}
+.trackmap .dot{stroke:#fff;stroke-width:.8}.trackmap .dot.ghost{fill:#0007}.trackmap .dot.me{fill:#fff;stroke:#ffcf40;stroke-width:1.5}
+.slice-progress .knob{position:absolute;top:50%;left:calc(var(--p, 0) * 100%);width:calc(13 * var(--u));height:calc(13 * var(--u));box-sizing:border-box;border-radius:50%;background:#fff;border:calc(3 * var(--u)) solid #ffcf40;transform:translate(-50%,-50%);box-shadow:0 1px 3px #0006;pointer-events:none}
+.slice-progress .flag{position:absolute;left:100%;bottom:-20%;width:calc(20 * var(--u));height:calc(24 * var(--u));margin-left:calc(3 * var(--u));filter:drop-shadow(0 1px 1px #0006)}
+/* Ranking: place, the horse each team rides now, gap (the name stays for screen readers; YOU shows its name). */
+.rank-horse{width:calc(20 * var(--u));height:calc(20 * var(--u));border-radius:50%;object-fit:cover;object-position:50% 30%;background:#ffffff1a;flex:none}
+.hud-ranking.crowd .rank-horse{grid-row:span 2}
+.ranking-row span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.ranking-row.is-player span{position:static;width:auto;height:auto;clip:auto}
+.hud-ranking.crowd .ranking-row.is-player span{grid-row:span 2}
+.hud-coins i{width:6.4cqw;height:6.4cqw;font-size:3.4cqw}.hud-coins b{font-size:4.6cqw;font-weight:800}
+.hud-ranking.crowd .ranking-row{column-gap:.8cqw;padding:.5cqw .8cqw}.hud-ranking.crowd .race-gap{font-size:calc(9.5 * var(--u));letter-spacing:-.02em}.ranking-row.is-player span{font-size:calc(10 * var(--u));overflow:visible}
+/* Results: diamonds won (a podium place) under the place, and both wallets in the header. */
+.res-wallets{display:flex;gap:var(--ui-s2)}.res-gems{display:inline-flex;align-items:center;gap:var(--ui-s1);margin:var(--ui-s2) 0 0;padding:calc(4 * var(--u)) calc(12 * var(--u));border-radius:99px;background:rgb(80 190 255 / .18);border:1px solid rgb(120 210 255 / .5);font-size:var(--ui-t-body);font-weight:700}.res-gems .gem{display:inline-grid;width:1.2em;height:1.2em;color:#6fd3ff}.res-gems .gem svg{width:100%;height:100%}
+/* Coin pickup: the flying coin and the "+10" (slice-app coinFly). */
+.coin-fly{position:absolute;z-index:7;width:calc(26 * var(--u));height:calc(26 * var(--u));font-size:calc(14 * var(--u));pointer-events:none;box-shadow:0 0 calc(10 * var(--u)) #ffd24a}
+.coin-plus{position:absolute;z-index:7;pointer-events:none;color:#ffe066;font-size:calc(20 * var(--u));font-weight:900;text-shadow:0 2px 0 #7a4a00,0 0 8px #0008}
+/* The whole track: ground strip (straight / bend / mud, hurdle ticks) under the bar, a dot per rival on it. */
+.slice-progress .terrain{position:absolute;left:0;right:0;top:calc(100% + 3 * var(--u));height:calc(5 * var(--u));border-radius:99px;box-shadow:0 0 0 1px #0005;pointer-events:none}
+.slice-progress .runner{position:absolute;top:calc(-4 * var(--u));left:0;z-index:1;width:calc(8 * var(--u));height:calc(8 * var(--u));box-sizing:border-box;border-radius:50%;background:var(--c);border:1.5px solid #fff;transform:translate(-50%,-50%);box-shadow:0 1px 2px #0008;pointer-events:none}
+/* Combo counter (hits in a row, from 3): over the scene, under the feedback line. */
+#slice-combo{position:absolute;z-index:5;left:50%;top:26%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.4cqw;pointer-events:none;color:#fff;text-shadow:0 2px 8px #000a}
+#slice-combo[hidden]{display:none}#slice-combo b{font:800 10cqw/1 var(--ui-font)}#slice-combo small{font:700 2.6cqw/1 var(--ui-font);letter-spacing:.14em;color:var(--ui-lime)}
+/* Solo run (單騎練跑): no ranking, no relay legs on the bar; the leg chip shows what the combo adds, the place chip the speed. */
+.is-solo .hud-ranking,.is-solo .slice-progress .runner,.is-solo .slice-progress::after{display:none}
+.is-solo .hud-lap span{white-space:nowrap}
+
+/* ---- Race feel (2026-10): the hit judgement beside each hoof, the big centre text (countdown, GO!, FINISH), the edge
+   flash, streak tiers, the sprint ring on the charge button, apples. slice-app: judge / banner / flash / combo. ---- */
+#slice-feedback{top:15%;font-size:calc(22 * var(--u));font-weight:800}
+#slice-feedback.hint{font-size:calc(15 * var(--u));font-weight:700}
+#slice-feedback.sprint{font-size:calc(34 * var(--u));font-style:italic;color:var(--ui-lime)}
+#slice-feedback.gold{font-size:calc(26 * var(--u));color:var(--ui-yellow)}#slice-feedback.apple{font-size:calc(26 * var(--u));color:#ff8a70}
+#slice-feedback.lime{color:var(--ui-lime)}#slice-feedback.green{font-size:calc(28 * var(--u));color:#7dffa0}#slice-feedback.warn{color:#ffa090}
+.judge{position:absolute;z-index:5;top:55%;opacity:0;pointer-events:none;font:800 calc(17 * var(--u))/1 var(--ui-font);letter-spacing:-.01em;white-space:nowrap;text-shadow:0 2px 6px #000c}
+.judge.left{left:3%;transform-origin:0 50%}.judge.right{right:3%;transform-origin:100% 50%}
+.judge.perfect{color:var(--ui-yellow)}.judge.good{color:#fff;font-size:calc(16 * var(--u))}.judge.miss,.judge.empty{color:#ffa090;font-size:calc(14 * var(--u))}
+#slice-count{position:absolute;z-index:6;left:0;right:0;top:30%;text-align:center;opacity:0;pointer-events:none;font:800 calc(72 * var(--u))/1 var(--ui-font);color:#fff;text-shadow:0 4px 18px #000a}
+#slice-count.go{font-size:calc(64 * var(--u));font-style:italic;color:var(--ui-lime)}#slice-count.finish{font-size:calc(48 * var(--u));letter-spacing:.06em}
+#slice-flash{position:absolute;inset:0;z-index:3;opacity:0;pointer-events:none;box-shadow:inset 0 0 22cqw 3cqw var(--c,#fff)}
+#slice-combo[data-tier="1"] b{font-size:11cqw;color:var(--ui-lime)}
+#slice-combo[data-tier="2"] b{font-size:12cqw;color:var(--ui-yellow);text-shadow:0 0 16px #ffd84699,0 2px 8px #000a}
+#slice-combo[data-tier="3"] b{font-size:13cqw;color:#ff7a45;text-shadow:0 0 18px #ff7a45aa,0 2px 8px #000a}
+#slice-combo[data-tier="x"] b{color:#a0a0a0}
+#slice-goal{position:absolute;z-index:5;left:50%;top:22%;transform:translateX(-50%);padding:1cqw 2.6cqw;border-radius:99px;background:var(--ui-glass-deep);border:1px solid var(--ui-edge);font:600 calc(13 * var(--u)) var(--ui-font);white-space:nowrap;pointer-events:none}
+#slice-goal[hidden],#slice-apples[hidden]{display:none}
+#slice-apples{position:absolute;z-index:5;right:4%;top:calc(env(safe-area-inset-top) + 7.6%);padding:.8cqw 2.2cqw;border-radius:99px;background:var(--ui-glass);border:1px solid var(--ui-edge);font:700 calc(13 * var(--u)) var(--ui-font);pointer-events:none;overflow:hidden}
+#slice-apples.on{border-color:#ff6a4a;box-shadow:0 0 10px #ff6a4a99}
+#slice-apples::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:calc(var(--left,0) * 100%);background:#ff6a4a}
+.charge-btn.sprinting::before{content:'';position:absolute;inset:-11%;border-radius:50%;pointer-events:none;background:conic-gradient(#fff calc(var(--left,0) * 360deg),#fff3 0);
+  -webkit-mask:radial-gradient(farthest-side,#0000 calc(100% - 1.3cqw),#000 calc(100% - 1.3cqw));mask:radial-gradient(farthest-side,#0000 calc(100% - 1.3cqw),#000 calc(100% - 1.3cqw))}
+.charge-btn.ending{animation:charge-ending .25s steps(2) infinite}@keyframes charge-ending{50%{filter:brightness(1.7)}}
+/* Results: the near miss, the record line, what the next race would cost, the gap on the player's row, confetti. */
+.res-near{margin:var(--ui-s1) 0 0;font-weight:800;font-size:var(--ui-t-section);color:var(--ui-yellow)}
+.res-rec{display:flex;align-items:center;gap:var(--ui-s2);flex-wrap:wrap}
+.res-note{margin:var(--ui-s1) 0 0;font-size:var(--ui-t-label);color:#ffd9a0}
+.res-board .who small{display:block;font-weight:500;font-size:calc(12 * var(--u));color:var(--ui-muted)}
+.res-board .ui-row.is-close{background:rgb(255 216 70 / .16);box-shadow:inset 0 0 0 1px var(--ui-yellow)}.res-board .is-close .who small{color:var(--ui-yellow)}
+.res-actions{grid-template-columns:1fr auto auto}.res-actions .ui-btn{white-space:nowrap}
+.confetti{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}.confetti i{position:absolute;top:0;width:calc(7 * var(--u));height:calc(11 * var(--u));border-radius:2px}
+#slice-result>*:not(.confetti){position:relative;z-index:2}#slice-result .coin-fly{position:absolute;z-index:3}
+.apple-ico{width:1.15em;height:1.15em;vertical-align:-.2em;margin-right:.2em}
+
+/* ---- 2026-10 UI pass: the start / pause card is a bottom sheet over the scene; the rhythm dial; the relay place card;
+   marks on the race bar; the jump cue on the hoofs; the charge button; the results. ---- */
+.slice-shell{background-size:cover;background-position:50% 30%}
+.slice-shell.is-ready>:not(#slice-canvas):not(#slice-cover):not(#slice-result){visibility:hidden}   /* nothing of the race shows before the start */
+#slice-cover{place-items:end stretch;padding:0;background:linear-gradient(rgb(8 10 6 / .2),rgb(8 10 6 / .1) 45%,rgb(8 10 6 / .65))}
+#slice-cover section{position:relative;border-radius:calc(24 * var(--u)) calc(24 * var(--u)) 0 0;border-bottom:0;padding:var(--ui-s6) var(--ui-s6) max(var(--ui-s6),env(safe-area-inset-bottom));text-align:left;animation:sheet-up .26s var(--ui-ease)}
+@keyframes sheet-up{from{transform:translateY(30%);opacity:0}}
+#slice-cover h1{margin:var(--ui-s1) 0 var(--ui-s2);font-size:calc(26 * var(--u))}
+.cover-back,.cover-help{position:absolute;z-index:1;top:calc(env(safe-area-inset-top) + var(--ui-s3));left:var(--ui-s4)}.cover-help{left:auto;right:var(--ui-s4);font-weight:700;font-size:calc(18 * var(--u))}
+.cover-stars{display:flex;gap:calc(4 * var(--u))}.cover-stars i{font-style:normal;font-size:calc(24 * var(--u));line-height:1;color:#ffffff40}.cover-stars i.on{color:var(--ui-yellow)}
+.cover-missions{list-style:none;margin:0 0 var(--ui-s3);padding:0;display:grid;gap:calc(3 * var(--u))}.cover-missions li{font-size:var(--ui-t-label);color:var(--ui-text-2)}.cover-missions li::before{content:'○  ';color:var(--ui-lime)}
+#slice-cover .cover-tip{color:var(--ui-text)}.how-wrap[hidden]{display:none}
+#slice-start,#slice-cover .cover-actions .primary{min-height:calc(60 * var(--u))}
+#slice-cover .cover-actions{grid-template-columns:repeat(3,1fr)}#slice-cover .cover-actions .primary{grid-column:1/-1}
+#slice-cover .cover-actions .toggle{grid-column:1/-1;min-height:calc(36 * var(--u));border:0;background:none;color:var(--ui-text-2)}
+#slice-cover .ui-btn.danger{color:#ff8a7a;border-color:#ff8a7a}
+/* The rhythm dial: the streak, and round it how far up its range the horse runs (white trot, lime canter, gold gallop). */
+#slice-combo{left:11.3%;top:64.8%;z-index:4;width:16%;aspect-ratio:1;transform:translate(-50%,-50%);justify-content:center;gap:.3cqw;border-radius:50%;background:var(--ui-glass-deep);box-shadow:0 3px 9px #14263877;text-shadow:none}
+#slice-combo::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--ring,#fff) calc(var(--fill,0) * 360deg),#ffffff24 0);
+  -webkit-mask:radial-gradient(farthest-side,#0000 calc(100% - 1.3cqw),#000 calc(100% - 1.3cqw));mask:radial-gradient(farthest-side,#0000 calc(100% - 1.3cqw),#000 calc(100% - 1.3cqw))}
+#slice-combo[data-gait="1"]{--ring:var(--ui-lime)}#slice-combo[data-gait="2"]{--ring:var(--ui-yellow)}
+#slice-combo b,#slice-combo[data-tier] b{font:800 6.2cqw/1 var(--ui-font)}#slice-combo small{font-size:1.8cqw;letter-spacing:.08em}
+.lefty #slice-combo{left:88.7%}.lefty #slice-charge{left:11.3%!important}
+/* Relay: place, and the horse just ahead and just behind. Solo: the pace chip's colours. */
+.hud-ranking,.slice-shell:not(.is-solo) .hud-position{display:none}
+#slice-rank{position:absolute;z-index:5;right:4%;top:calc(env(safe-area-inset-top) + 9.6%);display:flex;align-items:center;gap:2.4cqw;padding:1cqw 2.6cqw;border-radius:3cqw;background:var(--ui-glass);border:1px solid var(--ui-edge);pointer-events:none}
+#slice-rank b{font:800 calc(34 * var(--u))/1 var(--ui-font)}#slice-rank.first b{color:var(--ui-yellow)}
+#slice-rank span{display:flex;flex-direction:column;gap:2px;font:600 calc(12 * var(--u))/1.1 var(--ui-font);font-variant-numeric:tabular-nums;white-space:nowrap}#slice-rank i{font-style:normal}#slice-rank .close{color:var(--ui-yellow)}
+.hud-position.ahead b{color:#7dffa0}.hud-position.behind b{color:#ff9a8a}.hud-position.far b{color:#b9b9b9}
+/* The race bar: the ghost of the best run, an apple dot each (hollow once eaten), where a note was missed or a hurdle hit, the real handoff points. */
+.slice-progress .marks{position:absolute;inset:0;pointer-events:none}.slice-progress .marks i{position:absolute;top:50%;transform:translate(-50%,-50%)}
+.marks .ap{top:calc(-5 * var(--u))!important;width:calc(5 * var(--u));height:calc(5 * var(--u));box-sizing:border-box;border-radius:50%;background:#ff5a48;border:1px solid #fff}.marks .ap.got{background:none;border-color:#ff8a70}
+.marks .ms{width:2px;height:150%;background:#ff5a48}.marks .hit{width:3px;height:200%;background:#ff9a3c}
+.marks .ghost{width:calc(11 * var(--u));height:calc(11 * var(--u));box-sizing:border-box;border-radius:50%;border:2px solid #fff;background:#0007}
+.slice-progress::after{background:linear-gradient(90deg,transparent calc(var(--h0,33.33%) - 1px),#fff calc(var(--h0,33.33%) - 1px) calc(var(--h0,33.33%) + 1px),transparent calc(var(--h0,33.33%) + 1px) calc(var(--h1,66.67%) - 1px),#fff calc(var(--h1,66.67%) - 1px) calc(var(--h1,66.67%) + 1px),transparent calc(var(--h1,66.67%) + 1px))}
+/* The jump cue: a ring round each hoof closes in (--ring, on the shell) and turns lime while the window is open. */
+.rhythm-foot::before{content:'';position:absolute;inset:-5%;border:.9cqw solid #fff;border-radius:50%;opacity:0;transform:scale(var(--ring,1));pointer-events:none}
+.jump-soon .rhythm-foot::before{opacity:.95}.jump-now .rhythm-foot::before{border-color:var(--ui-lime);border-width:1.5cqw;box-shadow:0 0 14px var(--ui-lime)}
+.control-guide.live{display:flex!important;border-color:var(--ui-lime);color:var(--ui-lime)}
+.slide-track i{opacity:.4;transition:opacity .15s}.slide-track i.edge{opacity:.1}.slide-track i.block{opacity:1;color:#ff655d;font-size:7cqw}
+.lane-dots{width:auto!important;height:auto!important;padding:.9cqw 1.6cqw;border-radius:99px;background:rgb(14 17 12 / .6)}
+/* The charge button: bigger, a solid lime disc once a sprint is stored, the count as a badge, urgent before a handoff. */
+#slice-charge{width:18%!important}
+.charge-btn.ready{background:var(--ui-lime);color:#151810;border-color:#f4ffc0}.charge-btn.full{animation-duration:.4s}
+.charge-btn .charge-count{right:auto;bottom:auto;left:-5%;top:-5%;display:grid;place-items:center;width:38%;height:38%;border-radius:50%;background:#151810;border:1px solid var(--ui-edge);font-size:3.6cqw}
+.charge-btn.hurry{animation:charge-hurry .23s ease-in-out infinite alternate}.charge-btn.hurry .segs circle.on{stroke:#ffab40}@keyframes charge-hurry{from{box-shadow:0 0 2px #ffab40}to{box-shadow:0 0 18px #ffab40}}
+#slice-count.gold{color:var(--ui-yellow)}
+/* Results: verdict, the big number, record, stars, what opened; then the sheet. */
+#slice-result{gap:var(--ui-s2)}
+.res-head{display:flex;flex-direction:column;align-items:center;gap:calc(5 * var(--u));margin:var(--ui-s1) var(--ui-s2) auto;text-align:center}.res-head p{margin:0}
+.res-verdict{font-weight:800;font-size:calc(22 * var(--u))}.res-verdict.lime{color:var(--ui-lime)}.res-verdict.gold{color:var(--ui-yellow)}
+.res-big{margin:0;font:800 calc(64 * var(--u))/1 var(--ui-font);font-variant-numeric:tabular-nums}.res-big sup{font-size:.4em;vertical-align:1.1em;margin-left:.08em}
+.res-pill{padding:calc(4 * var(--u)) calc(12 * var(--u));border-radius:99px;background:var(--ui-glass-deep);font-weight:600;font-size:calc(14 * var(--u));text-shadow:none}.res-pill.good{background:#2a7a45}
+.res-stars{display:flex;gap:calc(6 * var(--u))}.res-stars i{font-style:normal;font-size:calc(38 * var(--u));line-height:1;color:#ffffff59}.res-stars i.on{color:var(--ui-yellow);filter:drop-shadow(0 2px 4px #0008)}
+.res-hint{font-weight:600;font-size:calc(13 * var(--u))}
+.res-news{padding:calc(4 * var(--u)) calc(12 * var(--u));border-radius:99px;background:var(--ui-lime);color:var(--ui-on-lime);font-weight:700;font-size:calc(14 * var(--u));text-shadow:none}
+.res-sheet{display:flex;flex-direction:column;gap:var(--ui-s3);max-height:66%;overflow:auto;padding:var(--ui-s4);border-radius:var(--ui-r-lg);scrollbar-width:none}
+.res-metrics>div.best .ui-stat{color:var(--ui-lime)}.res-parts{margin:0;line-height:1.5}
+.res-missions{list-style:none;display:flex;flex-wrap:wrap;gap:var(--ui-s1) var(--ui-s2);margin:0;padding:0}
+.res-missions li{padding:calc(3 * var(--u)) calc(9 * var(--u));border-radius:99px;background:rgb(255 255 255 / .07);font-size:calc(12 * var(--u));color:var(--ui-muted)}.res-missions li.done{background:rgb(217 255 79 / .13);color:var(--ui-lime)}
+.res-goal{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px var(--ui-s3);font-size:var(--ui-t-label)}.res-goal .ui-bar{height:calc(5 * var(--u))}
+.res-goal>img,.res-goal>svg{grid-row:span 2;width:calc(32 * var(--u));height:calc(32 * var(--u));border-radius:50%;object-fit:cover;object-position:50% 25%;color:var(--ui-yellow)}
+.res-sheet .res-board{padding:0;gap:0}.res-sheet .res-board .ui-row{min-height:calc(38 * var(--u));padding:0 var(--ui-s2)}
+.res-sheet .res-board .horse{position:static;flex:none;width:calc(30 * var(--u));height:calc(30 * var(--u));border-radius:50%;-webkit-mask:none;mask:none}
+.res-sheet .main{flex:none;min-height:calc(60 * var(--u))}
+.res-links{display:flex;justify-content:space-around}.res-links button{padding:var(--ui-s2) var(--ui-s3);border:0;background:none;color:var(--ui-text);font:600 calc(15 * var(--u)) var(--ui-font)}
+.res-parts b{font-weight:700}.res-parts b.up{color:#7dffa0}.res-parts b.dn{color:#ff9a8a}
+/* Fewer words. Always: the details of a result are folded. Lean HUD (a player past the first few races): no gait chip,
+   no standing JUMP guide or COMBO label, no hint lines; colour, shape and sound carry them. */
+.res-more summary,.cover-fold summary{font-size:var(--ui-t-label);color:var(--ui-text-2);cursor:pointer;list-style:none}.res-more summary::after,.cover-fold summary::after{content:' ▾'}
+.res-more[open] summary::after,.cover-fold[open] summary::after{content:' ▴'}.res-more p{margin:var(--ui-s2) 0 0}.cover-fold{margin:0 0 var(--ui-s3)}.cover-fold .cover-missions{margin:var(--ui-s2) 0 0}
+.lean.is-solo .hud-lap,.lean .jump-guide:not(.live),.lean #slice-combo small,.lean #slice-jump-hint,.lean #slice-final-call,.lean #chase-tag{display:none!important}
+.lean.is-solo .hud-position{top:8%}
+/* Stamina (slice-game): the bar over the charge button. A sprint runs it down and it comes back between sprints; red,
+   with the button dimmed, while there is not enough for one. */
+.charge-btn .stamina{position:absolute;left:4%;right:4%;bottom:108%;height:11%;border-radius:99px;background:var(--ui-glass-deep);box-shadow:0 0 0 1px #ffffff40;overflow:hidden;pointer-events:none}
+.charge-btn .stamina i{display:block;width:calc(var(--stamina,100)*1%);height:100%;border-radius:inherit;background:#59e07a}
+.charge-btn.tired .stamina i{background:#ff6b5a}
+.charge-btn.tired:not(.sprinting){color:#9aa08e;border-color:var(--ui-edge);background:radial-gradient(circle at 44% 36%,#3a3f2e,#171a12 72%);animation:none;box-shadow:0 3px 9px #14263877}
+
+/* 2026-10-04: the hoof pads are the painted buttons (assets/ui/pad_*.webp, cut from references/style/ribbon_neon.webp by
+   tools/ribbon.py: the face solid, the outer ring and glow see-through). The picture is 1.22 × the pad so its thin ring
+   sits on the pad's edge and its glow reaches past it; it replaces the drawn face, ring, hoof symbol and the tick below. */
+.rhythm-foot{background:none!important;border:0!important;box-shadow:none!important}
+.rhythm-foot .hoof-symbol{display:none}
+.rhythm-foot::after{left:-11%;top:-11%;width:122%;height:122%;background:url(../assets/ui/pad_left.webp) center/contain no-repeat;z-index:-1}
+.rhythm-foot.right::after{background-image:url(../assets/ui/pad_right.webp)}
+
+/* 2026-10-04, a calmer screen (the user: too many colours). One judgement label, white, at the bottom of the track under
+   the horse (it shows between the thumbs); GO! and the centre messages white (a warning keeps its red). */
+.judge{top:auto;bottom:max(.8%,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:calc(15 * var(--u))}
+.judge.perfect{color:#fff}.judge.good{color:#ffffffb8;font-size:calc(14 * var(--u))}
+#slice-count.go,#slice-count.gold{color:#fff}
+#slice-feedback.sprint,#slice-feedback.gold,#slice-feedback.apple,#slice-feedback.lime,#slice-feedback.green{color:#fff}
+
+/* 2026-10-04, a simpler HUD (the user). Relay: no leg chip (the leg is in the middle of the track map; the ground and the
+   horse's aptitude on it are not shown), the place alone in the rank card, no tag over the horse ahead. The judgement
+   sits where GO! shows. The lane slides' dark track is see-through (40%): a small arrow each in the middle of the free part, grey at
+   the outer lane, gone while a horse is beside (no red cross). The jump guide is white; the combo ring and the charge
+   button keep their own colours (white was tried and taken back the same day). */
+.hud-lap{display:none}   /* the solo run too (2026-10-04): its gait and speed bonus are not shown; the lap is in the map */
+.trackmap .leg{fill:#fff;stroke:#10233fb0;stroke-width:2.2px;paint-order:stroke;font:800 10px var(--ui-font);text-anchor:middle;dominant-baseline:central}
+#slice-rank{gap:.4cqw;align-items:baseline}#slice-rank small{font:700 calc(14 * var(--u))/1 var(--ui-font);opacity:.7}
+.judge{bottom:auto;top:33%;font-size:calc(22 * var(--u))}.judge.good{font-size:calc(19 * var(--u))}
+.slide-track{padding:0 5.6cqw;background:rgb(14 17 12 / .4);box-shadow:none}   /* see-through, not gone (it was 88% solid; none for a moment, the user: half-transparent) */
+.slide-track i,.slide-track i.block{box-sizing:border-box;width:2.6cqw;height:2.6cqw;border:solid #fff;border-width:0 0 .75cqw .75cqw;transform:rotate(45deg);opacity:.9;font-size:0}
+.slide-track.right i{transform:rotate(-135deg)}
+.slide-track i.edge{opacity:.28}.slide-track i.block{visibility:hidden}
+
+/* The jump cue (2026-10-04, the user: no white ring closing in from outside; show on the hoof buttons' own rings that
+   the two are pressed together). On both pads at once an arc runs round the pad's ring, starting from the side that
+   faces the other pad, the two mirrored, and closes at the moment to press (--ring on the shell: 1.6 → 1); then both
+   rings are whole and thicker together, and both pads swell. */
+.rhythm-foot::before{inset:-3%;border:0;transform:none;background:conic-gradient(from 90deg,#fff calc((1.6 - var(--ring,1)) / .6 * 360deg),#fff0 0);
+  -webkit-mask:radial-gradient(farthest-side,#0000 calc(100% - 1.5cqw),#000 calc(100% - 1.4cqw));mask:radial-gradient(farthest-side,#0000 calc(100% - 1.5cqw),#000 calc(100% - 1.4cqw))}
+.rhythm-foot.right::before{transform:scaleX(-1)}
+.jump-soon .rhythm-foot::before{opacity:1}
+.jump-now .rhythm-foot::before{border:0;box-shadow:none;background:#fff;-webkit-mask:radial-gradient(farthest-side,#0000 calc(100% - 2.3cqw),#000 calc(100% - 2.2cqw));mask:radial-gradient(farthest-side,#0000 calc(100% - 2.3cqw),#000 calc(100% - 2.2cqw))}
+.jump-now .rhythm-foot:not(.pressed){transform:translate(-50%,-50%) scale(1.08)}
+/* Every hint and message shows in one place, in one look (2026-10-04, the user): the "U + U" jump guide's pill, at its
+   spot under the hoof pads (presentation-config CONTROL_LAYOUT.guides.jump: 85.4% down, 4.5% high), fully rounded,
+   dark glass, white text. Ordinary information has no frame; what matters now has a white frame: the jump guide,
+   warnings (.warn), prompts to act (.lime: the charge is full, hand off soon), the practice coach, the final-stretch
+   call. One line shows at a time, the most urgent: the jump guide, then an event message, the coach, the final call,
+   the standing hint, the goal at the start. The countdown, GO! and FINISH stay big; the judgement stays where GO! shows. */
+#slice-feedback,#slice-jump-hint,#slice-coach,#slice-final-call,#slice-goal{top:85.4%;bottom:auto;left:50%;right:auto;width:max-content;max-width:92%;height:4.5%;box-sizing:border-box;transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;padding:0 4.2cqw;border:1px solid transparent;border-radius:99px;background:var(--ui-glass);color:#fff!important;
+  font:800 3.2cqw/1 var(--ui-font)!important;letter-spacing:.03em;text-shadow:none;box-shadow:0 3px 8px #0a263850;white-space:nowrap}
+#slice-feedback:empty,#slice-jump-hint:empty,#slice-coach[hidden]{display:none}
+#slice-feedback.warn,#slice-feedback.lime,#slice-coach,#slice-final-call,.control-guide.live{border-color:#fff}
+.control-guide.live{color:#fff}
+.jump-soon :is(#slice-feedback,#slice-coach,#slice-final-call,#slice-jump-hint,#slice-goal){display:none!important}
+.slice-shell:has(#slice-feedback:not(:empty)) :is(#slice-coach,#slice-final-call,#slice-jump-hint,#slice-goal){display:none!important}
+.slice-shell:has(#slice-coach:not([hidden])) :is(#slice-final-call,#slice-jump-hint,#slice-goal){display:none!important}
+.slice-shell:has(#slice-final-call:not([hidden])) :is(#slice-jump-hint,#slice-goal){display:none!important}
+.slice-shell:has(#slice-jump-hint:not(:empty)) #slice-goal{display:none!important}
+
+/* Alignment round the hoof pads (2026-10-04, measured on 432 × 780 and 390 × 844). The slide track takes its height from
+   its width (the reference's 292 × 150) so it stays 15/16 of the pad on any screen shape: it was a share of the
+   screen's height, taller than the pad on a tall phone. The lane arrow's drawn chevron (half its box) sits in the
+   middle of the track's free part. The combo ring is the charge button's size: the two flank the rider. */
+.slide-track{height:auto!important;aspect-ratio:292/150}
+.slide-track i,.slide-track i.block{transform:translateX(.86cqw) rotate(45deg)}.slide-track.right i{transform:translateX(-.86cqw) rotate(-135deg)}
+#slice-combo{width:18%}
+
+/* ---- UI v2 (2026-10-04, docs/UI_GUIDELINE_V2.md §4; look: ../ui/ui-v2.css). The race changes material and colour
+   only: the calm screen, the one subtitle line, the painted pads and the track map stay as the user set them. Over the
+   live 3D the glass is not blurred, so it is denser (.ui-live). The place is a black marker; coins the wallet pill;
+   pause a small round glass button; the subtitle a glass pill (a white frame on what matters now); the charge button
+   green; no red: what warns is yellow. The start / pause card is a black card over the scene. ---- */
+#slice-pause{width:var(--ui-h-sm)!important;height:var(--ui-h-sm)!important;border:0;border-radius:50%;background:var(--ui-glass-dark);font-size:calc(15 * var(--u))}
+.hud-coins,.hud-position{border:0;border-radius:var(--ui-r-pill);background:var(--ui-glass-dark);box-shadow:none}
+.hud-position{width:auto!important;height:var(--ui-h-sm)!important;padding:0 calc(14 * var(--u));white-space:nowrap}   /* the solo pace chip: as wide as its words */
+.hud-coins{padding:0 calc(12 * var(--u)) 0 calc(6 * var(--u))}.hud-coins i{width:calc(22 * var(--u));height:calc(22 * var(--u));font-size:calc(12 * var(--u))}.hud-coins b{font-weight:600;font-size:var(--ui-t-name)}
+#slice-rank{display:grid;grid-auto-flow:column;place-content:center;align-items:baseline;gap:1px;width:var(--ui-h);height:var(--ui-h);box-sizing:border-box;padding:0;border:0;border-radius:50%;background:#000}
+#slice-rank b{font:700 calc(22 * var(--u))/1 var(--ui-font)}#slice-rank small{font:500 var(--ui-t-tag)/1 var(--ui-font);opacity:1;color:var(--ui-grey)}
+#slice-feedback,#slice-jump-hint,#slice-coach,#slice-final-call,#slice-goal,.control-guide,#slice-apples,#slice-chase{background:var(--ui-glass-dark);box-shadow:none;font-weight:600!important;letter-spacing:0}
+.charge-btn,.charge-btn.tired:not(.sprinting){border:0;background:var(--ui-glass-dark);color:rgb(255 255 255 / .6);box-shadow:none}
+.charge-btn.ready{border:0;background:var(--ui-green);color:#000}
+.charge-btn.sprinting{color:#000;background:var(--ui-green);box-shadow:0 0 calc(18 * var(--u)) var(--ui-green)}
+@keyframes charge-pulse{from{box-shadow:0 0 2px var(--ui-green)}to{box-shadow:0 0 16px var(--ui-green)}}
+.charge-btn .charge-count{background:#000;border:0}
+.charge-btn .stamina{box-shadow:none}.charge-btn .stamina i{background:var(--ui-green)}.charge-btn.tired .stamina i{background:var(--ui-yellow)}
+.charge-btn.hurry .segs circle.on{stroke:var(--ui-yellow)}@keyframes charge-hurry{from{box-shadow:0 0 2px var(--ui-yellow)}to{box-shadow:0 0 18px var(--ui-yellow)}}
+#slice-combo{box-shadow:none}#slice-combo small{letter-spacing:0}
+#slice-cover{padding:0 var(--ui-margin) max(calc(18 * var(--u)),env(safe-area-inset-bottom))}
+#slice-cover section{padding:var(--ui-pad);border:0;border-radius:var(--ui-r-lg);background:#000;--ui-muted:#888687}
+#slice-cover small{font-weight:400;letter-spacing:0}#slice-cover h1{font-size:var(--ui-t-stat)}
+#slice-start,#slice-cover .cover-actions .primary{min-height:var(--ui-h)}
+#slice-cover .cover-actions{gap:var(--ui-gap)}#slice-cover .cover-actions .ui-btn{padding:0 var(--ui-s2);white-space:nowrap}#slice-cover .cover-actions .ui-btn:not(.primary){background:rgb(255 255 255 / .12)}
+#slice-cover .ui-btn.danger{color:var(--ui-yellow);border:0}
+.cover-back,.cover-help{top:max(calc(20 * var(--u)),calc(env(safe-area-inset-top) + 6 * var(--u)));left:var(--ui-margin)}.cover-help{left:auto;right:var(--ui-margin)}
+
+/* Results (2026-10-05, the user: not the last frame of the race, no live 3D, no victory pose: the race's backdrop):
+   the canvas is hidden and the city's far backdrop (the shell's own picture) stands behind the results. */
+.slice-shell.is-result{background-size:auto 122%;background-position:50% 100%}.slice-shell.is-result>canvas{visibility:hidden}
+
+/* ---- Results, UI v2 (2026-10-05; mock-up docs/ui-kit.html #a3 / #a7; slice-app showResults) ---- */
+#slice-result{gap:var(--ui-gap);padding:0 var(--ui-margin) max(calc(18 * var(--u)),env(safe-area-inset-bottom));background:rgb(6 22 12 / .12)}
+#slice-result .ui-top{padding-left:0;padding-right:0}
+.res-banner{display:flex;align-items:center;justify-content:center;gap:calc(14 * var(--u));padding:calc(12 * var(--u)) calc(18 * var(--u));border-radius:var(--ui-r-lg);text-align:center}
+.res-banner img{height:calc(58 * var(--u))}.res-banner small{display:block;font-size:var(--ui-t-body);font-weight:600}
+.res-banner .res-big{display:block;margin:0;font:700 calc(38 * var(--u))/1.1 var(--ui-font);font-variant-numeric:tabular-nums}
+#slice-result .res-stars{justify-content:center;margin:calc(6 * var(--u)) 0 0}#slice-result .res-stars i{font-size:calc(30 * var(--u));color:rgb(255 255 255 / .45)}#slice-result .res-stars i.on{color:var(--ui-yellow)}
+.res-mid{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(6 * var(--u))}
+.res-award{flex:1;min-height:0;max-height:calc(190 * var(--u));object-fit:contain;filter:drop-shadow(0 calc(6 * var(--u)) calc(10 * var(--u)) rgb(0 0 0 / .25))}
+.res-newsline{margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:calc(4 * var(--u))}.res-newsline:empty{display:none}
+.res-newsline .ui-tag{height:calc(24 * var(--u));padding:0 calc(10 * var(--u));font-size:var(--ui-t-label)}.res-newsline .gem{display:inline-grid;width:1em;height:1em}
+.res-rewards{padding:calc(14 * var(--u)) calc(8 * var(--u)) calc(16 * var(--u))}.res-rewards h2{margin:0 0 calc(10 * var(--u));text-align:center;font-size:var(--ui-t-name);font-weight:600}
+.res-rewards>div{display:grid;grid-template-columns:repeat(5,1fr)}.res-rewards>div>div{display:grid;justify-items:center;align-content:start;gap:calc(4 * var(--u));padding:0 calc(2 * var(--u))}.res-rewards>div>div+div{border-left:1px solid #2b2b2b}
+.res-rewards small{font-size:var(--ui-t-tag);color:var(--ui-grey);white-space:nowrap}.res-rewards img{height:calc(34 * var(--u))}.res-rewards b{font-size:calc(17 * var(--u));font-weight:700;font-variant-numeric:tabular-nums}
+.res-rank{list-style:none;margin:0;padding:0;display:grid;gap:calc(4 * var(--u))}.res-rank .ui-pillrow{height:calc(42 * var(--u));padding:0 calc(20 * var(--u)) 0 calc(16 * var(--u))}
+.res-rank .rk{width:calc(14 * var(--u));font-weight:700;font-size:var(--ui-t-name)}.res-rank img{width:calc(30 * var(--u));height:calc(30 * var(--u));border-radius:50%;object-fit:cover;object-position:50% 25%;background:#000}
+.res-acts{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--ui-gap)}.res-acts.three{grid-template-columns:1.5fr 1fr auto}
+.res-acts .ui-btn{padding:0 var(--ui-s2);gap:calc(8 * var(--u));white-space:nowrap;background:var(--ui-glass-dark)}.res-acts .ui-btn.primary{background:var(--ui-green)}
