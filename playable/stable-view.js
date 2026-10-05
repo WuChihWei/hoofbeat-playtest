@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r282';
-import {applyLook,LOOK} from '../visual-style.js?v=r282';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r286';
+import {applyLook,LOOK} from '../visual-style.js?v=r286';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -210,6 +210,8 @@ function findMuzzle(root){
   return i<0?null:{mesh,i};
 }
 
+// What the ranch needs, asked for ahead of time (home.js: as soon as the game is open).
+export const preloadStable=()=>Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat])]);
 export async function mountStableView(host){
   const [assets]=await Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});

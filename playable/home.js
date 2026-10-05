@@ -5,21 +5,21 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #stable (Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #race · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r282';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r282';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r282';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r286';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r286';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r286';
 // The models every race and the ranch need start downloading as soon as the first page is up (2026-10-05, the user: they
 // loaded slowly), so they are usually there by the time one is opened.
-setTimeout(()=>preloadPresentation().catch(()=>{}),3500);   // after the page that is open has asked for its own (the ranch waits for two of them only)
-import {lang,setLang,translate} from '../i18n.js?v=r282';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r282';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r282';
-import {mountStableView} from './stable-view.js?v=r282';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r282';
+setTimeout(()=>preloadStable().catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>preloadPresentation()).catch(()=>{}),300);   // 2026-10-06 (the user: the ranch took five seconds on a phone): the ranch's models first, from the moment the game is open, then the race's   // after the page that is open has asked for its own (the ranch waits for two of them only)
+import {lang,setLang,translate} from '../i18n.js?v=r286';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r286';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r286';
+import {mountStableView,preloadStable} from './stable-view.js?v=r286';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r286';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r282';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r282';
-import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r282';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r286';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r286';
+import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r286';
 
 const GHOST='hoofbeat.ghost.v4.',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -440,7 +440,7 @@ const PAGES={
     stableFocus=null;
     leave=()=>{alive=false;window.removeEventListener('keydown',esc,true);view?.dispose();applyLook();};
     paint.look=null;paint();
-    mountStableView(el.querySelector('.view')).then(v=>{if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();paint.look=null;paint();})
+    const t0=performance.now();mountStableView(el.querySelector('.view')).then(v=>{store.set('hoofbeat.loadtime.ranch',((performance.now()-t0)/1000).toFixed(1));if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();paint.look=null;paint();})
       .catch(()=>{el.querySelector('.stage-loading').textContent='3D 無法載入';});
   },
 
@@ -573,7 +573,7 @@ const PAGES={
         <li><button class="row" data-practice>${icon('horse')}<span>新手練習</span><small>${store.get(TUTORIAL)==='done'?'已完成':'約 1 分鐘'}</small>${icon('arrow','chev')}</button></li>
         <li><button class="row" data-log>${icon('info')}<span>測試紀錄</span><small>${summary().races} 場</small>${icon('arrow','chev')}</button></li>
         <li><button class="row" onclick="location.href='perf.html'">${icon('bolt')}<span>效能測試</span><small>約 30 秒</small>${icon('arrow','chev')}</button></li>
-        <li>${icon('horse')}<span style="white-space:nowrap">About HOOFBEAT</span><small style="text-align:right">${new URL(import.meta.url).searchParams.get('v')||''} · 模型 ${MODEL_VERSION} · ${innerWidth}×${Math.round(window.visualViewport?.height??innerHeight)}/${innerHeight}</small></li>
+        <li>${icon('horse')}<span style="white-space:nowrap">About HOOFBEAT</span><small style="text-align:right">${new URL(import.meta.url).searchParams.get('v')||''} · 模型 ${MODEL_VERSION} · ${innerWidth}×${Math.round(window.visualViewport?.height??innerHeight)}/${innerHeight} · 載入 ${store.get('hoofbeat.loadtime.ranch')||'–'}/${store.get('hoofbeat.loadtime.race')||'–'} s</small></li>
         <li><button class="row danger" id="reset">${icon('reset')}<span>Reset progress</span>${icon('arrow','chev')}</button></li></ul></main>
       <div class="ui-scrim" hidden></div><section class="ui-modal ui-panel deep" role="dialog" aria-modal="true" hidden><header><h2>Race controls</h2>
         <button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header><ul class="ui-list controls">
@@ -633,7 +633,7 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r282',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r286',import.meta.url);document.head.append(css);
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

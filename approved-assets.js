@@ -8,7 +8,7 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-60';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-61';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 let pending;
 // How many model files have been asked for and how many have arrived (the start card shows it while it waits).
@@ -18,7 +18,8 @@ const keyLoads={};
 // One presentation model by its key, once (the ranch asks for the two it needs; a race for all of them).
 const loadKey=key=>keyLoads[key]??=fetchModel(PRESENTATION_ASSETS[key]).then(gltf=>{approvedAssets.set(key,gltf);approvedAssets.set(PRESENTATION_ASSETS[key],gltf);},e=>{delete keyLoads[key];throw e;});   // by key, and by file for city dressing (preloadModels)
 export const preloadKeys=keys=>Promise.all(keys.map(loadKey));
-export function preloadPresentation(){return preloadKeys(Object.keys(PRESENTATION_ASSETS));}
+// far: the light models rivals wear (and ?lod=far): a race with nobody else in it does not wait for them.
+export function preloadPresentation(far=true){return preloadKeys(Object.keys(PRESENTATION_ASSETS).filter(k=>far||!k.endsWith('Far')));}
 // Extra models by file (a city's dressing), kept under their file name next to the presentation set.
 export const preloadModels=files=>Promise.all(files.filter(f=>!approvedAssets.has(f)).map(async f=>
   approvedAssets.set(f,await fetchModel(f))));

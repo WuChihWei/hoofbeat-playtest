@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r282';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r282';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r282';
-import {compositionRank} from '../race-composition.mjs?v=r282';
-import {ChaseRenderer} from '../race-scene.js?v=r282';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState} from '../approved-assets.js?v=r282';
-import {cityModels} from '../approved-environment.js?v=r282';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r286';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r286';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r286';
+import {compositionRank} from '../race-composition.mjs?v=r286';
+import {ChaseRenderer} from '../race-scene.js?v=r286';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState} from '../approved-assets.js?v=r286';
+import {cityModels} from '../approved-environment.js?v=r286';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r282';
-import {ControlRouter} from './control-router.mjs?v=r282';
-import {RaceAudio,readLatency} from '../audio.js?v=r282';
-import {addLog,raceEntry} from '../playtest.js?v=r282';
-import {SLICE_CONFIG,sliceChart,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r282';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r286';
+import {ControlRouter} from './control-router.mjs?v=r286';
+import {RaceAudio,readLatency} from '../audio.js?v=r286';
+import {addLog,raceEntry} from '../playtest.js?v=r286';
+import {SLICE_CONFIG,sliceChart,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r286';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -61,7 +61,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r282',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r286',import.meta.url);document.head.append(css);
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${practice?' is-practice':''}${lefty?' lefty':''}${lean?' lean':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp)"><canvas id="slice-canvas" aria-label="HOOFBEAT 三車道賽道"></canvas>
@@ -406,7 +406,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     // Relay: the place, alone (2026-10-04, the user: the metres to the horses ahead and behind meant nothing).
     if(field){const card=$('slice-rank'),rank=compositionRank(game,game.metrics());
       put(card.firstChild,'text',String(rank));put(card.lastChild,'text','/'+(others.length+1));put(card,'className',rank===1?'first':'');}
-    sound.speedFeedback(game.speed/game.config.baseSpeed,game.surge(),game.rush());
+    if(phase==='running'||phase==='countdown')sound.speedFeedback(game.speed/game.config.baseSpeed,game.surge(),game.rush());   // not once the race is over: this brought the wind back every frame after stop() (2026-10-06, the user: the sound should end with the race)
     updateEnergyControls(game.energy,game.cap(),game.boostActive(),game.drafting,game.config.boostCost,game.stamina/game.pool,!game.fresh());   // the bar: this buddy's own pool
     dots.forEach((d,i)=>put(d,'className',i-1===game.targetLane?'on':''));
     const h=game.hurdles.find(h=>!h.state&&h.distance>game.distance),until=h?(h.distance-game.distance)/game.speed:Infinity;   // the next hurdle
@@ -586,13 +586,22 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     // While it waits the button counts the model files in (2026-10-05: a player on the live site sat on 準備中… with no
     // sign of anything happening); nothing new for 25 s (a stalled download never fails by itself) → the button reloads
     // the page (what did arrive is in the browser's cache).
-    const btn=$('slice-start');let seen=-1,since=performance.now();
+    // The loading page (2026-10-06, the user): while the models come in, the card is the how-to-play cards (they turn by
+    // themselves) over a bar that fills; the goal, the missions and 起跑 come once everything is in and the scene has drawn.
+    // A load that is done within 0.4 s (everything cached) shows none of it.
+    const btn=$('slice-start');let seen=-1,since=performance.now();const how=cover.querySelector('.how-wrap');
+    const t0=performance.now();
+    const showHow=setTimeout(()=>{cover.classList.add('is-loading');how.hidden=false;},400);
     const wait=setInterval(()=>{if(loadState.done!==seen){seen=loadState.done;since=performance.now();}
       if(performance.now()-since>25000){clearInterval(wait);btn.disabled=false;btn.textContent='連線太慢，點這裡重新載入';btn.onclick=()=>location.reload();}
-      else btn.textContent=`準備中… ${loadState.done}/${loadState.total}`;},400);
-    try{try{await Promise.all([preloadPresentation(),preloadModels(cityModels(city)),preloadBuddies(team.map(h=>h.coat))]);}finally{clearInterval(wait);}
+      else{btn.textContent=`準備中… ${loadState.done}/${loadState.total}`;btn.style.setProperty('--p',loadState.total?loadState.done/loadState.total:0);}},400);
+    try{try{await Promise.all([preloadPresentation(rivals.length>0||/[?&]lod=far/.test(location.search)),preloadModels(cityModels(city)),preloadBuddies(team.map(h=>h.coat))]);}finally{clearInterval(wait);}
       // The track and the horse stand ready behind the start card (the same scene the run then uses).
       if(phase==='ready'&&!renderer){game=makeGame();resolver=new ControlRouter(game,lag);stage();frameId=requestAnimationFrame(frame);}
+      // 起跑 only once the scene has drawn (its first frames compile the shaders: a start pressed before that stuttered).
+      await Promise.race([new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))),new Promise(r=>setTimeout(r,1500))]);
+      try{localStorage.setItem('hoofbeat.loadtime.race',((performance.now()-t0)/1000).toFixed(1))}catch{}   // Settings → About shows it (for reports of slow loading)
+      clearTimeout(showHow);if(cover.classList.contains('is-loading')){cover.classList.remove('is-loading');how.hidden=true;$('slice-help').setAttribute('aria-expanded','false');}
       $('slice-start').disabled=false;$('slice-start').textContent=practice?'開始練習':'起跑';$('slice-start').onclick=newRun;}
     catch(error){$('slice-start').disabled=false;$('slice-start').textContent='重新載入模型';$('slice-start').onclick=load;feedback('模型載入失敗，請重試');}
   }

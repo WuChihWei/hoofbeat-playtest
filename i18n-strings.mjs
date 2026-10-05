@@ -600,4 +600,5 @@ export const STRINGS=[
   {zh:"準備中… {0}/{1}",en:"Loading… {0}/{1}",p:1},
   {zh:"連線太慢，點這裡重新載入",en:"Slow connection: tap to reload"},
   {zh:"{0} 位對手",en:"Rivals: {0}",p:1},
+  {zh:"載入 {0}/{1} s",en:"Load {0}/{1} s",p:1},
 ];

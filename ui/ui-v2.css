@@ -33,6 +33,10 @@
 }
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge long paragraphs by themselves (the course facts came out three times the size) */
 .ui-root{font-size:var(--ui-t-body);line-height:1.4}
+/* The frame is the size container, so on the frame itself cqw means the window, not the frame: text that only inherits
+   its size from it (a card's plain lines) grew with the window on a computer (2026-10-06, the user's screenshot). Its own
+   font size is written from the frame's width formula instead. */
+.home-shell.ui-root,.slice-shell.ui-root{font-size:calc(14 * min(100vw,var(--app-h,100dvh) * .5625,460px) / 390)}
 :where(.ui-root) :focus-visible{outline-color:var(--ui-white)}
 
 /* ---- surfaces ---- */
