@@ -463,3 +463,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .slice-shell.is-solo:not(.is-practice) :is(#slice-feedback,#slice-jump-hint,#slice-final-call,#slice-goal){top:calc(env(safe-area-inset-top) + 17.5%)}
 .slice-shell:not(.is-solo) :is(#slice-feedback,#slice-jump-hint,#slice-coach,#slice-final-call,#slice-goal){top:calc(env(safe-area-inset-top) + 19.5%)}
 #slice-cover:has(.cover-shot) .cover-actions{display:grid;grid-template-columns:1fr}
+/* 2026-10-05 (the user: are the hoof pads too small?): the pads 15% bigger, and their touch zone (the slide track)
+   reaches further up and down than it is drawn (60 → about 110 pt tall at phone size; less upward: the charge button) */
+.rhythm-foot{scale:1.15}
+.slide-track::before{content:"";position:absolute;inset:-28% 0 -58%}
