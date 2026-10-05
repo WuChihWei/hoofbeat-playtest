@@ -3,8 +3,8 @@
 // Start/Finish is s = 0. Race = 2 laps, 3 horses: handoffs at the end of the Relay Zone on each lap, then the line.
 // Gameplay positions are metres along ONE lap and lanes (-1|0|+1); they never name assets.
 import {buildTrack,closeLoop} from './track.mjs';
-import {THEMES} from './themes.mjs?v=r272';
-import {CITIES} from './cities/index.mjs?v=r272';
+import {THEMES} from './themes.mjs?v=r282';
+import {CITIES} from './cities/index.mjs?v=r282';
 
 export const RELAY_ZONE=40;  // metres of straight where the handoff happens
 const trail=(s,lane,n=3,gap=7)=>Array.from({length:n},(_,i)=>({s:s+i*gap,lane}));  // lane-change coin runs
@@ -33,7 +33,7 @@ export function buildCourse(id){
 const outlineOf=lap=>{const n=Math.round(lap.length/5);return Array.from({length:n},(_,i)=>{const p=lap.pose(i*lap.length/n);return [+p.x.toFixed(1),+p.z.toFixed(1)];});};
 export function soloCourse(id,target=0){   // one lap (2026-10-05, the user: stage 1 about 20 s, the others 40-odd: the laps themselves are that long); the practice asks for more
   const c=COURSES.find(x=>x.id===id);if(!c)throw new Error('Unknown course: '+id);
-  const lap=buildTrack(c.lap),lapLength=lap.length,laps=Math.max(1,Math.round(target/lapLength));
+  const lap=buildTrack(c.lap),lapLength=lap.length,laps=target?Math.max(1,Math.round(target/lapLength)):c.gameplay.soloLaps||1;   // a stage's own run: the pack's soloLaps (stage 1: one lap, about 20 s; the others two, 40-odd)
   const track=buildTrack(Array(laps).fill(c.lap).flat()),length=track.length;
   const sections=track.pieces.map(p=>({s0:p.s0,s1:p.s0+p.length,kind:p.straight?'straight':'curve',bend:p.straight?0:Math.sign(p.k)}));
   const hurdles=Array.from({length:laps},(_,k)=>c.gameplay.jumps.map(j=>j.s+k*lapLength)).flat().filter(h=>h>80&&h<length-60).slice(0,6);

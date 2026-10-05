@@ -1,10 +1,14 @@
 // The slice's only gameplay tuning source. Legacy game.js is intentionally untouched.
+// The game's speed: simulation seconds per real second. 1.95 since 2026-10-05 (the user: testers found it too slow;
+// 1.5 × the 1.3 it was): the buddies cover the ground, and the notes come, half as fast again (a note every 308 ms).
+// What is meant in real time (tap windows, a sprint's length, the stamina wait, an apple) is written × T.
+const T=1.95;
 export const SLICE_CONFIG = Object.freeze({
   // Three-leg relay, about 75 wall seconds: one horse per leg (SLICE_LEGS), handoffs and the finish by distance.
-  legLength:540, baseSpeed:12, countdown:3, tempo:1.3, fixedStep:1/120,
+  legLength:540, baseSpeed:12, countdown:3, tempo:T, fixedStep:1/120,
   // Rhythm windows are stored in simulation seconds. Preserve the intended
   // real-time tap tolerance when the whole race runs at 1.3x tempo.
-  chordWindow:.075, perfectWindow:.085*1.3, goodWindow:.17*1.3,
+  chordWindow:.075/1.3*T, perfectWindow:.085*T, goodWindow:.15*T,   // real time: both pads within 58 ms, Perfect ±85 ms, Good ±150 ms (170 until 2026-10-05: the notes are 308 ms apart now)
   laneDuration:.3, laneSpacing:3, bendLane:.05, followGap:6.24, laneOverlap:.8,   // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
   leapReach:3,   // a jump in a sprint leaps the horse just ahead (up to followGap + leapReach) when there is room to land
   // Comeback (stuck behind a horse, the taps should build toward a pass, not feel wasted):
@@ -23,13 +27,13 @@ export const SLICE_CONFIG = Object.freeze({
   missImpulse:0, impulseDecay:.4, hitImpulse:0, goodImpulse:0,
   // Sprint: one segment (50 energy), 2.6 wall seconds (simulation seconds at 1.3x tempo), no stacking. Segments are
   // capped at 2–3 and reset at each handoff, so a sprint is a big one.
-  boostCost:50, boostDuration:2.6*1.3, boostSpeed:4.6, boostAttack:.22, boostRelease:.52,
+  boostCost:50, boostDuration:2.6*T, boostSpeed:4.6, boostAttack:.22, boostRelease:.52,
   // Stamina (體力; 2026-10-04, the user): each buddy has its own pool, its Stamina number now in use (buddyStats; `stamina`
   // here stands in for a runner without numbers), so a handoff starts full. A sprint takes sprintStamina off as it
   // starts (none without that much left); from staminaWait after the last sprint ended it comes back at staminaRegen
   // (2 wall seconds, then 1 a wall second: both in simulation seconds here). The same for every runner.
-  stamina:20, sprintStamina:5, staminaWait:2*1.3, staminaRegen:1/1.3,
-  jumpDuration:1.05, jumpLead:.45, jumpWindow:.2,
+  stamina:20, sprintStamina:5, staminaWait:2*T, staminaRegen:1/T,
+  jumpDuration:1.05, jumpLead:.45, jumpWindow:.2/1.3*T,   // the window: ±154 ms of real time, as before
   // Knocked hurdle: speed dips (up to 60%) for 0.9 simulation seconds, combo, rhythm drive and a running sprint are lost.
   stumbleTime:.9, stumbleDip:.6,
   coinRadius:.78,
@@ -109,7 +113,7 @@ export function racing(st){
 // the horse a miss takes no drive (the combo and the charge still pay for it).
 // Apples (sliceApples): riding through one adds appleSpeed m/s for appleTime (2 wall seconds), on top of everything
 // else, a sprint included.
-export const SOLO=Object.freeze({missDrop:.08,floor:-.15,response:4,fall:1.5,target:600,boostRelease:.9,appleSpeed:3.2,appleTime:2*1.3,soloCharges:3,accel:.03,top:.35});
+export const SOLO=Object.freeze({missDrop:.08,floor:-.15,response:4,fall:1.5,target:600,boostRelease:.9,appleSpeed:3.2,appleTime:2*T,soloCharges:3,accel:.03,top:.35});
 // A course = {length, relays: [handoff 1, handoff 2], hurdles, sections: [{s0, s1, kind, bend}], mud: [[s0, s1]]}.
 // Cities build theirs from their own lap (course/courses.mjs relayCourse); this template (SLICE_LEGS on legLength)
 // is the fallback and the simulator's reference course.

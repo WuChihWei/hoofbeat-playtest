@@ -5,23 +5,26 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #stable (Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #race · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r272';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r272';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION} from '../approved-assets.js?v=r272';
-import {lang,setLang,translate} from '../i18n.js?v=r272';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r272';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r272';
-import {mountStableView} from './stable-view.js?v=r272';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r272';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r282';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r282';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r282';
+// The models every race and the ranch need start downloading as soon as the first page is up (2026-10-05, the user: they
+// loaded slowly), so they are usually there by the time one is opened.
+setTimeout(()=>preloadPresentation().catch(()=>{}),3500);   // after the page that is open has asked for its own (the ranch waits for two of them only)
+import {lang,setLang,translate} from '../i18n.js?v=r282';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r282';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r282';
+import {mountStableView} from './stable-view.js?v=r282';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r282';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r272';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r272';
-import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r272';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r282';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r282';
+import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r282';
 
-const GHOST='hoofbeat.ghost.v3.',SOLO_BEST='hoofbeat.solo.v3',RELAY_BEST='hoofbeat.relay.v2',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
+const GHOST='hoofbeat.ghost.v4.',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
 // v2 (2026-10-05): a solo run became one lap, so the best times and traces of the two-lap runs (v1) say nothing now: dropped.
-try{Object.keys(localStorage).filter(k=>/^hoofbeat\.(solo\.v[12]$|ghost\.v[12]\.|relay\.v1$)/.test(k)).forEach(store.del)}catch{}
+try{Object.keys(localStorage).filter(k=>/^hoofbeat\.(solo\.v[123]$|ghost\.v[123]\.|relay\.v[12]$)/.test(k)).forEach(store.del)}catch{}
 // The role (Settings; 2026-10-05, the user, to test the playtest build): 最高管理者 has coins and diamonds that never run
 // out and every stage open. The wallets read as ∞ and are left alone (nothing is paid in or out), so going back to
 // 一般使用者 finds them as they were; what was bought or won meanwhile stays.
@@ -431,7 +434,7 @@ const PAGES={
       const h=ROSTER[index],act=b.dataset.act,res=careAction(care[h.id],bag,act,food);
       if(res.fail){toast(res.fail);paint();return;}
       const was=care[h.id];care[h.id]=res.care;bag=res.items;saveCare({setItem:store.set},care,bag);toast(`${h.name} ${res.msg}`);
-      view?.react(act,()=>alive&&heart());   // heart on the bite / once combing is under way
+      view?.react(act,()=>alive&&heart(),`assets/stable/item_${food}.webp`);   // heart on the bite / once combing is under way
       paint();filled(was,res.care);
     });
     stableFocus=null;
@@ -630,7 +633,7 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r272',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r282',import.meta.url);document.head.append(css);
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

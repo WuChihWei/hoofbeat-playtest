@@ -7,16 +7,21 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {clone} from '../vendor/SkeletonUtils.js';
-import {preloadPresentation,preloadBuddies,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK,GEAR} from '../approved-assets.js?v=r272';
-import {applyLook,LOOK} from '../visual-style.js?v=r272';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r282';
+import {applyLook,LOOK} from '../visual-style.js?v=r282';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
 const url=f=>new URL(`../assets/models/${f}?v=${MODEL_VERSION}`,import.meta.url).href,load=f=>new GLTFLoader().loadAsync(url(f));
 let pending;
-const loadStable=()=>pending??=Promise.all([load('rider_part/rider_main/Rider_Showcase.glb'),load('stable/Scrub_Brush.glb'),load('stable/Carrot.glb')])
-  .then(([rider,brush,carrot])=>({rider,brush:brush.scene,carrot:carrot.scene}));
+// 2026-10-05 (the user): no rider in the ranch (her model was the heaviest thing it loaded) and no carrot: a feed trough
+// stands where she stood (Feed_Trough.glb, the user's model: five untextured parts, coloured here), the buddy lowers its
+// head to it, and the food is its shop picture standing in the trough. The brush works by itself.
+const loadStable=()=>pending??=Promise.all([load('stable/Scrub_Brush.glb'),load('stable/Feed_Trough.glb')]).then(([brush,trough])=>({brush:brush.scene,trough:trough.scene}));
+// What the ranch waits for: the buddy on show, nothing else of the race's set (2026-10-05, the user: the ranch loaded
+// slowly; the rider and the rest follow in the background, home.js).
+const needs=()=>COATS[PLAYER_LOOK.coat]?.model?[]:['horse'];
+const TROUGH={wood:'#c27a3e',metal:'#646a71',parts:{tripo_part_13:'metal',tripo_part_15:'metal',tripo_part_2:'metal'},rim:.40,k:1.9,at:[0,-.15],reach:.14,lift:{NeckLower:-.3,NeckUpper:-.15,Head:-.1},yaw:Math.PI/2,food:.55,top:1.0,fov:96,ground:'#a9783f'};   // rim: model height of the tray's edge; size: scale range (the rim is put just under the lowered mouth); yaw: end-on to the camera, its low front to the buddy (2026-10-05, the user's picture); food: the picture's size, m; top: how far above the tray the camera goes to look straight down while it eats; ground: the floor's colour in that shot
 
 // Horse faces -X (toward the rider), turned a little to camera; rider in front of its muzzle facing back at it.
 const HORSE={x:2.1,z:-.9,yaw:Math.PI/2+.45},RIDER={x:-.08,z:.27,yaw:Math.PI/2-.6};   // in front of the bowed face: brush at the forehead, carrot at the mouth
@@ -26,29 +31,26 @@ const HORSE={x:2.1,z:-.9,yaw:Math.PI/2+.45},RIDER={x:-.08,z:.27,yaw:Math.PI/2-.6
 // that crushes the poll, and the mane strands behind the ears fold inside out (sheen flares them pale grey).
 const POSE={idle:{NeckLower:.12,NeckUpper:.07,Head:.04,turn:0},
   brush:{NeckLower:.75,NeckUpper:.35,Head:0,turn:0},    // bowed in one arch (not all at the neck root, which folded the
-  feed:{NeckLower:.75,NeckUpper:.35,Head:0,turn:0}};     // breast in), the head just hanging: forehead to the brush, mouth to the carrot
+  feed:{NeckLower:.8,NeckUpper:.3,Head:-.3,turn:0}};     // breast in), the head just hanging: forehead to the brush, mouth to the carrot
 // A llama or a rhino (createApprovedHorse species) at the brush and the carrot: its own bow, and how much further back
 // it stands (x). The llama bows like the horse, but its neck starts low on its chest and carries its head a long way
 // forward: it stands back, or its forehead is in her helmet. The rhino's head hangs below her hands: it lifts its chin to them
 // (negative angles; its short neck takes that, the horse's does not).
-const BUDDY={llama:{x:.25},rhino:{x:.45,bow:{NeckLower:-.3,NeckUpper:-.15,Head:-.1,turn:0}}};
+const BUDDY={llama:{x:.25,wide:.2,feed:{NeckLower:.95,NeckUpper:.5,Head:-.15,turn:0}},rhino:{x:.45,wide:.3,bow:{NeckLower:-.3,NeckUpper:-.15,Head:-.1,turn:0},feed:{NeckLower:.12,NeckUpper:.1,Head:.12,turn:0}}};   // wide: how much further out than the horse's its flank is (the brush)
 const NECK=['NeckLower','NeckUpper','Head'],TURN={NeckLower:-.6,NeckUpper:-.4};   // turn sign: -Z bends toward the rider
-// Carrot (Carrot.glb local): gripped at the leaf base, its tip swung toward the horse's mouth every frame.
-const CARROT={grip:[.1,.14,0],tip:[-.25,.03,0],scale:.85};   // Carrot.glb local: leaf base, tip; .85: tip reaches the mouth
-const GRIP=[.017,.204,.007];   // the glove's centre in the HandL bone's frame (rider_showcase_rig.py prints it)
-const BRUSH={scale:.55,strap:.3,face:.55,settle:.3};   // Scrub_Brush.glb: strap at +Y .3, bristles down; face: aim 55% muzzle → poll;
+const BRUSH={scale:.8,strap:.3,bone:'Chest',at:[-.15,.1,.62],stroke:.3,dir:[0,-.35,-1]};   // 2026-10-05 (the user: nobody holds it now, it just brushes the body a few times): at: from the Spine bone to the flank the camera sees; stroke: how far along the body each way; dir: where the bristles point   // Scrub_Brush.glb: strap at +Y .3, bristles down; face: aim 55% muzzle → poll;
 // settle: s into Comb (the crossfade from Pickup) after which the brush stays fixed in the hand
 // The plate is flat and height-fit (cover), so the camera keeps a fixed vertical fov: the painted floor stays under
 // the hooves on every screen shape. tilt: deg down; bg: plate x (0..1).
 // Width-fit: the camera's distance to the horse is fill / aspect (clamped to dist), so the rider's helmet to the
 // horse's tail spans ~3–97% of the width on every screen (a 390×844 phone: 18.3 m; 9:16: 15 m). x centres the pair;
 // height = floor × distance keeps the hooves on the painted floor line.
-const CAM={x:1.466,fill:8.44,dist:[12,22],floor:.1393,tilt:1.4,fov:30,bg:.82};
+const CAM={x:1.5,fill:8.44,dist:[12,22],floor:.1393,tilt:1.4,fov:30,bg:.82};
 // After the 1 s Pickup: the rider clip, how long it runs, and the horse's extra neck/head pose meanwhile (radians).
 // Brush: the horse bows its forelock to the brush. Feed: neck down, head stretched out so its mouth meets the carrot.
-const PICKUP=1.0,ACTS={
-  brush:{clip:'Comb',prop:'brush',hold:2.6,peak:.9},
-  feed:{clip:'Offer',prop:'carrot',hold:1.8,bite:1.0,peak:1.0},   // bite / peak: s after Pickup
+const ACTS={
+  brush:{hold:2.6,peak:.9},
+  feed:{hold:2.2,bite:1.2,peak:1.2,cam:.6,down:[0,2.2]},   // the camera goes over the trough (cam s each way), the head comes down over the food (down: from, until), bite: it is gone under the head; the head lifts on an empty tray
 };
 
 // Moods, as bone poses over the Idle clip (the horse GLB has no clips for them). A pose entry is one of:
@@ -204,12 +206,12 @@ function findMuzzle(root){
   const head=mesh.skeleton.bones.findIndex(b=>b.name==='Head'),g=mesh.geometry,si=g.attributes.skinIndex,sw=g.attributes.skinWeight,pos=g.attributes.position;
   const hp=mesh.skeleton.boneInverses[head].clone().invert(),o=new THREE.Vector3().setFromMatrixPosition(hp),v=new THREE.Vector3();let i=-1,far=0;
   for(let k=0;k<pos.count;k++){let w=0;for(let j=0;j<4;j++)if(si.getComponent(k,j)===head)w+=sw.getComponent(k,j);
-    if(w>.6&&v.fromBufferAttribute(pos,k).distanceTo(o)>far){far=v.distanceTo(o);i=k;}}
+    if(w>.3&&v.fromBufferAttribute(pos,k).distanceTo(o)>far){far=v.distanceTo(o);i=k;}}   // .3: the horse body's head weights top out at .54 (it was .6: no muzzle was found on the horse)
   return i<0?null:{mesh,i};
 }
 
 export async function mountStableView(host){
-  const [assets]=await Promise.all([loadStable(),preloadPresentation(),preloadBuddies([PLAYER_LOOK.coat])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
+  const [assets]=await Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});
   r.setPixelRatio(Math.min(devicePixelRatio,2));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;
   r.domElement.setAttribute('aria-hidden','true');host.append(r.domElement);
@@ -221,33 +223,29 @@ export async function mountStableView(host){
   applyLook(r,scene,{sun,rim,shadowMap:LOOK.shadow.stableMap});
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({opacity:.28}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
 
-  const rider=clone(assets.rider.scene);rider.position.set(RIDER.x,0,RIDER.z);rider.rotation.y=RIDER.yaw;
-  const gearMats=new Set(GEAR.map(g=>g.mat));   // own copies of the recolourable parts (the clone shares materials)
-  rider.traverse(o=>{if(!o.isMesh)return;o.castShadow=o.receiveShadow=true;o.frustumCulled=false;
-    if(gearMats.has(o.material.name)){o.material=o.material.clone();o.material.userData.base=o.material.color.getHex();}});scene.add(rider);
-  const riderMixer=new THREE.AnimationMixer(rider),clip=n=>riderMixer.clipAction(assets.rider.animations.find(a=>a.name===n));
-  const stand=clip('Stand').play(),pickup=clip('Pickup');pickup.setLoop(THREE.LoopOnce);pickup.clampWhenFinished=true;
-  // Props ride in the left hand (bone Hand.L, +Y runs out past the fingers).
-  const hand=rider.getObjectByName('HandL'),shadow=o=>{o.traverse(m=>{if(m.isMesh)m.castShadow=true;});return o;};
-  const brush=shadow(assets.brush.clone());brush.scale.setScalar(BRUSH.scale);
-  const carrot=shadow(assets.carrot.clone());carrot.scale.setScalar(CARROT.scale);
-  const props={brush,carrot};for(const p of Object.values(props)){p.visible=false;hand?.add(p);}
-  // Eyes: she blinks (a skin-coloured lid over her eye parts, her lash arc closing with it) and turns her head to the
-  // horse's eyes; the horse's pupils follow her (or look into the camera while it has the frame to itself).
-  let skin='#f2c9a6';rider.traverse(o=>{if(o.isMesh&&o.material.name==='Rider_Skin')skin=o.material.color.getHexString();});
-  const riderEyes=livingEyes(rider,{measure:['Rider_Sclera'],paint:['Rider_Sclera','Rider_Iris','Rider_Pupil'],arc:'Rider_Eye',lights:'Rider_EyeLight',
-    lidColor:'#'+skin,open:1.3,from:.9,curve:1.4,arcStop:-.35});
-  const gaze=['Neck','Head'].map(n=>rider.getObjectByName(n)).filter(Boolean).map(b=>[b,b.quaternion.clone()]);
-  const LOOK_MAX=.4,I=new THREE.Quaternion(),hq=new THREE.Quaternion(),pq=new THREE.Quaternion(),tq=new THREE.Quaternion(),sq=new THREE.Quaternion();
-  const fwd=new THREE.Vector3(),hp=new THREE.Vector3(),vA=new THREE.Vector3(),vB=new THREE.Vector3(),eyeAt=new THREE.Vector3();
-  let lookW=0;rider.updateMatrixWorld(true);   // her face looks down +Z at rest: that direction in the Head bone's frame
-  if(gaze.length)fwd.set(0,0,1).applyQuaternion(rider.quaternion).applyQuaternion(gaze.at(-1)[0].getWorldQuaternion(hq).invert());
-  function lookAt(target,k){   // swing Neck then Head (half each) so her face points at target, at most LOOK_MAX rad
-    if(!gaze.length||k<.001)return;const head=gaze.at(-1)[0];head.getWorldQuaternion(hq);head.getWorldPosition(hp);
-    tq.setFromUnitVectors(vA.copy(fwd).applyQuaternion(hq),vB.subVectors(target,hp).normalize());
-    const a=2*Math.acos(Math.min(1,Math.abs(tq.w)));sq.copy(I).slerp(tq,k*Math.min(1,LOOK_MAX/Math.max(a,1e-4))/gaze.length);
-    for(const [b] of gaze){b.parent.getWorldQuaternion(pq);b.quaternion.premultiply(tq.copy(pq).invert().multiply(sq).multiply(pq));}
-  }
+  const shadow=o=>{o.traverse(m=>{if(m.isMesh)m.castShadow=m.receiveShadow=true;});return o;};
+  const brush=shadow(assets.brush.clone());brush.scale.setScalar(BRUSH.scale);brush.visible=false;scene.add(brush);
+  // The trough, in the user's colours by part; the food: a picture standing in it, facing the camera.
+  const trough=shadow(assets.trough.clone());trough.rotation.y=TROUGH.yaw;trough.scale.setScalar(TROUGH.k);trough.position.set(TROUGH.at[0],0,TROUGH.at[1]);scene.add(trough);let feedPose=POSE.feed;
+  {const mats={wood:new THREE.MeshStandardMaterial({color:TROUGH.wood,roughness:.8}),metal:new THREE.MeshStandardMaterial({color:TROUGH.metal,roughness:.5,metalness:.2})};
+    trough.traverse(o=>{if(o.isMesh)o.material=mats[TROUGH.parts[o.name]||'wood'];});}
+  const foodMat=new THREE.MeshBasicMaterial({transparent:true,alphaTest:.05,toneMapped:false}),food=new THREE.Mesh(new THREE.PlaneGeometry(1,1),foodMat);food.visible=false;scene.add(food);
+  // A food picture has its own empty margin: what is drawn in it (its opaque box, measured once on a small canvas) is
+  // made TROUGH.food across and set with its middle on the tray's edge, so half of the food itself shows, whatever it is.
+  const foodInfo=new Map(),foodBase=new THREE.Vector3(TROUGH.at[0],TROUGH.rim*TROUGH.k*.9,TROUGH.at[1]);let foodNow=null;
+  function placeFood(){const [x0,y0,x1,y1]=foodNow?.box||[0,0,1,1],S=TROUGH.food/Math.max(x1-x0,y1-y0);
+    food.scale.setScalar(S);food.position.set(foodBase.x+(.5-(x0+x1)/2)*S,foodBase.y-S/2+(y0+y1)/2*S,foodBase.z);}
+  const setFood=src=>{if(!src)return;let f=foodInfo.get(src);
+    if(!f){f={tex:new THREE.Texture(),box:null};f.tex.colorSpace=THREE.SRGBColorSpace;foodInfo.set(src,f);const img=new Image();
+      img.onload=()=>{f.tex.image=img;f.tex.needsUpdate=true;const n=64,c=document.createElement('canvas');c.width=c.height=n;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0,n,n);
+        const d=g.getImageData(0,0,n,n).data;let x0=n,x1=-1,y0=n,y1=-1;for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(d[(y*n+x)*4+3]>40){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+        f.box=x1<0?[0,0,1,1]:[x0/n,y0/n,(x1+1)/n,(y1+1)/n];if(foodNow===f)placeFood();};img.src=src;}
+    foodNow=f;foodMat.map=f.tex;foodMat.needsUpdate=true;placeFood();};
+  // The feeding shot: the camera rises over the trough and looks straight down (the floor, see-through in the stall shot
+  // so the painted barn shows, is a plain ground there).
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:TROUGH.ground,roughness:1,transparent:true,opacity:0}));ground.rotation.x=-Math.PI/2;ground.position.y=.002;ground.receiveShadow=true;ground.visible=false;scene.add(ground);
+  const basePos=new THREE.Vector3(),topPos=new THREE.Vector3(),baseQ=new THREE.Quaternion(),topQ=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0,0,-1),new THREE.Vector3(-1,0,0),new THREE.Vector3(0,1,0)));let camW=0;   // topQ: straight down, the buddy's side (+x) at the bottom of the screen: the trough lies across it and the head comes up from below (2026-10-05, the user's sketch)
+  const hp=new THREE.Vector3(),eyeAt=new THREE.Vector3(),hq=new THREE.Quaternion();
 
   const cam=new THREE.PerspectiveCamera(CAM.fov,1,.3,60),page=host.closest('.page-stable');
   let model=null,bones=[],muzzle=null,raf=0,last=performance.now(),nod=0,job=null,w=0;   // w: act's neck pose weight
@@ -256,7 +254,7 @@ export async function mountStableView(host){
   let resting=false,fore=0,hind=0,still=0,restAfter=0,rear=-1,queued=null,joy=false,rig={},poses={},body=null;
   const soon=()=>MOOD.restAfter[0]+Math.random()*(MOOD.restAfter[1]-MOOD.restAfter[0]);restAfter=soon();
   if(new URLSearchParams(location.search).has('debug'))window.__stable={r,scene,cam,get model(){return model;},BUDDY};   // dev (?debug): the scene, to look at a pose from other angles; BUDDY, to try another bow live
-  cam.rotation.set(-CAM.tilt*Math.PI/180,0,0);
+  cam.rotation.set(-CAM.tilt*Math.PI/180,0,0);baseQ.copy(cam.quaternion);
   page?.style.setProperty('--bg-x',`${CAM.bg*100}%`);page?.style.setProperty('--bg-f',CAM.bg);   // --bg-f: the decor layer
   // The tail never dips under the stall floor (y 0): lying or rearing, whatever of it would hang lower is laid on the
   // floor (the hair's vertex shader lifts those vertices, in world space; its shadow is not redrawn: it has none there).
@@ -267,7 +265,7 @@ export async function mountStableView(host){
     m.customProgramCacheKey=()=>key+'-floor';m.needsUpdate=true;}
   function show(){
     if(model)scene.remove(model.root);
-    model=createApprovedHorse(0);model.seat.visible=false;
+    model=createApprovedHorse(0,null,false,null,true);model.seat.visible=false;
     if(!model.species){fixHind(model.content);sharpLegs(model.content.getObjectByName('HorseBody'));}   // a llama or a rhino keeps its own leg rig: it only stands (moods)
     model.mixer.clipAction(model.clips.idle).play();
     model.content.traverse(o=>{if(o.material?.name==='Horse_ManeTail')onFloor(o.material);});
@@ -282,20 +280,25 @@ export async function mountStableView(host){
       for(const r of Object.values(rig)){r.b.quaternion.copy(r.q);r.b.position.copy(r.p);r.b.scale.setScalar(r.s);}}else body?.updateMorphTargets();
     // Nothing on the stable horse's head: the reins and bit rings are for racing (nobody holds them here).
     {const o=model.content.getObjectByName('BitRings');if(o)o.visible=false;}
-    rider.traverse(o=>{const m=o.material;if(o.isMesh&&gearMats.has(m.name))m.color.set(PLAYER_LOOK.gear[m.name]??m.userData.base);});
+    // The trough stands in one place for every buddy (2026-10-05, the user). The buddy is the one that fits it: how far
+    // it lowers (or, a low head, lifts: BUDDY bow / TROUGH.lift) its head is the pose that puts its mouth just over the
+    // tray's edge, and it stands where that mouth is over the tray.
+    {const rimY=TROUGH.rim*TROUGH.k,sp=BUDDY[model.species],dn=sp?.feed??POSE.feed,up=sp?.bow??TROUGH.lift,m=new THREE.Vector3();
+      const poseAt=t=>Object.fromEntries(NECK.map(n=>[n,POSE.idle[n]+((t<0?up:dn)[n]-POSE.idle[n])*Math.abs(t)]));
+      const at=t=>{const p=poseAt(t);for(const [b,base] of bones)b.quaternion.copy(base).multiply(q.setFromEuler(e.set(p[b.name],0,0)));
+        model.root.updateMatrixWorld(true);return muzzle.mesh.getVertexPosition(muzzle.i,m).applyMatrix4(muzzle.mesh.matrixWorld);};
+      let best=1,err=1e9;for(let t=-1;t<=1.001;t+=.1){const d=Math.abs(at(t).y-(rimY+.1));if(d<err){err=d;best=t;}}
+      feedPose={...poseAt(best),turn:0};at(best);model.root.position.x+=TROUGH.at[0]+TROUGH.reach-m.x;model.root.position.z+=TROUGH.at[1]-m.z;
+      for(const [b,base] of bones)b.quaternion.copy(base);model.root.updateMatrixWorld(true);}
   }
-  // Crouch (the prop appears as the hand reaches the floor), stand, act; the horse leans in meanwhile, then all back.
+  // Feed: the food is in the trough, the buddy lowers its head, one bite and it is gone. Brush: it bows, the brush combs.
   function acting(dt){
-    const a=ACTS[job.kind],prop=props[a.prop],t=job.t+=dt,end=PICKUP+a.hold;
-    if(job.t===dt)stand.crossFadeTo(pickup.reset().play(),.15,false);
-    if(!job.peaked&&t>PICKUP+a.peak){job.peaked=true;job.onPeak?.();}
-    if(!prop.visible&&t>.42&&t<end&&!job.ate)prop.visible=true;
-    if(job.step===0&&t>PICKUP){job.step=1;pickup.crossFadeTo(job.act.reset().play(),.25,false);}
-    if(job.step===1&&t>end){job.step=2;job.act.crossFadeTo(stand.reset().play(),.35,false);}
-    if(a.bite&&!job.ate&&t>PICKUP+a.bite){job.ate=true;nod=.9;prop.visible=false;}   // one bite: gone, and a nod
-    if(t>end+.2)prop.visible=false;
-    w=Math.min(1,Math.max(0,(t-PICKUP+.5)/.6),Math.max(0,(end+.5-t)/.6));
-    if(t>end+.6){job=null;w=0;}
+    const a=ACTS[job.kind],t=job.t+=dt,end=a.hold;
+    if(!job.peaked&&t>a.peak){job.peaked=true;job.onPeak?.();}
+    if(job.kind==='feed'){if(!job.ate&&!food.visible)food.visible=true;if(!job.ate&&t>a.bite){job.ate=true;nod=.9;food.visible=false;}
+      w=Math.min(1,Math.max(0,(t-a.down[0])/.6),Math.max(0,(a.down[1]-t)/.6));}   // (the look-straight-down shot was tried and dropped the same day: TROUGH.top, topPos and camW stay 0)
+    else{brush.visible=t>.2&&t<end;w=0;}   // the brush: the buddy stands as it is
+    if(t>end+.6){job=null;w=camW=0;brush.visible=food.visible=false;}
   }
   // The mood poses as local rotations (solve), and blending toward them by weight k (fore / hind / body eased separately).
   const pq2=new THREE.Quaternion(),e2=new THREE.Euler(),smooth=x=>x*x*(3-2*x),part=n=>/^Fore|^Neck|^Head/.test(n)?'fore':/^Hind|^Tail/.test(n)?'hind':'body';
@@ -357,46 +360,40 @@ export async function mountStableView(host){
     tv.copy(Y).addScaledVector(f,-f.y).normalize();turn(head,yq.setFromAxisAngle(f,Math.atan2(f.dot(mz.crossVectors(u,tv)),u.dot(tv))*k));
   }
   function fit(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;r.setSize(w,h,false);r.domElement.style.cssText='width:100%;height:100%;display:block';
-    const d=Math.min(CAM.dist[1],Math.max(CAM.dist[0],CAM.fill*h/w));cam.position.set(CAM.x,CAM.floor*d,HORSE.z+d);
+    const d=Math.min(CAM.dist[1],Math.max(CAM.dist[0],CAM.fill*h/w));basePos.set(CAM.x,CAM.floor*d,HORSE.z+d);cam.position.copy(basePos);
     cam.fov=CAM.fov;cam.aspect=w/h;cam.updateProjectionMatrix();}
   const ro=new ResizeObserver(fit);ro.observe(host);
   const q=new THREE.Quaternion(),e=new THREE.Euler();
   function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;nod=Math.max(0,nod-dt);
     moods(dt);if(job)acting(dt);
-    for(const [b,base] of gaze)b.quaternion.copy(base);   // from rest, in case a clip doesn't key them
-    model.mixer.update(dt);riderMixer.update(dt);
-    const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0),to=job?BUDDY[model.species]?.bow??POSE[job.kind]:POSE.idle;   // a soft chew-nod (the bite)
+    model.mixer.update(dt);
+    const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0),to=job?(job.kind==='feed'?feedPose:BUDDY[model.species]?.bow??POSE.brush):POSE.idle;   // a soft chew-nod (the bite)
     for(const [b,base] of bones){const n=b.name,p=POSE.idle[n]+(to[n]-POSE.idle[n])*w+bob*(n==='Head'?1:.3),t=(to.turn||0)*w*(TURN[n]||0);
       b.quaternion.copy(base).multiply(q.setFromEuler(e.set(p,0,t)));}   // from rest every frame: the idle clip doesn't key these
-    moodPose();watch(riderEyes.center(hp2.clone()),smooth(fore));if(body?.morphTargetInfluences)body.morphTargetInfluences[0]=smooth(hind);model.updateAttachment();
-    lookW+=((job?.step===0?0:1)-lookW)*(1-Math.exp(-dt*5));   // not while crouching for the prop
-    lookAt(model.eyes.center(eyeAt),lookW);rider.updateMatrixWorld(true);riderEyes.update(dt);   // she looks the buddy in the eyes (every buddy has them: approved-assets EYES)
-    model.eyes.update(dt,riderEyes.center(eyeAt));   // and it looks at her
-    if((carrot.visible||brush.visible)&&muzzle)aimProps();
+    moodPose();watch(cam.position,smooth(fore));if(body?.morphTargetInfluences)body.morphTargetInfluences[0]=smooth(hind);model.updateAttachment();
+    model.eyes.update(dt,cam.position);   // it looks at whoever is looking at it
+    if(brush.visible)aimProps();
+    food.quaternion.copy(cam.quaternion);
+    cam.position.lerpVectors(basePos,topPos,camW);cam.quaternion.slerpQuaternions(baseQ,topQ,camW);if(cam.fov!==(cam.fov=CAM.fov+(TROUGH.fov-CAM.fov)*camW)){cam.near=camW>0?.05:.3;cam.updateProjectionMatrix();}ground.visible=camW>0;ground.material.opacity=Math.min(1,camW*1.6);
     r.render(scene,cam);raf=requestAnimationFrame(frame);}
-  // Props sit in the mitten (it has no fingers to close) and point at the horse every frame, whatever the neck pose and
-  // hand bob do: the carrot is held at its leaf base with the tip to the mouth; the brush has the hand through its strap
-  // and the bristles (its −Y) to the face, between the poll and the muzzle.
-  const grip=new THREE.Vector3(...CARROT.grip),axis=new THREE.Vector3(...CARROT.tip).sub(grip).normalize(),at=new THREE.Vector3(),dir=new THREE.Vector3();
-  const palm=new THREE.Vector3(...GRIP),down=new THREE.Vector3(0,-1,0),strap=new THREE.Vector3(0,BRUSH.strap,0),poll=new THREE.Vector3();
+  // The brush works by itself on the flank the camera sees: back and forth along the body, bristles (its −Y) to the coat.
+  const at=new THREE.Vector3(),down=new THREE.Vector3(0,-1,0),strap=new THREE.Vector3(0,BRUSH.strap,0),bq=new THREE.Quaternion().setFromUnitVectors(down,new THREE.Vector3(...BRUSH.dir).normalize());
   function aimProps(){
-    scene.updateMatrixWorld();muzzle.mesh.getVertexPosition(muzzle.i,at).applyMatrix4(muzzle.mesh.matrixWorld);
-    // The brush is aimed while the arm comes up, then held in the hand (Comb only rocks the wrist, which turns it).
-    const aimBrush=brush.visible&&!(job?.kind==='brush'&&job.step===1&&job.t>PICKUP+BRUSH.settle);
-    if(aimBrush){model.content.getObjectByName('Head')?.getWorldPosition(poll);at.lerp(poll,BRUSH.face);}
-    hand.worldToLocal(at);dir.subVectors(at,palm).normalize();
-    if(carrot.visible){carrot.quaternion.setFromUnitVectors(axis,dir);carrot.position.copy(palm).sub(grip.clone().applyQuaternion(carrot.quaternion).multiply(carrot.scale));}
-    if(aimBrush){brush.quaternion.setFromUnitVectors(down,dir);brush.position.copy(palm).sub(strap.clone().applyQuaternion(brush.quaternion).multiply(brush.scale));}}
+    const b=model.content.getObjectByName(BRUSH.bone);if(!b)return;scene.updateMatrixWorld();b.getWorldPosition(at);
+    const s=Math.sin((job?.t||0)*6.5);at.x+=BRUSH.at[0]+BRUSH.stroke*s;at.y+=BRUSH.at[1]+.06*Math.cos((job?.t||0)*13);at.z+=BRUSH.at[2]+(BUDDY[model.species]?.wide??0);
+    brush.quaternion.copy(bq);brush.position.copy(at).sub(strap.clone().applyQuaternion(bq).multiply(brush.scale));}
   show();fit();raf=requestAnimationFrame(frame);
   // show: the ranch page can change the buddy without leaving (its row of heads, 2026-10-05), so the model of the one
   // asked for is loaded first; a later request wins, and nothing is shown once the view is gone.
   let gone=false;
-  const api={show:()=>{const c=PLAYER_LOOK.coat;preloadBuddies([c]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
-    react(kind,onPeak){if(job||queued||!ACTS[kind])return;api.wake();const go=()=>{job={kind,t:0,step:0,ate:false,peaked:false,onPeak,act:clip(ACTS[kind].clip)};};
+  if(window.__stable)window.__stable.act=(kind,t=.7,img)=>{setFood(img);job={kind,t,ate:false,peaked:true};};   // dev (?debug): jump into an act at t s (a hidden tab draws one frame at a time)
+  const api={show:()=>{const c=PLAYER_LOOK.coat;Promise.all([preloadKeys(needs()),preloadBuddies([c])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
+    react(kind,onPeak,foodImg){if(job||queued||!ACTS[kind])return;api.wake();if(kind==='feed')setFood(foodImg);const go=()=>{job={kind,t:0,ate:false,peaked:false,onPeak};};
       if(fore||hind)queued=go;else go();},
     wake(){still=0;restAfter=soon();resting=false;},   // any touch: stand up (if lying) and start the rest timer over
     cheer(){api.wake();joy=true;},                // a bar just filled: rear for joy once it is up and done
     get busy(){return !!(job||queued);},
     dispose(){gone=true;cancelAnimationFrame(raf);ro.disconnect();r.dispose();r.domElement.remove();page?.style.removeProperty('--bg-x');page?.style.removeProperty('--bg-f');}};
+  if(window.__stable)window.__stable.show=api.show;
   return api;
 }

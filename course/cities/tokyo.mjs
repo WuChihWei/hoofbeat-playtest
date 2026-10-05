@@ -5,9 +5,9 @@ export default {
   track:{
     // 2026-10-05 (the user: one lap in 30–40 s, then: more bends): 599 m (734, then 654). A wiggle on the start side, a
     // step out and back on the next, the far straight, then the hairpin straight into the dent.
-    lap:'S L30 R30 R30 L30 S L30 R30 R30 L30 L45 L45 R30 L30 F L30 R30 M L45 L45 L30 R30 R30 L30 F R30 L30 L30 R30 L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 S L45 L45',   // deep U dent into the park
-    gameplay:({at,trail})=>({mud:[[.06,.30]],laps:2,tempo:1.3,speed:1.0,relay:at(17,30),jumps:[{s:at(5,20)},{s:at(24,40)}],
-      coins:[...trail(at(2,2),0),...trail(at(8,2),-1),...trail(at(12,2),1),...trail(at(21,2),-1),...trail(at(31,2),0),...trail(at(40,2),1)]}),
+    lap:'M L30 R30 R30 L30 L45 L45 R30 L30 F L30 R30 L45 L45 F L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 L45 L45',   // deep U dent into the park
+    gameplay:({at,trail})=>({mud:[[.06,.30]],laps:2,soloLaps:2,tempo:1.3,speed:1.0,relay:at(14,45),jumps:[{s:at(9,25)}],
+      coins:[...trail(at(2,2),0),...trail(at(6,2),-1),...trail(at(12,2),1),...trail(at(17,2),-1),...trail(at(21,2),0)]}),
   },
   weather:{sky:{top:'#6db8ec',horizon:'#e3eef2'},sun:{color:'#fff4e2',intensity:1},fog:[260,1100],cloud:0,rain:0},
   ground:{road:'#c7956a',verge:'#8cc063',grass:'#72a84e'},

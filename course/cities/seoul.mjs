@@ -3,9 +3,9 @@ export default {
   id:'seoul', city:'Seoul', title:'Han River Sprint', brief:'河岸直線接連續小彎、高速', difficulty:3,
   tagline:'Long river straight. Full speed.', surface:'Dirt', scenery:'river',   // Tracks page copy
   track:{
-    lap:'S M L45 L45 M R30 L30 R30 L30 R30 L30 S L45 L45 F R30 L30 R30 L30 L45 L45 L30 R30 R30 L30 F L30 R30 R30 L30 M L45 L45',   // 2026-10-05 (the user: more bends): the river straight, then steps and wiggles all the way round
-    gameplay:({at,trail})=>({mud:[[.70,.92]],laps:2,tempo:1.4,speed:1.1,relay:at(1,30),jumps:[{s:at(4,40)},{s:at(14,45)},{s:at(30,40)}],
-      coins:[...trail(at(6,2),1),...trail(at(9,2),-1),...trail(at(16,2),0),...trail(at(22,2),1),...trail(at(27,2),-1,2)]}),
+    lap:'M L45 L45 M R30 L30 R30 L30 R30 L30 L45 L45 F R30 L30 R30 L30 L45 L45 L30 R30 R30 L30 F L30 R30 R30 L30 L45 L45',   // 2026-10-05 (the user: more bends): the river straight, then steps and wiggles all the way round
+    gameplay:({at,trail})=>({mud:[[.70,.92]],laps:2,soloLaps:2,tempo:1.4,speed:1.1,relay:at(3,30),jumps:[{s:at(3,15)},{s:at(23,30)}],
+      coins:[...trail(at(5,2),1),...trail(at(8,2),-1),...trail(at(14,2),0),...trail(at(20,2),1),...trail(at(25,2),-1,2)]}),
   },
   weather:{sky:{top:'#5aa9e6',horizon:'#dcecf4'},sun:{color:'#fff0d8',intensity:1},fog:[260,1100],cloud:0,rain:0},
   ground:{road:'#c48b5b',verge:'#83b25a',grass:'#6a9c49'},

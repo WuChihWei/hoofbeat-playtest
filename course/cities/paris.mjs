@@ -3,9 +3,9 @@ export default {
   id:'paris', city:'Paris', title:'Garden Ride', brief:'大 S 彎接小彎，繞著花園走', difficulty:2,
   tagline:'Formal gardens. Gentle arcs.', surface:'Sand', scenery:'garden',   // Tracks page copy
   track:{
-    lap:'S L45 R45 R45 L45 S L45 L45 L30 R30 F R30 L30 M L45 L45 F R45 L45 L45 R45 S L45 L45 S R30 L30 L30 R30 S R30 L30 L30 R30 L45 L45',   // 2026-10-05 (the user: more bends): a wide S on two sides, a step and a wiggle on the others
-    gameplay:({at,trail})=>({mud:[[.38,.62]],laps:2,tempo:1.25,speed:1.0,relay:at(13,30),jumps:[{s:at(5,20)},{s:at(21,20)},{s:at(29,20)}],
-      coins:[...trail(at(2,2),-1),...trail(at(8,2),1),...trail(at(11,2),-1),...trail(at(18,2),1),...trail(at(26,2),0),...trail(at(31,2),-1)]}),
+    lap:'M L45 R45 R45 L45 L45 L45 L30 R30 F R30 L30 L45 L45 F R45 L45 L45 R45 L45 L45 S R30 L30 L30 R30 L45 L45',   // 2026-10-05 (the user: more bends): a wide S on two sides, a step and a wiggle on the others
+    gameplay:({at,trail})=>({mud:[[.38,.62]],laps:2,soloLaps:2,tempo:1.25,speed:1.0,relay:at(9,0),jumps:[{s:at(14,20)},{s:at(21,20)}],
+      coins:[...trail(at(2,2),-1),...trail(at(6,2),1),...trail(at(12,2),-1),...trail(at(17,2),1),...trail(at(23,2),0)]}),
   },
   weather:{sky:{top:'#7cbde8',horizon:'#f1e6d6'},sun:{color:'#ffe6bf',intensity:1},fog:[260,1100],cloud:0,rain:0},
   ground:{road:'#d3a574',verge:'#8fb85e',grass:'#7aa552'},

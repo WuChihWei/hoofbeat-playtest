@@ -1,4 +1,4 @@
-import {PRESENTATION as P} from './presentation-config.mjs?v=r272';
+import {PRESENTATION as P} from './presentation-config.mjs?v=r282';
 export function chaseComposition(aspect,laneWorld=0){
  const c=P.camera,tangent=c.horizontalTangent/Math.max(.38,Math.min(.85,aspect));
  const fov=2*Math.atan(tangent)*180/Math.PI,pitch=Math.atan((1-2*c.horizon)*tangent);

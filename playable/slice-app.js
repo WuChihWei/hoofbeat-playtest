@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r272';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r272';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r272';
-import {compositionRank} from '../race-composition.mjs?v=r272';
-import {ChaseRenderer} from '../race-scene.js?v=r272';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState} from '../approved-assets.js?v=r272';
-import {cityModels} from '../approved-environment.js?v=r272';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r282';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r282';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r282';
+import {compositionRank} from '../race-composition.mjs?v=r282';
+import {ChaseRenderer} from '../race-scene.js?v=r282';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState} from '../approved-assets.js?v=r282';
+import {cityModels} from '../approved-environment.js?v=r282';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r272';
-import {ControlRouter} from './control-router.mjs?v=r272';
-import {RaceAudio,readLatency} from '../audio.js?v=r272';
-import {addLog,raceEntry} from '../playtest.js?v=r272';
-import {SLICE_CONFIG,SLICE_CHART,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r272';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r282';
+import {ControlRouter} from './control-router.mjs?v=r282';
+import {RaceAudio,readLatency} from '../audio.js?v=r282';
+import {addLog,raceEntry} from '../playtest.js?v=r282';
+import {SLICE_CONFIG,sliceChart,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r282';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -32,7 +32,7 @@ const PRACTICE_RIVALS=[{id:'coach',name:'教練',types:['straight','curve','mud'
 // assets/ui/practice_<n>.webp; 2026-10-05, the user).
 const PRACTICE_SAY=['圓圈滑到腳印時，點那一邊的腳印。連續踩中 5 下，連擊會讓夥伴加速。','蘋果在旁邊的車道。把靠那一邊的腳印往外滑就會換道，跑過去吃掉它，吃到會加速。','對手會從後面、旁邊的車道追上來。把腳印往牠那邊滑，換到牠前面，牠就過不去。','前面有一座欄。圓圈縮到腳印時，兩個腳印一起按，跳過去。','前面有對手擋路。追到牠後面時按右邊的蓄力鈕，從牠頭上飛過去。'];
 const PRACTICE_STEPS=['跟著節奏點腳印：連擊會加速','吃蘋果：加速','左右換道：擋住後面的對手','兩個腳印一起按：跳過一座欄','按蓄力鈕：飛越擋在前面的對手'];   // the practice cover's list: all there is to try
-const PRACTICE_LENGTH=3000;   // m of track for the practice (about four minutes at an easy pace): the five take about one
+const PRACTICE_LENGTH=9000;   // m of track for the practice (about four minutes at an easy pace): the five take about one
 export const TUTORIAL='hoofbeat.tutorial.v1';
 const TYPE_NAME={straight:'直線型',curve:'彎道型',mud:'泥地型'},GAIT_NAME=['小跑步','大跑步','奔跑'];   // GAIT_NAME: slice-game gait()
 // How to play: four picture cards on the start cover, one every 2 s (tap to skip ahead).
@@ -61,7 +61,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r272',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r282',import.meta.url);document.head.append(css);
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${practice?' is-practice':''}${lefty?' lefty':''}${lean?' lean':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp)"><canvas id="slice-canvas" aria-label="HOOFBEAT 三車道賽道"></canvas>
@@ -276,7 +276,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     renderCover('已暫停',`已跑 ${Math.round(game.distance/game.config.length*100)}% · ${wall(game.time)} · 連擊 ${game.combo} · 金幣 ${game.coinCount}`,
       [['繼續',resume],['重跑',newRun,'secondary'+far],...(practice?[['跳過，直接玩',skip,'secondary']]:[]),['換夥伴',toSetup,'secondary'+far],['離開',toHome,'secondary'+far],[soundLabel(),e=>{sound.setMuted(!sound.muted);e.target.textContent=soundLabel();},'secondary toggle']]);
   }
-  const makeGame=()=>{const g=new SliceGame({config:practice||solo?{solo:true}:getForm?.().config,team,rivals,chart:practice?SLICE_CHART:null,   // the practice: the plain opening phrases for as long as it takes
+  const makeGame=()=>{const g=new SliceGame({config:practice||solo?{solo:true}:getForm?.().config,team,rivals,chart:practice?sliceChart(600,1e9):null,   // the practice: the plain opening phrases for as long as it takes
     course:practice?soloCourse(city||'taipei',PRACTICE_LENGTH):city?(solo?soloCourse(city):relayCourse(city)):null});
     // Practice: nothing on the road but the coins; the fences and the apples wait far off for a lesson to place them.
     if(practice){g.hurdles=[0,1].map(()=>({distance:1e9,t:1e9,state:null}));g.apples=[0,1,2].map(i=>({id:'p'+i,distance:1e9,lane:0,collected:false}));}

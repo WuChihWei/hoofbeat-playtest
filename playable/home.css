@@ -417,3 +417,6 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 /* 單騎: how many rivals (the setup page) */
 .foes .ui-tabs{margin-left:auto;flex:0 0 58%}
 .foes .ui-tabs{background:#0000001f;-webkit-backdrop-filter:none;backdrop-filter:none}.foes .ui-tabs [role=tab]:not([aria-selected=true]){color:#000}
+/* 2026-10-05 (the user: on a computer screen everything was huge): the frame is at most a big phone's size (460 × 818);
+   every size in the UI follows the frame's width (--u), so the type stops growing there */
+.home-shell{width:min(100vw,calc(var(--app-h,100dvh) * .5625),460px);height:min(var(--app-h,100dvh),216.67vw,818px)}

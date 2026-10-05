@@ -8,18 +8,17 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-59';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-60';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 let pending;
 // How many model files have been asked for and how many have arrived (the start card shows it while it waits).
 export const loadState={done:0,total:0};
 const fetchModel=file=>{loadState.total++;return new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
-export function preloadPresentation(){
-  return pending??=Promise.all(Object.entries(PRESENTATION_ASSETS).map(async([key,file])=>{
-    const gltf=await fetchModel(file);
-    approvedAssets.set(key,gltf);approvedAssets.set(file,gltf);   // by key, and by file for city dressing (preloadModels)
-  })).catch(e=>{pending=null;throw e;});
-}
+const keyLoads={};
+// One presentation model by its key, once (the ranch asks for the two it needs; a race for all of them).
+const loadKey=key=>keyLoads[key]??=fetchModel(PRESENTATION_ASSETS[key]).then(gltf=>{approvedAssets.set(key,gltf);approvedAssets.set(PRESENTATION_ASSETS[key],gltf);},e=>{delete keyLoads[key];throw e;});   // by key, and by file for city dressing (preloadModels)
+export const preloadKeys=keys=>Promise.all(keys.map(loadKey));
+export function preloadPresentation(){return preloadKeys(Object.keys(PRESENTATION_ASSETS));}
 // Extra models by file (a city's dressing), kept under their file name next to the presentation set.
 export const preloadModels=files=>Promise.all(files.filter(f=>!approvedAssets.has(f)).map(async f=>
   approvedAssets.set(f,await fetchModel(f))));
@@ -296,9 +295,9 @@ function fur(m){   // MeshStandardMaterial → MeshPhysicalMaterial with the sam
 // Galloping seat: RacePose (the authored half-seat crouch) blended with RidePose (sitting up, reins by the saddle,
 // elbows out): this much of the crouch unless the caller says (the race: more the harder the horse runs).
 const RACE_SEAT=.4;
-export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null){   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
+export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false){   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
   const player=variant===0,coatIx=coatOverride??(player?PLAYER_LOOK.coat:variant===PLAYER_LOOK.coat?0:variant),look=COATS[coatIx]??COATS[0];
-  const horse=approvedAssets.get(look.model??(far?'horseFar':'horse')),rider=approvedAssets.get(far?'riderFar':'rider');
+  const horse=approvedAssets.get(look.model??(far?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far?'riderFar':'rider');
   if(!horse||!rider)throw new Error('Approved horse/rider assets not loaded');
   const root=new THREE.Group(),scene=new THREE.Group(),fit=new THREE.Group(),orientation=new THREE.Group();
   root.add(scene);scene.add(fit);fit.add(orientation);orientation.rotation.y=Math.PI;
@@ -336,14 +335,14 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
   // JumpPose = fold over the fence; each runs in its own mixer so same-named bones never bind to the horse.
   const riderMixer=new THREE.AnimationMixer(riderContent),poses={};
   for(const name of ['RidePose','RacePose','JumpPose']){
-    const clip=rider.animations.find(a=>a.name===name);if(!clip)throw new Error('Approved rider lacks '+name);
+    const clip=rider.animations.find(a=>a.name===name);if(!clip){if(bare)continue;throw new Error('Approved rider lacks '+name);}
     clip.tracks=clip.tracks.filter(t=>!t.name.endsWith('.scale'));   // the poses scale no bone (the tracks are 1 ± 1e-5). Left in, the mixer wrote them over the race look's own bone scales (race-scene RIDER_HEAD, RIDER_WAIST) as soon as the pose weights moved: the head was small on the grid and full size once galloping (2026-10-05, the user)
     poses[name]=riderMixer.clipAction(clip).play();poses[name].setEffectiveWeight(name==='RidePose'?1:0);
   }
   riderMixer.update(0);
   let race=0;
   function riderPose(running,jump=0,seat=RACE_SEAT){  // eases into the half-seat once galloping; the jump fold follows the jump curve
-    jump*=look.forward??1;race+=((running?1:0)-race)*.12;const r=race*(1-jump)*seat;   // seat: how much half-seat (rest: the upright RidePose)
+    if(bare)return;jump*=look.forward??1;race+=((running?1:0)-race)*.12;const r=race*(1-jump)*seat;   // seat: how much half-seat (rest: the upright RidePose)
     poses.JumpPose.setEffectiveWeight(jump);poses.RacePose.setEffectiveWeight(r);poses.RidePose.setEffectiveWeight(1-jump-r);
     riderMixer.update(0);
   }
