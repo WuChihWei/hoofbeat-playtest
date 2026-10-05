@@ -1,6 +1,6 @@
-import {compositionRivals} from './race-composition.mjs?v=r269';
-import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r269';
-import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r269';
+import {compositionRivals} from './race-composition.mjs?v=r272';
+import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r272';
+import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r272';
 const anchor=a=>`left:${a.center[0]*100}%;top:${a.center[1]*100}%;width:${a.size[0]*100}%;height:${a.size[1]*100}%;transform:translate(-50%,-50%);right:auto;min-width:0;`;
 // Five rows: two lines each (name, gap), growing down from the same top edge.
 const top=a=>`left:${a.center[0]*100}%;top:${(a.center[1]-a.size[1]/2)*100}%;width:${a.size[0]*100}%;transform:translateX(-50%);right:auto;min-width:0;`;
@@ -11,7 +11,7 @@ const headSrc=coat=>`assets/stable/buddy_${coat}.webp?v=coats-4`;
 // The whole track at a glance (instead of announcing the ground ahead): under the bar a strip of the course's ground
 // (straight / bend / mud) with a tick at each hurdle, and on the bar a dot per rival (its shirt colour) beside the
 // player's knob.
-const RUNNER_COLOR={pacer:'#3fae5a',chaser:'#ff5fa2',hazel:'#ff9a3c',rio:'#3f8fe0'},GROUND={straight:'#f1e2b0',curve:'#58c7ff',mud:'#8a5a34'};
+const RUNNER_COLOR={pacer:'#3fae5a',chaser:'#ff5fa2',hazel:'#ff9a3c',rio:'#3f8fe0',sage:'#9b6bff'},GROUND={straight:'#f1e2b0',curve:'#58c7ff',mud:'#8a5a34'};
 // rivals: the race's rival teams [{id, name}] (a ranking row each, plus YOU).
 export function raceHudMarkup(rivals=SLICE_RIVALS){const rows=[...rivals.map(r=>[r.id,r.name.toUpperCase()]),['player','YOU']],n=rows.length;return `
 <header class="slice-hud">

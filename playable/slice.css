@@ -467,3 +467,5 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
    reaches further up and down than it is drawn (60 → about 110 pt tall at phone size; less upward: the charge button) */
 .rhythm-foot{scale:1.15}
 .slide-track::before{content:"";position:absolute;inset:-28% 0 -58%}
+/* solo: the pace chip without its label (it reached under the bigger lap map) */
+.is-solo .hud-position>:not(#slice-position){display:none}

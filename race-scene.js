@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r269';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r269';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r269';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r269';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r269';
-import {installApprovedEnvironment} from './approved-environment.js?v=r269';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r269';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r269';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r269';
-import {turnAt} from './track-projection.js?v=r269';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r269';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r269';
+import {roadHalfWidth} from './track-presentation.mjs?v=r272';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r272';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r272';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r272';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r272';
+import {installApprovedEnvironment} from './approved-environment.js?v=r272';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r272';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r272';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r272';
+import {turnAt} from './track-projection.js?v=r272';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r272';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r272';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -286,7 +286,7 @@ export class ChaseRenderer {
       // Slice: the painted note (assets/ui, tools/ribbon.py), once it has loaded; the drawn disc until then.
       if(this.slice){const img=new Image();img.onload=()=>{this.noteImages[lane]=img;};img.src=new URL(`./assets/ui/note_${lane?'right':'left'}.webp`,import.meta.url).href;}
     }
-    this.runnerLabels = ['YOU', 'PACER', 'CHASER', 'HAZEL', 'RIO'].map((text, i) => {
+    this.runnerLabels = ['YOU', 'PACER', 'CHASER', 'HAZEL', 'RIO', 'SAGE'].map((text, i) => {
       const map = this.texture((c, w, h) => {
         c.fillStyle = ['#205a50ee','#465e59dd','#946944ee','#8a5a2cee','#3d4f86ee'][i]; c.beginPath(); c.roundRect(0, 0, w, h, 12); c.fill();
         c.fillStyle = '#fffdf0'; c.font = 'bold 26px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, w / 2, h / 2 + 1);

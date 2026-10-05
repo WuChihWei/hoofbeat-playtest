@@ -8,8 +8,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {clone} from '../vendor/SkeletonUtils.js';
-import {preloadPresentation,preloadBuddies,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK,GEAR} from '../approved-assets.js?v=r269';
-import {applyLook,LOOK} from '../visual-style.js?v=r269';
+import {preloadPresentation,preloadBuddies,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK,GEAR} from '../approved-assets.js?v=r272';
+import {applyLook,LOOK} from '../visual-style.js?v=r272';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.

@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r269';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r269';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r269';
-import {compositionRank} from '../race-composition.mjs?v=r269';
-import {ChaseRenderer} from '../race-scene.js?v=r269';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState} from '../approved-assets.js?v=r269';
-import {cityModels} from '../approved-environment.js?v=r269';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r272';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r272';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r272';
+import {compositionRank} from '../race-composition.mjs?v=r272';
+import {ChaseRenderer} from '../race-scene.js?v=r272';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState} from '../approved-assets.js?v=r272';
+import {cityModels} from '../approved-environment.js?v=r272';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r269';
-import {ControlRouter} from './control-router.mjs?v=r269';
-import {RaceAudio,readLatency} from '../audio.js?v=r269';
-import {addLog,raceEntry} from '../playtest.js?v=r269';
-import {SLICE_CONFIG,SLICE_CHART,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r269';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r272';
+import {ControlRouter} from './control-router.mjs?v=r272';
+import {RaceAudio,readLatency} from '../audio.js?v=r272';
+import {addLog,raceEntry} from '../playtest.js?v=r272';
+import {SLICE_CONFIG,SLICE_CHART,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r272';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -61,7 +61,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r269',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r272',import.meta.url);document.head.append(css);
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${practice?' is-practice':''}${lefty?' lefty':''}${lean?' lean':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp)"><canvas id="slice-canvas" aria-label="HOOFBEAT 三車道賽道"></canvas>
@@ -277,7 +277,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
       [['繼續',resume],['重跑',newRun,'secondary'+far],...(practice?[['跳過，直接玩',skip,'secondary']]:[]),['換夥伴',toSetup,'secondary'+far],['離開',toHome,'secondary'+far],[soundLabel(),e=>{sound.setMuted(!sound.muted);e.target.textContent=soundLabel();},'secondary toggle']]);
   }
   const makeGame=()=>{const g=new SliceGame({config:practice||solo?{solo:true}:getForm?.().config,team,rivals,chart:practice?SLICE_CHART:null,   // the practice: the plain opening phrases for as long as it takes
-    course:practice?soloCourse(city||'taipei',PRACTICE_LENGTH):city?(solo?soloCourse(city,SOLO.target):relayCourse(city)):null});
+    course:practice?soloCourse(city||'taipei',PRACTICE_LENGTH):city?(solo?soloCourse(city):relayCourse(city)):null});
     // Practice: nothing on the road but the coins; the fences and the apples wait far off for a lesson to place them.
     if(practice){g.hurdles=[0,1].map(()=>({distance:1e9,t:1e9,state:null}));g.apples=[0,1,2].map(i=>({id:'p'+i,distance:1e9,lane:0,collected:false}));}
     return g;};
@@ -380,7 +380,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     put($('slice-coins'),'text',String(game.coinCount));
     // Solo: the chip under the gait says how this run stands against the best one here (its ghost, also a dot on the
     // bar), else against the pace the next star needs; with neither, nothing.
-    if(solo){const chip=$('slice-position'),label=chip.previousElementSibling,pace=phase==='running'?paceAt(game.distance):null;
+    if(solo){const chip=$('slice-position'),label=chip.previousElementSibling,pace=phase==='running'&&!field?paceAt(game.distance):null;   // against rivals the place is the thing (and the chip would sit under the lap map)
       if(pace===null)put(chip.parentElement,'className','hud-position idle');   // nothing to compare with: no chip (2026-10-05, the user: the speed is not shown)
       else{const d=(game.time-pace)/game.config.tempo,front=d<=0;   // wall seconds behind (+) or ahead (−)
         put(label,'text',ghost?'比最佳':'比目標');put(chip,'text',`${front?'快':'慢'} ${Math.abs(d).toFixed(1)}`);put(chip.parentElement,'className',`hud-position ${front?'ahead':d>5?'far':'behind'}`);
@@ -478,7 +478,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     }else board=`<ol class="res-rank">${r.rank?`<li class="ui-pillrow glass">${icon('flag')}<span>名次</span><b>${r.rank} / ${r.of}${r.bonus?` · +${r.bonus}`:''}</b></li>`:''}${bank.xp?`<li class="ui-pillrow glass">${icon('horse')}<span>${esc(team[0].name)} 經驗</span><b>+${bank.xp} · LV ${bank.level}</b></li>`:''}${
       bank.starHint?`<li class="ui-pillrow glass">${icon('star')}<span>下一顆星</span><b>${bank.starHint}</b></li>`:''}</ol>`;
     const small=r.solo?(r.rank===1?'第 1 名！':bank.newBest&&bank.best?'新紀錄！':bank.newStars?'拿到新的星星！':off!==null&&off<=1?'差一點！':'單騎完成'):near||'比賽結果';
-    const award=['gold','red','blue'][r.solo?3-(bank.stars??0):r.rank-1];   // 1st gold, 2nd red, 3rd blue (the user); solo: by its stars
+    const award=['gold','red','blue'][r.solo&&!r.rank?3-(bank.stars??0):r.rank-1];   // 1st gold, 2nd red, 3rd blue (the user); solo: by its stars
     const tag='<span class="ui-tag yellow">新紀錄</span>',el=$('slice-result');
     const cols=[['獲得金幣','coins','<span data-count>+0</span>',''],['金幣總數','coin',n(total),''],['最高連擊','note',r.bestCombo,bank.newCombo?tag:''],['完美','star',r.perfect,''],['任務獎勵','flag',`+${bank.missionCoins||0}`,'']];
     el.innerHTML=`<header class="ui-top">${brand()}<div class="res-wallets">${wallet(total-gain,{gems:bank.gems??null})}</div></header>

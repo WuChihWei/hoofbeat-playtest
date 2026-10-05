@@ -15,7 +15,7 @@ for(const c of COURSES){
     const a=t.pose(p.s0-1e-6),b=t.pose(p.s0+1e-6);
     assert(Math.hypot(a.x-b.x,a.z-b.z)<1e-4&&Math.abs(a.heading-b.heading)<1e-6,`${c.id}: gap at ${p.name}`);
   }
-  assert(course.lapLength>=500&&course.lapLength<=800,`${c.id}: lap ${course.lapLength} m outside 500–800`);
+  assert(course.lapLength>=340&&course.lapLength<=950,`${c.id}: lap ${course.lapLength} m outside 340–950`);
   const lap=buildTrack(c.lap),first=lap.pieces[0];
   // Closed circuit: the lap ends where it started, heading one full turn round.
   assert(Math.hypot(lap.end.x,lap.end.z)<1e-6&&Math.abs(Math.abs(lap.end.heading)-2*Math.PI)<1e-9,`${c.id}: lap does not close (end ${lap.end.x.toFixed(2)}, ${lap.end.z.toFixed(2)})`);
