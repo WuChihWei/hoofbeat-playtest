@@ -5,23 +5,27 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #stable (Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #race · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r255';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r255';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION} from '../approved-assets.js?v=r255';
-import {lang,setLang,translate} from '../i18n.js?v=r255';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r255';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r255';
-import {mountStableView} from './stable-view.js?v=r255';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r255';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r256';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r256';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION} from '../approved-assets.js?v=r256';
+import {lang,setLang,translate} from '../i18n.js?v=r256';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r256';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r256';
+import {mountStableView} from './stable-view.js?v=r256';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r256';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r255';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r255';
-import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r255';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r256';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r256';
+import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r256';
 
 const GHOST='hoofbeat.ghost.v1.',SOLO_BEST='hoofbeat.solo.v1',RELAY_BEST='hoofbeat.relay.v1',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
-export const readCoins=()=>+store.get(WALLET)||0;
-export const addCoins=n=>store.set(WALLET,String(readCoins()+n));
+// The role (Settings; 2026-10-05, the user, to test the playtest build): 最高管理者 has coins and diamonds that never run
+// out and every stage open. The wallets read as ∞ and are left alone (nothing is paid in or out), so going back to
+// 一般使用者 finds them as they were; what was bought or won meanwhile stays.
+const ROLE='hoofbeat.role.v1',admin=()=>store.get(ROLE)==='admin';
+export const readCoins=()=>admin()?Infinity:+store.get(WALLET)||0;
+export const addCoins=n=>admin()||store.set(WALLET,String(readCoins()+n));
 const spendCoins=n=>readCoins()>=n&&(addCoins(-n),true);
 
 // Stable decorations: 2D stickers on the barn plate (assets/stable/deco/<id>.webp). slot = [centre x, centre y, width]
@@ -78,7 +82,7 @@ const saveProg=()=>store.set(PROGRESS,JSON.stringify(prog)),today=()=>new Date()
 // The relay team: three different buddies the player has (fewer while the relay is closed: the first owned ones).
 const fixOrder=()=>{const o=profile.order;if(!(o.length===3&&new Set(o).size===3&&o.every(id=>owns(prog,id))))profile.order=[...new Set([...o.filter(id=>owns(prog,id)),...prog.owned])].slice(0,3);};fixOrder();
 if(!owns(prog,profile.solo??profile.horse))profile.solo=STARTERS[0];if(!owns(prog,profile.horse))profile.horse=STARTERS[0];
-if(!unlocked(prog,profile.city))profile.city=currentLevel(prog).city;
+const stageOpen=city=>admin()||unlocked(prog,city),fixCity=()=>{if(!stageOpen(profile.city))profile.city=currentLevel(prog).city;};fixCity();
 // Solo run: the horse picked for it (else the one last looked at), best times {`city:horse id`: simulation s}, and a
 // time as the player felt it (wall clock).
 const soloHorse=()=>horseById(profile.solo??profile.horse),readJson=k=>{try{return JSON.parse(store.get(k)||'{}')||{}}catch{return {}}},readSolo=()=>readJson(SOLO_BEST),readRelay=()=>readJson(RELAY_BEST);   // RELAY_BEST: {city: {time, rank}}, the best relay time (simulation s) and place per track
@@ -100,7 +104,7 @@ let care=readCare({getItem:store.get},ROSTER.map(h=>h.id)),bag=readItems({getIte
 // worth about 200 coins (the prices in progress.mjs HORSE_PRICE keep to that); the game does not state the rate or
 // exchange them, and some things sell for diamonds only (the three special coats, progress.mjs HORSE_PRICE).
 const GEM=`<i class="gem">${icon('gem')}</i>`;
-const readGems=()=>+store.get('hoofbeat.gems.v1')||0,addGems=n=>n&&store.set('hoofbeat.gems.v1',String(readGems()+n));   // diamonds: a new star, a relay podium, day 7 in a row; they buy buddies
+const readGems=()=>admin()?Infinity:+store.get('hoofbeat.gems.v1')||0,addGems=n=>n&&!admin()&&store.set('hoofbeat.gems.v1',String(readGems()+n));   // diamonds: a new star, a relay podium, day 7 in a row; they buy buddies
 // Saves from the day the long mane was sold in the shop: the style worn goes onto every buddy, the diamonds come back.
 if(profile.hair||profile.hairs){if(profile.hairs?.includes('long'))addGems(2);if(profile.hair&&profile.hair!=='classic')profile.manes={...Object.fromEntries(ROSTER.map(h=>[h.id,profile.hair])),...profile.manes};
   delete profile.hair;delete profile.hairs;store.set(PROFILE,JSON.stringify(profile));}
@@ -207,16 +211,17 @@ const PAGES={
   home(){
     // Home (2026-10-04, the user's third sketch): the course card stays at the bottom, over the nav; above it the stages are wide cards
     // in a list, stage 1 first, scrolling beneath the card. Tapping one picks it: the scene and the card follow. The card says one thing (what to beat next) and has the one button → the buddy (#race).
+    // 2026-10-05 (the user): every stage card says how hard it is (the course's difficulty: its word and one to three dots).
     const s=totalStars(prog);
     const el=frame('page-home',`<i class="home-scene" aria-hidden="true"></i><header class="ui-top">${brand()}${wallets()}</header>
-      <main class="stage-row" aria-label="關卡">${LEVELS.map((l,i)=>{const open=unlocked(prog,l.city),st=prog.stars[l.city]||0;
+      <main class="stage-row" aria-label="關卡">${LEVELS.map((l,i)=>{const open=stageOpen(l.city),st=prog.stars[l.city]||0,d=COURSES.find(c=>c.id===l.city).difficulty;
         return `<button class="stage ${open?'':'locked'}" data-level="${l.city}" aria-label="第 ${i+1} 關 ${cityName(l.city)}${open?`，${st} 顆星`:`，再 ${l.need-s} 顆星開放`}">
-          <span class="dot"><canvas width="700" height="352" aria-hidden="true"></canvas>${open?'':icon('lock')}</span><b>${i+1} · ${cityName(l.city)}</b>${open?starRow(st):`<small class="ui-tag muted">再 ${l.need-s} ★</small>`}</button>`;}).join('')}</main><section class="next-race ui-panel" aria-live="polite"></section>${nav('home')}`);
+          <span class="dot"><canvas width="700" height="352" aria-hidden="true"></canvas>${open?'':icon('lock')}</span><b>${i+1} · ${cityName(l.city)}</b><small class="ui-tag diff">${[1,2,3].map(k=>`<i class="${k<=d?'on':''}"></i>`).join('')}${DIFF[d]}</small>${open?starRow(st):`<small class="ui-tag muted">再 ${l.need-s} ★</small>`}</button>`;}).join('')}</main><section class="next-race ui-panel" aria-live="polite"></section>${nav('home')}`);
     el.querySelectorAll('.stage canvas').forEach(cv=>drawCourse(cv,cv.closest('.stage').dataset.level));
     const row=el.querySelector('.stage-row'),stages=[...row.querySelectorAll('.stage')];
     let at=-1;
     const paint=i=>{if(i===at)return;at=i;
-      const l=LEVELS[i],c=COURSES.find(x=>x.id===l.city),open=unlocked(prog,l.city),st=prog.stars[l.city]||0,best=bestOn(l.city),next=nextStarTime(l.city,st);
+      const l=LEVELS[i],c=COURSES.find(x=>x.id===l.city),open=stageOpen(l.city),st=prog.stars[l.city]||0,best=bestOn(l.city),next=nextStarTime(l.city,st);
       profile.city=l.city;store.set(PROFILE,JSON.stringify(profile));
       stages.forEach((b,k)=>b.classList.toggle('is-selected',k===i));
       el.querySelector('.home-scene').style.backgroundImage=`url(assets/backdrops/${l.city}.webp)`;
@@ -468,7 +473,7 @@ const PAGES={
     // card is the button: it opens a confirm sheet (so a stray tap never spends). Food and care go into the Items bag;
     // decor goes on the stable wall (one each); postcards come from racing.
     let tab=PAGES.shop.tab||'food';
-    const el=frame('page-shop',`${header('Shop',readCoins())}<main class="page-body shop"></main>
+    const el=frame('page-shop',`${header('Shop',readCoins())}<div class="ui-tabs ui-panel" role="tablist" style="--n:4"></div><main class="page-body shop"></main>
       <div class="ui-scrim" hidden></div><section class="ui-modal ui-panel deep buy-sheet" role="dialog" aria-modal="true" hidden></section>${nav('shop')}`),toast=toaster(el);
     const scrim=el.querySelector('.ui-scrim'),sheet=el.querySelector('.buy-sheet'),close=()=>{scrim.hidden=sheet.hidden=true;};
     scrim.onclick=close;
@@ -501,8 +506,9 @@ const PAGES={
           +`<h2 class="ui-section">城市明信片</h2><p class="shop-note ui-label">在該城市完賽取得</p>`+POSTCARDS.map(p=>card(`assets/stable/deco/${p.id}.webp`,COURSES.find(c=>c.id===p.city).city,
             owned.has(p.id)?'已收集':'還沒去比賽','',p.id,`postcard ${owned.has(p.id)?'':'locked'}`,'article')).join('')
         :ITEMS.filter(it=>it.kind===tab).map(it=>card(`assets/stable/item_${it.id}.webp`,it.name,itemEffect(it),`<span class="own">×${bag[it.id]}</span>${price(it.price,coins)}`,it.id)).join('');
-      el.querySelector('.shop').innerHTML=`<div class="ui-tabs ui-panel" role="tablist" style="--n:4">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" data-tab="${k}">${l}</button>`).join('')}</div><div class="shop-grid">${list}</div>`;
-      el.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=PAGES.shop.tab=b.dataset.tab;paint();});
+      el.querySelector('.ui-tabs').innerHTML=tabs.map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" data-tab="${k}">${l}</button>`).join('');   // outside the scroller: the tabs stay put while the goods scroll (2026-10-05, the user)
+      el.querySelector('.shop').innerHTML=`<div class="shop-grid">${list}</div>`;
+      el.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=PAGES.shop.tab=b.dataset.tab;paint();el.querySelector('.shop').scrollTop=0;});
       el.querySelectorAll('button.shop-card').forEach(b=>b.onclick=()=>b.dataset.id.startsWith('horse-')?horseSheet(el,horseById(+b.dataset.id.slice(6)),paint):confirm(b.dataset.id));
     }
     paint();
@@ -541,6 +547,8 @@ const PAGES={
       <section class="rider-card ui-panel"><img class="ui-avatar" src="assets/ui/rider_0.webp?v=2" alt=""><div>
         <input class="rider-name" id="rider-name" maxlength="16" value="${esc(profile.name)}" autocomplete="off" aria-label="騎士名字">
         <small class="ui-sub">Lv. ${1+Math.floor(xp/RIDER_LEVEL)} · Best combo ${best}</small>${bar(xp%RIDER_LEVEL/RIDER_LEVEL*100)}</div></section>
+      <div class="ui-tabs ui-panel" role="tablist" aria-label="權限" style="--n:2">${[['user','一般使用者'],['admin','最高管理者']].map(([k,l])=>`<button role="tab" aria-selected="${admin()===(k==='admin')}" data-role="${k}">${l}</button>`).join('')}</div>
+      ${admin()?'<p class="ui-label role-note">金幣和鑽石無限 · 所有關卡開放</p>':''}
       <ul class="ui-list ui-panel">
         <li>${icon('sound')}<span>Sound</span><input class="ui-switch" id="sound" type="checkbox" role="switch" aria-label="音效" ${muted?'':'checked'}></li>
         <li data-i18n-off>${icon('info')}<span>English</span><input class="ui-switch" id="lang" type="checkbox" role="switch" aria-label="English" ${lang()==='en'?'checked':''}></li>
@@ -600,6 +608,7 @@ const PAGES={
     el.querySelector('#sound').onchange=e=>store.set('hoofbeat.muted',String(!e.target.checked));
     el.querySelector('#lang').onchange=e=>setLang(e.target.checked?'en':'zh');
     el.querySelector('#hand').onchange=e=>store.set('hoofbeat.hand.v1',e.target.checked?'left':'right');
+    el.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{store.set(ROLE,b.dataset.role);fixCity();saveProfile();go('settings');});
     el.querySelector('#reset').onclick=()=>{if(!confirm(translate('確定要重設所有進度（關卡、星星、解鎖的夥伴、金幣、照顧、外觀）？')))return;[WALLET,PROFILE,BEST,SOLO_BEST,RELAY_BEST,PROGRESS,OWNED_DECOR,TUTORIAL,'hoofbeat.care.v2','hoofbeat.items.v1','hoofbeat.gems.v1','hoofbeat.hand.v1','hoofbeat.jumps.v1'].forEach(store.del);
       try{Object.keys(localStorage).filter(k=>k.startsWith(GHOST)).forEach(store.del)}catch{}prog=fresh();
       profile={...defaults,gear:{}};care=readCare({getItem:store.get},ROSTER.map(h=>h.id));bag=readItems({getItem:store.get});applyLook();go('home');};
@@ -610,7 +619,7 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r255',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r256',import.meta.url);document.head.append(css);
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

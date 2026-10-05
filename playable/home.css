@@ -395,3 +395,11 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .manes{gap:calc(8 * var(--u));margin:calc(18 * var(--u)) 0 calc(4 * var(--u))}.manes button{border:0;border-radius:calc(16 * var(--u));background:rgb(255 255 255 / .08);color:var(--ui-grey)}
 .manes [aria-checked=true]{border:0;color:#fff;box-shadow:0 0 0 calc(3 * var(--u)) #fff}
 .st-stat.low svg{color:var(--ui-yellow)}.st-food b{font-style:normal}
+
+/* Shop (2026-10-05, the user): the category tabs stay put under the header (a row of their own, outside the scroller). */
+.page-shop{grid-template-rows:auto auto 1fr auto}.page-shop>.ui-tabs{margin:var(--ui-s2) var(--ui-margin)}
+/* Settings: the role (一般使用者 | 最高管理者) and what the second one changes. */
+.role-note{margin:calc(-8 * var(--u)) 0 0;text-align:center;color:#fff}
+/* Home: how hard a stage is, top left of its card (2026-10-05, the user): one to three dots and the word. */
+.stage .ui-tag.diff{top:calc(14 * var(--u));bottom:auto;left:calc(14 * var(--u));right:auto;background:rgb(0 0 0 / .5);color:#fff}
+.stage .diff i{width:calc(5 * var(--u));height:calc(5 * var(--u));border-radius:50%;background:rgb(255 255 255 / .35)}.stage .diff i.on{background:#fff}.stage .diff i:nth-of-type(3){margin-right:calc(2 * var(--u))}

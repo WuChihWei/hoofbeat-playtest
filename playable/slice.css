@@ -272,7 +272,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #slice-rank{position:absolute;z-index:5;right:4%;top:calc(env(safe-area-inset-top) + 9.6%);display:flex;align-items:center;gap:2.4cqw;padding:1cqw 2.6cqw;border-radius:3cqw;background:var(--ui-glass);border:1px solid var(--ui-edge);pointer-events:none}
 #slice-rank b{font:800 calc(34 * var(--u))/1 var(--ui-font)}#slice-rank.first b{color:var(--ui-yellow)}
 #slice-rank span{display:flex;flex-direction:column;gap:2px;font:600 calc(12 * var(--u))/1.1 var(--ui-font);font-variant-numeric:tabular-nums;white-space:nowrap}#slice-rank i{font-style:normal}#slice-rank .close{color:var(--ui-yellow)}
-.hud-position.ahead b{color:#7dffa0}.hud-position.behind b{color:#ff9a8a}.hud-position.far b{color:#b9b9b9}
+.hud-position.ahead b{color:#7dffa0}.hud-position.behind b{color:#ff9a8a}.hud-position.far b{color:#b9b9b9}.hud-position.idle{display:none}
 /* The race bar: the ghost of the best run, an apple dot each (hollow once eaten), where a note was missed or a hurdle hit, the real handoff points. */
 .slice-progress .marks{position:absolute;inset:0;pointer-events:none}.slice-progress .marks i{position:absolute;top:50%;transform:translate(-50%,-50%)}
 .marks .ap{top:calc(-5 * var(--u))!important;width:calc(5 * var(--u));height:calc(5 * var(--u));box-sizing:border-box;border-radius:50%;background:#ff5a48;border:1px solid #fff}.marks .ap.got{background:none;border-color:#ff8a70}
@@ -363,19 +363,20 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .jump-soon .rhythm-foot::before{opacity:1}
 .jump-now .rhythm-foot::before{border:0;box-shadow:none;background:#fff;-webkit-mask:radial-gradient(farthest-side,#0000 calc(100% - 2.3cqw),#000 calc(100% - 2.2cqw));mask:radial-gradient(farthest-side,#0000 calc(100% - 2.3cqw),#000 calc(100% - 2.2cqw))}
 .jump-now .rhythm-foot:not(.pressed){transform:translate(-50%,-50%) scale(1.08)}
-/* Every hint and message shows in one place, in one look (2026-10-04, the user): the "U + U" jump guide's pill, at its
-   spot under the hoof pads (presentation-config CONTROL_LAYOUT.guides.jump: 85.4% down, 4.5% high), fully rounded,
-   dark glass, white text. Ordinary information has no frame; what matters now has a white frame: the jump guide,
-   warnings (.warn), prompts to act (.lime: the charge is full, hand off soon), the practice coach, the final-stretch
-   call. One line shows at a time, the most urgent: the jump guide, then an event message, the coach, the final call,
-   the standing hint, the goal at the start. The countdown, GO! and FINISH stay big; the judgement stays where GO! shows. */
-#slice-feedback,#slice-jump-hint,#slice-coach,#slice-final-call,#slice-goal{top:85.4%;bottom:auto;left:50%;right:auto;width:max-content;max-width:92%;height:4.5%;box-sizing:border-box;transform:translate(-50%,-50%);
+/* Every hint and message shows in one place, in one look (2026-10-04, the user): a pill like the "U + U" jump guide's
+   (4.5% high), fully rounded, dark glass, white text. 2026-10-05 (the user): that place is right under the track map
+   at the top, not under the hoof pads, where the pill covered the jump guide and the buddy. Ordinary information has no
+   frame; what matters now has a white frame: the jump guide, warnings (.warn), prompts to act (.lime: the charge is
+   full, hand off soon), the practice coach, the final-stretch call. One line shows at a time, the most urgent: an event
+   message, the coach, the final call, the standing hint, the goal at the start (the jump guide has its own spot under
+   the pads, so nothing hides for it any more). The countdown, GO! and FINISH stay big; the judgement stays where GO! shows. */
+#slice-feedback,#slice-jump-hint,#slice-coach,#slice-final-call,#slice-goal{top:calc(env(safe-area-inset-top) + 15.5%);bottom:auto;left:50%;right:auto;width:max-content;max-width:92%;height:4.5%;box-sizing:border-box;transform:translate(-50%,-50%);
   display:flex;align-items:center;justify-content:center;padding:0 4.2cqw;border:1px solid transparent;border-radius:99px;background:var(--ui-glass);color:#fff!important;
   font:800 3.2cqw/1 var(--ui-font)!important;letter-spacing:.03em;text-shadow:none;box-shadow:0 3px 8px #0a263850;white-space:nowrap}
 #slice-feedback:empty,#slice-jump-hint:empty,#slice-coach[hidden]{display:none}
+.slice-shell:not(.is-solo) :is(#slice-feedback,#slice-jump-hint,#slice-coach,#slice-final-call,#slice-goal){top:calc(env(safe-area-inset-top) + 18.5%)}   /* the relay: clear of the place marker at the right (a long English line is as wide as the screen) */
 #slice-feedback.warn,#slice-feedback.lime,#slice-coach,#slice-final-call,.control-guide.live{border-color:#fff}
 .control-guide.live{color:#fff}
-.jump-soon :is(#slice-feedback,#slice-coach,#slice-final-call,#slice-jump-hint,#slice-goal){display:none!important}
 .slice-shell:has(#slice-feedback:not(:empty)) :is(#slice-coach,#slice-final-call,#slice-jump-hint,#slice-goal){display:none!important}
 .slice-shell:has(#slice-coach:not([hidden])) :is(#slice-final-call,#slice-jump-hint,#slice-goal){display:none!important}
 .slice-shell:has(#slice-final-call:not([hidden])) :is(#slice-jump-hint,#slice-goal){display:none!important}

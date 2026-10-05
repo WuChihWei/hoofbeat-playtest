@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r255';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r255';
-import {esc,icon,brand,wallet} from '../ui/ui.js?v=r255';
-import {compositionRank} from '../race-composition.mjs?v=r255';
-import {ChaseRenderer} from '../race-scene.js?v=r255';
-import {preloadPresentation,preloadModels,preloadBuddies} from '../approved-assets.js?v=r255';
-import {cityModels} from '../approved-environment.js?v=r255';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r256';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r256';
+import {esc,icon,brand,wallet} from '../ui/ui.js?v=r256';
+import {compositionRank} from '../race-composition.mjs?v=r256';
+import {ChaseRenderer} from '../race-scene.js?v=r256';
+import {preloadPresentation,preloadModels,preloadBuddies} from '../approved-assets.js?v=r256';
+import {cityModels} from '../approved-environment.js?v=r256';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r255';
-import {ControlRouter} from './control-router.mjs?v=r255';
-import {RaceAudio,readLatency} from '../audio.js?v=r255';
-import {addLog,raceEntry} from '../playtest.js?v=r255';
-import {SLICE_CONFIG,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r255';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r256';
+import {ControlRouter} from './control-router.mjs?v=r256';
+import {RaceAudio,readLatency} from '../audio.js?v=r256';
+import {addLog,raceEntry} from '../playtest.js?v=r256';
+import {SLICE_CONFIG,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r256';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -53,7 +53,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?[]:RIVALS,   // solo (單騎練跑): team is the one horse [{id, name, coat, type, stats}], no rivals, the SOLO rules
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r255',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r256',import.meta.url);document.head.append(css);
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${lefty?' lefty':''}${lean?' lean':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp)"><canvas id="slice-canvas" aria-label="HOOFBEAT 三車道賽道"></canvas>
@@ -68,7 +68,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
         ${offerPractice?'<button id="slice-practice" class="ui-btn block">先練習一次（約 1 分鐘）</button>':''}<button id="slice-start" class="ui-btn primary block" disabled>準備中…</button></section></div></main>`;
   const $=id=>document.getElementById(id),pads=[$('slice-left'),$('slice-right')],clock=new RaceClock(),shell=document.querySelector('.slice-shell');
   const chargeBtn=$('slice-charge'),tracks=[...document.querySelectorAll('.slide-track')],dots=[...document.querySelectorAll('.lane-dots i')],allControls=[...pads,chargeBtn];
-  if(solo)document.querySelector('.hud-position span').textContent='SPEED';   // no place to show: the speed instead
+  if(solo)document.querySelector('.hud-position').className='hud-position idle';   // no place to show; the chip shows only once there is a pace to compare with (below)
   const sound=new RaceAudio();
   // Times are shown in wall-clock seconds (simulation seconds / tempo), as the player felt them.
   const wall=t=>{const s=t/SLICE_CONFIG.tempo;return `${Math.floor(s/60)}:${(s%60).toFixed(2).padStart(5,'0')}`;},secs=t=>(Math.abs(t)/SLICE_CONFIG.tempo).toFixed(2);
@@ -345,9 +345,9 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     // (No announcement when the ground changes: the strip under the progress bar shows the whole track.)
     put($('slice-coins'),'text',String(game.coinCount));
     // Solo: the chip under the gait says how this run stands against the best one here (its ghost, also a dot on the
-    // bar), else against the pace the next star needs; with neither, the speed.
+    // bar), else against the pace the next star needs; with neither, nothing.
     if(solo){const chip=$('slice-position'),label=chip.previousElementSibling,pace=phase==='running'?paceAt(game.distance):null;
-      if(pace===null){put(label,'text','SPEED');put(chip,'text',game.speed.toFixed(1));put(chip.parentElement,'className','hud-position');}
+      if(pace===null)put(chip.parentElement,'className','hud-position idle');   // nothing to compare with: no chip (2026-10-05, the user: the speed is not shown)
       else{const d=(game.time-pace)/game.config.tempo,front=d<=0;   // wall seconds behind (+) or ahead (−)
         put(label,'text',ghost?'比最佳':'比目標');put(chip,'text',`${front?'快':'慢'} ${Math.abs(d).toFixed(1)}`);put(chip.parentElement,'className',`hud-position ${front?'ahead':d>5?'far':'behind'}`);
         if(front&&leading===false&&game.time>5&&clock.elapsed()>passAt+3){passAt=clock.elapsed();feedback(ghost?'超過最佳的自己！':'追上目標了！','lime',true);sound.accent('overtake');buzz('good');}

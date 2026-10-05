@@ -546,4 +546,8 @@ export const STRINGS=[
   {zh:"破第 {0} 關開放",en:"Opens at stage {0}",p:1},
   {zh:"還沒有這類道具",en:"None of these yet"},
   {zh:"你",en:"You"},
+  {zh:"權限",en:"Role"},
+  {zh:"一般使用者",en:"Regular user"},
+  {zh:"最高管理者",en:"Super admin"},
+  {zh:"金幣和鑽石無限 · 所有關卡開放",en:"Unlimited coins and diamonds · every stage open"},
 ];
