@@ -597,4 +597,6 @@ export const STRINGS=[
   {zh:"前面有一座欄。圓圈縮到腳印時，兩個腳印一起按，跳過去。",en:"A fence ahead. When the rings close on the pads, press both pads together to jump it."},
   {zh:"前面有對手擋路。追到牠後面時按右邊的蓄力鈕，從牠頭上飛過去。",en:"A rival blocks the way. Right behind it, press the charge button on the right to leap over it."},
   {zh:"第 {0} 項 / {1}",en:"Step {0} of {1}",p:1},
+  {zh:"準備中… {0}/{1}",en:"Loading… {0}/{1}",p:1},
+  {zh:"連線太慢，點這裡重新載入",en:"Slow connection: tap to reload"},
 ];

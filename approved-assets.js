@@ -11,15 +11,18 @@ export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HO
 export const MODEL_VERSION='lib-59';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 let pending;
+// How many model files have been asked for and how many have arrived (the start card shows it while it waits).
+export const loadState={done:0,total:0};
+const fetchModel=file=>{loadState.total++;return new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
 export function preloadPresentation(){
   return pending??=Promise.all(Object.entries(PRESENTATION_ASSETS).map(async([key,file])=>{
-    const gltf=await new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${MODEL_VERSION}`,import.meta.url).href);
+    const gltf=await fetchModel(file);
     approvedAssets.set(key,gltf);approvedAssets.set(file,gltf);   // by key, and by file for city dressing (preloadModels)
   })).catch(e=>{pending=null;throw e;});
 }
 // Extra models by file (a city's dressing), kept under their file name next to the presentation set.
 export const preloadModels=files=>Promise.all(files.filter(f=>!approvedAssets.has(f)).map(async f=>
-  approvedAssets.set(f,await new GLTFLoader().loadAsync(new URL(`./assets/models/${f}?v=${MODEL_VERSION}`,import.meta.url).href))));
+  approvedAssets.set(f,await fetchModel(f))));
 // Coat looks (horse coat sheet 01–09, plus the cream "Appaloosa"): the index is a horse's `coat` everywhere (buddy_<i>.webp
 // portraits, home.js ROSTER). body / mane (tail: when it differs), and the markings coat() paints:
 //   patches pinto white patches · socks white to the knee · blaze white face stripe · points darker lower legs ·
