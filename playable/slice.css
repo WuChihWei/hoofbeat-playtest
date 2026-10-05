@@ -4,6 +4,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
    fractions of the height, kept clear of the notch and home indicator); a 9:16 column on wider screens. */
 #app{display:flex;justify-content:center;align-items:center;background:#15100b}
 .slice-shell{width:min(100vw,56.25dvh);height:100vh;height:100dvh;flex:none;color:white}
+#app{height:var(--app-h,100%)}.slice-shell{width:min(100vw,calc(var(--app-h,100dvh) * .5625));height:var(--app-h,100dvh)}   /* --app-h: the height that can be seen (index.html) */
 .slice-hud{inset:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);pointer-events:none;display:block}
 .slice-hud button{position:absolute;pointer-events:auto;left:4%;top:2%;width:36px;height:36px;border-radius:12px;background:var(--ui-glass);border:1px solid var(--ui-edge);color:var(--ui-text);font-size:25px}
 .hud-lap,.hud-position,.hud-coins{position:absolute;display:flex;align-items:center;justify-content:space-between;gap:9px;background:var(--ui-glass);border:1px solid var(--ui-edge);border-radius:12px;padding:7px 9px;box-sizing:border-box;color:var(--ui-text);box-shadow:var(--ui-shadow)}
@@ -397,7 +398,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
    green; no red: what warns is yellow. The start / pause card is a black card over the scene. ---- */
 #slice-pause{width:var(--ui-h-sm)!important;height:var(--ui-h-sm)!important;border:0;border-radius:50%;background:var(--ui-glass-dark);font-size:calc(15 * var(--u))}
 .hud-coins,.hud-position{border:0;border-radius:var(--ui-r-pill);background:var(--ui-glass-dark);box-shadow:none}
-.hud-position{width:auto!important;height:var(--ui-h-sm)!important;padding:0 calc(14 * var(--u));white-space:nowrap}   /* the solo pace chip: as wide as its words */
+.hud-position{width:auto!important;height:var(--ui-h-sm)!important;padding:0 calc(14 * var(--u));white-space:nowrap;left:3.7%!important;transform:translateY(-50%)!important}   /* the solo pace chip: as wide as its words, growing from the left edge (under the pause button): held by its centre, the longer English words ran off the screen */
 .hud-coins{padding:0 calc(12 * var(--u)) 0 calc(6 * var(--u))}.hud-coins i{width:calc(22 * var(--u));height:calc(22 * var(--u));font-size:calc(12 * var(--u))}.hud-coins b{font-weight:600;font-size:var(--ui-t-name)}
 #slice-rank{display:grid;grid-auto-flow:column;place-content:center;align-items:baseline;gap:1px;width:var(--ui-h);height:var(--ui-h);box-sizing:border-box;padding:0;border:0;border-radius:50%;background:#000}
 #slice-rank b{font:700 calc(22 * var(--u))/1 var(--ui-font)}#slice-rank small{font:500 var(--ui-t-tag)/1 var(--ui-font);opacity:1;color:var(--ui-grey)}

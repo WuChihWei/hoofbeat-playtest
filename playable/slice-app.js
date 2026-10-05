@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r256';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r256';
-import {esc,icon,brand,wallet} from '../ui/ui.js?v=r256';
-import {compositionRank} from '../race-composition.mjs?v=r256';
-import {ChaseRenderer} from '../race-scene.js?v=r256';
-import {preloadPresentation,preloadModels,preloadBuddies} from '../approved-assets.js?v=r256';
-import {cityModels} from '../approved-environment.js?v=r256';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r257';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r257';
+import {esc,icon,brand,wallet} from '../ui/ui.js?v=r257';
+import {compositionRank} from '../race-composition.mjs?v=r257';
+import {ChaseRenderer} from '../race-scene.js?v=r257';
+import {preloadPresentation,preloadModels,preloadBuddies} from '../approved-assets.js?v=r257';
+import {cityModels} from '../approved-environment.js?v=r257';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r256';
-import {ControlRouter} from './control-router.mjs?v=r256';
-import {RaceAudio,readLatency} from '../audio.js?v=r256';
-import {addLog,raceEntry} from '../playtest.js?v=r256';
-import {SLICE_CONFIG,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r256';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r257';
+import {ControlRouter} from './control-router.mjs?v=r257';
+import {RaceAudio,readLatency} from '../audio.js?v=r257';
+import {addLog,raceEntry} from '../playtest.js?v=r257';
+import {SLICE_CONFIG,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r257';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -53,7 +53,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?[]:RIVALS,   // solo (單騎練跑): team is the one horse [{id, name, coat, type, stats}], no rivals, the SOLO rules
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r256',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r257',import.meta.url);document.head.append(css);
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${lefty?' lefty':''}${lean?' lean':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp)"><canvas id="slice-canvas" aria-label="HOOFBEAT 三車道賽道"></canvas>

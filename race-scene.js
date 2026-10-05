@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r256';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r256';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r256';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r256';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r256';
-import {installApprovedEnvironment} from './approved-environment.js?v=r256';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r256';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r256';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r256';
-import {turnAt} from './track-projection.js?v=r256';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r256';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r256';
+import {roadHalfWidth} from './track-presentation.mjs?v=r257';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r257';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r257';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r257';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r257';
+import {installApprovedEnvironment} from './approved-environment.js?v=r257';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r257';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r257';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r257';
+import {turnAt} from './track-projection.js?v=r257';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r257';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r257';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -53,9 +53,9 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // until the next hit; glance: the rider's head turns to a rival passed or passing ([rad, s]); pump: a fist in the air
 // for a clean jump, a leap, taking the lead ([rad on the right upper arm, s]); tail: it flicks to the side of a hit
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
-const REACT={lean:[.11,6],slump:.65,glance:[.8,.8],pump:[-1.7,.7],tail:[.32,.3],kick:5,rise:[.3,.22],launch:[3.5,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
+const REACT={lean:[.11,6],slump:.65,glance:[.8,.8],pump:[-1.7,.7],tail:[.32,.3],kick:5,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
-// by on the grid, seconds it opens out over once they are off] · lamp: the street lamps' glow, lit `reach` m further up the
+// by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
 // road per hit of the streak (to 16), none nearer than `from` m ahead of the horse (a glow that near fills the screen).
 const Y_AXIS=new THREE.Vector3(0,1,0),Z_AXIS=new THREE.Vector3(0,0,1),bell=u=>u>0&&u<1?Math.sin(Math.PI*u):0;
 const SCREEN=new THREE.Vector3(),BEND_Q=new THREE.Quaternion(),X_AXIS=new THREE.Vector3(1,0,0);

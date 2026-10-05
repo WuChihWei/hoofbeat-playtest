@@ -1,8 +1,8 @@
 /* App pages: layout only (grid, sizes, positions). Colours, type, radii and every component look come from
    ../ui/ui.css (HOOFBEAT UI Guideline v1, docs/UI_FRAMEWORK.md). Numbers are px on a 390-wide phone × var(--u). */
 html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}
-#app{display:flex;justify-content:center;align-items:center;background:#0e110c}
-.home-shell{position:relative;isolation:isolate;width:min(100vw,56.25dvh);height:min(100dvh,216.67vw);   /* 9:16 on wide screens, full height on phones up to 9:19.5 (the mockups) */
+#app{display:flex;justify-content:center;align-items:center;background:#0e110c;height:var(--app-h,100%)}   /* --app-h: the height that can be seen (index.html), where the browser gives it */
+.home-shell{position:relative;isolation:isolate;width:min(100vw,calc(var(--app-h,100dvh) * .5625));height:min(var(--app-h,100dvh),216.67vw);   /* 9:16 on wide screens, full height on phones up to 9:19.5 (the mockups) */
   flex:none;display:grid;grid-template-rows:auto 1fr auto;
   overflow:hidden;overflow:clip;   /* clip: never scrolls (the stable's decor layer is wider than the frame) */
   container-type:size;background:#2a2016 url(../assets/stable/bg.webp) 50% 45%/cover no-repeat}   /* full-bleed scene: the barn */
@@ -403,3 +403,13 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 /* Home: how hard a stage is, top left of its card (2026-10-05, the user): one to three dots and the word. */
 .stage .ui-tag.diff{top:calc(14 * var(--u));bottom:auto;left:calc(14 * var(--u));right:auto;background:rgb(0 0 0 / .5);color:#fff}
 .stage .diff i{width:calc(5 * var(--u));height:calc(5 * var(--u));border-radius:50%;background:rgb(255 255 255 / .35)}.stage .diff i.on{background:#fff}.stage .diff i:nth-of-type(3){margin-right:calc(2 * var(--u))}
+
+/* Short screens (2026-10-05, the user: on a phone inside a browser the buddies to pick from were squeezed flat under the
+   team card). The row of heads never shrinks; and where the frame is shorter than about 760 units (9:16 on a desktop,
+   a phone with the browser bars showing) the pick page tightens so that all of it, the button too, still fits. */
+.buddy-tray{flex:none}
+@container (min-aspect-ratio:390/760){
+  .ui-marker.big{width:calc(74 * var(--u));height:calc(74 * var(--u))}.buddy-tray .ui-marker{width:calc(54 * var(--u));height:calc(54 * var(--u))}
+  .pickcard.ui-card-body,.team.ui-card-body{padding-top:calc(14 * var(--u));padding-bottom:calc(14 * var(--u))}.pickcard .ui-card-head,.team .ui-card-head{margin-bottom:calc(10 * var(--u))}.pickcard .ui-data+.ui-data{margin-top:calc(10 * var(--u))}
+  .cond{padding-top:calc(12 * var(--u));padding-bottom:calc(12 * var(--u))}
+}

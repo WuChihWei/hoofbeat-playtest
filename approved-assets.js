@@ -334,6 +334,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
   const riderMixer=new THREE.AnimationMixer(riderContent),poses={};
   for(const name of ['RidePose','RacePose','JumpPose']){
     const clip=rider.animations.find(a=>a.name===name);if(!clip)throw new Error('Approved rider lacks '+name);
+    clip.tracks=clip.tracks.filter(t=>!t.name.endsWith('.scale'));   // the poses scale no bone (the tracks are 1 ± 1e-5). Left in, the mixer wrote them over the race look's own bone scales (race-scene RIDER_HEAD, RIDER_WAIST) as soon as the pose weights moved: the head was small on the grid and full size once galloping (2026-10-05, the user)
     poses[name]=riderMixer.clipAction(clip).play();poses[name].setEffectiveWeight(name==='RidePose'?1:0);
   }
   riderMixer.update(0);
