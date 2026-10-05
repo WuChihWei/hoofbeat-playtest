@@ -591,4 +591,10 @@ export const STRINGS=[
   {zh:"對手",en:"Rivals"},
   {zh:"無",en:"None"},
   {zh:"名次",en:"Place"},
+  {zh:"圓圈滑到腳印時，點那一邊的腳印。連續踩中 5 下，連擊會讓夥伴加速。",en:"Tap a pad as its circle slides onto it. Hit 5 in a row: a combo speeds your buddy up."},
+  {zh:"蘋果在旁邊的車道。把靠那一邊的腳印往外滑就會換道，跑過去吃掉它，吃到會加速。",en:"The apple is in the next lane. Slide the pad on that side outward to change lane and run over it: an apple speeds you up."},
+  {zh:"對手會從後面、旁邊的車道追上來。把腳印往牠那邊滑，換到牠前面，牠就過不去。",en:"A rival comes up from behind in the next lane. Slide the pad toward it to move in front: it cannot get past."},
+  {zh:"前面有一座欄。圓圈縮到腳印時，兩個腳印一起按，跳過去。",en:"A fence ahead. When the rings close on the pads, press both pads together to jump it."},
+  {zh:"前面有對手擋路。追到牠後面時按右邊的蓄力鈕，從牠頭上飛過去。",en:"A rival blocks the way. Right behind it, press the charge button on the right to leap over it."},
+  {zh:"第 {0} 項 / {1}",en:"Step {0} of {1}",p:1},
 ];

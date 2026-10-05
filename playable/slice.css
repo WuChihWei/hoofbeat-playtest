@@ -455,3 +455,11 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #slice-skip{background:rgb(255 255 255 / .12)}   /* the practice cover: skip, as the other quiet buttons on the black card */
 /* 單騎 with rivals: the apple count sits left of the place */
 .slice-shell:has(#slice-rank) #slice-apples{right:calc(4% + var(--ui-h) + 2cqw);top:calc(env(safe-area-inset-top) + 10.9%)}
+
+/* The practice: no lap map (it has no lap to show; the coach line has the room); a lesson's card has a picture */
+.is-practice .slice-progress{visibility:hidden}
+#slice-cover .cover-shot{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:calc(18 * var(--u));margin:0 0 var(--ui-s3);background:#0006}
+/* a race's messages sit under the bigger lap map */
+.slice-shell.is-solo:not(.is-practice) :is(#slice-feedback,#slice-jump-hint,#slice-final-call,#slice-goal){top:calc(env(safe-area-inset-top) + 17.5%)}
+.slice-shell:not(.is-solo) :is(#slice-feedback,#slice-jump-hint,#slice-coach,#slice-final-call,#slice-goal){top:calc(env(safe-area-inset-top) + 19.5%)}
+#slice-cover:has(.cover-shot) .cover-actions{display:grid;grid-template-columns:1fr}
