@@ -1,15 +1,15 @@
 // Taipei · Riverside Run. A city pack has four parts; everything else (race rules, shared models) is global.
 export default {
-  id:'taipei', city:'Taipei', title:'Riverside Run', brief:'花生形，兩側內縮，新手型', difficulty:1, mvp:true,
+  id:'taipei', city:'Taipei', title:'Riverside Run', brief:'左右連續彎，彎度小，新手型', difficulty:1, mvp:true,
   tagline:'Riverbank breeze. Easy bends.', surface:'Dirt', scenery:'riverside',   // Tracks page copy
 
   // 1. TRACK: the lap as shared pieces (course/track.mjs): S/M/L straights, L|R 15·30·45 bends, F = straight whose
   //    length closeLoop() solves so the lap closes. Gameplay sits on that lap: at(i,t) = t metres into piece i;
   //    trail(s,lane,n=3,gap=7) = a run of coins. Gameplay never names a model.
   track:{
-    lap:'S L45 L45 S L30 R30 S R30 L30 F L45 L45 F L45 L45 S L45 R45 R45 L45 S L45 L45',   // peanut: pinched both sides
-    gameplay:({at,trail})=>({mud:[[.74,.95]],laps:2,tempo:1.2,speed:1.0,relay:at(6,0),jumps:[{s:at(12,20)}],
-      coins:[...trail(at(3,5),0),...trail(at(10,2),-1),...trail(at(15,5),1),...trail(at(17,2),-1),...trail(at(20,5),0)]}),
+    lap:'S L30 R30 R30 L30 S L45 L45 F L45 L45 F L45 R45 R45 L45 L45 L45 R30 L30 L30 R30 L45 L45',   // 2026-10-05 (the user: more bends): a wiggle on the start side and on the last, a wide S on the far side
+    gameplay:({at,trail})=>({mud:[[.74,.95]],laps:2,tempo:1.2,speed:1.0,relay:at(8,5),jumps:[{s:at(11,25)}],
+      coins:[...trail(at(2,2),0),...trail(at(5,10),-1),...trail(at(9,5),1),...trail(at(14,2),-1),...trail(at(19,2),0)]}),
   },
 
   // 2. WEATHER: sky gradient (horizon = fog colour), sun colour and strength (× the unified look), fog near/far,

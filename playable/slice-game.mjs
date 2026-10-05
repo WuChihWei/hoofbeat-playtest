@@ -1,4 +1,4 @@
-import {SLICE_CONFIG,SLICE_CHART,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r262';
+import {SLICE_CONFIG,SLICE_CHART,SOLO_CHART,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r266';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -24,8 +24,8 @@ export class SliceGame {
   // track, slice-config racing(); without them the config's own); config.legs: per-leg form overrides (stable).
   // course: the city's relay course (course/courses.mjs relayCourse); default: the template course.
   // rivals: slice-config fieldRivals(3 | 5); default: the five-horse field.
-  constructor({config={},chart=SLICE_CHART,coins=null,team=DEFAULT_TEAM,rivals=SLICE_RIVALS,course=null}={}) {
-    const c=this.config={...SLICE_CONFIG,...(config.solo?SOLO:null),...config};course??=templateCourse(c);coins??=sliceCoins(course);
+  constructor({config={},chart=null,coins=null,team=DEFAULT_TEAM,rivals=SLICE_RIVALS,course=null}={}) {
+    const c=this.config={...SLICE_CONFIG,...(config.solo?SOLO:null),...config};course??=templateCourse(c);coins??=sliceCoins(course);chart??=c.solo?SOLO_CHART:SLICE_CHART;
     this.course=course;const m=this.marks=courseMarks(course);c.length=m.length;
     // A runner's leg: the config, its buddy's own numbers, then (the player) what the stable makes of them.
     const numbers=h=>h?.stats?racing(buddyStats(h.stats,h.level)):null;
@@ -47,7 +47,7 @@ export class SliceGame {
     this.rivals=rivals.map((r,i)=>{const horses=bestOrder(r,course),forms=horses.map(h=>({...c,...racing(buddyStats(RIVAL_BUDDY[h.type],RIVAL_LEVEL[tier])),...(r.pace?{baseSpeed:r.pace}:null)}));   // pace: the practice coach's own slow speed (slice-app PRACTICE_RIVALS)
       return {...r,horses,forms,form:forms[0],team:[0,1,2],leg:0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
         boosts:[],jumps:[],stumbles:[],jumped:new Set(),finishTime:null,energy:0,pool:forms[0].stamina,stamina:forms[0].stamina,restAt:0,skill:r.skill??RIVAL_SKILL[tier]+(r.edge??0),noteAt:0,
-        rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity};});
+        rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity,drive:0,driveSpeed:0,rushes:[]};});
     // Adapter fields consumed by the existing renderer.
     this.slice=true;this.city=0;this.weather='sun';
   }
@@ -119,12 +119,15 @@ export class SliceGame {
   // Leaders move first; nobody closes inside followGap of a runner ahead in an overlapping lane: they follow at its
   // speed (a sprint or a plain jump does not pass through either). Passing takes a clear side lane, or a sprint leap.
   move(dt){
-    const c=this.config,list=this.runners().map(o=>({o,d:o.distance,nd:o.distance+o.speed*dt,by:null})).sort((a,b)=>b.d-a.d);
+    // On a bend the inside lane is the shorter way round: a runner covers bendLane more of the course per lane inside the
+    // middle one, and as much less per lane outside it (bend: +1 left; lane: +1 right).
+    const c=this.config,list=this.runners().map(o=>{const k=1-c.bendLane*sectionAt(o.distance,this.course).bend*o.laneValue;return {o,k,d:o.distance,nd:o.distance+o.speed*dt*k,by:null};}).sort((a,b)=>b.d-a.d);
     for(const [i,a] of list.entries())for(const b of list.slice(0,i))if(Math.abs(a.o.laneValue-b.o.laneValue)<c.laneOverlap&&a.o.leap?.over!==b.o){
       const room=b.nd-c.followGap,limit=a.d>room?a.d+Math.max(0,b.nd-b.d):room;   // already inside the gap: never close it
       if(a.nd>limit){a.nd=Math.max(a.d,limit);a.by=b.o;}
     }
-    for(const a of list){a.o.speed=(a.nd-a.d)/dt;a.o.distance=a.nd;a.o.blockedBy=a.by;}
+    for(const a of list){a.o.speed=(a.nd-a.d)/dt/a.k;   // speed: how fast it runs (k: how much of the course that covers here)
+    a.o.distance=a.nd;a.o.blockedBy=a.by;}
   }
   // Rival riding: stuck behind someone → take a clear side lane (inner first), or leap it if sprinting; otherwise hold
   // its line. A blocker (r.block) up to 25 m ahead of the player moves onto the lane the player was in blockReaction
@@ -137,7 +140,7 @@ export class SliceGame {
       const over=!r.leap&&!cooling&&(sprinting||(r.energy>=c.boostCost&&this.fresh(r)))&&this.leapTarget(r);
       if(over){if(!sprinting)this.rivalSprint(r);r.leap={over,end:this.time+c.jumpDuration};r.jumps.push({t:this.time,leap:true});this.emit('rival-leap',{id:r.id,over:over.id??'player'});}
       return;}
-    const ahead=r.distance-this.distance,line=r.block&&ahead>0&&ahead<25?Math.round(this.laneAt(this.time-c.blockReaction)):r.lane;
+    const ahead=r.distance-this.distance,bend=sectionAt(r.distance+10,this.course).bend,line=r.block&&ahead>0&&ahead<25?Math.round(this.laneAt(this.time-c.blockReaction)):bend?-bend:r.lane;   // else the inside of the bend it is on or coming to, its own lane on a straight
     if(line!==r.targetLane){const to=r.targetLane+Math.sign(line-r.targetLane);if(!this.occupied(r,to))go(to);}
   }
   expireNotes(cutoff){
@@ -212,7 +215,11 @@ export class SliceGame {
     this.rivalCharge(r,dt,f);
     if(mid-r.lastRhythm>c.rhythmGrace)r.rhythmDrive=Math.max(0,r.rhythmDrive-c.rhythmDecay*dt);
     r.rhythmSpeed+=(r.rhythmDrive-r.rhythmSpeed)*(1-Math.exp(-c.rhythmResponse*dt));
-    r.speed=this.leapPace(r,Math.max(4,r.form.baseSpeed+r.rhythmSpeed+c.boostSpeed*strength(r.boosts,mid,c))*AFFINITY[r.horses[r.leg].type][sec.kind]*this.stumbleFactor(mid,r));
+    // A solo race: the player's solo sums (its own speed × (1 + combo drive), an apple's speed-up, no aptitude). Not the
+    // practice coach (r.pace): it keeps the pace it is given.
+    const solo=this.solo&&!r.pace;if(solo)r.driveSpeed+=(r.drive-r.driveSpeed)*(1-Math.exp(-(r.drive<r.driveSpeed?this.solo.fall:this.solo.response)*dt));
+    const own=solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed;
+    r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r));
     r.laneValue=laneAt(r.laneChanges,this.time,c.laneDuration)??r.laneValue;
   }
   // The notes round a rival's own hurdle jump are rested for it, as the player's are (restNotes): hands on the jump.
@@ -228,8 +235,9 @@ export class SliceGame {
     const c=this.config,cap=this.cap(r),n=this.notes;r.drafting=this.drafts(r);
     for(;r.noteAt<n.length&&n[r.noteAt].t<=this.time;r.noteAt++){const k=r.noteAt;if(this.rested(r,n[k].t))continue;
       if(hash(k,r.phase+1)<r.skill){const perfect=hash(k+.5,r.phase+1)<.5;r.energy=Math.min(cap,r.energy+(perfect?c.perfectEnergy:c.goodEnergy)*(r.drafting?c.draftGain:1));
-        r.lastRhythm=this.time;r.rhythmDrive=Math.min(c.rhythmMax,r.rhythmDrive+(perfect?r.form.rhythmGain:r.form.goodRhythmGain));}
-      else this.missed(r);}
+        r.lastRhythm=this.time;r.rhythmDrive=Math.min(c.rhythmMax,r.rhythmDrive+(perfect?r.form.rhythmGain:r.form.goodRhythmGain));
+        if(this.solo)r.drive=Math.min(r.form.top,(1+Math.max(0,r.drive))*(1+r.form.accel*(perfect?1:.5))-1);}
+      else{this.missed(r);if(this.solo&&!(strength(r.boosts,this.time,c)>0||strength(r.rushes,this.time,c)>0))r.drive=Math.max(this.solo.floor,r.drive-this.solo.missDrop);}}
     const sprinting=strength(r.boosts,this.time,c)>0;this.rest(r,dt);
     if(r.drafting&&!sprinting)r.energy=Math.min(cap,r.energy+c.draftTrickle*dt);
     if(!sprinting&&!r.finishTime&&r.energy>=c.boostCost&&this.fresh(r)&&(f>=r.sprintAt||r.energy>=cap-1e-9))this.rivalSprint(r);
@@ -259,7 +267,8 @@ export class SliceGame {
         // player's stumble (the dip, the sprint and the rhythm drive lost).
         for(const [k,h] of this.hurdles.entries())if(!r.jumped.has(h)&&(h.distance-r.distance)/r.speed<=c.jumpLead&&h.distance>b){r.jumped.add(h);r.jumps.push({t:this.time});r.hop=this.time;
           if(hash(k+.25,r.phase+1)<(1-r.skill)/3)r.trip=h;}
-        if(r.trip&&r.distance>=r.trip.distance){r.trip=null;r.stumbles.push({t:this.time});r.rhythmDrive=0;for(const x of r.boosts)if(x.end>this.time)x.end=this.time;this.emit('rival-trip',{id:r.id});}
+        if(r.trip&&r.distance>=r.trip.distance){r.trip=null;r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;this.emit('rival-trip',{id:r.id});}
+        for(const a of this.apples)if(!a.collected&&a.distance>b&&a.distance<=r.distance&&Math.abs(a.lane-r.laneValue)*c.laneSpacing<=c.coinRadius){a.collected=true;r.rushes.push({t:this.time,end:this.time+c.appleTime});}   // an apple it runs over is its own (the player's rule)
         if(r.leg<2&&r.distance>=this.course.relays[r.leg]){r.leg++;r.energy=0;r.form=r.forms[r.leg];r.pool=r.stamina=r.form.stamina;r.restAt=0;}
         if(!r.finishTime&&r.distance>=c.length)r.finishTime=this.time+dt*(c.length-r.distance)/(r.distance-b);}
       this.time+=dt;this.laneValue=this.laneAt(this.time);

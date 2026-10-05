@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r262';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r262';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r262';
-import {compositionRank} from '../race-composition.mjs?v=r262';
-import {ChaseRenderer} from '../race-scene.js?v=r262';
-import {preloadPresentation,preloadModels,preloadBuddies} from '../approved-assets.js?v=r262';
-import {cityModels} from '../approved-environment.js?v=r262';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r266';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r266';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r266';
+import {compositionRank} from '../race-composition.mjs?v=r266';
+import {ChaseRenderer} from '../race-scene.js?v=r266';
+import {preloadPresentation,preloadModels,preloadBuddies} from '../approved-assets.js?v=r266';
+import {cityModels} from '../approved-environment.js?v=r266';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r262';
-import {ControlRouter} from './control-router.mjs?v=r262';
-import {RaceAudio,readLatency} from '../audio.js?v=r262';
-import {addLog,raceEntry} from '../playtest.js?v=r262';
-import {SLICE_CONFIG,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r262';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r266';
+import {ControlRouter} from './control-router.mjs?v=r266';
+import {RaceAudio,readLatency} from '../audio.js?v=r266';
+import {addLog,raceEntry} from '../playtest.js?v=r266';
+import {SLICE_CONFIG,SLICE_CHART,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r266';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -54,16 +54,16 @@ const BUZZ={tap:['impact',{style:'LIGHT'},12],hit:['impact',{style:'MEDIUM'},22]
 const buzz=kind=>{const [method,options,pattern]=BUZZ[kind],native=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.nativePromise;
   if(native)native('Haptics',method,options).catch(()=>{});else navigator.vibrate?.(pattern);};
 // practice: the five things to try (see PRACTICE_RIVALS; with solo: its exit dest 'solo' is the real run).
-export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,practice=false,solo=false}={}){   // getBest() → the record to beat on this track (simulation s) or null
-  const rivals=practice?PRACTICE_RIVALS:solo?[]:RIVALS,   // solo (單騎練跑): team is the one horse [{id, name, coat, type, stats}], no rivals, the SOLO rules
+export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,practice=false,solo=false,rivalCount=0}={}){   // getBest() → the record to beat on this track (simulation s) or null
+  const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r262',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r266',import.meta.url);document.head.append(css);
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${practice?' is-practice':''}${lefty?' lefty':''}${lean?' lean':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp)"><canvas id="slice-canvas" aria-label="HOOFBEAT 三車道賽道"></canvas>
     ${raceHudMarkup(rivals)}<div id="slice-coach" aria-live="polite" hidden><b></b><span></span></div>
-    <i id="slice-flash" aria-hidden="true"></i><div id="slice-feedback" aria-live="polite"></div><div id="slice-count" aria-live="assertive"></div><div id="slice-combo" data-tier="0"><b>–</b><small>COMBO</small></div>${solo?'':'<div id="slice-rank"><b></b><small></small></div>'}<b id="judge" class="judge" aria-hidden="true"></b><div id="slice-goal" hidden></div>${solo?`<div id="slice-apples" hidden>${APPLE}<b>0</b></div>`:''}<div id="slice-final-call" hidden></div><div id="slice-chase" hidden></div><i id="chase-left" class="chase-edge" hidden>‹</i><i id="chase-right" class="chase-edge" hidden>›</i><div id="slice-jump-hint"></div>
+    <i id="slice-flash" aria-hidden="true"></i><div id="slice-feedback" aria-live="polite"></div><div id="slice-count" aria-live="assertive"></div><div id="slice-combo" data-tier="0"><b>–</b><small>COMBO</small></div>${field?'<div id="slice-rank"><b></b><small></small></div>':''}<b id="judge" class="judge" aria-hidden="true"></b><div id="slice-goal" hidden></div>${solo?`<div id="slice-apples" hidden>${APPLE}<b>0</b></div>`:''}<div id="slice-final-call" hidden></div><div id="slice-chase" hidden></div><i id="chase-left" class="chase-edge" hidden>‹</i><i id="chase-right" class="chase-edge" hidden>›</i><div id="slice-jump-hint"></div>
     ${raceControlsMarkup()}
     <div id="slice-result" hidden></div><div id="slice-cover"><button id="slice-back" class="ui-icon-btn cover-back" aria-label="返回">${icon('back','')}</button><button id="slice-help" class="ui-icon-btn cover-help" aria-label="玩法說明" aria-expanded="false">?</button>
       <section><small>${esc(info?.title??tag)}</small><h1>${practice?'新手練習':esc(info?.goal??(solo?'單騎練跑':'三棒接力'))}</h1>
@@ -268,7 +268,8 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     renderCover('已暫停',`已跑 ${Math.round(game.distance/game.config.length*100)}% · ${wall(game.time)} · 連擊 ${game.combo} · 金幣 ${game.coinCount}`,
       [['繼續',resume],['重跑',newRun,'secondary'+far],...(practice?[['跳過，直接玩',skip,'secondary']]:[]),['換夥伴',toSetup,'secondary'+far],['離開',toHome,'secondary'+far],[soundLabel(),e=>{sound.setMuted(!sound.muted);e.target.textContent=soundLabel();},'secondary toggle']]);
   }
-  const makeGame=()=>{const g=new SliceGame({config:practice||solo?{solo:true}:getForm?.().config,team,rivals,course:practice?soloCourse(city||'taipei',PRACTICE_LENGTH):city?(solo?soloCourse(city,SOLO.target):relayCourse(city)):null});
+  const makeGame=()=>{const g=new SliceGame({config:practice||solo?{solo:true}:getForm?.().config,team,rivals,chart:practice?SLICE_CHART:null,   // the practice: the plain opening phrases for as long as it takes
+    course:practice?soloCourse(city||'taipei',PRACTICE_LENGTH):city?(solo?soloCourse(city,SOLO.target):relayCourse(city)):null});
     // Practice: nothing on the road but the coins; the fences and the apples wait far off for a lesson to place them.
     if(practice){g.hurdles=[0,1].map(()=>({distance:1e9,t:1e9,state:null}));g.apples=[0,1,2].map(i=>({id:'p'+i,distance:1e9,lane:0,collected:false}));}
     return g;};
@@ -281,7 +282,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     clearInterval(howTimer);game=makeGame();lesson=0;lessons=practice?LESSONS():[];taught=0;peak=0;seen=0;feedbackUntil=bigUntil=0;finalTen=false;result=null;phase='countdown';cover.hidden=true;
     streak=0;gaitShown=0;countShown=null;landAt=0;wasCarried=false;shownEarly.clear();$('slice-feedback').textContent='';combo(0);
     shell.classList.remove('is-ready');
-    trace=[];ghost=solo?getGhost?.()??null:null;target=solo?getBrief?.().target??null:null;leading=null;passAt=0;lostAt=-9;hurry=-1;
+    trace=[];ghost=solo&&!field?getGhost?.()??null:null;target=solo?getBrief?.().target??null:null;leading=null;passAt=0;lostAt=-9;hurry=-1;
     // The race bar's marks: the ghost of the best run (solo), an apple dot each, the real handoff points (relay).
     const L=game.config.length,barEl=document.querySelector('.slice-progress');barEl.querySelector('.marks')?.remove();
     barEl.insertAdjacentHTML('beforeend',`<span class="marks">${practice?'':game.apples.map(a=>`<i class="ap" data-apple="${a.id}" style="left:${(a.distance/L*100).toFixed(1)}%"></i>`).join('')}${ghost?'<i class="ghost"></i>':''}</span>`);
@@ -380,7 +381,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     const dial=$('slice-combo'),gaitNow=String(game.gait());put(dial,'--fill',game.surge().toFixed(2));if(dial.dataset.gait!==gaitNow)dial.dataset.gait=gaitNow;
     put($('slice-speed'),'text',`${game.carried()?'爆發':'速度'} ${Math.round(game.speed)}`);
     const remaining=Math.max(0,game.config.length-game.distance);
-    if(phase==='running'&&!finalTen&&remaining/(Math.max(game.speed,game.config.baseSpeed)*game.config.tempo)<=10){
+    if(phase==='running'&&!finalTen&&remaining/(Math.max(game.speed,game.config.baseSpeed)*game.config.tempo)<=(solo?6:10)){   // the last 10 s of a relay, 6 of a one-lap run
       finalTen=true;sound.accent('final');sound.finalStretch=true;feedback('最後衝線！','gold',true);buzz('strong');
     }
     put($('slice-final-call'),'hidden',!finalTen||phase!=='running');
@@ -394,7 +395,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
       put(el,'hidden',!live||!r);if(r)put(el,'opacity',(.35+.65*(1-(game.distance-r.distance)/22)).toFixed(1));
     }
     // Relay: the place, alone (2026-10-04, the user: the metres to the horses ahead and behind meant nothing).
-    if(!solo){const card=$('slice-rank'),rank=compositionRank(game,game.metrics());
+    if(field){const card=$('slice-rank'),rank=compositionRank(game,game.metrics());
       put(card.firstChild,'text',String(rank));put(card.lastChild,'text','/'+(others.length+1));put(card,'className',rank===1?'first':'');}
     sound.speedFeedback(game.speed/game.config.baseSpeed,game.surge(),game.rush());
     updateEnergyControls(game.energy,game.cap(),game.boostActive(),game.drafting,game.config.boostCost,game.stamina/game.pool,!game.fresh());   // the bar: this buddy's own pool
@@ -436,11 +437,11 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
       const cleared=game.hurdles.filter(h=>h.state==='cleared').length;try{localStorage.setItem(JUMPS,String((+localStorage.getItem(JUMPS)||0)+cleared));}catch{}
       const seen={};for(const n of game.notes)if(n.state&&n.state!=='rest'){const k=phraseOf(n);seen[k]=(seen[k]??true)&&n.state!=='miss';}
       const tally={phrases:Object.values(seen).filter(Boolean).length,phraseTotal:Object.keys(seen).length,bestCombo:game.bestCombo,perfect,hits:state(['perfect','good']),notes:state(['perfect','good','miss']),finishTime:game.finishTime,pickups:game.coinCount,boosts:game.boosts.length,stumbles:game.stumbles.length,cleared,apples:game.appleCount};   // notes: the ones judged (not the chart's tail)
-      if(solo)result={solo:true,coins:game.coinCount*c.coinValue,appleTotal:game.apples.length,topSpeed:peak,trace,splits:splits(),...tally};   // solo: the time is the result; coins picked up are banked
+      if(solo){const beat=field?rivals.length+1-m.rank:0;result={solo:true,rank:field?m.rank:null,of:rivals.length+1,bonus:beat*c.coinValue,coins:(game.coinCount+beat)*c.coinValue,appleTotal:game.apples.length,topSpeed:peak,trace,splits:splits(),...tally};}   // solo: the time is the result (the stars); coins picked up are banked, and a coin's worth for every rival beaten
       else{const bonus=c.placeBonus[m.rank-1]||0;result={rank:m.rank,coins:game.coinCount*c.coinValue+bonus,gems:c.gemBonus?.[m.rank-1]||0,bonus,lead:c.length-Math.max(...m.rivals.map(x=>x.distance)),...tally};}   // lead: m ahead of the best rival at the line
       const bank=onFinish?.(result)||{};
       // The line is a moment of its own: FINISH, a flash and a tune for how it went, then the results (a tap skips ahead).
-      const grade=solo?(bank.newBest?'win':'podium'):m.rank===1?'win':m.rank<=3?'podium':'lost';
+      const grade=!field?(bank.newBest?'win':'podium'):m.rank===1?'win':m.rank<=3?'podium':'lost';
       const clean=tally.notes>0&&tally.hits===tally.notes&&!tally.stumbles;   // not one note missed, no hurdle knocked
       banner(clean?(perfect===tally.notes?'ALL PERFECT':'FULL COMBO'):'FINISH',clean?'finish gold':'finish',900);flash('#ffffff',.55,180);sound.accent(grade);buzz(grade==='lost'?'hit':'strong');
       const show=()=>{clearTimeout(resultTimer);if(phase==='finished'&&$('slice-result').hidden)showResults(result,m,bank,grade);};
@@ -465,9 +466,9 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
       const me=rows.findIndex(x=>x.you),up=rows[me-1];
       if(up&&(r.finishTime-up.time)/tempo<=1.5){near='就差一點！';again=`再來一場 · 追回 ${secs(r.finishTime-up.time)} 秒`;}
       board=`<ol class="res-rank">${rows.map((x,i)=>`<li class="ui-pillrow ${x.you?'':'glass'}"><b class="rk">${i+1}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span><b class="ui-num">${wall(x.time)}</b></li>`).join('')}</ol>`;
-    }else board=`<ol class="res-rank">${bank.xp?`<li class="ui-pillrow glass">${icon('horse')}<span>${esc(team[0].name)} 經驗</span><b>+${bank.xp} · LV ${bank.level}</b></li>`:''}${
+    }else board=`<ol class="res-rank">${r.rank?`<li class="ui-pillrow glass">${icon('flag')}<span>名次</span><b>${r.rank} / ${r.of}${r.bonus?` · +${r.bonus}`:''}</b></li>`:''}${bank.xp?`<li class="ui-pillrow glass">${icon('horse')}<span>${esc(team[0].name)} 經驗</span><b>+${bank.xp} · LV ${bank.level}</b></li>`:''}${
       bank.starHint?`<li class="ui-pillrow glass">${icon('star')}<span>下一顆星</span><b>${bank.starHint}</b></li>`:''}</ol>`;
-    const small=r.solo?(bank.newBest&&bank.best?'新紀錄！':bank.newStars?'拿到新的星星！':off!==null&&off<=1?'差一點！':'單騎完成'):near||'比賽結果';
+    const small=r.solo?(r.rank===1?'第 1 名！':bank.newBest&&bank.best?'新紀錄！':bank.newStars?'拿到新的星星！':off!==null&&off<=1?'差一點！':'單騎完成'):near||'比賽結果';
     const award=['gold','red','blue'][r.solo?3-(bank.stars??0):r.rank-1];   // 1st gold, 2nd red, 3rd blue (the user); solo: by its stars
     const tag='<span class="ui-tag yellow">新紀錄</span>',el=$('slice-result');
     const cols=[['獲得金幣','coins','<span data-count>+0</span>',''],['金幣總數','coin',n(total),''],['最高連擊','note',r.bestCombo,bank.newCombo?tag:''],['完美','star',r.perfect,''],['任務獎勵','flag',`+${bank.missionCoins||0}`,'']];

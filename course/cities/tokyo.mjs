@@ -3,9 +3,11 @@ export default {
   id:'tokyo', city:'Tokyo', title:'Park Circuit', brief:'深 U 彎繞進公園池塘', difficulty:2,
   tagline:'City park. Pond loops.', surface:'Dirt', scenery:'park',   // Tracks page copy
   track:{
-    lap:'S S L45 L45 M F L45 L45 F L45 L45 S L45 L45 R45 R45 R45 R45 L45 L45 S L45 L45',   // deep U dent into the park
-    gameplay:({at,trail})=>({mud:[[.06,.30]],laps:2,tempo:1.3,speed:1.0,relay:at(4,20),jumps:[{s:at(5,50)},{s:at(8,40)}],
-      coins:[...trail(at(1,5),0),...trail(at(12,2),-1),...trail(at(14,2),1),...trail(at(16,2),-1),...trail(at(20,5),0)]}),
+    // 2026-10-05 (the user: one lap in 30–40 s, then: more bends): 599 m (734, then 654). A wiggle on the start side, a
+    // step out and back on the next, the far straight, then the hairpin straight into the dent.
+    lap:'S L30 R30 R30 L30 L45 L45 R30 L30 F L30 R30 L45 L45 F L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 L45 L45',   // deep U dent into the park
+    gameplay:({at,trail})=>({mud:[[.06,.30]],laps:2,tempo:1.3,speed:1.0,relay:at(14,45),jumps:[{s:at(9,25)},{s:at(14,20)}],
+      coins:[...trail(at(2,2),0),...trail(at(6,2),-1),...trail(at(12,2),1),...trail(at(17,2),-1),...trail(at(21,2),0)]}),
   },
   weather:{sky:{top:'#6db8ec',horizon:'#e3eef2'},sun:{color:'#fff4e2',intensity:1},fog:[260,1100],cloud:0,rain:0},
   ground:{road:'#c7956a',verge:'#8cc063',grass:'#72a84e'},

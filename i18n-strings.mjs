@@ -148,6 +148,11 @@ export const STRINGS=[
   {zh:"衝刺 3 次",en:"Sprint 3 times"},
   {zh:"Perfect 30 個",en:"30 Perfects"},
   {zh:"吃 4 顆蘋果",en:"Eat 4 apples"},
+  {zh:"連擊到 12",en:"Reach a 12 combo"},
+  {zh:"撿 6 枚金幣",en:"Pick up 6 coins"},
+  {zh:"衝刺 2 次",en:"Sprint 2 times"},
+  {zh:"Perfect 15 個",en:"15 Perfects"},
+  {zh:"吃 2 顆蘋果",en:"Eat 2 apples"},
   {zh:"命中 85% 以上",en:"Hit 85% or more"},
   {zh:"跑進前 3 名",en:"Finish in the top 3"},
   // stable-care.js
@@ -297,7 +302,7 @@ export const STRINGS=[
   {zh:"河濱奔馳",en:"Riverside Run"},
   {zh:"Taipei 河濱奔馳",en:"Taipei Riverside Run"},
   {zh:"河岸微風，彎道平緩。",en:"Riverbank breeze. Easy bends."},
-  {zh:"花生形，兩側內縮，新手型",en:"Peanut-shaped, pinched on both sides; beginner-friendly"},
+  {zh:"左右連續彎，彎度小，新手型",en:"Gentle left-right bends, for beginners"},
   {zh:"土路",en:"Dirt"},
   {zh:"河濱",en:"riverside"},
   // course/cities/tokyo.mjs
@@ -310,14 +315,14 @@ export const STRINGS=[
   {zh:"花園騎行",en:"Garden Ride"},
   {zh:"Paris 花園騎行",en:"Paris Garden Ride"},
   {zh:"法式庭園，弧線柔和。",en:"Formal gardens. Gentle arcs."},
-  {zh:"豆形，上緣繞過花園",en:"Bean-shaped; the top edge rounds the garden"},
+  {zh:"大 S 彎接小彎，繞著花園走",en:"Wide S-bends and small ones round the garden"},
   {zh:"沙地",en:"Sand"},
   {zh:"花園",en:"garden"},
   // course/cities/seoul.mjs
   {zh:"漢江衝刺",en:"Han River Sprint"},
   {zh:"Seoul 漢江衝刺",en:"Seoul Han River Sprint"},
   {zh:"河岸長直線，全速前進。",en:"Long river straight. Full speed."},
-  {zh:"140 m 河岸長直線、高速",en:"140 m riverside straight; high speed"},
+  {zh:"河岸直線接連續小彎、高速",en:"A river straight, then quick small bends"},
   {zh:"河岸",en:"river"},
   // course/cities/stockholm.mjs
   {zh:"北歐林道",en:"Nordic Trail"},
@@ -583,4 +588,7 @@ export const STRINGS=[
   {zh:"新造型",en:"New look"},
   {zh:"新開放",en:"Unlocked"},
   {zh:"獎品",en:"Prize"},
+  {zh:"對手",en:"Rivals"},
+  {zh:"無",en:"None"},
+  {zh:"名次",en:"Place"},
 ];

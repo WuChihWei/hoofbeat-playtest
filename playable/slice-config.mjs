@@ -5,7 +5,7 @@ export const SLICE_CONFIG = Object.freeze({
   // Rhythm windows are stored in simulation seconds. Preserve the intended
   // real-time tap tolerance when the whole race runs at 1.3x tempo.
   chordWindow:.075, perfectWindow:.085*1.3, goodWindow:.17*1.3,
-  laneDuration:.3, laneSpacing:3, followGap:6.24, laneOverlap:.8,   // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
+  laneDuration:.3, laneSpacing:3, bendLane:.05, followGap:6.24, laneOverlap:.8,   // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
   leapReach:3,   // a jump in a sprint leaps the horse just ahead (up to followGap + leapReach) when there is room to land
   // Comeback (stuck behind a horse, the taps should build toward a pass, not feel wasted):
   draftReach:7, draftGain:1.6, draftTrickle:4,   // drafting: a horse ahead in the lane within draftReach m (right behind) → hits give ×draftGain energy, plus draftTrickle / s
@@ -71,7 +71,7 @@ export const SLICE_RIVALS = Object.freeze([
   {id:'hazel',name:'Hazel',types:['curve','mud','curve'],coats:[4,5,7],edge:.05,lane:0,start:-7,sprintAt:.35},
   {id:'rio',name:'Rio',types:['mud','straight','mud'],coats:[6,8,6],lane:1,start:-7,sprintAt:.65},
 ]);
-export const fieldRivals=size=>SLICE_RIVALS.slice(0,size===3?2:4);
+export const fieldRivals=size=>SLICE_RIVALS.slice(0,size-1);   // size: runners with the player (a solo race: 2, 3 or 5; the relay: 5, or 3 with ?field=3)
 // The ladder, by the course's difficulty (city pack `difficulty`, the ★ on the track cards; none, the template course,
 // is 3): the level of the rivals' buddies, which is also the level the city expects of the player's, and their riders'
 // skill. A player who hits more of the notes than that, on buddies of that level, wins.
@@ -93,20 +93,22 @@ export function racing(st){
   return {baseSpeed:+(11.7+st.Speed.now/250).toFixed(3),rhythmGain:+gain.toFixed(4),goodRhythmGain:+(gain*.6875).toFixed(4),stamina:st.Stamina.now,
     accel:+(.02+.02*st.Accel.now/STAT_FULL).toFixed(4),top:+(.44-.16*st.Accel.full/STAT_FULL).toFixed(3)};
 }
-// Solo run (單騎練跑): phase 1 of the new race rules; the relay still runs the rules above. One horse, no rivals, no
+// Solo run (單騎): phase 1 of the new race rules; the relay still runs the rules above. One horse, 0–4 rivals on one
+// buddy each by these same sums (slice-game rivalStep; 2026-10-05), no
 // handoffs, and its own speed with a combo drive in place of baseSpeed + rhythm drive: speed = its speed × (1 + drive).
 // Every hit in a row multiplies (1 + drive) by (1 + its accel) (a Good: half that step) up to its top. Nothing fades
 // the drive but a miss: each takes missDrop off, miss after miss, down to floor (slower than its own speed); the next
 // hit starts again from its own speed. response: how fast the running speed follows the drive (1/s). No terrain
 // aptitude here (grip will replace it, phase 2), so its type gives nothing either: every buddy stores soloCharges
 // segments. accel, top: the stand-ins for a buddy without numbers (racing()). target: the run is whole laps of the
-// city's track to about this (m).
+// city's track to about this (m). 600 since 2026-10-05 (it was 1000: two laps of the three shorter tracks, a minute or
+// more for a new player; the user: 控制在 30~40 秒): every city is now one lap, 549–791 m.
 // Losing speed is a glide, not a drop: the running speed follows the drive down at `fall` (1/s, up at `response`), a
 // sprint lets go over boostRelease (simulation s; the relay's is shorter), and while a sprint or an apple is carrying
 // the horse a miss takes no drive (the combo and the charge still pay for it).
 // Apples (sliceApples): riding through one adds appleSpeed m/s for appleTime (2 wall seconds), on top of everything
 // else, a sprint included.
-export const SOLO=Object.freeze({missDrop:.08,floor:-.15,response:4,fall:1.5,target:1000,boostRelease:.9,appleSpeed:3.2,appleTime:2*1.3,soloCharges:3,accel:.03,top:.35});
+export const SOLO=Object.freeze({missDrop:.08,floor:-.15,response:4,fall:1.5,target:600,boostRelease:.9,appleSpeed:3.2,appleTime:2*1.3,soloCharges:3,accel:.03,top:.35});
 // A course = {length, relays: [handoff 1, handoff 2], hurdles, sections: [{s0, s1, kind, bend}], mud: [[s0, s1]]}.
 // Cities build theirs from their own lap (course/courses.mjs relayCourse); this template (SLICE_LEGS on legLength)
 // is the fallback and the simulator's reference course.
@@ -138,14 +140,16 @@ export function legMains(course=templateCourse()){
 // One note at a time (never both hoofs at once), 0.6 s apart; runs past the slowest finish.
 const PHRASES=[[[0,1,0,1],[1,0,1,0],[0,0,1,1],[1,1,0,0]],[[1,0,1,1,1,0],[0,1,1,0,1,0],[1,0,0,1,0,1],[0,1,0,1,1,0]],
   [[0,1,0,1,1,0,1,0],[1,0,1,0,0,1,0,1],[0,1,1,0,0,1,1,0],[1,0,0,1,1,0,0,1]]];
-export function sliceChart(end=130){
+export function sliceChart(end=130,third=33){   // third: how long each intensity lasts (simulation s)
   const notes=[];let t=1,k=0;
-  while(t<end){const leg=t<33?0:t<66?1:2,phrase=PHRASES[leg][k%4];
+  while(t<end){const leg=t<third?0:t<2*third?1:2,phrase=PHRASES[leg][k%4];
     phrase.forEach((lane,i)=>notes.push({id:`n${k}-${i}`,t:+(t+i*.6).toFixed(3),lane,leg}));
     t+=phrase.length*.6+(leg<2?1.2:.6);k++;}
   return notes;
 }
 export const SLICE_CHART = Object.freeze(sliceChart());
+// A solo run is one lap, about 30 s (2026-10-05): the same build-up in thirds of that, or it would end on the opening phrases.
+export const SOLO_CHART = Object.freeze(sliceChart(130,12));
 // Coin runs: three in a lane every ~70 m, lanes rotating, none near the start, a hurdle or a handoff.
 export function sliceCoins(course=templateCourse()){
   const m=courseMarks(course),clear=d=>d>12&&d<m.length-15&&m.hurdles.every(h=>Math.abs(h-d)>22)&&m.relays.every(r=>Math.abs(r-d)>28),coins=[];

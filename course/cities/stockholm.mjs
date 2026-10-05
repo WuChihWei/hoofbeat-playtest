@@ -3,9 +3,11 @@ export default {
   id:'stockholm', city:'Stockholm', title:'Nordic Trail', brief:'S 形折返＋U 彎，彎最多', difficulty:3, mvp:true,
   tagline:'Pine forests. Open horizons.', surface:'Dirt', scenery:'forest',   // Tracks page copy
   track:{
-    lap:'S M L45 L45 S F L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 F L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 S L45 L45',   // switchback + dent
-    gameplay:({at,trail})=>({mud:[[.40,.52],[.80,.92]],laps:2,tempo:1.3,speed:1.0,relay:at(4,0),jumps:[{s:at(1,40)},{s:at(5,50)}],
-      coins:[...trail(at(6,2),1),...trail(at(10,2),-1),...trail(at(19,2),0),...trail(at(21,2),1),...trail(at(27,5),-1)]}),
+    // 2026-10-05 (the user: a solo run, one lap, should take 30–40 s): 711 m, it was 791. The last 40 m straight is gone
+    // (the first fill closes 40 m shorter with it); both switchbacks stay: any shorter would take one of them out.
+    lap:'S M L45 L45 S F L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 F L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 L45 L45',   // switchback + dent
+    gameplay:({at,trail})=>({mud:[[.40,.52],[.80,.92]],laps:2,tempo:1.3,speed:1.0,relay:at(4,0),jumps:[{s:at(1,40)},{s:at(5,35)}],
+      coins:[...trail(at(6,2),1),...trail(at(10,2),-1),...trail(at(19,2),0),...trail(at(21,2),1),...trail(at(16,2),-1)]}),
   },
   weather:{sky:{top:'#5fb2ee',horizon:'#cfe6f2'},sun:{color:'#fff0d4',intensity:1},fog:[260,1100],cloud:0,rain:0},
   ground:{road:'#b98a63',verge:'#7fae57',grass:'#5f9444'},

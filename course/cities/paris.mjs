@@ -1,11 +1,11 @@
 // Paris · Garden Ride (format: taipei.mjs).
 export default {
-  id:'paris', city:'Paris', title:'Garden Ride', brief:'豆形，上緣繞過花園', difficulty:2,
+  id:'paris', city:'Paris', title:'Garden Ride', brief:'大 S 彎接小彎，繞著花園走', difficulty:2,
   tagline:'Formal gardens. Gentle arcs.', surface:'Sand', scenery:'garden',   // Tracks page copy
   track:{
-    lap:'S L45 L45 M F L45 L45 F L45 L45 L30 S R30 S R30 S L30 L45 L45',   // bean: wide garden dip
-    gameplay:({at,trail})=>({mud:[[.38,.62]],laps:2,tempo:1.25,speed:1.0,relay:at(3,20),jumps:[{s:at(4,40)},{s:at(13,20)}],
-      coins:[...trail(at(1,2),-1),...trail(at(7,5),1),...trail(at(11,5),-1),...trail(at(15,5),1),...trail(at(17,2),0)]}),
+    lap:'S L45 R45 R45 L45 L45 L45 L30 R30 F R30 L30 L45 L45 F R45 L45 L45 R45 L45 L45 S R30 L30 L30 R30 L45 L45',   // 2026-10-05 (the user: more bends): a wide S on two sides, a step and a wiggle on the others
+    gameplay:({at,trail})=>({mud:[[.38,.62]],laps:2,tempo:1.25,speed:1.0,relay:at(9,0),jumps:[{s:at(14,20)},{s:at(21,20)}],
+      coins:[...trail(at(2,2),-1),...trail(at(6,2),1),...trail(at(12,2),-1),...trail(at(17,2),1),...trail(at(23,2),0)]}),
   },
   weather:{sky:{top:'#7cbde8',horizon:'#f1e6d6'},sun:{color:'#ffe6bf',intensity:1},fog:[260,1100],cloud:0,rain:0},
   ground:{road:'#d3a574',verge:'#8fb85e',grass:'#7aa552'},

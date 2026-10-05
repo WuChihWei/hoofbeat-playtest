@@ -413,3 +413,7 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
   .pickcard.ui-card-body,.team.ui-card-body{padding-top:calc(14 * var(--u));padding-bottom:calc(14 * var(--u))}.pickcard .ui-card-head,.team .ui-card-head{margin-bottom:calc(10 * var(--u))}.pickcard .ui-data+.ui-data{margin-top:calc(10 * var(--u))}
   .cond{padding-top:calc(12 * var(--u));padding-bottom:calc(12 * var(--u))}
 }
+
+/* 單騎: how many rivals (the setup page) */
+.foes .ui-tabs{margin-left:auto;flex:0 0 58%}
+.foes .ui-tabs{background:#0000001f;-webkit-backdrop-filter:none;backdrop-filter:none}.foes .ui-tabs [role=tab]:not([aria-selected=true]){color:#000}

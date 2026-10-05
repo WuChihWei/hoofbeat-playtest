@@ -180,7 +180,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .slice-shell.is-result::before{display:none}
 /* Race look HUD. Progress: the track map (race-hud drawMap: the lap, the flag at the line, the handoffs, the mud, a dot a
    runner) when the course has a lap; else the bar: a knob at the runner's place (--p) and a chequered flag at the end. */
-.slice-progress{overflow:visible}.slice-progress .trackmap{display:none;position:absolute;left:0;top:50%;width:100%;height:calc(56 * var(--u));transform:translateY(-50%);overflow:visible;pointer-events:none;filter:drop-shadow(0 1px 1px #0005)}
+.slice-progress{overflow:visible}.slice-progress .trackmap{display:none;position:absolute;left:-30%;top:50%;width:160%;height:calc(90 * var(--u));transform:translateY(-36%);overflow:visible;pointer-events:none;filter:drop-shadow(0 1px 1px #0005)}
 .slice-progress.has-map .trackmap{display:block}.slice-progress.has-map>progress,.slice-progress.has-map>.terrain,.slice-progress.has-map>.knob,.slice-progress.has-map>.flag,.slice-progress.has-map>.runner,.slice-progress.has-map>.marks,.slice-progress.has-map::after{display:none}
 .trackmap path{fill:none;stroke-linejoin:round;stroke-linecap:round}.trackmap .case{stroke:#10233fb0;stroke-width:4.6}.trackmap .road{stroke:#fff;stroke-width:2.4}.trackmap .mud{stroke:#8a5a34;stroke-width:2.4}
 .trackmap rect{stroke:none}.trackmap .hand{fill:#ffcf40;stroke:#10233f;stroke-width:.6}.trackmap .pole{stroke:#fff;stroke-width:.9}
@@ -453,3 +453,5 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .is-practice #slice-apples{display:none!important}
 #slice-result>.ui-prize{position:absolute;z-index:6}   /* the prize chest's layer covers the results until 收下 (ui-v2.css .ui-prize) */
 #slice-skip{background:rgb(255 255 255 / .12)}   /* the practice cover: skip, as the other quiet buttons on the black card */
+/* 單騎 with rivals: the apple count sits left of the place */
+.slice-shell:has(#slice-rank) #slice-apples{right:calc(4% + var(--ui-h) + 2cqw);top:calc(env(safe-area-inset-top) + 10.9%)}

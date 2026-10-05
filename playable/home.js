@@ -5,21 +5,23 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #stable (Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #race · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r262';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r262';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION} from '../approved-assets.js?v=r262';
-import {lang,setLang,translate} from '../i18n.js?v=r262';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r262';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r262';
-import {mountStableView} from './stable-view.js?v=r262';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r262';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r266';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r266';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION} from '../approved-assets.js?v=r266';
+import {lang,setLang,translate} from '../i18n.js?v=r266';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r266';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r266';
+import {mountStableView} from './stable-view.js?v=r266';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r266';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r262';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r262';
-import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r262';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r266';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r266';
+import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r266';
 
-const GHOST='hoofbeat.ghost.v1.',SOLO_BEST='hoofbeat.solo.v1',RELAY_BEST='hoofbeat.relay.v1',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
+const GHOST='hoofbeat.ghost.v2.',SOLO_BEST='hoofbeat.solo.v2',RELAY_BEST='hoofbeat.relay.v1',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
+// v2 (2026-10-05): a solo run became one lap, so the best times and traces of the two-lap runs (v1) say nothing now: dropped.
+try{Object.keys(localStorage).filter(k=>k==='hoofbeat.solo.v1'||k.startsWith('hoofbeat.ghost.v1.')).forEach(store.del)}catch{}
 // The role (Settings; 2026-10-05, the user, to test the playtest build): 最高管理者 has coins and diamonds that never run
 // out and every stage open. The wallets read as ∞ and are left alone (nothing is paid in or out), so going back to
 // 一般使用者 finds them as they were; what was bought or won meanwhile stays.
@@ -69,6 +71,7 @@ const DIFF=['','入門','進階','挑戰'];
 const defaults={name:'Rider',horse:1,city:'taipei',gear:{},order:[1,0,2]};   // new players start on the ★1 course   // order: relay legs 1–3 (horse ids)   // gear: {material: colour} from GEAR (approved-assets)
 let profile={...defaults};
 try{profile={...defaults,...JSON.parse(store.get(PROFILE)||'{}')}}catch{}
+const foes=()=>[0,1,2,4].includes(profile.foes)?profile.foes:4;   // rivals in a 單騎 run (2026-10-05, the user: racing others should not need the relay): none, 1, 2 or 4; a new player: 4
 // Older profiles kept only a shirt and a saddle colour ('' = authored leather).
 if(profile.shirt||profile.saddle){profile.gear={Rider_Shirt:profile.shirt||undefined,Tack_Saddle:profile.saddle||undefined,...profile.gear};delete profile.shirt;delete profile.saddle;}
 profile.gear=Object.fromEntries(Object.entries(profile.gear||{}).filter(([m,c])=>GEAR.some(g=>g.mat===m&&g.colors.includes(c))));
@@ -256,7 +259,7 @@ const PAGES={
     const el=frame('page-race',`${header('選夥伴',readCoins())}<main class="page-body">
       <div class="ctr"><div class="ui-tabs" role="tablist" aria-label="比賽方式" style="--n:2"><button role="tab" data-mode="solo">單騎</button><button role="tab" data-mode="relay" ${relayOk?'':'disabled'}>${relayOk?'三棒接力':`${icon('lock')}接力 · 要 3 位夥伴`}</button></div></div>
       <section data-for="solo"><div class="buddy-tray" role="list" aria-label="夥伴">${[...mine,...ROSTER.filter(h=>!owns(prog,h.id))].map(h=>head(h,'data-solo')).join('')}</div>
-        <div class="stack"><article class="ui-panel ui-card-body pickcard"></article><div class="ui-pillrow">${icon('horse')}<span>類型</span><b class="pick-type"></b></div>${cond(bc.gameplay.jumps.length)}<div class="go-row"></div></div></section>
+        <div class="stack"><div class="ui-pillrow foes">${icon('flag')}<span>對手</span><div class="ui-tabs" role="tablist" aria-label="對手" style="--n:4">${[0,1,2,4].map(n=>`<button role="tab" data-foes="${n}">${n||'無'}</button>`).join('')}</div></div><article class="ui-panel ui-card-body pickcard"></article><div class="ui-pillrow">${icon('horse')}<span>類型</span><b class="pick-type"></b></div>${cond(bc.gameplay.jumps.length)}<div class="go-row"></div></div></section>
       <section data-for="relay"><div class="legs">${[0,1,2].map(k=>`<div><button class="ui-marker big" data-leg="${k}"></button><span class="ui-tag"></span></div>`).join('')}</div>
         <div class="buddy-tray" role="list" aria-label="我的夥伴">${mine.map(h=>head(h,'data-horse')).join('')}<button class="ui-tag yellow" data-best>推薦</button></div>
         <div class="stack"><article class="ui-panel ui-card-body team"></article>${cond(rc.hurdles.length)}<button class="ui-btn primary block" data-go="play">出發${icon('arrow','')}</button></div></section></main>
@@ -274,7 +277,7 @@ const PAGES={
           ${has?`<dl class="ui-data"><h3>這條賽道<i>最佳 / 下一顆星</i></h3><span>秒</span><b>${best?(best/SLICE_CONFIG.tempo).toFixed(1):'–'}</b><b>${next??'–'}</b></dl>`
             :`<p class="pickprice">${p.coins?`${coin}${p.coins} 或 `:''}${GEM}${p.gems}${p.stars?` · 集滿 ${p.stars} ★ 免費`:p.stage?` · 破第 ${p.stage} 關送`:''}</p>`}`;
         el.querySelector('.pick-type').textContent=TYPE_NAME[h.type];
-        el.querySelectorAll('[data-solo]').forEach(b=>b.classList.toggle('is-selected',+b.dataset.solo===h.id));
+        el.querySelectorAll('[data-solo]').forEach(b=>b.classList.toggle('is-selected',+b.dataset.solo===h.id));el.querySelectorAll('[data-foes]').forEach(b=>b.setAttribute('aria-selected',+b.dataset.foes===foes()));
         el.querySelector('.go-row').innerHTML=has?`<button class="ui-btn primary block" data-start>出發 · ${h.name}${icon('arrow','')}</button>`:`<button class="ui-btn primary block" data-unlock>${icon('lock')}解鎖 ${h.name}</button>`;
         el.querySelector('[data-start]')?.addEventListener('click',()=>go('solo'));
         el.querySelector('[data-unlock]')?.addEventListener('click',()=>horseSheet(el,h,()=>{profile.solo=h.id;saveProfile();render();}));
@@ -290,6 +293,7 @@ const PAGES={
           <span>這一段</span>${team.map((h,k)=>{const x=fit(h,k);return `<b class="fit ${x>=1.15?'':x>=1.07?'mid':'warn'}">${suits(x)}</b>`;}).join('')}</dl>`;
     };
     el.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{profile.mode=b.dataset.mode;saveProfile();paint();});
+    el.querySelectorAll('[data-foes]').forEach(b=>b.onclick=()=>{profile.foes=+b.dataset.foes;saveProfile();paint();});
     el.querySelectorAll('[data-solo]').forEach(b=>b.onclick=()=>{see=+b.dataset.solo;if(owns(prog,see)){profile.solo=see;saveProfile();}paint();});
     el.querySelectorAll('[data-leg]').forEach(b=>b.onclick=()=>{sel=+b.dataset.leg;paint();});
     el.querySelectorAll('[data-horse]').forEach(b=>b.onclick=()=>{putOnLeg(+b.dataset.horse,sel);sel=(sel+1)%3;saveProfile();paint();});
@@ -340,7 +344,7 @@ const PAGES={
       const a=afterSolo(care[h.id],{stars:f.runStars,perfect:r.perfect});care[h.id]=a.care;saveCare({setItem:store.set},care,bag);
       return {total:readCoins(),gems:readGems(),best,newBest,xp:a.xp,level:level(a.care),levelUp:a.levelUp,...rewards(f,c.id,seconds)};};
     const ghost=()=>{try{return JSON.parse(store.get(GHOST+key)||'null')}catch{return null}};
-    session=await startSlice({city:c.id,solo:true,practice,team:[racer(h)],...(practice?null:{onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3}),
+    session=await startSlice({city:c.id,solo:true,practice,rivalCount:foes(),team:[racer(h)],...(practice?null:{onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3}),
       tag:practice?'PRACTICE':`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
       onExit:(result,dest)=>{if(location.hash!=='#solo')return;  // already navigated away (back gesture)
         if(dest?.city){profile.city=dest.city;saveProfile();go('race',{replace:true});}   // the level this run opened
@@ -628,7 +632,7 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r262',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r266',import.meta.url);document.head.append(css);
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});
