@@ -45,6 +45,11 @@ export const brand=(attrs='',{logo=false}={})=>{const tag=attrs?'button':'div',a
   return logo?`<${tag} class="ui-brand" ${a}><img class="mark" src="assets/ui/logo_mark.webp" alt=""><img class="word" src="assets/ui/wordmark.webp" alt="HOOFBEAT · RIDE THE WORLD"></${tag}>`
     :`<${tag} class="ui-wordmark" ${a}><b>HOOFBEAT</b><small>RIDE THE WORLD</small></${tag}>`;};
 export const coin='<i class="ui-coin" aria-hidden="true">U</i>';
+// The prize chest (ui-v2.css .ui-chest): prizes [{img, name, tag?, sub?}] → markup. In the page it plays once: it hops
+// in, turns a full turn, the lid opens and each prize rises out as a card, back first, then turns over (its tag, its
+// picture, its name and a line under it; several: side by side). cls 'at-0' | 'at-1' | 'at-b' | 'at-2' holds it still.
+export const chest=(prizes,cls='')=>`<div class="ui-chest ${cls}" aria-hidden="true"><div class="hop"><div class="turn">${['b-back','b-left','b-right','b-in'].map(f=>`<i class="f ${f}"></i>`).join('')}${
+  prizes.map((p,i)=>`<div class="prize" style="--x:${(i-(prizes.length-1)/2)*120}"><div class="front">${p.tag?`<span class="tag">${esc(p.tag)}</span>`:''}<img src="${p.img}" alt=""><b>${esc(p.name??'')}</b>${p.sub?`<small>${esc(p.sub)}</small>`:''}</div><i class="back"></i></div>`).join('')}<i class="f b-front"></i><div class="lid">${['l-in','l-back','l-left','l-right','l-top','l-front','lock'].map(f=>`<i class="f ${f}"></i>`).join('')}</div></div></div></div>`;
 export const wallet=(coins,{gems=null}={})=>`<div class="ui-wallet" aria-label="金幣 ${coins}">${coin}<b data-coins>${coins.toLocaleString('en-US')}</b></div>${
   gems==null?'':`<div class="ui-wallet" aria-label="鑽石 ${gems}"><i class="gem">${icon('gem')}</i><b>${gems.toLocaleString('en-US')}</b></div>`}`;
 export const header=(title,coins)=>`<header class="ui-header"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>${esc(title)}</h1>${coins==null?'':wallet(coins)}</header>`;

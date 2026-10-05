@@ -441,3 +441,15 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .res-rank .rk{width:calc(14 * var(--u));font-weight:700;font-size:var(--ui-t-name)}.res-rank img{width:calc(30 * var(--u));height:calc(30 * var(--u));border-radius:50%;object-fit:cover;object-position:50% 25%;background:#000}
 .res-acts{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--ui-gap)}.res-acts.three{grid-template-columns:1.5fr 1fr auto}
 .res-acts .ui-btn{padding:0 var(--ui-s2);gap:calc(8 * var(--u));white-space:nowrap;background:var(--ui-glass-dark)}.res-acts .ui-btn.primary{background:var(--ui-green)}
+
+/* Practice (2026-10-05): the five things to try, listed on its cover; the coach line under the track map is n/5 and
+   what to do, on up to two lines (it grows downward); the apple counter means nothing there. */
+.cover-steps{margin:0 0 var(--ui-s4);padding-left:1.5em;display:grid;gap:calc(6 * var(--u));font-size:var(--ui-t-body);line-height:1.35;color:var(--ui-text)}
+.cover-steps li::marker{color:var(--ui-green);font-weight:600}
+#slice-coach{top:calc(env(safe-area-inset-top) + 13.2%);transform:translateX(-50%);height:auto;min-height:4.5%;max-width:90%;padding:1.6cqw 4.2cqw;gap:2.4cqw;border-radius:5cqw;white-space:normal;line-height:1.35!important;text-align:left}
+#slice-coach b{flex:none;color:var(--ui-yellow);font-variant-numeric:tabular-nums}
+#slice-coach,.is-practice #slice-feedback{font-size:calc(16 * var(--u))!important}   /* 2026-10-05, the user: the practice's lines at 16 (a race's own short messages stay 12.5) */
+.is-practice #slice-feedback{height:auto;min-height:4.5%;padding:1.6cqw 4.2cqw;line-height:1.35!important}
+.is-practice #slice-apples{display:none!important}
+#slice-result>.ui-prize{position:absolute;z-index:6}   /* the prize chest's layer covers the results until 收下 (ui-v2.css .ui-prize) */
+#slice-skip{background:rgb(255 255 255 / .12)}   /* the practice cover: skip, as the other quiet buttons on the black card */

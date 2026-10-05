@@ -1,4 +1,4 @@
-import {InputResolver} from './input-resolver.mjs?v=r257';
+import {InputResolver} from './input-resolver.mjs?v=r261';
 // The race controls: two hoof sliders and the charge button. A hoof tap is a rhythm hit; both hoofs at once (a chord,
 // within chordWindow) are a jump (the notes under the press are still judged: the chart never puts both hoofs on one
 // beat). Sliding a hoof outward changes lane and the charge button sprints (or leaps): neither waits on the chord

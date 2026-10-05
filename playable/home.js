@@ -5,18 +5,18 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #stable (Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #race · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r257';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r257';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION} from '../approved-assets.js?v=r257';
-import {lang,setLang,translate} from '../i18n.js?v=r257';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r257';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r257';
-import {mountStableView} from './stable-view.js?v=r257';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r257';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r261';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r261';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION} from '../approved-assets.js?v=r261';
+import {lang,setLang,translate} from '../i18n.js?v=r261';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r261';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r261';
+import {mountStableView} from './stable-view.js?v=r261';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r261';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r257';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r257';
-import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r257';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r261';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r261';
+import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r261';
 
 const GHOST='hoofbeat.ghost.v1.',SOLO_BEST='hoofbeat.solo.v1',RELAY_BEST='hoofbeat.relay.v1',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -146,7 +146,12 @@ function rewards(f,city,seconds){
   return {extra:f.coins,stars:f.stars,runStars:f.runStars??null,newStars:f.newStars,starHint:t?`再快 ${(seconds-t).toFixed(1)} 秒拿第 ${f.stars+1} 顆星`:'',
     missions:f.missions,missionCoins:f.missionCoins,phraseCoins:f.phraseCoins,daily:f.daily,next:f.opened[0]?{city:f.opened[0],label:`下一關：${cityName(f.opened[0])}`}:null,goal:goalLine(),
     news:[...f.opened.map(id=>`第 ${levelOf(id)+1} 關 ${cityName(id)} 開放了！`),...(f.relayOpened?['三棒接力開放了！']:[]),...f.gifts.map(id=>`新夥伴 ${horseById(id).name} 加入牧場！`),
-      ...(f.perks||[]).map(k=>k==='mane'?`新造型：${HAIR.find(x=>x.id===PERKS.mane.id).name}`:'騎士服裝的顏色開放了！')]};
+      ...(f.perks||[]).map(k=>k==='mane'?`新造型：${HAIR.find(x=>x.id===PERKS.mane.id).name}`:'騎士服裝的顏色開放了！')],
+    // What was given (a buddy, a mane style, the rider's colours): each comes out of the prize chest first (slice-app openChest).
+    // img, name, tag, sub: its card (ui chest()); text: the line under the chest.
+    prizes:[...f.gifts.map(id=>{const h=horseById(id);return {img:buddyImg(h),text:`新夥伴 ${h.name} 加入牧場！`,name:h.name,tag:'新夥伴',sub:TYPE_NAME[h.type]};}),
+      ...(f.perks||[]).map(k=>{const mane=HAIR.find(x=>x.id===PERKS.mane.id).name;return k==='mane'?{img:`assets/ui/hair_${PERKS.mane.id}.webp?v=1`,text:`新造型：${mane}`,name:mane,tag:'新造型',sub:'鬃毛造型'}
+        :{img:'assets/ui/rider_0.webp?v=2',text:'騎士服裝的顏色開放了！',name:'騎士服裝顏色',tag:'新開放'};})]};
 }
 // Before a race (slice-app's start card): the level, the goal of this run and its three missions.
 function brief(c,solo){
@@ -185,7 +190,7 @@ const courseFacts=c=>`${Math.round(c.lapLength)} m / 圈 · ${c.track.pieces.fil
 
 // ---- router ----
 const app=()=>document.querySelector('#app');
-let leave=null,stableFocus=null,playFromSetup=false,practiceNext=false;   // practiceNext: the next #play is the guided practice  // stableFocus: horse id Collection asked the Stable to open on
+let leave=null,stableFocus=null,playFromSetup=false,practiceNext=false;   // practiceNext: the next #solo is the practice (Settings → 新手練習)  // stableFocus: horse id Collection asked the Stable to open on
 // replace: swap the current history entry (leaving a race must not leave #play behind for the back button)
 const go=(r,{replace=false}={})=>{if(r==='play'||r==='solo')playFromSetup=location.hash==='#race';
   if(location.hash==='#'+r)render();else if(replace)location.replace('#'+r);else location.hash=r;};
@@ -296,7 +301,7 @@ const PAGES={
   },
 
   async play(){
-    const c=COURSES.find(x=>x.id===profile.city)||COURSES[0],team=profile.order.map(horseById),practice=practiceNext;practiceNext=false;applyLook(team[0]);
+    const c=COURSES.find(x=>x.id===profile.city)||COURSES[0],team=profile.order.map(horseById);applyLook(team[0]);
     let session=null,gone=false;leave=()=>{gone=true;session?.exit();};
     // The stable feeds the race (form from Hunger / Stamina / Mood / Lv) and the race feeds the stable back.
     const form=()=>relayForm(team.map(h=>recover(care[h.id])),team.map(h=>({...SLICE_CONFIG,...racing(buddyStats(h.stats,lvOf(h)))})),team.map(h=>h.name));   // each buddy's own numbers at its level, then its care
@@ -310,13 +315,11 @@ const PAGES={
       const f=finish(prog,{city:c.id,solo:false,result:r,today:today()});prog=f.p;saveProg();addCoins(f.coins);addGems(f.gems);
       return {total:readCoins(),gems:readGems(),newCombo:r.bestCombo>best,best:old?.time||0,newBest,xp:runs[0].xp,level:level(care[team[0].id]),levelUp:runs.some(a=>a.levelUp),notes:worn,...rewards(f,c.id,null)};
     };
-    // Practice (first run / Settings): no care form, no rewards; the start cover offers it until it has been finished once.
-    session=await startSlice({city:c.id,team:team.map(racer),practice,offerPractice:!practice&&store.get(TUTORIAL)!=='done',
-      getForm:practice?null:form,onFinish:practice?null:bank,getBest:practice?null:()=>readRelay()[c.id]?.time,getBrief:practice?null:()=>brief(c,false),lean:prog.runs>=3,
-      tag:practice?'PRACTICE':`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · RELAY`,
+    session=await startSlice({city:c.id,team:team.map(racer),getForm:form,onFinish:bank,getBest:()=>readRelay()[c.id]?.time,getBrief:()=>brief(c,false),lean:prog.runs>=3,
+      tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · RELAY`,
       onExit:(result,dest)=>{if(location.hash!=='#play')return;  // already navigated away (back gesture)
         if(dest?.city){profile.city=dest.city;saveProfile();go('race',{replace:true});}
-        else if(dest==='practice'){practiceNext=true;go('play',{replace:true});}else if(dest==='play')go('play',{replace:true});
+        else if(dest==='play')go('play',{replace:true});
         else if(dest==='race'&&playFromSetup)history.back();else go(dest,{replace:true});}});
     if(gone)session.exit();
   },
@@ -326,7 +329,10 @@ const PAGES={
     // rules' first stage (slice-config SOLO), on its own numbers at its level. Practice: no stable form and no wear,
     // and it earns xp (stable-care afterSolo, by the run's stars; 2026-10-04, the user); the coins picked up are banked
     // and the best time per track and buddy is kept (SOLO_BEST, simulation seconds).
-    const h=soloHorse(),c=COURSES.find(x=>x.id===profile.city)||COURSES[0],key=`${c.id}:${h.id}`;applyLook(h);
+    // 2026-10-05 (the user): a regular player's first solo start is the practice (five things to try, slice-app LESSONS:
+    // no rewards, no time kept); done once (TUTORIAL), its green button comes back here for the real run. 最高管理者 skips
+    // it; Settings → 新手練習 plays it again.
+    const h=soloHorse(),c=COURSES.find(x=>x.id===profile.city)||COURSES[0],key=`${c.id}:${h.id}`,practice=practiceNext||(!admin()&&store.get(TUTORIAL)!=='done');practiceNext=false;applyLook(h);
     let session=null,gone=false;leave=()=>{gone=true;session?.exit();applyLook();};
     const bank=r=>{const all=readSolo(),best=all[key]||0,newBest=!best||r.finishTime<best,seconds=r.finishTime/SLICE_CONFIG.tempo;
       if(newBest){all[key]=+r.finishTime.toFixed(3);store.set(SOLO_BEST,JSON.stringify(all));if(r.trace)store.set(GHOST+key,JSON.stringify(r.trace));}
@@ -334,10 +340,11 @@ const PAGES={
       const a=afterSolo(care[h.id],{stars:f.runStars,perfect:r.perfect});care[h.id]=a.care;saveCare({setItem:store.set},care,bag);
       return {total:readCoins(),gems:readGems(),best,newBest,xp:a.xp,level:level(a.care),levelUp:a.levelUp,...rewards(f,c.id,seconds)};};
     const ghost=()=>{try{return JSON.parse(store.get(GHOST+key)||'null')}catch{return null}};
-    session=await startSlice({city:c.id,solo:true,team:[racer(h)],onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,firstRun:prog.runs===0,lean:prog.runs>=3,
-      tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
+    session=await startSlice({city:c.id,solo:true,practice,team:[racer(h)],...(practice?null:{onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3}),
+      tag:practice?'PRACTICE':`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
       onExit:(result,dest)=>{if(location.hash!=='#solo')return;  // already navigated away (back gesture)
         if(dest?.city){profile.city=dest.city;saveProfile();go('race',{replace:true});}   // the level this run opened
+        else if(dest==='solo')go('solo',{replace:true});   // the practice is done: the real run
         else if(dest==='race'&&playFromSetup)history.back();else go(dest,{replace:true});}});
     if(gone)session.exit();
   },
@@ -601,7 +608,7 @@ const PAGES={
       el.querySelector('[data-log] small').textContent=`${x.races} 場`;};
     const logText=()=>JSON.stringify({app:'HOOFBEAT',build:MODEL_VERSION,exported:new Date().toISOString(),log:readLog()},null,1);
     el.querySelector('[data-log]').onclick=()=>{paintLog();show(plog);};
-    el.querySelector('[data-practice]').onclick=()=>{practiceNext=true;go('play');};
+    el.querySelector('[data-practice]').onclick=()=>{practiceNext=true;go('solo');};
     plog.querySelector('[data-log-copy]').onclick=async e=>{try{await navigator.clipboard.writeText(logText());e.target.textContent='已複製';}catch{e.target.textContent='無法複製，請改用下載';}};
     plog.querySelector('[data-log-save]').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([logText()],{type:'application/json'}));
       a.download=`hoofbeat-playtest-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
@@ -621,7 +628,7 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r257',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r261',import.meta.url);document.head.append(css);
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

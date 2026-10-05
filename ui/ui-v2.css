@@ -157,3 +157,71 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge lo
 .ui-legend{display:grid;grid-template-columns:auto 1fr auto;column-gap:calc(8 * var(--u));row-gap:calc(1 * var(--u));align-items:center}
 .ui-legend>i{width:calc(3 * var(--u));height:calc(11 * var(--u));border-radius:calc(2 * var(--u));background:var(--ui-grey)}.ui-legend>i.hot{background:var(--ui-yellow)}
 .ui-legend>b{font-weight:400;font-variant-numeric:tabular-nums}
+
+/* ── The prize chest (2026-10-05, the user): a box with a hinged lid in CSS 3D, skinned from one picture
+   (assets/ui/chest_skin.webp; its regions: artifacts/shop-art/chest_skin.py). Put in the page it plays once: it hops
+   in, turns a full turn, the lid swings open and what was won rises out of it. 160 x 104 x 86 with a lid 44 high, in
+   --c (the layout unit × --chest, a scale to set from outside). Classes at-0 / at-1 / at-b / at-2 hold it still (shut, mid-turn, the card out back first, the card turned over). */
+.ui-chest{--c:calc(var(--u) * var(--chest,1));--skin:url(../assets/ui/chest_skin.webp?v=1);position:relative;width:calc(160 * var(--c));height:calc(290 * var(--c));margin:0 auto;perspective:calc(760 * var(--c));perspective-origin:50% 68%}
+.ui-chest .hop,.ui-chest .turn,.ui-chest .lid{position:absolute;transform-style:preserve-3d}
+.ui-chest .hop{left:0;bottom:calc(14 * var(--c));width:100%;height:calc(130 * var(--c))}
+.ui-chest .turn{inset:0;transform:rotateX(-16deg) rotateY(-24deg)}
+.ui-chest .f{position:absolute;left:0;bottom:0;width:calc(160 * var(--c));height:calc(86 * var(--c));background:var(--skin) 0 0/calc(264 * var(--c)) calc(188 * var(--c)) no-repeat;backface-visibility:hidden}
+.ui-chest .f::after{content:'';position:absolute;inset:0;background:var(--shade,none)}
+.ui-chest .b-front{transform:translateZ(calc(52 * var(--c)));--shade:linear-gradient(transparent 50%,rgb(0 0 0 / .16))}
+.ui-chest .b-back{transform:rotateY(180deg) translateZ(calc(52 * var(--c)));--shade:rgb(0 0 0 / .3)}
+.ui-chest :is(.b-left,.b-right,.l-left,.l-right){left:calc(28 * var(--c));width:calc(104 * var(--c));background-position:calc(-160 * var(--c)) 0;--shade:rgb(0 0 0 / .22)}
+.ui-chest :is(.b-left,.l-left){transform:rotateY(-90deg) translateZ(calc(80 * var(--c)))}
+.ui-chest :is(.b-right,.l-right){transform:rotateY(90deg) translateZ(calc(80 * var(--c)))}
+.ui-chest .b-in{bottom:calc(26 * var(--c));height:calc(104 * var(--c));transform:rotateX(90deg);background:radial-gradient(#4a2c14,#1d1007 75%);--shade:radial-gradient(rgb(255 232 140 / .95),rgb(255 200 60 / .5) 45%,transparent 72%)}   /* the inside, 8 below the rim; its ::after is the light that comes on */
+.ui-chest .lid{left:0;bottom:calc(86 * var(--c));width:100%;height:0;transform-origin:50% 100% calc(-52 * var(--c))}   /* hinged on the back edge of the rim */
+.ui-chest :is(.l-front,.l-back){height:calc(49.65 * var(--c));transform-origin:50% 100%;background-size:calc(264 * var(--c)) calc(212.1 * var(--c));background-position:0 calc(-97.04 * var(--c))}   /* the sloping faces: 44 high, leaning in 27.6deg to a top 58 deep */
+.ui-chest .l-front{transform:translateZ(calc(52 * var(--c))) rotateX(27.6deg)}
+.ui-chest .l-back{transform:translateZ(calc(-52 * var(--c))) rotateY(180deg) rotateX(27.6deg);--shade:rgb(0 0 0 / .3)}
+.ui-chest :is(.l-left,.l-right){height:calc(44 * var(--c));background-position:calc(-160 * var(--c)) calc(-86 * var(--c));clip-path:polygon(22.1% 0,77.9% 0,100% 100%,0 100%)}
+.ui-chest .l-top{bottom:calc(15 * var(--c));height:calc(58 * var(--c));transform:rotateX(90deg);background-position:0 calc(-130 * var(--c));--shade:rgb(255 255 255 / .1)}
+.ui-chest .l-in{bottom:calc(-52 * var(--c));height:calc(104 * var(--c));transform:rotateX(-90deg);background:#2a180b;box-shadow:inset 0 0 0 calc(5 * var(--c)) #c4922a}   /* the lid's underside */
+.ui-chest .lock{left:calc(66 * var(--c));bottom:calc(-14 * var(--c));width:calc(28 * var(--c));height:calc(28 * var(--c));transform:translateZ(calc(53.5 * var(--c)));background-size:calc(127.45 * var(--c)) calc(90.76 * var(--c));background-position:calc(-77.24 * var(--c)) calc(-62.76 * var(--c))}
+/* what was won: a card (2026-10-05, the user: like a trading card; it was a round picture) that starts as nothing inside
+   the box, facing the screen (it undoes the box's tilt): it rises out back first, holds a beat, and turns over (the
+   user: 先加翻面). Front: a gold frame, the picture, a tag, the name and a line under it; a shine runs across it once it
+   has turned. Back: green, a gold border, the U mark. The card is a 3D box of two faces: no opacity or overflow on it
+   (either would flatten it and show the front through the back). */
+.ui-chest .prize{position:absolute;left:calc(24 * var(--c));bottom:calc(18 * var(--c));width:calc(112 * var(--c));height:calc(156 * var(--c));transform-style:preserve-3d;
+  transform:rotateY(24deg) rotateX(16deg) translate(calc(var(--x,0) * var(--c)),0) rotateY(180deg) scale(0)}
+.ui-chest .prize>*{position:absolute;inset:0;box-sizing:border-box;border-radius:calc(13 * var(--c));overflow:hidden;-webkit-backface-visibility:hidden;backface-visibility:hidden;box-shadow:0 calc(8 * var(--c)) calc(18 * var(--c)) rgb(0 0 0 / .4),0 0 calc(28 * var(--c)) rgb(255 226 120 / .6)}
+.ui-chest .prize .front{padding:calc(6 * var(--c));display:flex;flex-direction:column;gap:calc(4 * var(--c));background:linear-gradient(155deg,#fff0b0,#f4c64a 40%,#c08a1e 78%,#f0c040);color:#2c1a06;text-align:center}
+.ui-chest .prize .back{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,rgb(255 255 255 / .07) 0 calc(5 * var(--c)),transparent calc(5 * var(--c)) calc(10 * var(--c))),radial-gradient(circle at 50% 45%,#2f8a4e,#103620 78%);border:calc(5 * var(--c)) solid #f4c64a;outline:calc(1.5 * var(--c)) solid #7a5510;outline-offset:calc(-7 * var(--c))}
+.ui-chest .prize .back::after{content:'U';position:absolute;left:50%;top:50%;width:calc(48 * var(--c));height:calc(48 * var(--c));margin:calc(-24 * var(--c)) 0 0 calc(-24 * var(--c));border-radius:50%;background:#f4c64a;box-shadow:0 0 0 calc(3 * var(--c)) #c08a1e,0 0 0 calc(6 * var(--c)) rgb(255 240 170 / .35);color:#2c1a06;font:800 calc(28 * var(--c))/calc(48 * var(--c)) var(--ui-font);text-align:center}
+.ui-chest .prize img{display:block;flex:1;min-height:0;width:100%;border-radius:calc(8 * var(--c));background:radial-gradient(circle at 50% 30%,#8fd0ff,#2f6fc0 70%,#1f4c8f);object-fit:cover;object-position:50% 22%;box-shadow:inset 0 0 0 calc(1.5 * var(--c)) rgb(0 0 0 / .25)}
+.ui-chest .prize b{font:700 calc(15 * var(--c))/1.15 var(--ui-font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ui-chest .prize small{margin-top:calc(-3 * var(--c));font:500 calc(9.5 * var(--c))/1.2 var(--ui-font);opacity:.78}
+.ui-chest .prize .tag{position:absolute;left:calc(10 * var(--c));top:calc(10 * var(--c));padding:calc(2 * var(--c)) calc(6 * var(--c));border-radius:99px;background:rgb(0 0 0 / .62);color:#fff;font:600 calc(9 * var(--c))/1.3 var(--ui-font)}
+.ui-chest .prize .front::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 36%,rgb(255 255 255 / .8) 50%,transparent 64%);transform:translateX(-120%);animation:chest-shine .7s 2.85s ease-out both}
+@keyframes chest-shine{to{transform:translateX(120%)}}
+@keyframes chest-in{from{transform:translateY(calc(70 * var(--c))) scale(.2)}55%{transform:translateY(calc(-20 * var(--c))) scale(1.05)}to{transform:none}}
+@keyframes chest-turn{to{transform:rotateX(-16deg) rotateY(336deg)}}
+@keyframes chest-open{70%{transform:rotateX(124deg)}to{transform:rotateX(112deg)}}
+/* the card: out of the box back first (0.6 s), a beat, then over (0.45 s) with a small lift */
+@keyframes chest-prize{0%{animation-timing-function:cubic-bezier(.2,1.25,.4,1)}
+  46%,62%{transform:rotateY(24deg) rotateX(16deg) translate(calc(var(--x,0) * var(--c)),calc(-84 * var(--c))) rotateY(180deg) scale(1);animation-timing-function:ease-in-out}
+  82%{transform:rotateY(24deg) rotateX(16deg) translate(calc(var(--x,0) * var(--c)),calc(-94 * var(--c))) rotateY(70deg) scale(1.1)}
+  100%{transform:rotateY(24deg) rotateX(16deg) translate(calc(var(--x,0) * var(--c)),calc(-84 * var(--c))) rotateY(0deg) scale(1)}}
+@keyframes chest-show{from{opacity:0}to{opacity:1}}
+.ui-chest .hop{animation:chest-in .45s cubic-bezier(.3,1.2,.5,1) both}
+.ui-chest .turn{animation:chest-turn .9s .3s cubic-bezier(.55,0,.2,1) both}
+.ui-chest .lid{animation:chest-open .5s 1.25s cubic-bezier(.3,1.1,.5,1) both}
+.ui-chest .b-in::after{animation:chest-show .3s 1.3s both}
+.ui-chest .prize{animation:chest-prize 1.3s 1.5s both}
+.ui-chest:is(.at-0,.at-1,.at-2,.at-b) *,.ui-chest:is(.at-0,.at-1,.at-2,.at-b) *::after{animation:none!important}
+.ui-chest:is(.at-0,.at-1) .b-in::after{opacity:0}
+.ui-chest.at-1 .turn{transform:rotateX(-16deg) rotateY(118deg)}
+.ui-chest.at-2 .lid{transform:rotateX(112deg)}
+.ui-chest.at-2 .prize{transform:rotateY(24deg) rotateX(16deg) translate(calc(var(--x,0) * var(--c)),calc(-84 * var(--c))) rotateY(0deg) scale(1)}
+.ui-chest.at-b .lid{transform:rotateX(112deg)}.ui-chest.at-b .prize{transform:rotateY(24deg) rotateX(16deg) translate(calc(var(--x,0) * var(--c)),calc(-84 * var(--c))) rotateY(180deg) scale(1)}
+@media(prefers-reduced-motion:reduce){.ui-chest *,.ui-chest *::after{animation-duration:.01s!important;animation-delay:0s!important}}
+/* The layer a chest opens on: over the page, dimmed; the prize's line and the button come in once it is out. */
+.ui-prize{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(12 * var(--u));padding:var(--ui-margin);box-sizing:border-box;background:rgb(4 14 8 / .66);-webkit-backdrop-filter:blur(calc(8 * var(--u)));backdrop-filter:blur(calc(8 * var(--u)));--chest:1.15}
+.ui-prize p{margin:0;font-weight:600;font-size:var(--ui-t-page);line-height:1.35;text-align:center;color:#fff;animation:chest-show .3s 2.85s both}
+.ui-prize .ui-btn{min-width:60%;margin-top:calc(10 * var(--u));animation:chest-show .3s 3.05s both}
+.ui-prize.at-2 :is(p,.ui-btn){animation:none}
