@@ -19,9 +19,9 @@
 export const LEVELS=Object.freeze([
   {city:'taipei',rivals:0,need:0,silver:19.5,gold:18},
   {city:'tokyo',rivals:1,need:2,silver:42,gold:39},
-  {city:'paris',rivals:3,need:4,silver:41,gold:38},
-  {city:'seoul',rivals:5,need:6,silver:40.5,gold:38},
-  {city:'stockholm',rivals:5,need:8,silver:43,gold:39.5},
+  {city:'paris',rivals:2,need:4,silver:41,gold:38},
+  {city:'seoul',rivals:4,need:6,silver:40.5,gold:38},
+  {city:'stockholm',rivals:4,need:8,silver:43,gold:39.5},
 ]);
 export const RELAY_BUDDIES=3;   // the relay (a three-buddy team race) opens once the player has three buddies (2026-10-05: it was 3 stars, when every player started with three)
 export const STAR_REWARD={coins:50,gems:1};   // each star, the first time it is earned

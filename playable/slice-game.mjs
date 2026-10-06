@@ -1,4 +1,4 @@
-import {SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r292';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r301';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -44,8 +44,13 @@ export class SliceGame {
     this.actions=[];this.impulses=[];this.hurdles=m.hurdles.map(distance=>({distance,t:distance/c.baseSpeed,state:null}));
     this.terrain=sectionAt(0,course);
     const tier=course.difficulty in RIVAL_LEVEL?course.difficulty:3;   // easier cities: lower rival buddies and riders (the template course: as ★3)
-    this.rivals=rivals.map((r,i)=>{const horses=bestOrder(r,course),forms=horses.map(h=>({...c,...racing(buddyStats(RIVAL_BUDDY[h.type],RIVAL_LEVEL[tier])),...(r.pace?{baseSpeed:r.pace}:null)}));   // pace: the practice coach's own slow speed (slice-app PRACTICE_RIVALS)
-      return {...r,horses,forms,form:forms[0],team:[0,1,2],leg:0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
+    // The start gate (2026-10-06, the user): a field of four or more starts level, side by side, one stall each (STALLS,
+    // in lanes: the player has the middle one). The ones between two lanes (targetLane not whole) run their stall's
+    // line, clear of their neighbours, and after breakOut m take the lane beside them once it is free near them: ahead
+    // of the buddy in it if they broke faster, behind it if slower (rivalLanes; move: the narrow stallOverlap).
+    const gate=rivals.length>2&&!rivals.some(r=>r.pace);
+    this.rivals=rivals.map((r,i)=>{if(gate)r={...r,lane:STALLS[i],start:0};const horses=bestOrder(r,course),forms=horses.map(h=>({...c,...racing(buddyStats(RIVAL_BUDDY[h.type],RIVAL_LEVEL[tier])),...(r.pace?{baseSpeed:r.pace}:null)}));   // pace: the practice coach's own slow speed (slice-app PRACTICE_RIVALS)
+      return {...r,horses,forms,form:forms[0],team:[0,1,2],leg:0,stall:r.lane%1!==0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
         boosts:[],jumps:[],stumbles:[],jumped:new Set(),finishTime:null,energy:0,pool:forms[0].stamina,stamina:forms[0].stamina,restAt:0,skill:r.skill??RIVAL_SKILL[tier]+(r.edge??0),noteAt:0,
         rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity,drive:0,driveSpeed:0,rushes:[]};});
     // Adapter fields consumed by the existing renderer.
@@ -122,8 +127,8 @@ export class SliceGame {
     // On a bend the inside lane is the shorter way round: a runner covers bendLane more of the course per lane inside the
     // middle one, and as much less per lane outside it (bend: +1 left; lane: +1 right).
     const c=this.config,list=this.runners().map(o=>{const k=1-c.bendLane*sectionAt(o.distance,this.course).bend*o.laneValue;return {o,k,d:o.distance,nd:o.distance+o.speed*dt*k,by:null};}).sort((a,b)=>b.d-a.d);
-    for(const [i,a] of list.entries())for(const b of list.slice(0,i))if(Math.abs(a.o.laneValue-b.o.laneValue)<c.laneOverlap&&a.o.leap?.over!==b.o){
-      const room=b.nd-c.followGap,limit=a.d>room?a.d+Math.max(0,b.nd-b.d):room;   // already inside the gap: never close it
+    for(const [i,a] of list.entries())for(const b of list.slice(0,i))if(Math.abs(a.o.laneValue-b.o.laneValue)<(a.o.stall||b.o.stall?c.stallOverlap:c.laneOverlap)&&a.o.leap?.over!==b.o){
+      const room=b.nd-c.followGap*(a.o!==b.o&&list.some(x=>x.o.leap?.over===a.o)?2:1),limit=a.d>room?a.d+Math.max(0,b.nd-b.d):room;   // already inside the gap: never close it
       if(a.nd>limit){a.nd=Math.max(a.d,limit);a.by=b.o;}
     }
     for(const a of list){a.o.speed=(a.nd-a.d)/dt/a.k;   // speed: how fast it runs (k: how much of the course that covers here)
@@ -135,6 +140,7 @@ export class SliceGame {
   rivalLanes(r){
     if(this.time<(r.think??0)||Math.abs(r.laneValue-r.targetLane)>1e-6)return;r.think=this.time+.4;
     const c=this.config,go=to=>{r.laneChanges.push({from:r.laneValue,to,t:this.time});r.targetLane=to;};
+    if(r.targetLane%1){if(r.distance>=c.breakOut){const to=[...new Set([Math.floor(r.targetLane),Math.ceil(r.targetLane)].map(l=>Math.max(-1,Math.min(1,l))))].sort((a,b)=>Math.abs(a-r.targetLane)-Math.abs(b-r.targetLane)).find(l=>!this.occupied(r,l));if(to!==undefined){go(to);r.lane=to;}}return;}   // out of the stalls: into the lane beside it
     if(r.blockedBy){for(const to of [r.targetLane-1,r.targetLane+1].filter(l=>Math.abs(l)<=1).sort((a,b)=>Math.abs(a)-Math.abs(b)))if(!this.occupied(r,to)){go(to);return;}
       const sprinting=strength(r.boosts,this.time,c)>0,cooling=r.jumps.length&&this.time-r.jumps.at(-1).t<c.jumpDuration;   // no leap straight out of a jump (as the player: charge())
       const over=!r.leap&&!cooling&&(sprinting||(r.energy>=c.boostCost&&this.fresh(r)))&&this.leapTarget(r);
@@ -220,7 +226,9 @@ export class SliceGame {
     const solo=this.solo&&!r.pace;if(solo)r.driveSpeed+=(r.drive-r.driveSpeed)*(1-Math.exp(-(r.drive<r.driveSpeed?this.solo.fall:this.solo.response)*dt));
     const own=solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed;
     r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r));
+    if(r.targetLane%1&&r.distance>3*c.breakOut)r.speed*=.75;   // still between two lanes with no room beside it: it eases off and drops in behind
     r.laneValue=laneAt(r.laneChanges,this.time,c.laneDuration)??r.laneValue;
+    if(r.stall&&r.laneValue%1===0)r.stall=false;   // in its lane: the full traffic rule from here
   }
   // The notes round a rival's own hurdle jump are rested for it, as the player's are (restNotes): hands on the jump.
   rested(r,t){

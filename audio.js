@@ -1,5 +1,5 @@
-import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r292';
-import {racePhase} from './race-session.js?v=r292';
+import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r301';
+import {racePhase} from './race-session.js?v=r301';
 
 export function buildScore(race){
   const tempo=race.slice?race.config.tempo??1:1;

@@ -9,7 +9,7 @@ export const SLICE_CONFIG = Object.freeze({
   // Rhythm windows are stored in simulation seconds. Preserve the intended
   // real-time tap tolerance when the whole race runs at 1.3x tempo.
   chordWindow:.075/1.3*T, perfectWindow:.085*T, goodWindow:.15*T,   // real time: both pads within 58 ms, Perfect ±85 ms, Good ±150 ms (170 until 2026-10-05: the notes are 308 ms apart now)
-  laneDuration:.3, laneSpacing:3, bendLane:.05, followGap:6.24, laneOverlap:.8,   // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
+  laneDuration:.3, laneSpacing:3, bendLane:.05, followGap:6.24, laneOverlap:.8, stallOverlap:.45, stall:.75, breakOut:15,   // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
   leapReach:3,   // a jump in a sprint leaps the horse just ahead (up to followGap + leapReach) when there is room to land
   // Comeback (stuck behind a horse, the taps should build toward a pass, not feel wasted):
   draftReach:7, draftGain:1.6, draftTrickle:4,   // drafting: a horse ahead in the lane within draftReach m (right behind) → hits give ×draftGain energy, plus draftTrickle / s
@@ -76,6 +76,7 @@ export const SLICE_RIVALS = Object.freeze([
   {id:'rio',name:'Rio',types:['mud','straight','mud'],coats:[6,8,6],lane:1,start:-7,sprintAt:.65},
   {id:'sage',name:'Sage',types:['straight','mud','curve'],coats:[5,3,4],lane:-1,start:-7,sprintAt:.45},   // the sixth runner (2026-10-05: stages 4 and 5 are run against five); the relay keeps the first four
 ]);
+export const STALLS=[-1,1,-2,2,3].map(k=>k*.75);   // the rivals' start stalls, in lanes (the player's is 0): 2.25 m apart, across the 16 m of dirt (the three lanes are its middle 6 m)
 export const fieldRivals=size=>SLICE_RIVALS.slice(0,size-1);   // size: runners with the player (a solo race: 2, 3 or 5; the relay: 5, or 3 with ?field=3)
 // The ladder, by the course's difficulty (city pack `difficulty`, the ★ on the track cards; none, the template course,
 // is 3): the level of the rivals' buddies, which is also the level the city expects of the player's, and their riders'

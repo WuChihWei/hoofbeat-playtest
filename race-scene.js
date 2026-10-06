@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r292';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r292';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r292';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r292';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r292';
-import {installApprovedEnvironment} from './approved-environment.js?v=r292';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r292';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r292';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r292';
-import {turnAt} from './track-projection.js?v=r292';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r292';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r292';
+import {roadHalfWidth} from './track-presentation.mjs?v=r301';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r301';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r301';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r301';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r301';
+import {installApprovedEnvironment} from './approved-environment.js?v=r301';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r301';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r301';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r301';
+import {turnAt} from './track-projection.js?v=r301';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r301';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r301';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -53,6 +53,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // until the next hit; glance: the rider's head turns to a rival passed or passing ([rad, s]); pump: a fist in the air
 // for a clean jump, a leap, taking the lead ([rad on the right upper arm, s]); tail: it flicks to the side of a hit
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
+const WIDE=(new URLSearchParams(globalThis.location?.search||'').get('wide')||'6,9,3').split(',').map(Number);   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
 const REACT={lean:[.11,6],slump:.65,glance:[.8,.8],pump:[-1.7,.7],tail:[.32,.3],kick:5,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
 // by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
@@ -306,6 +307,23 @@ export class ChaseRenderer {
     this.dustParts=[];this.sparkParts=[];this.dustTime=undefined;this.pulses=[-100,-100];this.look=this.cheerAt=this.flick=null;this.sliceTurn=0;this.surge=0;this.kick=0;
     this.models.forEach(e=>{for(const k of ['sprint','gait','crouch','tuck','dustTime','dustDue','lastTime','animationTime','lastDistance','laneLast','lean','slump'])delete e[k];if(e.model.blaze)e.model.blaze.value=0;});
     return true;
+  }
+  // The start gate (slice races): a stall per runner where it stands at the start, a door before each that swings open
+  // over the last of the countdown (time: simulation seconds, below 0 before GO); left behind once they are off.
+  startGate(race,time,turn){
+    if(!this.stalls){
+      const box=this.own(new THREE.BoxGeometry(1,1,1)),white=this.material('#f4efe2'),blue=this.material('#2f58c8'),group=new THREE.Group(),W=race.config.laneSpacing*(race.config.stall||.5)/2;this.scene.add(group);
+      const part=(parent,x,y,z,sx,sy,sz,m)=>{const o=this.mesh(box,m,parent);o.position.set(x,y,z);o.scale.set(sx,sy,sz);return o;};
+      const xs=[race.laneValue,...race.rivals.filter(r=>r.distance>-50).map(r=>r.laneValue)].map(l=>l*race.config.laneSpacing),posts=[...new Set(xs.flatMap(x=>[x-W,x+W]).map(x=>+x.toFixed(2)))];
+      for(const x of posts)for(const z of [0,3.4])part(group,x,1.5,z,.12,3,.12,white);
+      for(const x of posts)part(group,x,2.9,1.7,.08,.1,3.4,white);
+      part(group,(Math.min(...posts)+Math.max(...posts))/2,3.2,0,Math.max(...posts)-Math.min(...posts)+.3,.5,.16,blue);
+      const doors=xs.flatMap(x=>[-1,1].map(side=>{const pivot=new THREE.Group();pivot.position.set(x+side*W,0,0);group.add(pivot);for(const y of [.9,1.5,2.1])part(pivot,-side*W/2,y,0,W-.08,.1,.08,blue);return {pivot,side};}));
+      this.stalls={group,doors,wide:Math.max(...xs.map(Math.abs))>race.config.laneSpacing?WIDE:0};
+    }
+    const g=this.stalls,ahead=3.2-race.distance,pose=roadPose(HORSE_Z-ahead,turn),open=clamp(1+time/.7,0,1);
+    g.group.visible=ahead>-30;g.group.position.set(pose.x,0,pose.z);g.group.rotation.y=pose.heading;
+    for(const d of g.doors)d.pivot.rotation.y=d.side*Math.PI*.55*open*open*(3-2*open);
   }
   buildRelayGates(){
     const box=this.own(new THREE.BoxGeometry(1,1,1)),wood=this.material('#aa8761'),roof=this.material('#557b75'),trim=this.material('#e3d7b6');
@@ -756,17 +774,19 @@ export class ChaseRenderer {
       const targetEase=this.reduced?0:clamp((race.speed/race.config.baseSpeed-1)/.45,0,1);
       this.sliceCameraEase=(this.sliceCameraEase||0)+(targetEase-(this.sliceCameraEase||0))*(1-Math.exp(-Math.max(0,frameTime)/210));
       const lift=this.reduced?0:this.playerJump||0;   // the player's jump height, from the last frame's runners()
-      this.camera.position.set(c.x,c.y+.035*this.sliceCameraEase+REACT.rise[0]*lift,c.z+.3*this.sliceCameraEase);
+      // The start gate's whole row in view: the camera is lifted (stalls.wide m) through the countdown and comes back down over the first 1.2 s after GO.
+      const back=clamp(1-Math.max(0,time)/1.2,0,1),high=this.stalls?.wide?back*back*(3-2*back):0;
+      this.camera.position.set(c.x,c.y+high*WIDE[0]+.035*this.sliceCameraEase+REACT.rise[0]*lift,c.z+high*WIDE[1]+.3*this.sliceCameraEase);
       // A sprint or an apple: the view widens a little (REACT.kick), eased; the framing and the controls stay put.
       this.kick=(this.kick||0)+((this.reduced?0:race.rush(time))-(this.kick||0))*(1-Math.exp(-Math.max(0,frameTime)/140));
       const off=clamp(1-Math.max(0,time)/REACT.launch[1],0,1),fov=c.fov+REACT.kick*this.kick-(this.reduced?0:REACT.launch[0]*off*off*(3-2*off));if(Math.abs(this.camera.fov-fov)>.01){this.camera.fov=fov;this.camera.updateProjectionMatrix();}
-      this.camera.lookAt(c.x,c.targetY+REACT.rise[1]*lift,c.targetZ);
+      this.camera.lookAt(c.x,c.targetY+high*WIDE[2]+REACT.rise[1]*lift,c.targetZ);
       this.canvas.dataset.composition=JSON.stringify(c);
       this.canvas.dataset.cameraSpeedEase=this.sliceCameraEase.toFixed(3);
     }
     this.camera.updateMatrixWorld();
     const sceneryTime=coastAge?DURATION+coastDistance/12:time;
-    if(race.slice)this.relayGates.forEach(g=>g.group.visible=false);else this.gates(sceneryTime,turn);this.runners(race, time, turn, metrics); this.rhythm(race, time, turn);
+    if(race.slice){this.relayGates.forEach(g=>g.group.visible=false);this.startGate(race,time,turn);}else this.gates(sceneryTime,turn);this.runners(race, time, turn, metrics); this.rhythm(race, time, turn);
     this.hurdles(race,time,turn,[0,...metrics.rivals.map(r=>rivalOffset(r.lead))]);
     const finishAhead=race.slice?race.config.length-race.distance:null;
     this.finish.visible=race.slice?(finishAhead>=-PAST&&finishAhead<72):time>DURATION-5;
