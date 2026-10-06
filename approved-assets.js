@@ -10,6 +10,15 @@ export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HO
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
 export const MODEL_VERSION='lib-61';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
+// The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
+// come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
+// are all in (slice-app sceneReady). A manager of their own: the default one also carries the models still downloading
+// in the background (home.js), which a race must not wait for.
+export const scenePictures=new THREE.LoadingManager();
+let loading=false;const settled=[];
+scenePictures.onStart=()=>{loading=true;};
+scenePictures.onLoad=()=>{loading=false;settled.splice(0).forEach(f=>f());};
+export const loadsSettled=()=>loading?new Promise(r=>settled.push(r)):Promise.resolve();
 let pending;
 // How many model files have been asked for and how many have arrived (the start card shows it while it waits).
 export const loadState={done:0,total:0};

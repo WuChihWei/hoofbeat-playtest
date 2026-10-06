@@ -5,21 +5,24 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #stable (Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #race · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r286';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r286';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r286';
-// The models every race and the ranch need start downloading as soon as the first page is up (2026-10-05, the user: they
-// loaded slowly), so they are usually there by the time one is opened.
-setTimeout(()=>preloadStable().catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>preloadPresentation()).catch(()=>{}),300);   // 2026-10-06 (the user: the ranch took five seconds on a phone): the ranch's models first, from the moment the game is open, then the race's   // after the page that is open has asked for its own (the ranch waits for two of them only)
-import {lang,setLang,translate} from '../i18n.js?v=r286';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r286';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r286';
-import {mountStableView,preloadStable} from './stable-view.js?v=r286';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r286';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r292';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r292';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r292';
+// In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
+// race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
+// painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
+const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
+setTimeout(()=>{barn.src='assets/stable/bg.webp';preloadStable().catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
+import {lang,setLang,translate} from '../i18n.js?v=r292';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r292';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r292';
+import {mountStableView,preloadStable} from './stable-view.js?v=r292';
+import {cityPictures} from '../approved-environment.js?v=r292';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r292';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r286';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r286';
-import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r286';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r292';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r292';
+import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal} from './progress.mjs?v=r292';
 
 const GHOST='hoofbeat.ghost.v4.',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -167,6 +170,11 @@ function brief(c,solo){
 }
 
 const buddyImg=h=>`assets/stable/buddy_${h.coat}.webp?v=coats-4`;   // re-rendered from approved-assets COATS (_coat-lineup.html)
+ROSTER.forEach(h=>{new Image().src=buddyImg(h);});
+// A city's scene is about twenty pictures, 1.5–1.9 MB (its painted trees, lamps and far view; approved-environment
+// cityPictures). The scene is shown only once they are all in, so they are asked for ahead: the chosen city's when the
+// game opens, and any city's when its pick page is opened.
+const warmed=new Set(),warmCity=id=>{if(warmed.has(id))return;warmed.add(id);for(const u of cityPictures(id)){const i=new Image();i.crossOrigin='anonymous';i.src=u;}};   // the portraits (110 KB in all) are asked for at once: the row of heads on the pick page was black circles for a moment the first time
 const RIDER_LEVEL=100;   // the rider levels every 100 xp their buddies earn (a buddy: stable-care level(), XP_LEVEL a level)
 
 // ---- course drawing (Tracks card, race setup, tracks list): the real lap from the course generator ----
@@ -253,6 +261,7 @@ const PAGES={
     // glass, the green button. Relay: three big heads are the legs (a tag: which leg, its ground), the heads under them
     // go onto the chosen leg; the card sets the three side by side.
     const c=COURSES.find(x=>x.id===profile.city)||COURSES[0],relayOk=relayOpen(prog),mine=ROSTER.filter(h=>owns(prog,h.id)),bc=buildCourse(c.id),[wi,wl]=weatherOf(bc.theme.weather);
+    warmCity(c.id);
     if(!relayOk||!profile.mode)profile.mode='solo';
     fixOrder();
     const cond=(n,foes=null)=>`<article class="ui-panel soft ui-card-body cond"><div><b>賽道狀況</b><p><span>${wl}</span><span>${bc.surface}</span><span>${n} 跳欄</span>${foes?`<span>${foes} 位對手</span>`:''}</p></div>${icon(wi)}</article>`;
@@ -633,7 +642,7 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r286',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r292',import.meta.url);document.head.append(css);
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

@@ -32,8 +32,8 @@ export function sunDirection(bg){
   return new THREE.Vector3(Math.sin(az*D2R)*Math.cos(el*D2R),Math.sin(el*D2R),-Math.cos(az*D2R)*Math.cos(el*D2R));
 }
 // → {mesh (null for equirect: the scene background carries it), update(camera)}
-export function installFarBackground(scene,bg,url,own=x=>x){
-  const tex=own(new THREE.TextureLoader().load(url));tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
+export function installFarBackground(scene,bg,url,own=x=>x,manager=undefined){   // manager: the loading manager the painting comes through (approved-assets scenePictures)
+  const tex=own(new THREE.TextureLoader(manager).load(url));tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
   if(bg.projection==='equirect'){tex.mapping=THREE.EquirectangularReflectionMapping;scene.background=tex;return {mesh:null,update(){}};}
   tex.wrapS=THREE.MirroredRepeatWrapping;
   const far=bg.far||{};

@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r286';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r286';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r286';
-import {compositionRank} from '../race-composition.mjs?v=r286';
-import {ChaseRenderer} from '../race-scene.js?v=r286';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState} from '../approved-assets.js?v=r286';
-import {cityModels} from '../approved-environment.js?v=r286';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r292';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r292';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r292';
+import {compositionRank} from '../race-composition.mjs?v=r292';
+import {ChaseRenderer} from '../race-scene.js?v=r292';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r292';
+import {cityModels} from '../approved-environment.js?v=r292';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r286';
-import {ControlRouter} from './control-router.mjs?v=r286';
-import {RaceAudio,readLatency} from '../audio.js?v=r286';
-import {addLog,raceEntry} from '../playtest.js?v=r286';
-import {SLICE_CONFIG,sliceChart,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r286';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r292';
+import {ControlRouter} from './control-router.mjs?v=r292';
+import {RaceAudio,readLatency} from '../audio.js?v=r292';
+import {addLog,raceEntry} from '../playtest.js?v=r292';
+import {SLICE_CONFIG,sliceChart,TERRAIN_NAME,SOLO,fieldRivals} from './slice-config.mjs?v=r292';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -61,7 +61,8 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r286',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r292',import.meta.url);document.head.append(css);
+  await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${practice?' is-practice':''}${lefty?' lefty':''}${lean?' lean':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp)"><canvas id="slice-canvas" aria-label="HOOFBEAT 三車道賽道"></canvas>
@@ -281,6 +282,13 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     // Practice: nothing on the road but the coins; the fences and the apples wait far off for a lesson to place them.
     if(practice){g.hurdles=[0,1].map(()=>({distance:1e9,t:1e9,state:null}));g.apples=[0,1,2].map(i=>({id:'p'+i,distance:1e9,lane:0,collected:false}));}
     return g;};
+  // The scene is shown complete or not at all (2026-10-06, the user: the race was seen being put together: its sky, ground
+  // and painted cards are pictures that arrive after the scene is built, each one popping in). Its canvas stays hidden
+  // (slice.css .scene-ready: the city's painted backdrop, the shell's own background, shows meanwhile) until every
+  // picture is in and three frames have been drawn with them. At most 10 s: a picture that never arrives must not keep
+  // the race shut.
+  const frames=n=>Promise.race([new Promise(r=>{const f=()=>--n<0?r():requestAnimationFrame(f);f();}),new Promise(r=>setTimeout(r,1500))]);
+  const sceneReady=async()=>{await Promise.race([loadsSettled(),new Promise(r=>setTimeout(r,10000))]);await frames(3);shell.classList.add('scene-ready');};
   const stage=()=>{renderer=new ChaseRenderer($('slice-canvas'),{controls:pads,slice:true,city});renderer.prepare(game);$('slice-canvas').addEventListener('race-render-error',pause);$('slice-canvas').addEventListener('coin-burst',e=>coinFly(e.detail));};
   async function newRun(){
     if(phase==='loading')return;if(midRace())logRun('restart');phase='loading';
@@ -305,7 +313,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     try{
       // The scene built for the start card (or the last run) is used again: only what a run leaves behind is cleared
       // (race-scene rerun). Anything else is rebuilt, the old picture staying up until the new one is ready.
-      if(!renderer?.rerun(game)){if(renderer){renderer.dispose();const old=$('slice-canvas');old.replaceWith(old.cloneNode(false));}stage();}
+      if(!renderer?.rerun(game)){shell.classList.remove('scene-ready');if(renderer){renderer.dispose();const old=$('slice-canvas');old.replaceWith(old.cloneNode(false));}stage();sceneReady();}   // a rebuilt scene: hidden again until it is whole (the countdown runs on)
       clock.reset();if(runs++)clock.start-=1000;   // again: a 2 s countdown (the first second is skipped, its beep too)
       sound.start(()=>clock.elapsed(),game);
       frameId=requestAnimationFrame(frame);
@@ -586,20 +594,23 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     // While it waits the button counts the model files in (2026-10-05: a player on the live site sat on 準備中… with no
     // sign of anything happening); nothing new for 25 s (a stalled download never fails by itself) → the button reloads
     // the page (what did arrive is in the browser's cache).
-    // The loading page (2026-10-06, the user): while the models come in, the card is the how-to-play cards (they turn by
-    // themselves) over a bar that fills; the goal, the missions and 起跑 come once everything is in and the scene has drawn.
-    // A load that is done within 0.4 s (everything cached) shows none of it.
-    const btn=$('slice-start');let seen=-1,since=performance.now();const how=cover.querySelector('.how-wrap');
+    // The loading page (2026-10-06, the user): while the scene is not ready the screen is the city's painting (the scene's
+    // canvas is hidden: sceneReady) under the start card, whose button is a bar that fills; after a second of that the
+    // how-to-play cards come up above the card (they turn by themselves; slice.css .is-loading). The scene, 起跑 and the
+    // cards' leaving all happen at once, when everything is in and has drawn. The usual load (everything already
+    // downloaded) is over before the second is.
+    const btn=$('slice-start');let seen=-1,since=performance.now();const how=cover.querySelector('.how-wrap'),d0=loadState.done,n0=loadState.total;   // d0, n0: the counts before this load (they run on through the session)
     const t0=performance.now();
-    const showHow=setTimeout(()=>{cover.classList.add('is-loading');how.hidden=false;},400);
+    const showHow=practice?0:setTimeout(()=>{cover.classList.add('is-loading');how.hidden=false;},1000);   // not over the practice's card: it lists what to try itself (and is tall: the cards would cover the top buttons)
     const wait=setInterval(()=>{if(loadState.done!==seen){seen=loadState.done;since=performance.now();}
       if(performance.now()-since>25000){clearInterval(wait);btn.disabled=false;btn.textContent='連線太慢，點這裡重新載入';btn.onclick=()=>location.reload();}
-      else{btn.textContent=`準備中… ${loadState.done}/${loadState.total}`;btn.style.setProperty('--p',loadState.total?loadState.done/loadState.total:0);}},400);
+      else{const n=loadState.total-n0,d=loadState.done-d0;btn.textContent=n?`準備中… ${d}/${n}`:'準備中…';btn.style.setProperty('--p',n?.8*d/n:0);}},400);   // the models are the first 80% of the bar
     try{try{await Promise.all([preloadPresentation(rivals.length>0||/[?&]lod=far/.test(location.search)),preloadModels(cityModels(city)),preloadBuddies(team.map(h=>h.coat))]);}finally{clearInterval(wait);}
       // The track and the horse stand ready behind the start card (the same scene the run then uses).
       if(phase==='ready'&&!renderer){game=makeGame();resolver=new ControlRouter(game,lag);stage();frameId=requestAnimationFrame(frame);}
-      // 起跑 only once the scene has drawn (its first frames compile the shaders: a start pressed before that stuttered).
-      await Promise.race([new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))),new Promise(r=>setTimeout(r,1500))]);
+      btn.textContent='準備中…';btn.style.setProperty('--p',.9);   // the models are in: the scene's own pictures and first frames are the rest
+      // 起跑, and the scene itself, only once it is whole and has drawn (its first frames compile the shaders too).
+      await sceneReady();if(phase==='exited')return;
       try{localStorage.setItem('hoofbeat.loadtime.race',((performance.now()-t0)/1000).toFixed(1))}catch{}   // Settings → About shows it (for reports of slow loading)
       clearTimeout(showHow);if(cover.classList.contains('is-loading')){cover.classList.remove('is-loading');how.hidden=true;$('slice-help').setAttribute('aria-expanded','false');}
       $('slice-start').disabled=false;$('slice-start').textContent=practice?'開始練習':'起跑';$('slice-start').onclick=newRun;}

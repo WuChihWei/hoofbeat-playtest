@@ -473,6 +473,18 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #app{display:flex;justify-content:center;align-items:center;background:#0e110c}
 .slice-shell{width:min(100vw,calc(var(--app-h,100dvh) * .5625),460px);height:min(var(--app-h,100dvh),818px)}
 
-/* The loading page: the how-to cards instead of the goal and the missions, the button a bar that fills */
-#slice-cover.is-loading :is(.cover-stars,.cover-fold,.cover-tip,.cover-steps,#slice-skip){display:none}
+/* The loading page: the how-to cards float over the city's painting just above the start card, whose button is a bar
+   that fills. The card itself keeps its shape: nothing in it moves when the cards come or go (a screen recording
+   showed them swapped in and out again within a tenth of a second when they replaced the card's own lines). */
+#slice-cover.is-loading .how-wrap{position:absolute;left:0;right:0;bottom:calc(100% + var(--ui-gap));padding:calc(14 * var(--u)) var(--ui-pad) calc(12 * var(--u));border-radius:var(--ui-r-lg);background:rgb(0 0 0 / .78);animation:ui-enter .22s var(--ui-ease)}
+#slice-cover.is-loading .how{margin:0}
+#slice-cover.is-loading .how-card{padding:calc(8 * var(--u)) var(--ui-s3);gap:calc(4 * var(--u));background:none}   /* smaller than in the card: it must clear the top buttons on a short screen */
+#slice-cover.is-loading .how-art{height:calc(54 * var(--u))}
+#slice-cover.is-loading .how-hoof{width:calc(46 * var(--u));height:calc(46 * var(--u))}
+#slice-cover.is-loading .how-dots{margin-top:calc(6 * var(--u))}
 #slice-start:disabled{background:linear-gradient(90deg,var(--ui-green) calc(var(--p,0) * 100%),rgb(255 255 255 / .16) 0);color:#fff;opacity:1}
+
+/* The scene is shown complete or not at all: its canvas is hidden (the shell's own background, the city's painted
+   backdrop, shows) until slice-app says it is whole (.scene-ready), then it comes in at once */
+.slice-shell>#slice-canvas{opacity:0}
+.slice-shell.scene-ready>#slice-canvas{opacity:1;transition:opacity .18s}

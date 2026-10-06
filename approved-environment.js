@@ -1,16 +1,16 @@
-import {fencePose} from './track-presentation.mjs?v=r286';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r286';
+import {fencePose} from './track-presentation.mjs?v=r292';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r292';
 import * as THREE from './vendor/three.module.min.js';
-import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r286';
+import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r292';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {approvedAssets} from './approved-assets.js?v=r286';
-import {HORSE_Z,roadPose} from './race-world.js?v=r286';
-import {cityById,CITIES} from './course/cities/index.mjs?v=r286';
-import {modelFor} from './course/assets.mjs?v=r286';
+import {approvedAssets,scenePictures} from './approved-assets.js?v=r292';
+import {HORSE_Z,roadPose} from './race-world.js?v=r292';
+import {cityById,CITIES} from './course/cities/index.mjs?v=r292';
+import {modelFor} from './course/assets.mjs?v=r292';
 // The release tag the page loaded this module with (?v=…): the paintings and cards carry it too, so a picture replaced
 // under the same name is fetched again instead of coming from the browser's cache.
 const TAG=new URL(import.meta.url).search;
-import {installFarBackground,sunDirection} from './far-background.js?v=r286';
+import {installFarBackground,sunDirection} from './far-background.js?v=r292';
 
 // The race dressing comes from the city pack (course/cities/<id>.mjs): barrier, prop rows, treeline, weather, backdrop.
 const packFor=id=>cityById(id)||cityById('stockholm')||CITIES[0];
@@ -18,6 +18,17 @@ const packFor=id=>cityById(id)||cityById('stockholm')||CITIES[0];
 export function cityModels(id){
  const d=packFor(id).dressing,ids=[d.barrier.asset,d.barrier.far||'Fence_Wood',...d.rows.map(r=>r.asset),...d.treeline.assets];
  return [...new Set([lite(modelFor(d.barrier.asset)),...ids.map(modelFor).filter(Boolean).flatMap(m=>[near(m),m.far])].filter(Boolean))];
+}
+
+// Every picture a city's scene asks for as it is built: its far painting (or backdrop), the two ground tiles, and its
+// painted cards and fence (course/assets.mjs C / F). home.js asks for them ahead of a race, so the scene finds them in
+// the browser's cache: it is shown only once they are all in (approved-assets scenePictures).
+export function cityPictures(id){
+ const pack=packFor(id),D=pack.dressing,files=new Set(['textures/grass.webp','textures/dirt.webp']);
+ const add=asset=>{const m=modelFor(asset);if(m?.variants)m.variants.forEach(add);else{const f=m?.card?.file||m?.fence?.file;if(f)files.add(f+TAG);}};
+ [D.barrier.asset,...D.rows.map(r=>r.asset),...D.treeline.assets,...(D.skyline||[]).map(c=>c[0])].forEach(add);
+ files.add(pack.background?`panoramas/${pack.background.panorama}${TAG}`:`backdrops/${pack.backdrop}`);
+ return [...files].map(f=>new URL('./assets/'+f,import.meta.url).href);
 }
 
 // Phones draw the lighter copy of a model up close where there is one (course/assets.mjs lite).
@@ -78,7 +89,7 @@ export function installApprovedEnvironment(renderer){
  const cardLook=m=>{m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
    {float cl=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));diffuseColor.rgb=mix(vec3(cl),diffuseColor.rgb,${LOOK.race.card.toFixed(3)})*${LOOK.race.cardValue.toFixed(3)};}`);};m.customProgramCacheKey=()=>'hoofbeat-card'+LOOK.race.card+'-'+LOOK.race.cardValue;return m;};
  function cardBatch(card,count){
-  const tex=r.own(new THREE.TextureLoader().load(new URL(`./assets/${card.file}${TAG}`,import.meta.url).href));tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
+  const tex=r.own(new THREE.TextureLoader(scenePictures).load(new URL(`./assets/${card.file}${TAG}`,import.meta.url).href));tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
   const s=card.scale,plane=r.instances(r.own(new THREE.PlaneGeometry(card.aspect*s,s).translate((.5-card.anchor)*card.aspect*s,s/2,0)),cardLook(r.own(new THREE.MeshBasicMaterial({map:tex,alphaTest:.5,side:THREE.DoubleSide}))),count);
   if(card.shade===false)return [plane];
   const shade=r.own(r.shadowMaterial.clone()),[sw,sd]=(card.shade||[card.aspect*1.5,card.aspect*.8]).map(v=>v*s);shade.side=THREE.DoubleSide;
@@ -89,7 +100,7 @@ export function installApprovedEnvironment(renderer){
  // and 1 high, centred, the post at its far end: bay after bay it is span, post, span, post. Unlit like the cards, a
  // little darker on the post's sides and lighter on top.
  function fenceBatch({file,aspect,post},count){
-  const tex=r.own(new THREE.TextureLoader().load(new URL(`./assets/${file}${TAG}`,import.meta.url).href));tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
+  const tex=r.own(new THREE.TextureLoader(scenePictures).load(new URL(`./assets/${file}${TAG}`,import.meta.url).href));tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
   const pw=post*aspect,xp=aspect/2-pw,d=pw/2,pos=[],uv=[],col=[],idx=[];
   const quad=(c,u,shade)=>{const i=pos.length/3;for(const p of c)pos.push(...p);for(const q of u)uv.push(...q);for(let k=0;k<4;k++)col.push(shade,shade,shade);idx.push(i,i+1,i+2,i,i+2,i+3);};
   const POST=[[0,0],[post,0],[post,1],[0,1]],SPAN=[[post,0],[1,0],[1,1],[post,1]],TOP=Array(4).fill([post/2,.93]);
@@ -193,7 +204,7 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
  r.r.toneMappingExposure=LOOK.race.exposure;raceGrade(r.r);
  // Far layer. Panorama city: far-background.js (sky, clouds, far land, skyline in one painting). Otherwise the
  // gradient dome (blue overhead to pale haze at the horizon = fog colour) with the backdrop card and mountains below.
- const far=BG?installFarBackground(r.scene,BG,new URL(`./assets/panoramas/${BG.panorama}${TAG}`,import.meta.url).href,x=>r.own(x)):null;
+ const far=BG?installFarBackground(r.scene,BG,new URL(`./assets/panoramas/${BG.panorama}${TAG}`,import.meta.url).href,x=>r.own(x),scenePictures):null;
  if(far)r.clouds.children.forEach(c=>c.visible=false);   // the painting has its own clouds
  const sky=far?null:r.mesh(r.own(new THREE.SphereGeometry(1000,32,16)),r.own(new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,toneMapped:false,
   uniforms:{top:{value:new THREE.Color(W.sky.top)},hor:{value:new THREE.Color(W.sky.horizon)}},
@@ -210,20 +221,20 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
  r.ground.scale.set(2.6,2.6,1);
  // Grass: a painted lawn tile (assets/textures/grass.webp, tools/grass.py: seamless, in the game's lawn colour), GRASS_M metres a
  // tile, repeated over the whole lawn and the verge (one load each: the browser serves the second from its cache).
- const GRASS_M=4,grassTile=(rx,ry)=>{const t=r.own(new THREE.TextureLoader().load(new URL('./assets/textures/grass.webp',import.meta.url).href));
+ const GRASS_M=4,grassTile=(rx,ry)=>{const t=r.own(new THREE.TextureLoader(scenePictures).load(new URL('./assets/textures/grass.webp',import.meta.url).href));
   t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;t.repeat.set(rx,ry);return t;};
  const groundTex=grassTile(620*2.6/GRASS_M,620*2.6/GRASS_M);r.grassMaterial.map=groundTex;r.grassMaterial.needsUpdate=true;
  const vergeTex=grassTile(P.track.vergeWidth/GRASS_M,390/GRASS_M);r.vergeMaterial.map=vergeTex;r.vergeMaterial.needsUpdate=true;
  relay.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
  // The track: a painted dirt tile (assets/textures/dirt.webp, tools/tile.py: seamless, in the track's colour), DIRT_M metres a tile.
- const DIRT_M=4.2,dirt=r.own(new THREE.TextureLoader().load(new URL('./assets/textures/dirt.webp',import.meta.url).href));
+ const DIRT_M=4.2,dirt=r.own(new THREE.TextureLoader(scenePictures).load(new URL('./assets/textures/dirt.webp',import.meta.url).href));
  dirt.colorSpace=THREE.SRGBColorSpace;dirt.wrapS=dirt.wrapT=THREE.RepeatWrapping;dirt.repeat.set(P.track.width/DIRT_M,390/DIRT_M);dirt.anisotropy=8;r.roadMaterial.map=dirt;r.roadMaterial.needsUpdate=true;
  // City backdrop (assets/backdrops/<city>.webp: the painted skyline cropped at its lawn line, top and sides faded to alpha)
  // stands in for the mountains: a flat card far behind the treeline, lawn line on the ground, unlit and unfogged.
  const BACKDROP={z:-700,width:290};
  let card=null;
  if(pack.backdrop&&!far){
-  const tex=r.own(new THREE.TextureLoader().load(new URL(`./assets/backdrops/${pack.backdrop}`,import.meta.url).href,t=>{
+  const tex=r.own(new THREE.TextureLoader(scenePictures).load(new URL(`./assets/backdrops/${pack.backdrop}`,import.meta.url).href,t=>{
    card.scale.y=BACKDROP.width*t.image.height/t.image.width;card.position.y=card.scale.y/2-4;}));
   tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
   card=r.mesh(r.own(new THREE.PlaneGeometry(1,1)),r.own(new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,fog:false,toneMapped:false})));
