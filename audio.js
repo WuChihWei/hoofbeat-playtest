@@ -1,6 +1,19 @@
-import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r304';
-import {racePhase} from './race-session.js?v=r304';
+import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r307';
+import {racePhase} from './race-session.js?v=r307';
 
+// A tune everyone knows for each city (2026-10-06, the user; all long out of copyright), played over the rhythm section
+// in place of the made-up lead: [semitones from C5, length in half-beats] (null: a rest), looped from the first note of
+// the chart (simulation t = 1; a beat is .6 simulation s, the spacing of the chart's notes, so the taps fall on it).
+// taipei: Rossini, William Tell overture (finale) · tokyo: Sakura Sakura · paris: Offenbach, the can-can (Galop infernal)
+// seoul: Arirang · stockholm: Grieg, In the Hall of the Mountain King.
+const G3=[[7,.5],[7,.5],[7,1]],TELL_A=[...G3,...G3,[7,.5],[7,.5],[12,1],[14,1],[16,1]],MK=[[-3,1],[-1,1],[0,1],[2,1],[4,1],[0,1],[4,2]];
+const MELODY={
+  taipei:[...TELL_A,...G3,[7,.5],[7,.5],[12,1],[16,.5],[16,.5],[14,1],[11,1],[7,1],...TELL_A,[12,1],[16,1],[19,2],[17,1],[16,1],[14,1],[12,1]],
+  tokyo:[[-3,2],[-3,2],[-1,4],[-3,2],[-3,2],[-1,4],[-3,2],[-1,2],[0,2],[-1,2],[-3,2],[-1,1],[-3,1],[-7,4],[-8,2],[-12,2],[-8,2],[-7,2],[-8,2],[-8,1],[-12,1],[-13,4]],
+  paris:[[0,2],[0,2],[2,1],[5,1],[4,1],[2,1],[7,2],[7,2],[7,1],[9,1],[4,1],[5,1],[2,2],[2,2],[2,1],[5,1],[4,1],[2,1],[0,1],[12,1],[11,1],[9,1],[7,1],[5,1],[4,1],[2,1]],
+  seoul:[[7,3],[9,1],[7,2],[9,2],[12,3],[14,1],[12,2],[14,2],[16,2],[14,1],[16,1],[14,1],[12,1],[9,2],[7,3],[9,1],[7,2],[9,2],[12,2],[14,1],[12,1],[9,1],[7,1],[9,2],[7,4],[null,4]],
+  stockholm:[...MK,[3,1],[-1,1],[3,2],[2,1],[-2,1],[2,2],...MK.slice(0,6),[4,1],[9,1],[7,1],[4,1],[0,1],[4,1],[7,4]],
+};
 export function buildScore(race){
   const tempo=race.slice?race.config.tempo??1:1;
   const events=[0,1,2].map(t=>({t,kind:'count'}));
@@ -12,6 +25,8 @@ export function buildScore(race){
     const next=race.notes[i+1];if(race.slice&&next)for(let t=note.t+.6;t<next.t-.3;t+=.6)events.push({t:COUNTDOWN+t/tempo,kind:'beat',i,leg:note.leg,phase:racePhase(t),rest:true,fill:true});});
   for(const lap of (race.slice?[]:[1,2]))events.push({t:COUNTDOWN+lap*LEG_SECONDS,kind:'relay'});
   for(const n of race.notes)events.push({t:COUNTDOWN+n.t/tempo,kind:'note',lane:n.lane});
+  const tune=race.slice&&MELODY[race.course?.id];
+  if(tune)for(let t=1,k=0,end=race.notes.at(-1)?.t??0;t<end;k++){const [st,len]=tune[k%tune.length];if(st!==null)events.push({t:COUNTDOWN+t/tempo,kind:'melody',f:523.25*2**(st/12),len:len*.3/tempo});t+=len*.3;}
   for(const h of (race.slice?[]:race.hurdles)){
     events.push({t:COUNTDOWN+h.t-JUMP_LEAD-1,kind:'approach'});
     events.push({t:COUNTDOWN+h.t-JUMP_LEAD,kind:'hurdle'});
@@ -117,7 +132,7 @@ export class RaceAudio {
     const source=this.context.createBufferSource();source.buffer=this.noiseBuffer;this.voice(source,at,duration,volume);
   }
   start(getElapsed,race) {
-    this.stop();this.next=0;this.layer=0;this.finalStretch=false;this.surge=0;this.beatGap=.6/(race.config?.tempo??1);this.music=MUSIC[race.course?.id]??MUSIC.taipei;this.getElapsed=getElapsed;this.events=buildScore(race);this.end=race.slice?Infinity:COUNTDOWN+DURATION;   // the relay ends by distance
+    this.stop();this.next=0;this.layer=0;this.finalStretch=false;this.surge=0;this.beatGap=.6/(race.config?.tempo??1);this.music=MUSIC[race.course?.id]??MUSIC.taipei;this.getElapsed=getElapsed;this.events=buildScore(race);this.melody=this.events.some(e=>e.kind==='melody');this.end=race.slice?Infinity:COUNTDOWN+DURATION;   // the relay ends by distance
     if(!this.context)return;
     this.timer=setInterval(()=>this.schedule(),25);this.schedule();
   }
@@ -133,6 +148,7 @@ export class RaceAudio {
       if(event.kind==='go'){this.tone(880,when,.18,'sine',.25);this.tick(when,.16,.045);this.tone(300,when+.02,.26,'sawtooth',.05,1300);continue}   // the gate clacks open, a rush of air
       if(event.kind==='relay'){this.tone(523.25,when,.35,'sine',.14);this.tone(783.99,when+.08,.35,'sine',.1);continue}
       if(event.kind==='note'){this.tone(this.music.blip[event.lane?1:0],when,.065,'triangle',.15,null,event.lane?.45:-.45);continue}
+      if(event.kind==='melody'){this.tone(event.f,when,Math.max(.09,event.len*.92),'square',.05);this.tone(event.f/2,when,Math.max(.09,event.len*.92),'triangle',.07);continue}
       if(event.kind==='approach'){this.tone(392,when,.10,'sine',.13);continue}
       if(event.kind==='hurdle'){this.tone(587.33,when,.14,'sine',.23,1174.66);continue}
       if(event.fill&&this.layer<2)continue;
@@ -145,7 +161,7 @@ export class RaceAudio {
       // The music fills in with the streak (layer, setCombo): a pad, a high note on the beat, a fifth between beats,
       // then a bass and an open hat. A miss takes one layer off (dropLayer), not all of them.
       // The city's tune and its own rhythm section (MUSIC).
-      if(step>=0&&!event.rest){this.tone(chord*up*2**(scale[step]/12),when,long,wave,loud*(1+.2*this.layer));
+      if(step>=0&&!event.rest&&!this.melody){this.tone(chord*up*2**(scale[step]/12),when,long,wave,loud*(1+.2*this.layer));
         if(M.twice&&this.layer>=1)this.tone(chord*up*2**(scale[(step+2)%6]/12),when+half,long,wave,loud*.8);}
       if(M.hat>=1)this.tick(when+half,.04*duck,.02);
       if(M.hat>=2){this.tick(when+half/2,.028*duck,.015);this.tick(when+half*1.5,.028*duck,.015);}

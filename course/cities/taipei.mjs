@@ -8,7 +8,7 @@ export default {
   //    trail(s,lane,n=3,gap=7) = a run of coins. Gameplay never names a model.
   track:{
     lap:'M L30 R30 R30 L30 S L45 L45 F L45 L45 F L45 R45 R45 L45 L45 L45 R30 L30 L30 R30 L45 L45',   // 2026-10-05 (the user: more bends): a wiggle on the start side and on the last, a wide S on the far side
-    gameplay:({at,trail})=>({mud:[[.74,.95]],laps:2,soloLaps:1,easy:true,tempo:1.2,speed:1.0,relay:at(8,5),jumps:[{s:at(11,25)}],
+    gameplay:({at,trail})=>({mud:[[.74,.95]],laps:2,soloLaps:1,tempo:1.2,speed:1.0,relay:at(8,5),jumps:[{s:at(11,25)}],
       coins:[...trail(at(2,2),0),...trail(at(5,10),-1),...trail(at(9,5),1),...trail(at(14,2),-1),...trail(at(19,2),0)]}),
   },
 

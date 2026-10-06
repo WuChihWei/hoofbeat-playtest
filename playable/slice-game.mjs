@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,EASY_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r304';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r307';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -25,7 +25,7 @@ export class SliceGame {
   // course: the city's relay course (course/courses.mjs relayCourse); default: the template course.
   // rivals: slice-config fieldRivals(3 | 5); default: the five-horse field.
   constructor({config={},chart=null,coins=null,team=DEFAULT_TEAM,rivals=SLICE_RIVALS.slice(0,4),course=null}={}) {
-    const c=this.config={...SLICE_CONFIG,...(config.solo?SOLO:null),...config};course??=templateCourse(c);coins??=sliceCoins(course);chart??=c.solo?(course.easy?EASY_CHART:soloChart(course.length)):SLICE_CHART;
+    const c=this.config={...SLICE_CONFIG,...(config.solo?SOLO:null),...config};course??=templateCourse(c);coins??=sliceCoins(course);chart??=c.solo?soloChart(course.length):SLICE_CHART;
     this.course=course;const m=this.marks=courseMarks(course);c.length=m.length;
     // A runner's leg: the config, its buddy's own numbers, then (the player) what the stable makes of them.
     const numbers=h=>h?.stats?racing(buddyStats(h.stats,h.level)):null;
@@ -38,6 +38,7 @@ export class SliceGame {
     this.notes=chart.map(n=>({...n,state:null,leg:n.leg??0,track:'straight',weather:'cloud'}));   // leg: estimated (music colour)
     this.coins=coins.map(c=>({...c,collected:false}));this.coinCount=0;
     this.apples=(c.solo?sliceApples(course):[]).map(a=>({...a,collected:false}));this.appleCount=0;this.rushes=[];   // rushes: the apples' speed-ups {t, end}
+    if(c.locks?.lane)for(const x of [...this.coins,...this.apples])x.lane=0;   // no lane changes yet: everything to pick up is straight ahead
     this.rhythmDrive=0;this.rhythmSpeed=0;this.lastRhythm=-Infinity;this.finishTime=null;this.lastRank=null;
     this.energy=c.startEnergy;this.pool=this.stamina=this.form.stamina;this.restAt=0;this.combo=0;this.bestCombo=0;this.finished=false;this.paused=false;
     this.targetLane=0;this.laneValue=0;this.laneChanges=[];this.boosts=[];this.jumps=[];this.sprints=[];this.stumbles=[];
@@ -105,7 +106,7 @@ export class SliceGame {
   missed(o){const c=this.config;o.energy=Math.max(this.segments(o)*c.boostCost,o.energy-c.missEnergy);}   // a stored segment stays
   drafts(o){const c=this.config;return this.runners().some(x=>x!==o&&Math.abs(x.laneValue-o.laneValue)<c.laneOverlap&&x.distance>o.distance&&x.distance-o.distance<c.draftReach);}
   lane(side){
-    if(this.paused||this.finished)return;
+    if(this.paused||this.finished||this.config.locks?.lane)return;   // locks: what the stage does not have yet (progress.mjs LEVELS)
     const next=clamp(this.targetLane+(side===0?-1:1),-1,1);
     if(next===this.targetLane)return this.emit('boundary',{side});
     if(this.occupied(this,next))return this.emit('lane-blocked',{side,to:next});   // a horse beside: no cutting into it
@@ -164,7 +165,7 @@ export class SliceGame {
   carried(t=this.time){return this.boostActive(t)||this.rushes.some(b=>t>=b.t&&t<b.end-1e-9);}
   rush(t=this.time){return Math.max(this.boostStrength(t),this.appleStrength(t));}
   boost(){
-    const c=this.config;if(this.paused||this.finished||this.energy<c.boostCost||!this.fresh()||this.boostActive())return false;
+    const c=this.config;if(this.paused||this.finished||c.locks?.sprint||this.energy<c.boostCost||!this.fresh()||this.boostActive())return false;
     const end=this.time+this.form.boostDuration;this.energy-=c.boostCost;this.boosts.push({t:this.time,end});this.spend(this,end);
     this.emit('boost');return true;
   }
@@ -179,7 +180,7 @@ export class SliceGame {
   }
   // The charge button: a sprint on one stored segment; right behind a horse with room to land, the sprint leaps it.
   charge(pressedAt=this.time){
-    if(this.paused||this.finished)return;
+    if(this.paused||this.finished||this.config.locks?.sprint)return;
     const c=this.config,cooling=this.jumps.length&&pressedAt-this.jumps.at(-1).t<c.jumpDuration,over=!cooling&&this.leapTarget(this);
     if(over&&(this.boostActive()||(this.energy>=c.boostCost&&this.fresh()))){if(!this.boostActive())this.boost();return this.jump(pressedAt);}
     if(this.boostActive())return this.emit('charge-busy');
@@ -218,7 +219,7 @@ export class SliceGame {
   // rhythmGrace without one) + its sprint, × its aptitude for the ground, × the dip of a knocked hurdle.
   rivalStep(r,dt,mid){
     const c=this.config,sec=sectionAt(r.distance,this.course),f=(r.distance-this.legStart(r.leg))/(this.legEnd(r.leg)-this.legStart(r.leg));
-    this.rivalCharge(r,dt,f);
+    this.rivalCharge(r,dt,f);if(c.locks?.sprint)r.energy=0;   // no sprints on this stage: none for the rivals either
     if(mid-r.lastRhythm>c.rhythmGrace)r.rhythmDrive=Math.max(0,r.rhythmDrive-c.rhythmDecay*dt);
     r.rhythmSpeed+=(r.rhythmDrive-r.rhythmSpeed)*(1-Math.exp(-c.rhythmResponse*dt));
     // A solo race: the player's solo sums (its own speed × (1 + combo drive), an apple's speed-up, no aptitude). Not the

@@ -488,3 +488,8 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
    backdrop, shows) until slice-app says it is whole (.scene-ready), then it comes in at once */
 .slice-shell>#slice-canvas{opacity:0}
 .slice-shell.scene-ready>#slice-canvas{opacity:1;transition:opacity .18s}
+
+/* A stage that does not have a thing yet (progress.mjs LEVELS locks): its control is not there. */
+.no-lanes .slide-track,.no-lanes .lane-dots{display:none}
+.no-sprint .charge-btn{display:none}
+.no-lanes.no-sprint .jump-guide{display:none}
