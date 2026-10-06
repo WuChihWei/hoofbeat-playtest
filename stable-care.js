@@ -6,7 +6,7 @@
 // Shop items (price in coins) go into the same bag: foods are eaten by Feed (the one picked in Items), care items are
 // used from Items; two of them are one-race buffs kept on the horse (`buff`, spent by the next race).
 // Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1). Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL} from './playable/slice-config.mjs?v=r302';
+import {MAX_LEVEL} from './playable/slice-config.mjs?v=r304';
 export const ITEMS=[
   // food: +Hunger, +Mood (stamina: +Stamina)
   {id:'hay',name:'乾草',kind:'food',food:25,mood:2,price:20},{id:'carrot',name:'紅蘿蔔',kind:'food',food:15,mood:6,price:15},
@@ -94,9 +94,9 @@ export function afterRace(r,{rank,perfect=0},now=Date.now()){
   return {care:next,xp,levelUp:level(next)>lv};
 }
 // A solo run is practice (2026-10-04, the user: it earns xp too): xp by the stars the run was worth (+1 per 5 perfect
-// hits), about half a relay's; no wear, no buffs spent.
+// hits), about half a relay's; no wear.
 export const SOLO_XP=[6,10,15];
-export function afterSolo(r,{stars,perfect=0}){const xp=SOLO_XP[stars-1]+Math.floor(perfect/5),next={...r,xp:r.xp+xp};return {care:next,xp,levelUp:level(next)>level(r)};}
+export function afterSolo(r,{stars,perfect=0}){const xp=SOLO_XP[stars-1]+Math.floor(perfect/5),next={...r,xp:r.xp+xp,buff:r.buff?.bonus?{bonus:r.buff.bonus}:undefined};return {care:next,xp,levelUp:level(next)>level(r)};}   // the energy bar is spent (home.js soloForm gave it to this run); the lucky charm waits for a relay
 
 // -> {care, items, msg} or {fail} (nothing changes on a fail). food: the item picked in the Items panel.
 // Brushing cleans the coat (+30) and cheers a little (+6 mood).

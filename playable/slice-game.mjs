@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r302';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,EASY_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r304';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -25,7 +25,7 @@ export class SliceGame {
   // course: the city's relay course (course/courses.mjs relayCourse); default: the template course.
   // rivals: slice-config fieldRivals(3 | 5); default: the five-horse field.
   constructor({config={},chart=null,coins=null,team=DEFAULT_TEAM,rivals=SLICE_RIVALS.slice(0,4),course=null}={}) {
-    const c=this.config={...SLICE_CONFIG,...(config.solo?SOLO:null),...config};course??=templateCourse(c);coins??=sliceCoins(course);chart??=c.solo?soloChart(course.length):SLICE_CHART;
+    const c=this.config={...SLICE_CONFIG,...(config.solo?SOLO:null),...config};course??=templateCourse(c);coins??=sliceCoins(course);chart??=c.solo?(course.easy?EASY_CHART:soloChart(course.length)):SLICE_CHART;
     this.course=course;const m=this.marks=courseMarks(course);c.length=m.length;
     // A runner's leg: the config, its buddy's own numbers, then (the player) what the stable makes of them.
     const numbers=h=>h?.stats?racing(buddyStats(h.stats,h.level)):null;

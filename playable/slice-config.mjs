@@ -156,6 +156,7 @@ export function sliceChart(end=130,third=33){   // third: how long each intensit
 export const SLICE_CHART = Object.freeze(sliceChart());
 // A solo run is one lap, about 30 s (2026-10-05): the same build-up in thirds of that, or it would end on the opening phrases.
 export const SOLO_CHART = Object.freeze(sliceChart(130,12));
+export const EASY_CHART=Object.freeze(sliceChart(130,1e9));   // stage 1 (a city pack's gameplay.easy): the opening four-note phrases all the way, as the practice has them
 export const soloChart=length=>sliceChart(130,Math.max(6,length/55));   // by the run's length: 384 m (stage 1) → 7 s a third, 860 m → 15.6 s
 // Coin runs: three in a lane every ~70 m, lanes rotating, none near the start, a hurdle or a handoff.
 export function sliceCoins(course=templateCourse()){

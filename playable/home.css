@@ -304,12 +304,12 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .stage{position:relative;width:calc(144 * var(--u));top:calc(46 * var(--u));opacity:1;transform:none}
 .stage:nth-of-type(even){top:calc(-46 * var(--u))}
 .stage .dot{width:calc(124 * var(--u));height:calc(124 * var(--u))}
-.stage.is-selected .dot{border-color:var(--ui-green)}
+.stage.is-selected .dot{border-color:var(--ui-yellow)}
 .stage b{font-size:var(--ui-t-name)}
 /* the user (2026-10-04): the stage pictures bigger, rounded squares, using the empty height */
 .stage{width:calc(184 * var(--u));top:calc(74 * var(--u))}.stage:nth-of-type(even){top:calc(-74 * var(--u))}
 .stage .dot{width:calc(168 * var(--u));height:calc(168 * var(--u));border-radius:calc(40 * var(--u))}
-.stage.is-selected .dot{border-color:#fff;box-shadow:0 0 0 calc(4 * var(--u)) var(--ui-green)}
+.stage.is-selected .dot{border-color:#fff;box-shadow:0 0 0 calc(4 * var(--u)) var(--ui-yellow)}
 .stage:not(.is-selected) .dot{border-color:rgb(255 255 255 / .7)}
 /* the user's second sketch (2026-10-04): wide rounded cards in two rows, each starting at the middle of the one before,
    a solid lane between them, the name inside the card: more stages in view */
