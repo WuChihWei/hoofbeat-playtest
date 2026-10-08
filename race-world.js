@@ -1,4 +1,4 @@
-import {clamp, LEG_SECONDS} from './game.js?v=r349';
+import {clamp, LEG_SECONDS} from './game.js?v=r354';
 
 export const ROAD_WIDTH = 13.2;
 export const HORSE_Z = -6.4;   // where the runners are on the road (m from the origin): 0.9 further up the road than the -5.5 the camera was framed on, so the player's horse sits about 40 px higher on a phone while the track and backdrop stay put

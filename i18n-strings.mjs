@@ -560,7 +560,7 @@ export const STRINGS=[
   {zh:"上滑加檔 · 下滑減檔 · 左右滑換道 · 點一下跳",en:"Swipe up / down: gear · left / right: lane · tap: jump"},
   {zh:"踹中了！",en:"Got them!"},
   {zh:"踹空了",en:"Missed"},
-  {zh:"沒力了！",en:"Out of wind!"},  {zh:"爆了！",en:"Popped!"},  {zh:"撞倒了！",en:"Knocked down!"},  {zh:"彈開了",en:"Bounced off"},  {zh:"踢中！",en:"Got it!"},  {zh:"踢空",en:"Missed"},  {zh:"漂亮放開 6 次",en:"6 nice releases"},  {zh:"極限放開 2 次",en:"2 releases at the limit"},  {zh:"一次都不爆",en:"Never pop"},  {zh:"放開！",en:"Let go!"},  {zh:"極限！",en:"Limit!"},  {zh:"漂亮！",en:"Nice!"},
+  {zh:"沒力了！",en:"Out of wind!"},  {zh:"爆了！",en:"Popped!"},  {zh:"還沒有衝刺 · 吃蘋果存一段",en:"No sprint yet · an apple stores one"},  {zh:"撞倒了！",en:"Knocked down!"},  {zh:"彈開了",en:"Bounced off"},  {zh:"踢中！",en:"Got it!"},  {zh:"踢空",en:"Missed"},  {zh:"漂亮放開 6 次",en:"6 nice releases"},  {zh:"極限放開 2 次",en:"2 releases at the limit"},  {zh:"一次都不爆",en:"Never pop"},  {zh:"放開！",en:"Let go!"},  {zh:"極限！",en:"Limit!"},  {zh:"漂亮！",en:"Nice!"},
   {zh:"先試一次這一關要用的操作。",en:"First, try what this stage asks for."},
   {zh:"先試這五個操作。每完成一個，下一個情境會自動出現。",en:"Try these five moves. Finish one and the next scene is set up for you."},
   {zh:"跟著節奏點腳印：連擊會加速",en:"Tap the pads on the beat: a combo speeds you up"},

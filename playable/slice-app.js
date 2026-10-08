@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r349';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r349';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r349';
-import {compositionRank} from '../race-composition.mjs?v=r349';
-import {ChaseRenderer} from '../race-scene.js?v=r349';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r349';
-import {cityModels} from '../approved-environment.js?v=r349';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r354';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r354';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r354';
+import {compositionRank} from '../race-composition.mjs?v=r354';
+import {ChaseRenderer} from '../race-scene.js?v=r354';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r354';
+import {cityModels} from '../approved-environment.js?v=r354';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r349';
-import {ControlRouter} from './control-router.mjs?v=r349';
-import {RaceAudio,readLatency} from '../audio.js?v=r349';
-import {addLog,raceEntry} from '../playtest.js?v=r349';
-import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt} from './slice-config.mjs?v=r349';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r354';
+import {ControlRouter} from './control-router.mjs?v=r354';
+import {RaceAudio,readLatency} from '../audio.js?v=r354';
+import {addLog,raceEntry} from '../playtest.js?v=r354';
+import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt} from './slice-config.mjs?v=r354';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -65,7 +65,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r349',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r354',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -403,7 +403,8 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     sound.layer=Math.min(4,game.streak);   // the music fills in with the streak and thins out when it is lost
     ring.classList.toggle('tail',phase==='running'&&!!game.behind());ring.classList.toggle('hit-l',phase==='running'&&game.canBump(0));ring.classList.toggle('hit-r',phase==='running'&&game.canBump(1));
     if(AUTO)game.holding=game.ball<.88;
-    const now=phase==='countdown'?t:game.time,k=game.ball;ring.style.setProperty('--ball',k.toFixed(3));
+    const now=phase==='countdown'?t:game.time,k=game.ball;ring.style.setProperty('--ball',k.toFixed(3));ring.style.setProperty('--size',(k<.8?.2+.42*k/.8:k<.95?.62+.24*(k-.8)/.15:.86+.14*(k-.95)/.05).toFixed(3));   // the ball's size across the ring: the two zones are drawn wider than their share (slice.css: green .62–.86, orange .86–1)
+    
     ring.classList.toggle('held',game.holding);ring.classList.toggle('warn',k>.6);ring.classList.toggle('hot',k>=.8);ring.classList.toggle('max',k>=.95);if(ring.dataset.n!==String(game.streak)){ring.dataset.n=game.streak;ring.querySelector('s').textContent=game.streak?'×'+game.streak:'';}ring.classList.toggle('dead',game.blown>now);};
   let drawn=0,settle=20;
   function frame(){
@@ -425,6 +426,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
       else if(e.type==='lane')sound.cue('lane');   // the lane dots show it
       else if(e.type==='boundary'){feedback('已在最外側','hint');sound.cue('deny');}
       else if(e.type==='lane-blocked'){feedback('旁邊有對手，等空位','hint');sound.cue('deny');}
+      else if(e.type==='charge-empty'&&BALL){feedback('還沒有衝刺 · 吃蘋果存一段','hint');sound.cue('deny');}
       else if(e.type==='charge-empty'){feedback(`還沒存到一段 · 踩準 ${Math.ceil((game.config.boostCost-game.energy)/game.config.perfectEnergy)} 下`,'hint');sound.cue('deny');
         if(!still)chargeBtn.animate([{translate:'0 0'},{translate:'-4px 0'},{translate:'4px 0'},{translate:'0 0'}],{duration:160});}
       else if(e.type==='charge-busy')feedback('衝刺中','hint');

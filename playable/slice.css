@@ -578,3 +578,16 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 /* 2026-10-08 (the user, after seeing it moved up over the buddy's back: 「回到這張圖位置」): where r343 had it, at the foot of the
    screen (bottom 6%); a little larger than r343's 24%, as asked just before. */
 #ball-ring{width:28%}
+/* 2026-10-08 (the user: the sprint button could not be pressed): the pad lay over it. The button's z-index 8 is inside
+   .slice-controls (z 4), under the pad's 5; the pad goes below the controls instead. */
+#ball-pad{z-index:3}
+/* 2026-10-08 (the user picked design 2, 「目標圈」): no gauge round the rim. The ball grows from the centre and the ring
+   shows where its edge should be when the thumb lets go: a wide green band (nice), an orange one outside it (the limit),
+   a red rim (it pops). One thing to watch: the ball's edge. Sizes: slice-app --size. */
+#ball-ring{background:rgb(29 33 23 / .45)}
+#ball-ring i{-webkit-mask:none;mask:none;background:radial-gradient(closest-side,transparent 61%,#8fcb7a 62% 85%,#ff7a1a 86% 95%,#e5484d 96%)}
+#ball-ring b{width:calc(var(--size,.2) * 100%)}
+#ball-ring.warn b{animation:none}
+/* the ball stays yellow inside the zones (green on the green band hid the band): the band it has reached brightens instead */
+#ball-ring.hot.held b,#ball-ring.max.held b{background:var(--ui-yellow);box-shadow:0 0 0 calc(3 * var(--u)) #fff}
+#ball-ring.hot i{filter:brightness(1.25)}
