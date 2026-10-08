@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r354';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r357';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -209,7 +209,7 @@ export class SliceGame {
       this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.ball=c.ballBack;this.rushes.push({t:at,end:at+c.ballRush*(max?2:1)});this.emit('release',{max,streak:this.streak});}
     this.wasHeld=this.holding;
     this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill:-dt/c.ballFall));
-    if(this.ball>=1){this.ball=0;this.streak=0;this.blown=at+c.ballPop;if(at>=0)this.stumbles.push({t:at});this.emit('blown');}   // spent: it stumbles
+    if(this.ball>=1){this.ball=0;this.streak=Math.floor(this.streak/2);this.blown=at+c.ballPop;if(at>=0)this.stumbles.push({t:at});this.emit('blown');}   // spent: it stumbles
     this.drive=this.blown>at?S.floor:S.top*(c.ballLo+(c.ballHi-c.ballLo)*this.ball)*(1+c.ballGain*this.streak);
     if(at<0)this.driveSpeed=this.drive;}
   // The ball game: who a kick behind would reach (the same lane, within a following gap and a third behind) → the runner or undefined.
@@ -310,7 +310,7 @@ export class SliceGame {
     // A solo race: the player's solo sums (its own speed × (1 + combo drive), an apple's speed-up, no aptitude). Not the
     // practice coach (r.pace): it keeps the pace it is given.
     const solo=this.solo&&!r.pace;if(solo&&c.ball)r.bump=Math.max(0,(r.bump||0)-dt/(c.ballFill*2));   // a bump's notch eases off: for a moment it is nearer its limit
-    if(solo&&c.ball)r.drive=(r.blown??-9)>mid?this.solo.floor:(r.form.top??this.solo.top)*(c.ballLo+(c.ballHi-c.ballLo)*(.35+.75*r.skill))*(1+c.ballGain*c.ballStack*r.skill*Math.min(1,mid/(c.ballFill*6)));   // the ball test: a rival holds its ball at a steady share of the limit and builds a share of the streak, both by its skill
+    if(solo&&c.ball)r.drive=(r.blown??-9)>mid?this.solo.floor:(r.form.top??this.solo.top)*(c.ballLo+(c.ballHi-c.ballLo)*(.2+.7*r.skill))*(1+c.ballGain*c.ballStack*r.skill*.7*Math.min(1,mid/(c.ballFill*6)));   // the ball test: a rival holds its ball at a steady share of the limit and builds a share of the streak, both by its skill
     if(solo)r.driveSpeed+=(r.drive-r.driveSpeed)*(1-Math.exp(-(r.drive<r.driveSpeed?this.solo.fall:this.solo.response)*dt));
     const own=solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed;
     r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r));

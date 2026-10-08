@@ -591,3 +591,16 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 /* the ball stays yellow inside the zones (green on the green band hid the band): the band it has reached brightens instead */
 #ball-ring.hot.held b,#ball-ring.max.held b{background:var(--ui-yellow);box-shadow:0 0 0 calc(3 * var(--u)) #fff}
 #ball-ring.hot i{filter:brightness(1.25)}
+/* 2026-10-08, after the user played r354: the ring larger and its centre on the buddy's hindquarters; the zone one
+   gradient like the reference (yellow where letting go starts to count, greener the nearer the limit, a red rim: it
+   pops); and the two moves nobody found get a word: 踢 under the down arrow when a runner is in reach behind, 撞 by a
+   side arrow when a bump that way is on. */
+#ball-ring{width:36%;top:77%;bottom:auto;transform:translate(-50%,-50%);background:rgb(29 33 23 / .22)}
+#ball-ring i{background:radial-gradient(closest-side,transparent 59%,#ffe14a 62%,#b9e24a 76%,#3fd65a 90%,#2fd060 94.5%,#ff3b30 96%)}
+#ball-ring small{display:none;position:absolute;translate:-50% -50%;border-radius:99px;background:var(--ui-yellow);color:#000;font:700 calc(13 * var(--u))/1 var(--ui-font);padding:calc(4 * var(--u)) calc(8 * var(--u));white-space:nowrap}
+#ball-ring.tail .k-kick{display:block;left:50%;top:128%}#ball-ring.hit-l .k-l{display:block;left:-26%;top:50%}#ball-ring.hit-r .k-r{display:block;left:126%;top:50%}
+/* 2026-10-08 (the user: 「然後半透明」): the buddy shows through the ring, its zone and the ball. */
+#ball-ring{background:rgb(29 33 23 / .12)}#ball-ring i{opacity:.55}#ball-ring.hot i{opacity:.8}
+#ball-ring b,#ball-ring.held b{opacity:.6}#ball-ring.hot.held b,#ball-ring.max.held b{opacity:.75}
+/* 2026-10-08 (the user: 「球不該是透明的，環才是」): the ball solid, the ring and its zone see-through. */
+#ball-ring b,#ball-ring.held b,#ball-ring.hot.held b,#ball-ring.max.held b{opacity:1}#ball-ring.dead b{opacity:.7}
