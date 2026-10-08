@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r307';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r307';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r307';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r307';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r307';
-import {installApprovedEnvironment} from './approved-environment.js?v=r307';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r307';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r307';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r307';
-import {turnAt} from './track-projection.js?v=r307';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r307';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r307';
+import {roadHalfWidth} from './track-presentation.mjs?v=r349';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r349';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r349';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r349';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r349';
+import {installApprovedEnvironment} from './approved-environment.js?v=r349';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r349';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r349';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r349';
+import {turnAt} from './track-projection.js?v=r349';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r349';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r349';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -47,6 +47,7 @@ const NOTE_POP={time:.42,rise:[.7,1.15],grow:[.2,.45],past:1.6};
 // beside the hips): the pose's own hands rest at the foot of the mane. Their entries stay: the second is the fist pump's.
 const RIDER_TURNS=[['UpperArmL',0],['UpperArmR',0],['ThighL',-.2],['ThighR',.2],['ShinL',.35],['ShinR',-.35]];
 const RIDER_WAIST=1.2;   // the lower torso × this sideways (and half as much front to back), the chest scaled back: a less pinched waist
+const BUCK=[['HindUpper',[0,-.45,-.9]],['HindLower',[0,.05,-1]],['HindCannon',[0,.22,-.97]],['HindHoof',[0,.45,-.9]]],BUCK_Q=new THREE.Quaternion(),BUCK_W=new THREE.Quaternion(),BUCK_P=new THREE.Quaternion(),BUCK_X=new THREE.Vector3(),BUCK_Y=new THREE.Vector3(),BUCK_Z=new THREE.Vector3(),BUCK_M=new THREE.Matrix4();
 const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THREE.Vector3();
 // The horse and rider answer the player (racePosture). lean: the horse rolls into a lane change (rad at most, per lane
 // of sideways speed); slump: after two misses in a row the rider sits up out of the crouch (share of the bend lost)
@@ -54,7 +55,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // for a clean jump, a leap, taking the lead ([rad on the right upper arm, s]); tail: it flicks to the side of a hit
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
 const WIDE=(new URLSearchParams(globalThis.location?.search||'').get('wide')||'6,9,3').split(',').map(Number);   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
-const REACT={lean:[.11,6],slump:.65,glance:[.8,.8],pump:[-1.7,.7],tail:[.32,.3],kick:5,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
+const REACT={pump:[-1.7,.7],kick:5,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
 // by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
 // road per hit of the streak (to 16), none nearer than `from` m ahead of the horse (a glow that near fills the screen).
@@ -296,16 +297,17 @@ export class ChaseRenderer {
       label.scale.set(1.03, .32, 1);label.visible=false; this.scene.add(label); return label;
     });
   }
-  pulse(lane, time, strength=1) {this.pulses[lane] = time;this.pulseStrength[lane]=strength;this.flick=[time,lane?1:-1];}
+  pulse(lane, time, strength=1) {this.pulses[lane] = time;this.pulseStrength[lane]=strength;}
   // The rider looks to that side (−1 left, 1 right) / punches the air, from now (race time).
-  glance(side){this.look=[this.raceTime??0,side];}
-  cheer(){this.cheerAt=this.raceTime??0;}
+  // The ball game (2026-10-08): buck(): the kick behind. win(): first past the post, it rears and the rider's fist goes up.
+  buck(){this.buckAt=this.raceTime??0;}
+  win(){this.winAt=performance.now();}
   // The same track and field again: the scene, the models and the coins stay; only what the last run left is cleared.
   rerun(race){
     if(this.coinMeshes&&(this.coinMeshes.length!==race.coins.length||this.appleMeshes.length!==(race.apples||[]).length))return false;
     for(const m of [...this.coinMeshes||[],...this.appleMeshes||[]])m.userData.burst=false;
-    this.dustParts=[];this.sparkParts=[];this.dustTime=undefined;this.pulses=[-100,-100];this.look=this.cheerAt=this.flick=null;this.sliceTurn=0;this.surge=0;this.kick=0;
-    this.models.forEach(e=>{for(const k of ['sprint','gait','crouch','tuck','dustTime','dustDue','lastTime','animationTime','lastDistance','laneLast','lean','slump'])delete e[k];if(e.model.blaze)e.model.blaze.value=0;});
+    this.dustParts=[];this.sparkParts=[];this.dustTime=undefined;this.pulses=[-100,-100];this.buckAt=this.winAt=null;this.sliceTurn=0;this.surge=0;this.kick=0;
+    this.models.forEach(e=>{for(const k of ['sprint','gait','crouch','tuck','dustTime','dustDue','lastTime','animationTime','lastDistance','bones'])delete e[k];if(e.model.blaze)e.model.blaze.value=0;});
     return true;
   }
   // The start gate (slice races): a stall per runner where it stands at the start, a door before each that swings open
@@ -392,7 +394,8 @@ export class ChaseRenderer {
     }));
     this.canvas.dataset.visibleHurdles=String(visible);
   }
-  prepare(race) {
+  prepare(race) {this.buckAt=this.winAt=null;   // a new run: nothing of the last one's kick or win (2026-10-08: only rerun() cleared them)
+
     this.resize(); this.configure(race, -3);
     // Upload coats and compile all relay runners before the countdown starts.
     const teams=race.slice?[['player',race.horses,0],...race.rivals.map((r,i)=>[r.id,r.horses,i+1])]:[['player', race.team], ...compositionRivals(race,race.metrics?.()||{rivals:race.rivals,player:{distance:0,speed:12}}).map(r=>[r.id,r.team])];
@@ -581,21 +584,19 @@ export class ChaseRenderer {
   // stride itself follows ground covered). A knocked hurdle is a clear stumble: nose down, a dip, the rider thrown
   // forward, a wobble, then straight back to running.
   racePosture(entry,race,role,runner,time,actor,jump){
+    // Leg bones the kick or the win turned last frame go back to what they were, unless the animation has written them
+    // since (it only writes a bone whose value changed): without this a frame that stands still (a pause, the finish, a
+    // buddy whose legs the stride below does not touch) kept the kicked legs, and the stride took them for the gallop's.
+    for(const x of entry.kept||[])if(x.b.quaternion.equals(x.set))x.b.quaternion.copy(x.was);entry.kept=[];
     const model=entry.model,run=actor.running&&time>=0&&!this.reduced?1:0,fold=jump.airborne?clamp(jump.phase/.1,0,1):jump.landing||0;
     const player=role==='player'&&actor.active,target=role==='player'?race.rush(time):runner.boosting?1:0;entry.sprint=(entry.sprint??0)+(target-(entry.sprint??0))*.12;   // rush: a sprint or an apple
-    const s=entry.sprint,st=player?race.stumbles.at(-1):null,age=st?time-st.t:9,T=race.config.stumbleTime;
+    const s=entry.sprint,st=player?race.stumbles.at(-1):runner.stumbleAt!=null?{t:runner.stumbleAt}:null,age=st?time-st.t:9,   // a rival's last stumble too (2026-10-08: kicked, shoved or off a fence, it showed nothing)
+      T=race.config.stumbleTime;
     const trip=age>=0&&age<T?Math.sin(Math.PI*age/T):0,phase=(entry.animationTime||0)*2*Math.PI/(model.clips.run?.duration||.77);
     const surge=player?race.surge():0,level=player?race.gait():target>0?2:1;
     const g=entry.gait=(entry.gait??level)+(level-(entry.gait??level))*.07;
     model.root.rotation.x+=run*(gait(STRIDE.rock,g)*Math.sin(phase)-POSTURE.reach*(1+s))-POSTURE.tripPitch*trip;   // reach: nose a little down, more in a sprint
-    const lv=role==='player'?race.laneValue:runner.lane??0,side=clamp(-(lv-(entry.laneLast??lv))*REACT.lean[1],-REACT.lean[0],REACT.lean[0]);entry.laneLast=lv;
-    entry.lean=(entry.lean??0)+(side-(entry.lean??0))*.25;
-    model.root.rotation.z=POSTURE.tripRoll*trip*Math.sin(age*4*Math.PI/T)+run*entry.lean;
-    entry.slump=(entry.slump??0)+((player&&race.missRun>=2?1:0)-(entry.slump??0))*.15;
-    // The tail flicks to the side of the hoof just hit (on a kept base, like the rider's bend below).
-    if(player&&this.flick&&!this.reduced){entry.tail??=model.content?.getObjectByName('Tail02')??null;const b=entry.tail,k=bell((time-this.flick[0])/REACT.tail[1]);
-      if(b){if(!entry.tailSet||!b.quaternion.equals(entry.tailSet))(entry.tailBase??=new THREE.Quaternion()).copy(b.quaternion);
-        b.quaternion.copy(entry.tailBase).multiply(BEND_Q.setFromAxisAngle(Z_AXIS,REACT.tail[0]*k*this.flick[1]));(entry.tailSet??=new THREE.Quaternion()).copy(b.quaternion);}}
+    model.root.rotation.z=POSTURE.tripRoll*trip*Math.sin(age*4*Math.PI/T);
     // A hit on the beat (the pads' pulse): the player's horse drives forward a little and dips its nose.
     const hit=role==='player'&&actor.active?run*Math.max(...this.pulses.map((at,l)=>this.pulseStrength[l]*clamp(1-(time-at)/.32,0,1))):0;
     if(hit){const h=model.root.rotation.y;model.root.position.x-=Math.sin(h)*STRIDE.push*hit;model.root.position.z-=Math.cos(h)*STRIDE.push*hit;model.root.rotation.x-=.025*hit;}
@@ -611,8 +612,8 @@ export class ChaseRenderer {
     // mixer only rewrites a bone when its animated value changes (not every frame), so the bend goes on top of a kept
     // base pose (refreshed whenever the mixer did write) instead of being added to the bone again each frame.
     entry.back??=['Hips','Spine','Chest','Neck'].map(n=>model.riderContent?.getObjectByName(n)).filter(Boolean);
-    const bend=model.forward*Math.min(POSTURE.max,(run*(POSTURE.ride+POSTURE.crouch*tuck+POSTURE.sprint*s))*(1-fold)*(1-REACT.slump*entry.slump)+POSTURE.tripLean*trip);   // forward: less on a llama (approved-assets COATS)
-    const look=player&&this.look&&!this.reduced?REACT.glance[0]*this.look[1]*bell((time-this.look[0])/REACT.glance[1]):0,pump=player&&this.cheerAt!=null&&!this.reduced?bell((time-this.cheerAt)/REACT.pump[1]):0;
+    const bend=model.forward*Math.min(POSTURE.max,(run*(POSTURE.ride+POSTURE.crouch*tuck+POSTURE.sprint*s))*(1-fold)+POSTURE.tripLean*trip);   // forward: less on a llama (approved-assets COATS)
+    const look=0,pump=player&&this.winAt?1:0;   // 2026-10-08: the rider's glance at a rival and the fist for a clean jump or a pass are gone; the fist is the win's
     entry.back.forEach((bone,i)=>{
       entry.backBase??=[];entry.backSet??=[];
       if(!entry.backSet[i]||!bone.quaternion.equals(entry.backSet[i]))(entry.backBase[i]??=new THREE.Quaternion()).copy(bone.quaternion);
@@ -632,6 +633,23 @@ export class ChaseRenderer {
       if(bone.parent===entry.back[0])bone.quaternion.premultiply(BEND_Q.setFromAxisAngle(X_AXIS,-bend*POSTURE.split[0]));   // the thighs stay where they were under the turned hips
       (entry.limbSet[i]??=new THREE.Quaternion()).copy(bone.quaternion);
     });
+    // The ball game's two moves of its own (buck, win above), last: after the stride's own leg work above, which would
+    // take these legs as the gallop's and push them further. The whole body turns and lifts, so every buddy has them;
+    // the legs (the horse's rig: Fore* / Hind* bones) fold where the model has them.
+    if(player&&!this.reduced){const R=model.root,now=performance.now()/1000;
+      const keep=bone=>{const x={b:bone,was:bone.quaternion.clone(),set:null};entry.kept.push(x);return x;};
+      const legs=(names,angle)=>{for(const n of names){const bone=(entry.bones??={})[n]??=model.content?.getObjectByName(n)??null;if(bone){const x=keep(bone);bone.rotateX(angle);x.set=bone.quaternion.clone();}}};
+      const win=this.winAt?Math.min(1,(now-this.winAt/1000)/.35):0,up=win*win*(3-2*win);
+      if(up>.01){R.rotation.x+=.42*up;R.position.y+=.4*up;legs(['ForeUpperL','ForeUpperR'],-.8*up);legs(['ForeLowerL','ForeLowerR'],1.2*up);}   // the win: it rears, forelegs tucked
+      // The kick behind: nose down, rump up, and both hind legs thrown straight out behind. The legs are aimed, not
+      // turned from where the gallop has them (r336 turned them: the kick looked different at every point of the stride,
+      // folded under the tail at some; the user: 「後踢有問題」). A bone runs along its +Y; BUCK is the way each segment
+      // points in the buddy's own space (y up, z forward) at the top of the kick.
+      if(this.buckAt!=null){const k=bell((time-this.buckAt)/.5);if(k>.01){R.rotation.x-=.3*k;R.position.y+=.25*k;R.updateMatrixWorld(true);
+        const base=model.content?.getObjectByName('Root')??R;base.getWorldQuaternion(BUCK_Q);const turn=Math.min(1,k*1.6);
+        for(const side of ['L','R'])for(const [n,d] of BUCK){const bone=(entry.bones??={})[n+side]??=model.content?.getObjectByName(n+side)??null;if(!bone)continue;
+          bone.parent.updateWorldMatrix(true,false);BUCK_Y.set(...d).normalize().applyQuaternion(BUCK_Q);BUCK_X.set(1,0,0).applyQuaternion(BUCK_Q);BUCK_X.addScaledVector(BUCK_Y,-BUCK_X.dot(BUCK_Y)).normalize();
+          BUCK_W.setFromRotationMatrix(BUCK_M.makeBasis(BUCK_X,BUCK_Y,BUCK_Z.crossVectors(BUCK_X,BUCK_Y)));bone.parent.getWorldQuaternion(BUCK_P);const x=keep(bone);bone.quaternion.slerp(BUCK_P.invert().multiply(BUCK_W),turn);x.set=bone.quaternion.clone();}}}}
     model.updateAttachment?.();
   }
   coinBurst(at,S=COIN){
@@ -750,7 +768,7 @@ export class ChaseRenderer {
     if (time > 0 && frameTime > 0 && frameTime < 100) {
       this.frameAverage = this.frameAverage * .97 + frameTime * .03;
       this.frameSamples++;
-      if (this.frameSamples > 120 && this.frameAverage > 23 && this.r.getPixelRatio() > 1) this.r.setPixelRatio(1);
+      if (this.frameSamples > 120 && this.frameAverage > 40 && this.r.getPixelRatio() > 1) this.r.setPixelRatio(1);   // below 25 a second (the game draws 30: slice-app frame): the resolution comes down for the rest of the run
     }
     this.lastDrawTime = now;
     this.raceTime=time;this.configure(race, race.slice?0:time);

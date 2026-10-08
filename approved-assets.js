@@ -275,7 +275,10 @@ export const HAIR=Object.freeze([{id:'classic',mesh:'ManeTail',name:'經典鬃�
 //   gloss: [strength, tightness, lie] the groomed band of light across the lie of the hair (gloss()); lie: the hair's
 //   direction in rest space (the coat runs back and down, mane and tail hang).   streak: fine light and dark hairs in
 //   the coat's colour (coat(); close-ups only, like the grain).
-export const FUR={Horse_Coat:{sheen:1,sheenRoughness:.35,lift:.7,hair:.3,streak:.1,gloss:[.1,56,'0.,-.35,-1.']},Horse_ManeTail:{sheen:.7,sheenRoughness:.45,lift:.55,gloss:[.1,60,'0.,-1.,-.25']}};
+// 2026-10-06 (the user, with the concept sheets: the buddies and the rider should read as soft matte clay, as drawn): the
+// groomed-coat look is taken down: a faint sheen only, no hair grain, no streaks, no band of gloss (was sheen 1 / .7,
+// hair .3, streak .1, gloss .1).
+export const FUR={Horse_Coat:{sheen:.3,sheenRoughness:.8,lift:.5,hair:0,streak:0,gloss:[0,56,'0.,-.35,-1.']},Horse_ManeTail:{sheen:.25,sheenRoughness:.8,lift:.4,gloss:[0,60,'0.,-1.,-.25']}};
 // Groomed gloss: a brushed coat shows a soft band of light running across the lie of its hair, and combed hair a
 // bright one (Kajiya–Kay: brightest where the hair lies square to the half-way between sun and eye). Added to the
 // material's own shader (after coat() / maneTail()), from the scene's first directional light; the hair's lie follows
@@ -330,7 +333,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
       // the rivals wear team shirts (Willow green, Luna pink, Hazel orange, Rio blue).
       if(m.name==='Rider_Shirt'&&!player)m.color.set(['#ffffff','#4d9a58','#c23b66','#e08a2e','#4467c4'][variant]);
       // Matte vinyl (palette roughness): broad soft highlight from the sky light, no small hot spot.
-      if(m.name==='Horse_Coat')m.roughness=.62;if(m.name==='Horse_ManeTail')m.roughness=.62;
+      if(m.name==='Horse_Coat')m.roughness=.9;if(m.name==='Horse_ManeTail')m.roughness=.9;   // clay: was .62
       if(FUR[m.name])m.sheenColor.copy(m.color).lerp(WHITE,FUR[m.name].lift);
       // Lash lines and brows (the model's own parts): the upper lash keeps its near-black on every coat, the lower one
       // and the brow are the coat darkened.
@@ -386,7 +389,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
 // on its vertices, so it renders as before. Positions are baked through each part's bind matrix (the rider's differs
 // from the horse's). Only the coat, mane/tail and the merged mesh cast shadows. → the new geometries and material, for
 // the caller to dispose. The model's eyes.update no longer applies (the race never calls it).
-const OWN_SHADER=new Set(['Horse_Coat','Horse_ManeTail','Horse_Eye','Buddy_Eye']),RACE_GLOSS=.78;
+const OWN_SHADER=new Set(['Horse_Coat','Horse_ManeTail','Horse_Eye','Buddy_Eye']),RACE_GLOSS=1;   // clay: the race no longer shines the parts up (was .78)
 // Race look, the horse and rider (the city mock-ups, references/style/city_*.webp: a soft velvet toy with a full,
 // stranded tail), added to the coat / mane-tail / merged shaders in the race only (the stable keeps the plain ones):
 //   fuzz     light caught along the silhouette, like a short nap ([coat, hair, rider and tack], × the surface colour)
@@ -411,8 +414,8 @@ export function mergeForRace(model){
   // Race look (the race concept art): a glossier toy than the stable's matte vinyl. Coat and mane/tail are this model's
   // own materials; the merged parts get RACE_GLOSS × their roughness below.
   for(const o of own){const m=o.material;
-    if(m.name==='Horse_Coat'){m.roughness=.46;also(m,'race-coat',sh=>{sh.uniforms.uBlaze=blaze;sh.fragmentShader='uniform float uBlaze;\n'+sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n'+soft(0));});}
-    if(m.name==='Horse_ManeTail'){m.roughness=.52;also(m,'race-hair',sh=>{
+    if(m.name==='Horse_Coat'){m.roughness=.88;also(m,'race-coat',sh=>{sh.uniforms.uBlaze=blaze;sh.fragmentShader='uniform float uBlaze;\n'+sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n'+soft(0));});}
+    if(m.name==='Horse_ManeTail'){m.roughness=.88;also(m,'race-hair',sh=>{
       sh.vertexShader='varying vec3 vHairP;\n'+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>\nvHairP=position;transformed+=normal*${RACE_FUR.full.toFixed(4)}*smoothstep(-.3,-.6,position.z);`);
       sh.uniforms.uBlaze=blaze;sh.fragmentShader=`uniform float uBlaze;varying vec3 vHairP;
       float tH(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}

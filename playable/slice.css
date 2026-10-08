@@ -493,3 +493,88 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .no-lanes .slide-track,.no-lanes .lane-dots{display:none}
 .no-sprint .charge-btn{display:none}
 .no-lanes.no-sprint .jump-guide{display:none}
+
+/* The pace test (?pace=1): no ribbons, a gauge over the pads. */
+.is-pace .rhythm-overlay,.is-pace .rhythm-note-overlay{display:none}
+#pace-gauge{position:absolute;z-index:6;left:50%;bottom:26%;width:46%;transform:translateX(-50%);pointer-events:none}
+#pace-gauge svg{display:block;width:100%;overflow:visible}
+#pace-gauge path{fill:none;stroke-width:14;stroke-linecap:butt}
+#pace-gauge .slow{stroke:rgb(150 160 170 / .9)}#pace-gauge .good{stroke:#27eb62}#pace-gauge .hot{stroke:#f0462f}
+#pace-needle{stroke:#fff;stroke-width:5;stroke-linecap:round;transform-origin:100px 100px;transform:rotate(var(--turn,-90deg));filter:drop-shadow(0 1px 2px rgb(0 0 0 / .6))}
+#pace-wind{display:block;height:calc(6 * var(--u));margin:calc(4 * var(--u)) 18% 0;border-radius:99px;background:rgb(0 0 0 / .45);overflow:hidden}
+#pace-wind b{display:block;height:100%;width:calc(var(--wind,1) * 100%);background:#fff;border-radius:99px}
+#pace-gauge[data-zone=hot] #pace-wind b{background:#f0462f}#pace-gauge[data-zone=blown]{opacity:.45}
+
+/* The reins test (?reins=1): the pads give way to two hands on a rein. */
+.is-reins .rhythm-foot,.is-reins .slide-track,.is-reins .jump-guide{display:none}
+.is-reins .charge-btn{z-index:8}
+#reins{position:absolute;z-index:5;left:0;right:0;bottom:0;height:46%;touch-action:none}
+#reins svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#rein-line{fill:none;stroke:rgb(39 235 98 / .75);stroke-width:calc(9 * var(--u));stroke-linecap:round}
+#reins.both #rein-line{stroke:#27eb62}
+#reins i{position:absolute;left:0;top:0;width:calc(64 * var(--u));height:calc(64 * var(--u));margin:calc(-32 * var(--u)) 0 0 calc(-32 * var(--u));border-radius:50%;border:calc(4 * var(--u)) solid #fff;background:rgb(0 0 0 / .45);pointer-events:none}
+#reins i.held{background:rgb(39 235 98 / .55)}#reins i.out{border-color:#ffcc00;background:rgb(255 204 0 / .6)}
+.is-reins #pace-gauge{bottom:50%;width:36%}
+
+/* The gait test (?gait=1): one thumb swipes anywhere; the pads, the ribbons and the charge button are not there. */
+.is-gait .rhythm-foot,.is-gait .slide-track,.is-gait .jump-guide,.is-gait .charge-btn,.is-gait .rhythm-overlay,.is-gait .rhythm-note-overlay,.is-gait .hud-combo,.is-gait #slice-combo{display:none!important}
+#gait-pad{position:absolute;z-index:5;left:0;right:0;top:14%;bottom:0;touch-action:none}
+#gait-hud{position:absolute;z-index:6;left:50%;bottom:calc(18 * var(--u));transform:translateX(-50%);display:grid;justify-items:center;gap:calc(6 * var(--u));padding:calc(10 * var(--u)) calc(16 * var(--u));border-radius:calc(22 * var(--u));background:rgb(0 0 0 / .62);color:#fff;pointer-events:none;min-width:52%}
+#gait-hud .gears{display:flex;gap:calc(6 * var(--u))}
+#gait-hud .gears i{display:grid;place-items:center;width:calc(40 * var(--u));height:calc(26 * var(--u));border-radius:calc(8 * var(--u));background:rgb(255 255 255 / .14);font-style:normal;font-size:calc(13 * var(--u));color:rgb(255 255 255 / .55)}
+#gait-hud .gears i.on{background:#27eb62;color:#0b1a10}#gait-hud[data-g="3"] .gears i.on{background:#ffcc00}
+#gait-hud strong{font-size:calc(17 * var(--u));line-height:1}
+#gait-hud .wind{display:block;width:100%;height:calc(8 * var(--u));border-radius:99px;background:rgb(255 255 255 / .18);overflow:hidden}
+#gait-hud .wind b{display:block;height:100%;width:calc(var(--wind,1) * 100%);border-radius:99px;background:#fff}
+#gait-hud.low .wind b,#gait-hud.bend .wind b{background:#f0462f}#gait-hud.blown{opacity:.55}
+#gait-hud small{font-size:calc(11 * var(--u));opacity:.8;white-space:nowrap}#gait-hud.lean small{display:none}
+
+/* The ball test (?ball=1): one ring at the foot of the screen; the ball grows to the white limit ring. */
+.is-ball .rhythm-foot,.is-ball .slide-track,.is-ball .jump-guide,.is-ball .rhythm-overlay,.is-ball .rhythm-note-overlay,.is-ball .hud-combo,.is-ball #slice-combo{display:none!important}
+.is-ball .charge-btn{z-index:8}.is-ball .charge-btn.ready{background:#fff;color:#000}.is-ball .charge-btn.sprinting{background:#fff;box-shadow:0 0 calc(18 * var(--u)) #fff}
+#ball-pad{position:absolute;z-index:5;left:0;right:0;top:14%;bottom:0;touch-action:none}
+#ball-ring{position:absolute;z-index:6;left:50%;bottom:4%;width:36%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:rgb(29 33 23 / .5);pointer-events:none}
+#ball-ring i,#ball-ring u{position:absolute;inset:0;border-radius:50%;border:calc(4 * var(--u)) solid #fff}#ball-ring u{opacity:0}
+#ball-ring.hot i{border-color:var(--ui-danger)}#ball-ring.dead i{border-color:rgb(255 255 255 / .35)}
+#ball-ring b{position:absolute;left:50%;top:50%;width:calc(24% + 70% * var(--ball,0));aspect-ratio:1;border-radius:50%;background:var(--ui-yellow);opacity:.6;
+  transform:translate(calc(-50% + var(--dx,0) * 1px),calc(-58% + var(--dy,0) * 1px));box-shadow:0 calc(8 * var(--u)) calc(6 * var(--u)) rgb(0 0 0 / .35);transition:transform .09s ease-out}
+#ball-ring.held b{opacity:1;transform:translate(calc(-50% + var(--dx,0) * 1px),calc(-50% + var(--dy,0) * 1px));box-shadow:inset 0 0 0 calc(2 * var(--u)) rgb(0 0 0 / .25),0 0 calc(14 * var(--u)) var(--ui-yellow)}
+#ball-ring.warn b{animation:ball-sway .28s ease-in-out infinite alternate}#ball-ring.hot b{animation-duration:.11s}
+#ball-ring.dead b{background:#8d9085;opacity:.7;box-shadow:none;animation:none}
+@keyframes ball-sway{from{margin-left:-4%}to{margin-left:4%}}
+#ball-ring::before,#ball-ring::after{position:absolute;top:50%;translate:0 -50%;color:#fff;opacity:.55;font-size:calc(26 * var(--u));font-weight:700;line-height:1}
+#ball-ring::before{content:'‹';right:108%}#ball-ring::after{content:'›';left:108%}
+#ball-ring em{display:none;position:absolute;left:50%;top:38%;width:30%;height:62%;border-radius:45% 45% 30% 30% / 28% 28% 20% 20%;background:rgb(255 255 255 / .5);border:calc(2 * var(--u)) solid rgb(255 255 255 / .8);translate:-50% 0;animation:ball-tap .9s ease-in-out infinite alternate}
+#ball-ring.hint:not(.held) em{display:block}@keyframes ball-tap{from{translate:-50% -22%}to{translate:-50% 0}}
+#ball-ring i::before{content:'‹';position:absolute;left:50%;bottom:112%;translate:-50% 0;rotate:90deg;color:#fff;opacity:.55;font-size:calc(26 * var(--u));font-weight:700;line-height:1;font-style:normal}
+#ball-ring{width:30%;bottom:1.5%;background:rgb(29 33 23 / .35)}.is-ball .charge-btn .stamina{display:none}
+#ball-ring.max i{border-color:var(--ui-yellow);border-width:calc(7 * var(--u))}#ball-ring.max b{animation-duration:.07s}
+#ball-ring s{position:absolute;left:92%;bottom:84%;text-decoration:none;border-radius:99px;background:var(--ui-yellow);color:#000;font:700 calc(15 * var(--u))/1 var(--ui-font);padding:calc(4 * var(--u)) calc(9 * var(--u))}#ball-ring s:empty{display:none}
+/* Where letting go scores: a pale band (good, ball .8–.95) and a gold one against the limit ring (.95–1), over the ball. */
+#ball-ring span{position:absolute;inset:0;border-radius:50%;background:radial-gradient(closest-side,transparent 79.5%,rgb(255 255 255 / .75) 80% 90%,#ff7a1a 90.5% 94.5%,transparent 95%)}
+#ball-ring.hot span{animation:ball-zone .22s ease-in-out infinite alternate}#ball-ring.dead span{opacity:.3}
+@keyframes ball-zone{from{filter:brightness(1)}to{filter:brightness(1.5)}}
+#ball-ring.hot.held b{background:#fff;box-shadow:0 0 calc(18 * var(--u)) #fff}#ball-ring.max.held b{background:#ff7a1a;box-shadow:0 0 calc(22 * var(--u)) #ff7a1a}
+#ball-ring strong{display:none;position:absolute;left:50%;bottom:122%;translate:-50% 0;white-space:nowrap;border-radius:99px;background:#fff;color:#000;font:700 calc(17 * var(--u))/1 var(--ui-font);padding:calc(6 * var(--u)) calc(14 * var(--u));animation:ball-zone .22s ease-in-out infinite alternate}
+#ball-ring.hot.held strong{display:block}#ball-ring.max.held strong{background:#ff7a1a;color:#fff}
+#ball-pad,#ball-ring,#ball-ring *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* 2026-10-08: the ring sits higher (room for the thumb to drag down); the down arrow shows only when a runner is in reach behind. */
+#ball-ring{bottom:6%}#ball-ring span::after{content:'‹';display:none;position:absolute;left:50%;top:106%;translate:-50% 0;rotate:-90deg;color:var(--ui-yellow);font:700 calc(30 * var(--u))/1 var(--ui-font);animation:ball-zone .22s ease-in-out infinite alternate}
+#ball-ring.tail span::after{display:block}
+/* 2026-10-08: a side arrow turns yellow when a bump that way is on (a runner alongside and a step of the streak to spend). */
+#ball-ring.hit-l::before,#ball-ring.hit-r::after{color:var(--ui-yellow);opacity:1;font-size:calc(34 * var(--u))}
+/* 2026-10-08 (the user: 「原本不是有外圈一個類似多少快爆掉的進度環嗎？」): the outer ring is a gauge again. It fills clockwise
+   from the top with the ball; the last fifth of the way round is marked ahead of time: soft green where letting go is
+   nice (80–95%), orange where it is the limit (95–100%). The top of the ring is where it pops. The bands that were drawn
+   inside the ring are gone; the ball takes the colour of the zone it is in. */
+#ball-ring i{border:0;background:conic-gradient(var(--ui-yellow) calc(var(--ball,0) * 360deg),transparent 0),conic-gradient(rgb(255 255 255 / .28) 0 288deg,#8fcb7a 288deg 342deg,#ff7a1a 342deg 360deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 83%,#000 84%);mask:radial-gradient(closest-side,transparent 83%,#000 84%)}
+#ball-ring.dead i{opacity:.35}#ball-ring span{background:none;animation:none}
+#ball-ring.hot.held b{background:#8fcb7a;box-shadow:0 0 calc(18 * var(--u)) #8fcb7a}#ball-ring.max.held b{background:#ff7a1a;box-shadow:0 0 calc(22 * var(--u)) #ff7a1a}
+#ball-ring strong{background:#8fcb7a;color:#0d1a08}#ball-ring.max.held strong{background:#ff7a1a;color:#fff}
+#ball-ring b{width:calc(22% + 56% * var(--ball,0))}
+/* 2026-10-08 (the user: 「做在中間，縮小兩成」): the ring a fifth smaller, still in the middle. */
+#ball-ring{width:24%}
+/* 2026-10-08 (the user, after seeing it moved up over the buddy's back: 「回到這張圖位置」): where r343 had it, at the foot of the
+   screen (bottom 6%); a little larger than r343's 24%, as asked just before. */
+#ball-ring{width:28%}

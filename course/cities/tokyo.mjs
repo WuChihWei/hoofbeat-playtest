@@ -6,7 +6,7 @@ export default {
     // 2026-10-05 (the user: one lap in 30–40 s, then: more bends): 599 m (734, then 654). A wiggle on the start side, a
     // step out and back on the next, the far straight, then the hairpin straight into the dent.
     lap:'M L30 R30 R30 L30 L45 L45 R30 L30 F L30 R30 L45 L45 F L45 L45 L45 L45 R45 R45 R45 R45 L45 L45 L45 L45',   // deep U dent into the park
-    gameplay:({at,trail})=>({mud:[[.06,.30]],laps:2,soloLaps:2,tempo:1.3,speed:1.0,relay:at(14,45),jumps:[{s:at(9,25)}],
+    gameplay:({at,trail})=>({mud:[[.06,.30]],laps:2,soloLaps:1,tempo:1.3,speed:1.0,relay:at(14,45),jumps:[{s:at(9,25)}],
       coins:[...trail(at(2,2),0),...trail(at(6,2),-1),...trail(at(12,2),1),...trail(at(17,2),-1),...trail(at(21,2),0)]}),
   },
   weather:{sky:{top:'#6db8ec',horizon:'#e3eef2'},sun:{color:'#fff4e2',intensity:1},fog:[260,1100],cloud:0,rain:0},
@@ -21,7 +21,7 @@ export default {
       {asset:'Tree_Round',every:30,offset:[9,13],height:[11,14],shrink:true},
       {asset:'Tree_Cherry',every:13,offset:[10,17],height:[9,12],shrink:true},   // a second, lower rank behind: depth
       {asset:'Planter_Long',every:20,offset:[1.5,1.9],height:[1.9,1.9]},
-      {asset:'Shrub_Round',every:26,offset:[2.6,4.2],height:[1.5,2.1]},
+      {asset:'Shrub_Round',every:7,offset:[2.4,5.2],height:[1.7,2.8]},
       // Plants at the fence's foot, on both sides of it (only the nearest stretch: beyond it they are a pixel or two)
       {asset:'Grass_Clump',every:2.4,offset:[-.7,-.2],height:[.6,1],reach:85},
       {asset:'Grass_Clump',every:3.6,offset:[.35,1.5],height:[.6,1],reach:60},
@@ -32,7 +32,7 @@ export default {
     // Skyline cards just beyond the treeline (course/assets.mjs; approved-environment.js): [asset, x m right of the road,
     // z m ahead, height m]. The far bank and its water across the view, the bridge over that water to one side, groups
     // of buildings behind them; the landmark is the far painting's, in the middle.
-    skyline:[['Bank_Tokyo',0,455,20],['Bridge_Tokyo',-99,440,16],['Mid_Tokyo_B',-37,500,26],['Mid_Tokyo_C',40,520,34]],
+    skyline:[['Bank_Tokyo',0,455,14],['Bridge_Tokyo',-99,440,20]],
   },
   backdrop:'tokyo.webp',
 
@@ -41,7 +41,7 @@ export default {
   //    the Skytree stands straight ahead, about 6.4° tall (14% of the screen). The far bank's waterline (row 0.679) is on the
   //    true horizon, so the painted trees there merge with the 3D treeline and the city rises above it. No sun in the
   //    picture: u, v (outside it) keep the key light where it was (80° left, 44° up). Colours sampled from the painting.
-  background:{panorama:'tokyo.webp',projection:'strip',span:44,yaw:0,horizon:0.679,sun:{u:-1.316,v:-1.309},
-    fogColor:'#bbe1fc',horizonColor:'#bbe1fc',topColor:'#389cfd',ambientColor:'#62b6fc',keyLightColor:'#fff4e2',
+  background:{panorama:'tokyo.webp',projection:'strip',span:44,yaw:0,horizon:0.684,sun:{u:-1.316,v:-1.309},
+    fogColor:'#82c8fd',horizonColor:'#82c8fd',topColor:'#50a9fd',ambientColor:'#62b6fc',keyLightColor:'#fff4e2',
     far:{saturation:1,contrast:1,haze:.04,deep:0}},
 };

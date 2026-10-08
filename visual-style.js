@@ -6,9 +6,10 @@ import * as THREE from './vendor/three.module.min.js';
 export const LOOK = Object.freeze({
   toneMapping: THREE.NeutralToneMapping, exposure: 1.0,
   sky: {zenith: '#8ec8ef', horizon: '#fff0dc', ground: '#b8966f', sunGlow: '#fff4e0'},
-  env: {intensity: 0.85},
-  sun: {color: '#fff2e2', intensity: 2.0},
-  fill: {sky: '#dcecff', ground: '#b58f6a', intensity: 0.45},
+  // 2026-10-06, clay: a big soft light, as the concept sheets are lit (was env .85, sun 2.0, fill .45)
+  env: {intensity: 1.05},
+  sun: {color: '#fff2e2', intensity: 1.55},
+  fill: {sky: '#eef3fb', ground: '#c9ab8a', intensity: 0.7},
   rim: {color: '#fff1dc', intensity: 0.8},
   backdrop: {top: '#6fb3ee', horizon: '#d6e9f2'},   // visible sky gradient; horizon doubles as the fog colour
   shadow: {type: THREE.PCFShadowMap, radius: 3, raceMap: 1024, stableMap: 2048},
@@ -21,7 +22,7 @@ export const LOOK = Object.freeze({
   // the city's distances) so the roadside fades into the painting's haze instead of ending against it.
   // 2026-10-04, the user: the roadside trees and things still drew the eye too much. The painted cards (trees, lamps,
   // banners, shrubs, benches; the skyline cards too) are held back: card = their saturation, cardValue = their brightness.
-  race: {sun: 2.5, fill: 0.3, env: 0.68, rim: 1.1, exposure: 1.06, saturation: 1.18, card: 0.72, cardValue: 0.92, skyFill: 0.3, fog: [1, 1]},
+  race: {sun: 1.85, fill: 0.55, env: 0.95, rim: 0.9, exposure: 1.06, saturation: 1.1, card: 0.72, cardValue: 0.92, skyFill: 0.3, fog: [1, 1]},
 });
 // Race grade: Neutral tone mapping, then saturation × LOOK.race.saturation, in the same shader step (CustomToneMapping).
 // The chunk is shared, but only renderers set to CustomToneMapping (the race) use it.

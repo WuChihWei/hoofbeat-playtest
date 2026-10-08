@@ -1,5 +1,5 @@
-import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r307';
-import {racePhase} from './race-session.js?v=r307';
+import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r349';
+import {racePhase} from './race-session.js?v=r349';
 
 // A tune everyone knows for each city (2026-10-06, the user; all long out of copyright), played over the rhythm section
 // in place of the made-up lead: [semitones from C5, length in half-beats] (null: a rest), looped from the first note of
@@ -15,6 +15,12 @@ const MELODY={
   stockholm:[...MK,[3,1],[-1,1],[3,2],[2,1],[-2,1],[2,2],...MK.slice(0,6),[4,1],[9,1],[7,1],[4,1],[0,1],[4,1],[7,4]],
 };
 export function buildScore(race){
+  // The pace test (race.beats: slice-game config.pace) has no beat to follow: the city's tune alone, no pulse under it and
+  // no blip where a note would have been.
+  if(race.beats&&!race.config?.ball)return buildScore({...race,beats:null,notes:race.beats}).filter(e=>e.kind!=='beat'&&e.kind!=='note');
+  // The ball game (2026-10-08, the user: 「音樂就不用打點，直接當背景音樂」): nothing to hit, so the music is just music: the
+  // city's tune over its own rhythm section on a steady beat (one every .6 simulation s, no rests), and no blip per note.
+  if(race.config?.ball)return buildScore({...race,config:{...race.config,ball:false},beats:null,notes:Array.from({length:400},(_,i)=>({t:i*.6,lane:0,leg:0}))}).filter(e=>e.kind!=='note');
   const tempo=race.slice?race.config.tempo??1:1;
   const events=[0,1,2].map(t=>({t,kind:'count'}));
   events.push({t:COUNTDOWN,kind:'go'});

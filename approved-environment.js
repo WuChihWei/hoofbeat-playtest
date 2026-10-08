@@ -1,16 +1,16 @@
-import {fencePose} from './track-presentation.mjs?v=r307';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r307';
+import {fencePose} from './track-presentation.mjs?v=r349';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r349';
 import * as THREE from './vendor/three.module.min.js';
-import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r307';
+import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r349';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {approvedAssets,scenePictures} from './approved-assets.js?v=r307';
-import {HORSE_Z,roadPose} from './race-world.js?v=r307';
-import {cityById,CITIES} from './course/cities/index.mjs?v=r307';
-import {modelFor} from './course/assets.mjs?v=r307';
+import {approvedAssets,scenePictures} from './approved-assets.js?v=r349';
+import {HORSE_Z,roadPose} from './race-world.js?v=r349';
+import {cityById,CITIES} from './course/cities/index.mjs?v=r349';
+import {modelFor} from './course/assets.mjs?v=r349';
 // The release tag the page loaded this module with (?v=…): the paintings and cards carry it too, so a picture replaced
 // under the same name is fetched again instead of coming from the browser's cache.
 const TAG=new URL(import.meta.url).search;
-import {installFarBackground,sunDirection} from './far-background.js?v=r307';
+import {installFarBackground,sunDirection} from './far-background.js?v=r349';
 
 // The race dressing comes from the city pack (course/cities/<id>.mjs): barrier, prop rows, treeline, weather, backdrop.
 const packFor=id=>cityById(id)||cityById('stockholm')||CITIES[0];
@@ -20,13 +20,16 @@ export function cityModels(id){
  return [...new Set([lite(modelFor(d.barrier.asset)),...ids.map(modelFor).filter(Boolean).flatMap(m=>[near(m),m.far])].filter(Boolean))];
 }
 
+// 2026-10-06 (the user: the near view looked broken up; the concept picture's ground is clean): the small plants at the
+// fence's foot (Grass_Clump rows: a card every 2–4 m) are not drawn.
+const ROWS=D=>D.rows.filter(r=>r.asset!=='Grass_Clump');
 // Every picture a city's scene asks for as it is built: its far painting (or backdrop), the two ground tiles, and its
 // painted cards and fence (course/assets.mjs C / F). home.js asks for them ahead of a race, so the scene finds them in
 // the browser's cache: it is shown only once they are all in (approved-assets scenePictures).
 export function cityPictures(id){
- const pack=packFor(id),D=pack.dressing,files=new Set(['textures/grass.webp','textures/dirt.webp']);
+ const pack=packFor(id),D=pack.dressing,files=new Set(['textures/grass.webp'+TAG,'textures/dirt.webp'+TAG]);
  const add=asset=>{const m=modelFor(asset);if(m?.variants)m.variants.forEach(add);else{const f=m?.card?.file||m?.fence?.file;if(f)files.add(f+TAG);}};
- [D.barrier.asset,...D.rows.map(r=>r.asset),...D.treeline.assets,...(D.skyline||[]).map(c=>c[0])].forEach(add);
+ [D.barrier.asset,...ROWS(D).map(r=>r.asset),...D.treeline.assets,...(D.skyline||[]).map(c=>c[0])].forEach(add);
  files.add(pack.background?`panoramas/${pack.background.panorama}${TAG}`:`backdrops/${pack.backdrop}`);
  return [...files].map(f=>new URL('./assets/'+f,import.meta.url).href);
 }
@@ -72,7 +75,7 @@ export function installApprovedEnvironment(renderer){
  const TINT=new THREE.Color(),GT=pack.grassTint||[1,1,1];   // GT: the pack's tint on the shared grass
  // tree: trees and shrubs get a wide spread of sizes and a slight tint each; loose: natural things (anything with
  // variants, shrubs, rocks) stand unevenly, with gaps; row.reach: only this far ahead (small plants).
- const rows=D.rows.map((row,k)=>{const n=Math.ceil(FAR_LOOP/row.every),kd=kind(row.asset,n*sidesOf(row).length,row.tint);
+ const rows=ROWS(D).map((row,k)=>{const n=Math.ceil(FAR_LOOP/row.every),kd=kind(row.asset,n*sidesOf(row).length,row.tint);
   return {...row,k,n,kind:kd,tree:/^(Tree|Shrub)/.test(row.asset),loose:!!kd.variants||/^(Shrub|Rock)/.test(row.asset)};});
  const treeline=Array.from({length:D.treeline.count},(_,j)=>kind(D.treeline.assets[j%D.treeline.assets.length],1,D.treeline.tint));
  // Skyline cards (pack dressing.skyline: [asset, x, z, height] in metres, right of / ahead of the road's start): painted
@@ -92,7 +95,7 @@ export function installApprovedEnvironment(renderer){
   const tex=r.own(new THREE.TextureLoader(scenePictures).load(new URL(`./assets/${card.file}${TAG}`,import.meta.url).href));tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
   const s=card.scale,plane=r.instances(r.own(new THREE.PlaneGeometry(card.aspect*s,s).translate((.5-card.anchor)*card.aspect*s,s/2,0)),cardLook(r.own(new THREE.MeshBasicMaterial({map:tex,alphaTest:.5,side:THREE.DoubleSide}))),count);
   if(card.shade===false)return [plane];
-  const shade=r.own(r.shadowMaterial.clone()),[sw,sd]=(card.shade||[card.aspect*1.5,card.aspect*.8]).map(v=>v*s);shade.side=THREE.DoubleSide;
+  const shade=r.own(r.shadowMaterial.clone()),[sw,sd]=(card.shade||[card.aspect*1.5,card.aspect*.8]).map(v=>v*s*(/Tree_/.test(card.file)?1.8:1));   // trees: a pool of shade on the lawn under the crown, not a patch at the trunk (2026-10-07)shade.side=THREE.DoubleSide;
   return [plane,r.instances(r.own(new THREE.PlaneGeometry(sw,sd).rotateX(-Math.PI/2).translate(0,.003,0)),shade,count)];
  }
  // A built fence: the balustrade's picture on 12 triangles a bay. The post is a box (the post's picture on its four sides, a
@@ -129,11 +132,13 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
  // Ground bands that follow the road (like the lane lines): a ragged grass edge over the seam between dirt and verge,
  // and a soft dark band under each fence (it casts no shadow: without it the fence floats).
  const edgeTex=r.texture((c,w,h)=>{let seed=7;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
-  c.fillStyle='#84a65c';c.fillRect(w*.4,0,w*.6,h);
+  // 2026-10-07 (the user: 「靠近比賽場地那邊沒鋪」): the band was one flat green right across the verge to the fence, over
+  // the lawn tile. Now only the ragged edge itself: it fades out over the grass side, where the tile shows.
+  const fade=c.createLinearGradient(w*.4,0,w*.62,0);fade.addColorStop(0,'#88ae3a');fade.addColorStop(1,'#88ae3a00');c.fillStyle=fade;c.fillRect(w*.4,0,w*.22,h);c.fillStyle='#88ae3a';
   for(let i=0;i<26;i++){const y=rnd()*h,rad=(.07+.16*rnd())*w;for(const dy of [-h,0,h]){c.beginPath();c.ellipse(w*.4,y+dy,rad,rad*(1+rnd()),0,0,Math.PI*2);c.fill();}}   // clumps: an uneven edge that reads from the saddle
-  for(let i=0;i<700;i++){const y=rnd()*h,len=(.12+.3*rnd()*rnd())*w,half=2+rnd()*4,lean=(rnd()-.5)*14;c.fillStyle=['#84a65c','#72914c','#96b56b','#7a9c52'][i%4];
+  for(let i=0;i<700;i++){const y=rnd()*h,len=(.12+.3*rnd()*rnd())*w,half=2+rnd()*4,lean=(rnd()-.5)*14;c.fillStyle=['#88ae3a','#6f9a34','#a6c24a','#7ea238'][i%4];
    for(const dy of [-h,0,h]){c.beginPath();c.moveTo(w*.36,y+dy-half);c.lineTo(w*.36-len,y+dy+lean);c.lineTo(w*.36,y+dy+half);c.fill();}}
-  for(let i=0;i<500;i++){const x=w*(.4+.6*rnd()),y=rnd()*h;c.strokeStyle=rnd()>.5?'#68854566':'#aec67a55';c.beginPath();c.moveTo(x,y);c.lineTo(x-3-rnd()*4,y+(rnd()-.5)*5);c.stroke();}
+  for(let i=0;i<180;i++){const x=w*(.4+.2*rnd()),y=rnd()*h;c.strokeStyle=rnd()>.5?'#68854566':'#aec67a55';c.beginPath();c.moveTo(x,y);c.lineTo(x-3-rnd()*4,y+(rnd()-.5)*5);c.stroke();}
  },128,256);
  const EDGE_TILE=5,bandTex=(t,flip,tile=EDGE_TILE)=>{const x=t.clone();x.wrapS=x.wrapT=THREE.RepeatWrapping;x.repeat.set(flip?-1:1,390/tile);x.offset.x=flip?1:0;x.needsUpdate=true;return r.own(x);};
  // Dappled tree shade (the mock-ups have it across the track): soft dark leaf-cluster blobs, thick toward the trees and
@@ -141,15 +146,15 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
  // every `tile` m and moving with the ground. It lies over the road and the lawn; nothing casts it.
 // The dirt is lit brighter and warmer than its tile (the reference's track: clean orange-tan).
  const CLEAN=[1.25,1.1,1.08];
- const DAPPLE={inner:P.track.width/2-4.7,width:8.4,tile:16.8,alpha:.35};   // inner: it starts 4.7 m inside the dirt's edge, whatever the track's width   // alpha: how dark the shade is (1 read as dirt on the track: the reference is clean and bright)
+ const DAPPLE={inner:P.track.width/2-6.5,width:11,tile:33,alpha:.42};   // 2026-10-06: a few large soft shadows (was 120 small gaps of light over 8.4 m, tile 16.8, alpha .35)   // inner: it starts 4.7 m inside the dirt's edge, whatever the track's width   // alpha: how dark the shade is (1 read as dirt on the track: the reference is clean and bright)
  const dappleTex=r.texture((c,w,h)=>{let seed=29;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
   const blob=(x,y,rx,a)=>{for(const dy of [-h,0,h]){const g=c.createRadialGradient(x,y+dy,0,x,y+dy,rx);g.addColorStop(0,`rgba(26,34,22,${a.toFixed(3)})`);g.addColorStop(.55,`rgba(26,34,22,${(a*.85).toFixed(3)})`);g.addColorStop(1,'rgba(26,34,22,0)');
    c.save();c.translate(x,y+dy);c.scale(1,.5);c.translate(-x,-(y+dy));c.fillStyle=g;c.beginPath();c.arc(x,y+dy,rx,0,Math.PI*2);c.fill();c.restore();}};
   // one body of shade, deepest by the trees…
   const g=c.createLinearGradient(0,0,w,0);g.addColorStop(.12,'rgba(26,34,22,0)');g.addColorStop(.4,'rgba(26,34,22,.2)');g.addColorStop(1,'rgba(26,34,22,.36)');c.fillStyle=g;c.fillRect(0,0,w,h);
   // …with sunlight coming through in patches (more of it toward the open track), and loose islands of shade beyond its edge
-  c.globalCompositeOperation='destination-out';for(let i=0;i<120;i++){const u=rnd();blob(u*w,rnd()*h,(14+rnd()*40)*(1.35-.8*u),.5+.5*rnd());}
-  c.globalCompositeOperation='source-over';for(let i=0;i<46;i++){const u=.08+.5*rnd();blob(u*w,rnd()*h,16+rnd()*40,.14+.16*rnd());}
+  c.globalCompositeOperation='destination-out';for(let i=0;i<16;i++){const u=rnd();blob(u*w,rnd()*h,(60+rnd()*70)*(1.35-.8*u),.7+.3*rnd());}
+  c.globalCompositeOperation='source-over';for(let i=0;i<7;i++){const u=.08+.5*rnd();blob(u*w,rnd()*h,50+rnd()*60,.16+.14*rnd());}
  },512,512);
  const shadeTex=r.texture((c,w,h)=>{const g=c.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(24,34,20,0)');g.addColorStop(.5,'rgba(24,34,20,.34)');g.addColorStop(1,'rgba(24,34,20,0)');c.fillStyle=g;c.fillRect(0,0,w,h);},64,4);
  const bands=[-1,1].flatMap(side=>{
@@ -221,13 +226,13 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
  r.ground.scale.set(2.6,2.6,1);
  // Grass: a painted lawn tile (assets/textures/grass.webp, tools/grass.py: seamless, in the game's lawn colour), GRASS_M metres a
  // tile, repeated over the whole lawn and the verge (one load each: the browser serves the second from its cache).
- const GRASS_M=4,grassTile=(rx,ry)=>{const t=r.own(new THREE.TextureLoader(scenePictures).load(new URL('./assets/textures/grass.webp',import.meta.url).href));
+ const GRASS_M=7,grassTile=(rx,ry)=>{const t=r.own(new THREE.TextureLoader(scenePictures).load(new URL('./assets/textures/grass.webp'+TAG,import.meta.url).href));
   t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;t.repeat.set(rx,ry);return t;};
  const groundTex=grassTile(620*2.6/GRASS_M,620*2.6/GRASS_M);r.grassMaterial.map=groundTex;r.grassMaterial.needsUpdate=true;
  const vergeTex=grassTile(P.track.vergeWidth/GRASS_M,390/GRASS_M);r.vergeMaterial.map=vergeTex;r.vergeMaterial.needsUpdate=true;
  relay.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
  // The track: a painted dirt tile (assets/textures/dirt.webp, tools/tile.py: seamless, in the track's colour), DIRT_M metres a tile.
- const DIRT_M=4.2,dirt=r.own(new THREE.TextureLoader(scenePictures).load(new URL('./assets/textures/dirt.webp',import.meta.url).href));
+ const DIRT_M=12,dirt=r.own(new THREE.TextureLoader(scenePictures).load(new URL('./assets/textures/dirt.webp'+TAG,import.meta.url).href));
  dirt.colorSpace=THREE.SRGBColorSpace;dirt.wrapS=dirt.wrapT=THREE.RepeatWrapping;dirt.repeat.set(P.track.width/DIRT_M,390/DIRT_M);dirt.anisotropy=8;r.roadMaterial.map=dirt;r.roadMaterial.needsUpdate=true;
  // City backdrop (assets/backdrops/<city>.webp: the painted skyline cropped at its lawn line, top and sides faded to alpha)
  // stands in for the mountains: a flat card far behind the treeline, lawn line on the ground, unlit and unfogged.
@@ -288,15 +293,18 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
   for(const row of rows)for(const side of sidesOf(row))for(let i=0;i<row.n;i++){
    // Loose rows stand unevenly: each up to 40% of the spacing off its spot, one in seven missing.
    const seed=row.k*97+i*7+(side>0?3:0),V=row.kind.variants,k=V?V[Math.floor(rnd(seed+21)*V.length)]:row.kind,tree=row.tree;
-   if(thin(i)&&!k.card||row.loose&&rnd(seed+15)<.14)continue;   // cards are 2 triangles: phones keep them all
+   // Trees and shrubs stand in groups with clearings between (2026-10-07, the user: 「很像電腦放的」, the reference has
+   // clumps, gaps and a few giants): three slots in a row are left empty one time in three.
+   if(thin(i)&&!k.card||row.loose&&rnd(seed+15)<.14||tree&&rnd(row.k*31+Math.floor((i+row.k)/3)*5+(side>0?1:0)+40)<.33)continue;   // cards are 2 triangles: phones keep them all
    const z=loopZ(i,row.every,row.k*3.1+(side>0?row.every*.37:0)+(row.loose?(rnd(seed+9)-.5)*row.every*.8:0)),edge=fenceAt(z,side);if(row.reach&&z<-row.reach)continue;
    const far=z<LOD_Z&&k.far,n=k.card?CARD:box(far?k.farFile:k.file),road=row.face==='road'||!!k.card;if(PHONE&&!k.far&&!k.card&&z<PHONE_END)continue;
    const shrink=row.shrink?1-.45*Math.min(1,Math.max(0,(-z-200)/200)):1;   // like the reference: smaller toward the road's end
-   const size=(row.height[0]+(row.height[1]-row.height[0])*rnd(seed+1))/n.h*shrink*(tree?.66+.64*rnd(seed+5):1);   // trees: a wide spread of sizes
+   const size=(row.height[0]+(row.height[1]-row.height[0])*rnd(seed+1))/n.h*shrink*(tree?.8+.9*rnd(seed+5)**2:1);   // trees: mostly middling, a few giants (.8–1.7)
    // face 'road': unturned (flags hang over the track, lamps reach it), mirrored on the right (materials are double-sided).
    // Cards face down the road too, unmirrored (their painted light comes from the left on both sides, like the sun; banners
    // keep their lettering readable) unless the row says mirror.
-   const out=side*(row.offset[0]+(row.offset[1]-row.offset[0])*rnd(seed+2)),h=edge.heading||0;
+   const out=side*(row.offset[0]+(row.offset[1]-row.offset[0])*(tree?1.7:1)*rnd(seed+2));   // trees: spread deeper, the ranks run into each other
+   const h=edge.heading||0;
    if(row.asset.startsWith('Lamp_Banner')&&z>-420)r.lampSpots.push({x:edge.x+out*Math.cos(h),y:(n.h*.93-n.y)*size,z:edge.z-out*Math.sin(h)});
    put(far?k.far:k.near,edge.x+out*Math.cos(h),-n.y*size,edge.z-out*Math.sin(h),size*(k.card?(row.mirror?-side:1):road?-side:1),size,road?h:rnd(seed+3)*6.28,tree?treeTint(seed):null);
   }

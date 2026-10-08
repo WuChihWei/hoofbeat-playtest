@@ -17,28 +17,29 @@ const F=(file,spec)=>Object.freeze({fence:Object.freeze({file:'cards/'+file,...s
 export const ASSETS=Object.freeze({
   
   // Each city's banner on a post (tools/cards-derived.py): on the classic lamp, or on Stockholm's wooden pole.
-  Lamp_Banner_Taipei:C('Lamp_Banner_Taipei.webp',.369,[.14,.08],.26), Lamp_Banner_Tokyo:C('Lamp_Banner_Tokyo.webp',.369,[.14,.08],.26),
-  Lamp_Banner_Paris:C('Lamp_Banner_Paris.webp',.372,[.14,.08],.26), Lamp_Banner_Seoul:C('Lamp_Banner_Seoul.webp',.366,[.14,.08],.26),
-  Banner_Pole_Stockholm:C('Banner_Pole_Stockholm.webp',.452,[.12,.07],.17),
+  Lamp_Banner_Taipei:C('Lamp_Banner_Taipei.webp',.32,[.14,.08],.23), Lamp_Banner_Tokyo:C('Lamp_Banner_Tokyo.webp',.32,[.14,.08],.23),   // 2026-10-07: the user's clay lamps, each with its banner (card-sources/lamp_banners_clay.png)
+  Lamp_Banner_Paris:C('Lamp_Banner_Paris.webp',.32,[.14,.08],.23), Lamp_Banner_Seoul:C('Lamp_Banner_Seoul.webp',.32,[.14,.08],.23),
+  Banner_Pole_Stockholm:C('Banner_Pole_Stockholm.webp',.354,[.12,.07],.16),
   // _R: the same post for the right of the track, mirrored so its banner hangs toward the track too (the picture flipped,
   // the cloth flipped back so the lettering reads). The left row uses the plain one.
-  Lamp_Banner_Taipei_R:C('Lamp_Banner_Taipei_R.webp',.369,[.14,.08],.74), Lamp_Banner_Tokyo_R:C('Lamp_Banner_Tokyo_R.webp',.369,[.14,.08],.74),
-  Lamp_Banner_Paris_R:C('Lamp_Banner_Paris_R.webp',.372,[.14,.08],.74), Lamp_Banner_Seoul_R:C('Lamp_Banner_Seoul_R.webp',.366,[.14,.08],.74),
-  Banner_Pole_Stockholm_R:C('Banner_Pole_Stockholm_R.webp',.452,[.12,.07],.83),
+  Lamp_Banner_Taipei_R:C('Lamp_Banner_Taipei_R.webp',.32,[.14,.08],.77), Lamp_Banner_Tokyo_R:C('Lamp_Banner_Tokyo_R.webp',.32,[.14,.08],.77),   // 2026-10-07: no lettering now, the whole picture is flipped
+  Lamp_Banner_Paris_R:C('Lamp_Banner_Paris_R.webp',.32,[.14,.08],.77), Lamp_Banner_Seoul_R:C('Lamp_Banner_Seoul_R.webp',.32,[.14,.08],.77),
+  Banner_Pole_Stockholm_R:C('Banner_Pole_Stockholm_R.webp',.354,[.12,.07],.84),
   Fence_Wood:A('fence/Fence.glb'), 
   
-  Topiary_Cone:C('Topiary_Cone.webp',.492), Urn_Planter:C('Urn_Planter.webp',.516),   // Paris garden: cards from references/style/paris_garden_pieces.webp
-  Balustrade:F('Balustrade.webp',{aspect:3.125,post:.107}),
+  Topiary:V('Topiary_Cone','Topiary_Ball'), Topiary_Cone:C('Topiary_Cone.webp',.371), Topiary_Ball:C('Topiary_Ball.webp',.557,undefined,.49,.84), Urn_Planter:C('Urn_Planter.webp',.668),   // 2026-10-07: the user's clay pieces (card-sources/paris_garden_clay.png)   // Paris garden: cards from references/style/paris_garden_pieces.webp
+  Balustrade:F('Balustrade.webp',{aspect:3.351,post:.0968}),
     // (tools/garden.py; the cone and the urn it also makes are not used: the cards replaced them)
   // Park pieces (card-sources/park_props.png) and plants at the fence's foot (plant_tufts.png).
-  Planter_Long:C('Planter_Long.webp',1.838,[2,.5]), Bench_Simple:C('Bench_Simple.webp',1.406,[1.5,.45]), Rock_Large:C('Rock_Large.webp',1.489,[1.6,.5]), Shrub_Round:C('Shrub_Round.webp',1.185,[1.3,.5]),
+  Planter_Long:C('Planter_Long.webp',2.254,[2.2,.5]), Bench_Simple:C('Bench_Simple.webp',1.788,[1.8,.45]), Rock_Large:C('Rock_Large.webp',1.717,[1.8,.5]), Shrub_Round:V('Shrub_A','Shrub_B','Shrub_C'), Shrub_A:C('Shrub_A.webp',2.311,[2.2,.5],.49,.92), Shrub_B:C('Shrub_B.webp',1.314,[1.3,.5],.42,.89), Shrub_C:C('Shrub_C.webp',1.67,[1.6,.5],.48),   // 2026-10-06: the user's puffy shrubs (references/style/card-sources/shrubs_puffy.webp)
   Grass_Clump:V('Tuft_Grass','Tuft_Yellow','Tuft_Weed','Tuft_Daisy'),
   Tuft_Grass:C('Tuft_Grass.webp',.914,false), Tuft_Yellow:C('Tuft_Yellow.webp',1.008,false,.5,.89), Tuft_Weed:C('Tuft_Weed.webp',1.246,false,.5,.73), Tuft_Daisy:C('Tuft_Daisy.webp',1.055,false,.5,.89),
   // Trees (card-sources/trees_round.png, trees_pine.png, trees_cherry.png): three of each kind.
-  Tree_Round:V('Tree_Round_A','Tree_Round_B','Tree_Round_C'), Tree_Pine:V('Tree_Pine_A','Tree_Pine_B','Tree_Pine_C'), Tree_Cherry:V('Tree_Cherry_A','Tree_Cherry_B','Tree_Cherry_C'),
-  Tree_Round_A:C('Tree_Round_A.webp',.822,[.8,.42],.53), Tree_Round_B:C('Tree_Round_B.webp',1.202,[1.1,.5]), Tree_Round_C:C('Tree_Round_C.webp',1.282,[.95,.45],.5,.77),
-  Tree_Pine_A:C('Tree_Pine_A.webp',.395,[.42,.24],.49), Tree_Pine_B:C('Tree_Pine_B.webp',.562,[.55,.3],.49), Tree_Pine_C:C('Tree_Pine_C.webp',.682,[.55,.3],.49,.82),
-  Tree_Cherry_A:C('Tree_Cherry_A.webp',1.28,[1,.48],.51,.85), Tree_Cherry_B:C('Tree_Cherry_B.webp',.855,[.8,.42],.49), Tree_Cherry_C:C('Tree_Cherry_C.webp',1.334,[.9,.42],.49,.72),
+  Tree_Round:V('Tree_Round_A','Tree_Round_B','Tree_Round_C','Tree_Round_D','Tree_Round_E','Tree_Round_F'), Tree_Pine:V('Tree_Pine_A','Tree_Pine_B','Tree_Pine_C'), Tree_Cherry:V('Tree_Cherry_A','Tree_Cherry_B','Tree_Cherry_C'),
+  Tree_Round_A:C('Tree_Round_A.webp',1.098,[1,.45],.47,.93), Tree_Round_B:C('Tree_Round_B.webp',.636,[.7,.42],.49), Tree_Round_C:C('Tree_Round_C.webp',.919,[.9,.45],.38,.91),   // 2026-10-06: the user's puffy trees (trees_puffy.webp), in place of the leafy painted ones
+  Tree_Round_D:C('Tree_Round_D.webp',1.588,[1.3,.45],.49,.64), Tree_Round_E:C('Tree_Round_E.webp',.428,[.4,.3],.52), Tree_Round_F:C('Tree_Round_F.webp',1.049,[.9,.45],.49,.72),   // 2026-10-07: a second set (trees_puffy2.png)
+  Tree_Pine_A:C('Tree_Pine_A.webp',.459,[.42,.24],.5), Tree_Pine_B:C('Tree_Pine_B.webp',.756,[.6,.3],.5,.84), Tree_Pine_C:C('Tree_Pine_C.webp',.604,[.55,.3],.51,.89),   // 2026-10-07: puffy pines and cherries (trees_pine_puffy.png, trees_cherry_puffy.png)
+  Tree_Cherry_A:C('Tree_Cherry_A.webp',1.149,[1,.48],.48,.88), Tree_Cherry_B:C('Tree_Cherry_B.webp',.658,[.7,.42],.49), Tree_Cherry_C:C('Tree_Cherry_C.webp',.98,[.9,.42],.52,.88),
 
   
 
@@ -47,8 +48,8 @@ export const ASSETS=Object.freeze({
   // riverbank and a bridge. The pack's dressing.skyline places them beyond the treeline, heights in metres; no ground shadow.
   // Left out: the groups that repeat the far painting's landmark (Taipei A: 101, Tokyo A: Skytree, Paris B: Eiffel, Seoul A and B:
   // N Seoul Tower and Lotte World Tower); tools/cards-mid.py still cuts them.
-  Mid_Taipei_B:C('Mid_Taipei_B.webp',1.843,false), Mid_Taipei_C:C('Mid_Taipei_C.webp',1.975,false), Bank_Taipei:C('Bank_Taipei.webp',8.719,false), Bridge_Taipei:C('Bridge_Taipei.webp',11.557,false),
-  Mid_Tokyo_B:C('Mid_Tokyo_B.webp',1.539,false), Mid_Tokyo_C:C('Mid_Tokyo_C.webp',1.003,false), Bank_Tokyo:C('Bank_Tokyo.webp',7.722,false), Bridge_Tokyo:C('Bridge_Tokyo.webp',11.325,false),
+  Bank_Taipei:C('Bank_Taipei.webp',5.544,false), Bridge_Taipei:C('Bridge_Taipei.webp',11.827,false),   // 2026-10-07: the user's new bank (with its own skyline) and bridge (card-sources/mid2_<city>.png); the old building groups are out
+  Bank_Tokyo:C('Bank_Tokyo.webp',11.128,false), Bridge_Tokyo:C('Bridge_Tokyo.webp',9.185,false),
   Mid_Paris_A:C('Mid_Paris_A.webp',1.425,false), Mid_Paris_C:C('Mid_Paris_C.webp',1.478,false), Bank_Paris:C('Bank_Paris.webp',5.927,false), Bridge_Paris:C('Bridge_Paris.webp',8.935,false),
   Mid_Seoul_C:C('Mid_Seoul_C.webp',2.023,false), Bank_Seoul:C('Bank_Seoul.webp',8.981,false), Bridge_Seoul:C('Bridge_Seoul.webp',13.046,false),
   Mid_Stockholm_A:C('Mid_Stockholm_A.webp',1.167,false), Mid_Stockholm_B:C('Mid_Stockholm_B.webp',2.632,false), Mid_Stockholm_C:C('Mid_Stockholm_C.webp',1.554,false), Bank_Stockholm:C('Bank_Stockholm.webp',7.205,false), Bridge_Stockholm:C('Bridge_Stockholm.webp',11.708,false),

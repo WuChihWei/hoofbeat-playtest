@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r307';
-import {applyLook,LOOK} from '../visual-style.js?v=r307';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r349';
+import {applyLook,LOOK} from '../visual-style.js?v=r349';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -215,7 +215,7 @@ export const preloadStable=()=>Promise.all([loadStable(),preloadKeys(needs()),pr
 export async function mountStableView(host){
   const [assets]=await Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});
-  r.setPixelRatio(Math.min(devicePixelRatio,2));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;
+  r.setPixelRatio(Math.min(devicePixelRatio,1.5));   // 2026-10-06: was 2 (the phone ran hot)r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;
   r.domElement.setAttribute('aria-hidden','true');host.append(r.domElement);
   const scene=new THREE.Scene();
   // Unified look (visual-style.js), aimed like the plate: warm key from the open door up right, rim from behind.
@@ -329,7 +329,7 @@ export async function mountStableView(host){
     r.b.quaternion.slerp(t.q,w);if(t.y)r.b.position.y+=(t.y-r.b.position.y)*w;if(LEG.test(n))r.b.scale.setScalar((1+((t.s??1)-1)*w)/chainS(r.b));}}
   function moods(dt){
     if(model.species){still=0;joy=false;}   // LIE and REAR are the horse's joints: the other animals stay standing
-    if(!resting&&!job&&!queued&&rear<0&&(still+=dt)>restAfter)resting=true;
+    // 2026-10-08 (the user: 「14 砍掉」): the buddy no longer lies down when left alone (resting stays false; the LIE pose is unused).
     // Down: forelegs first, the hind end follows past halfway; up: the hind end first, then the front.
     const step=(v,to,t)=>to>v?Math.min(to,v+dt/t):Math.max(to,v-dt/t);
     if(resting){fore=step(fore,1,MOOD.down/2);if(fore>.5)hind=step(hind,1,MOOD.down/2);}
@@ -366,7 +366,8 @@ export async function mountStableView(host){
     cam.fov=CAM.fov;cam.aspect=w/h;cam.updateProjectionMatrix();}
   const ro=new ResizeObserver(fit);ro.observe(host);
   const q=new THREE.Quaternion(),e=new THREE.Euler();
-  function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;nod=Math.max(0,nod-dt);
+  function frame(now){if(now-last<(job?29:46)){raf=requestAnimationFrame(frame);return;}   // 30 pictures a second while it eats or is brushed, 20 standing
+    const dt=Math.min(.1,(now-last)/1000);last=now;nod=Math.max(0,nod-dt);
     moods(dt);if(job)acting(dt);
     model.mixer.update(dt);
     const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0),to=job?(job.kind==='feed'?feedPose:BUDDY[model.species]?.bow??POSE.brush):POSE.idle;   // a soft chew-nod (the bite)

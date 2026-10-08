@@ -41,7 +41,7 @@ export default {
   //    the City Hall tower stands straight ahead, about 4.6° tall (10% of the screen). The quay's waterline (row 0.638) is on the
   //    true horizon, so the painted trees there merge with the 3D treeline and the city rises above it. No sun in the
   //    picture: u, v (outside it) keep the key light where it was (73° left, 38° up). Colours sampled from the painting.
-  background:{panorama:'stockholm.webp',projection:'strip',span:54,yaw:0,horizon:0.638,sun:{u:-0.847,v:-0.753},
-    fogColor:'#bfe3fc',horizonColor:'#bfe3fc',topColor:'#369cfd',ambientColor:'#60b4fc',keyLightColor:'#fff3dc',
+  background:{panorama:'stockholm.webp',projection:'strip',span:54,yaw:0,horizon:0.752,sun:{u:-0.847,v:-0.753},
+    fogColor:'#9dd2fc',horizonColor:'#9dd2fc',topColor:'#4da4fd',ambientColor:'#60b4fc',keyLightColor:'#fff3dc',
     far:{saturation:1,contrast:1,haze:.04,deep:0}},
 };

@@ -32,7 +32,7 @@ export default {
       {asset:'Tree_Round',every:15,offset:[5,9],height:[12,15],shrink:true},
       {asset:'Tree_Round',every:13,offset:[10,17],height:[9,13],shrink:true},   // a second, lower rank behind: depth
       {asset:'Bench_Simple',every:48,offset:[2.6,3.2],height:[1.5,1.5],side:'left'},
-      {asset:'Shrub_Round',every:22,offset:[2.4,4.2],height:[1.5,2.1]},
+      {asset:'Shrub_Round',every:7,offset:[2.4,5.2],height:[1.7,2.8]},
       // Plants at the fence's foot, on both sides of it (only the nearest stretch: beyond it they are a pixel or two)
       {asset:'Grass_Clump',every:2.4,offset:[-.7,-.2],height:[.6,1],reach:85},
       {asset:'Grass_Clump',every:3.6,offset:[.35,1.5],height:[.6,1],reach:60},
@@ -43,7 +43,7 @@ export default {
     // Skyline cards just beyond the treeline (course/assets.mjs; approved-environment.js): [asset, x m right of the road,
     // z m ahead, height m]. The far bank and its water across the view, the bridge over that water to one side, groups
     // of buildings behind them; the landmark is the far painting's, in the middle.
-    skyline:[['Bank_Taipei',0,455,20],['Bridge_Taipei',100,440,16],['Mid_Taipei_B',-37,500,34],['Mid_Taipei_C',40,520,29]],
+    skyline:[['Bank_Taipei',0,455,31],['Bridge_Taipei',100,440,16]],
   },
 
   // 4. BACKDROP: the painted far view, assets/backdrops/<file> (skyline cropped at its lawn line, top and sides faded).
@@ -54,7 +54,7 @@ export default {
   //    Taipei 101 stands straight ahead, about 5.9° tall (13% of the screen). The far bank's waterline (row 0.679) is on the
   //    true horizon, so the painted trees there merge with the 3D treeline and the city rises above it. No sun in the
   //    picture: u, v (outside it) keep the key light where it was (74° left, 36° up). Colours sampled from the painting.
-  background:{panorama:'taipei.webp',projection:'strip',span:44,yaw:0,horizon:0.679,sun:{u:-1.180,v:-0.971},
-    fogColor:'#b9dffb',horizonColor:'#b9dffb',topColor:'#3da0fd',ambientColor:'#64b6fc',keyLightColor:'#fff3dc',
+  background:{panorama:'taipei.webp',projection:'strip',span:44,yaw:0,horizon:0.702,sun:{u:-1.180,v:-0.971},
+    fogColor:'#87ccfd',horizonColor:'#87ccfd',topColor:'#4da7fd',ambientColor:'#64b6fc',keyLightColor:'#fff3dc',
     far:{saturation:1,contrast:1,haze:.04,deep:0}},
 };

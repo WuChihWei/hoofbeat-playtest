@@ -1,4 +1,4 @@
-import {lapSections,LEG_SECONDS,clamp} from './game.js?v=r307';
+import {lapSections,LEG_SECONDS,clamp} from './game.js?v=r349';
 const smooth=t=>t*t*(3-2*t);
 export function turnAt(city,time){
   const leg=clamp(Math.floor(Math.max(0,time)/LEG_SECONDS),0,2),local=Math.max(0,time)-leg*LEG_SECONDS;

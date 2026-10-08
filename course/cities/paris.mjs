@@ -15,9 +15,9 @@ export default {
     barrier:{asset:'Balustrade',height:2.8},
     rows:[
       {asset:'Lamp_Banner_Paris',every:50,offset:[1.3,1.3],height:[9,9],side:'left'},{asset:'Lamp_Banner_Paris_R',every:50,offset:[1.3,1.3],height:[9,9],side:'right'},   // both banners hang toward the track; 2026-10-04: half as many (every 24 → 50 m; Stockholm 40 → 80), on the user's word
-      {asset:'Topiary_Cone',every:12,offset:[2.6,3],height:[5.5,6.5]},
+      {asset:'Topiary',every:12,offset:[2.6,3],height:[5.5,6.5]},
       {asset:'Urn_Planter',every:24,offset:[1.5,1.5],height:[3.6,3.6]},
-      {asset:'Shrub_Round',every:24,offset:[2.2,3.2],height:[1.6,2.1]},
+      {asset:'Shrub_Round',every:7,offset:[2.4,5.2],height:[1.7,2.8]},
       {asset:'Tree_Round',every:14,offset:[7,11],height:[11,14]},
       {asset:'Tree_Round',every:13,offset:[11,18],height:[10,13]},   // a second rank behind: depth
       // Plants at the fence's foot, on both sides of it (only the nearest stretch: beyond it they are a pixel or two)
@@ -39,8 +39,8 @@ export default {
   //    the Eiffel Tower stands straight ahead, about 5.7° tall (12% of the screen). The far edge of the lawn (row 0.660) is on the
   //    true horizon, so the painted trees there merge with the 3D treeline and the city rises above it. No sun in the
   //    picture: u, v (outside it) keep the key light where it was (140° left, 45° up). Colours sampled from the painting.
-  background:{panorama:'paris.webp',projection:'strip',span:44,yaw:0,horizon:0.660,sun:{u:-2.674,v:-1.388},
-    fogColor:'#bce0fc',horizonColor:'#bce0fc',topColor:'#39a0fd',ambientColor:'#63b8fd',keyLightColor:'#fff3dc',
+  background:{panorama:'paris.webp',projection:'strip',span:44,yaw:0,horizon:0.750,sun:{u:-2.674,v:-1.388},
+    fogColor:'#86cdfd',horizonColor:'#86cdfd',topColor:'#4da2fd',ambientColor:'#63b8fd',keyLightColor:'#fff3dc',
     far:{saturation:1,contrast:1,haze:.04,deep:0}},
   grassTint:[1.2,1.1,.92],   // × the shared grass (lawn, verge, edge): the baseline's light yellow-green
 };
