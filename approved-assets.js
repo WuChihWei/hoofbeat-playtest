@@ -8,7 +8,7 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-61';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-62';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
@@ -59,6 +59,11 @@ export const COATS=Object.freeze([
 ]);
 // Their models load only for a player who rides or looks at one (0.9 MB each; rivals are horses, so the _Far files stay unused).
 export const preloadBuddies=coats=>preloadModels(coats.map(c=>COATS[c]?.model).filter(Boolean));
+// Ranch models (models/ranch/build_buddies.py): the same buddy at about 1.5k triangles, no tack, lashes or brows, same
+// rig and clips: what walks about in the ranch overview, where a buddy is 40–60 px tall (ranch-view.js). One file per
+// kind of animal, beside its full model.
+export const ranchFile=coat=>(COATS[coat]?.model??PRESENTATION_ASSETS.horse).replace('_Mobile.glb','_Ranch.glb');
+export const preloadRanchBuddies=coats=>preloadModels([...new Set(coats.map(ranchFile))]);
 // Eyes, set up the same way on every buddy. The model's side (artifacts/tripo-retarget/build_animal.py): a mesh `Eyes`,
 // its two eyeballs where the model has them, material Buddy_Eye (the horse keeps its own three names: export_final.py
 // add_eyes); the socket, lids, lash lines and brows are the model's own parts and are drawn as modelled. On the
@@ -308,9 +313,9 @@ function fur(m){   // MeshStandardMaterial → MeshPhysicalMaterial with the sam
 // Galloping seat: RacePose (the authored half-seat crouch) blended with RidePose (sitting up, reins by the saddle,
 // elbows out): this much of the crouch unless the caller says (the race: more the harder the horse runs).
 const RACE_SEAT=.4;
-export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false){   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
+export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false,ranch=false){   // ranch: its ranch model (ranchFile)   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
   const player=variant===0,coatIx=coatOverride??(player?PLAYER_LOOK.coat:variant===PLAYER_LOOK.coat?0:variant),look=COATS[coatIx]??COATS[0];
-  const horse=approvedAssets.get(look.model??(far?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far?'riderFar':'rider');
+  const horse=approvedAssets.get(ranch?ranchFile(coatIx):look.model??(far?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far?'riderFar':'rider');
   if(!horse||!rider)throw new Error('Approved horse/rider assets not loaded');
   const root=new THREE.Group(),scene=new THREE.Group(),fit=new THREE.Group(),orientation=new THREE.Group();
   root.add(scene);scene.add(fit);fit.add(orientation);orientation.rotation.y=Math.PI;

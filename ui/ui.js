@@ -53,7 +53,7 @@ export const chest=(prizes,cls='')=>`<div class="ui-chest ${cls}" aria-hidden="t
 export const wallet=(coins,{gems=null}={})=>`<div class="ui-wallet" aria-label="金幣 ${coins}">${coin}<b data-coins>${coins.toLocaleString('en-US')}</b></div>${
   gems==null?'':`<div class="ui-wallet" aria-label="鑽石 ${gems}"><i class="gem">${icon('gem')}</i><b>${gems.toLocaleString('en-US')}</b></div>`}`;
 export const header=(title,coins)=>`<header class="ui-header"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>${esc(title)}</h1>${coins==null?'':wallet(coins)}</header>`;
-export const NAV=[['home','比賽','flag'],['stable','牧場','horse'],['shop','商店','shop'],['settings','設定','settings']];   // Home is the level map: races start there
+export const NAV=[['home','比賽','flag'],['ranch','牧場','horse'],['shop','商店','shop'],['settings','設定','settings']];   // Home is the level map: races start there
 export const nav=active=>`<nav class="ui-nav ui-panel deep" style="--n:${NAV.length}" aria-label="主選單">${NAV.map(([r,label,ic])=>
   `<button data-go="${r}" ${r===active?'aria-current="page"':''}>${icon(ic)}<span>${label}</span></button>`).join('')}</nav>`;
 const pct=v=>Math.max(0,Math.min(100,Math.round(v)));

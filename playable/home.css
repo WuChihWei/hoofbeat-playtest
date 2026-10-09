@@ -420,3 +420,9 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 /* 2026-10-05 (the user: on a computer screen everything was huge): the frame is at most a big phone's size (460 × 818);
    every size in the UI follows the frame's width (--u), so the type stops growing there */
 .home-shell{width:min(100vw,calc(var(--app-h,100dvh) * .5625),460px);height:min(var(--app-h,100dvh),216.67vw,818px)}
+/* ---- ranch overview (2026-10-09): the 3D grounds fill the frame, the sky behind them; header and nav over it (.ui-live: no blur over a live canvas) ---- */
+.page-ranch{display:block}
+.page-ranch .view{position:absolute;inset:0;background:linear-gradient(#8ec8ef,#e4f3fb 72%)}.page-ranch .view canvas{display:block;width:100%;height:100%}
+.page-ranch .stage-loading{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-weight:600;text-shadow:var(--ui-on-scene)}
+.page-ranch .ui-nav{position:absolute;left:0;right:0;bottom:0;z-index:3}
+.ranch-hint{position:absolute;z-index:3;left:50%;bottom:calc(88 * var(--u));transform:translateX(-50%);margin:0;padding:var(--ui-s2) var(--ui-s4);border-radius:999px;font-size:calc(13 * var(--u));white-space:nowrap;pointer-events:none}

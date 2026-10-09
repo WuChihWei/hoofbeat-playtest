@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r357';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r357';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r357';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r357';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r357';
-import {installApprovedEnvironment} from './approved-environment.js?v=r357';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r357';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r357';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r357';
-import {turnAt} from './track-projection.js?v=r357';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r357';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r357';
+import {roadHalfWidth} from './track-presentation.mjs?v=r361';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r361';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r361';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r361';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r361';
+import {installApprovedEnvironment} from './approved-environment.js?v=r361';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r361';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r361';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r361';
+import {turnAt} from './track-projection.js?v=r361';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r361';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r361';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},

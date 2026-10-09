@@ -31,11 +31,11 @@
 // 2026-10-07, the ball game (tools/stage-times-ball.mjs: never holding / letting go at .85 every time, seconds): 27.6 / 20.2,
 // 28.8 / 20.7, 50.9 / 36, 48.9 / 34, 49 / 34. Silver is a little under the middle of the two, gold about 6% over the second.
 export const LEVELS=Object.freeze([
-  {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},lesson:[0,1],silver:25,gold:21.5},
-  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},lesson:[1,3],silver:26,gold:22},
-  {city:'paris',rivals:2,tempo:1.75,locks:{},lesson:[3,5],silver:45,gold:38},
-  {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:43,gold:36},
-  {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:43,gold:36},
+  {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},lesson:[0,1],silver:26.5,gold:23},
+  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},lesson:[1,3],silver:27.5,gold:24.5},
+  {city:'paris',rivals:2,tempo:1.75,locks:{},lesson:[3,5],silver:47,gold:41},
+  {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:45,gold:38.5},
+  {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:45,gold:38.5},
 ]);
 export const RELAY_BUDDIES=3;   // the relay (a three-buddy team race) opens once the player has three buddies (2026-10-05: it was 3 stars, when every player started with three)
 export const STAR_REWARD={coins:50,gems:1};   // each star, the first time it is earned
@@ -148,7 +148,7 @@ function demo(){
   const ok=(c,m)=>{if(!c)throw new Error('progress: '+m);};
   let p=fresh();ok(unlocked(p,'taipei')&&!unlocked(p,'tokyo')&&!relayOpen(p)&&p.owned.join()==='1','only the first level is open; one buddy, no relay');
   ok(!maneOpen(p,'long')&&maneOpen(p,'classic')&&maneOpen(p,'short')&&!riderColors(p),'the long mane and the rider colours are closed at first');
-  ok(starsFor('taipei',40)===1&&starsFor('taipei',25)===2&&starsFor('taipei',21.5)===3,'stars by time');
+  ok(starsFor('taipei',40)===1&&starsFor('taipei',26.5)===2&&starsFor('taipei',23)===3,'stars by time');
   const run={bestCombo:25,releases:8,limits:3,pops:0,pickups:12,stumbles:0,boosts:3,perfect:31,apples:4,hits:50,notes:55,seconds:24};
   let f=finish(p,{city:'taipei',solo:true,result:run,today:'2026-10-04'});
   ok(f.newStars===2&&f.stars===2&&f.missionCoins===100&&f.daily.coins===50&&f.coins===100+100+50&&f.gems===2,'first run pays stars, missions and the day');
@@ -160,7 +160,7 @@ function demo(){
    q=finish(q.p,{city:'seoul',solo:true,result:{...run,seconds:90},today:'2026-10-05'});ok(q.perks.join()==='rider'&&riderColors(q.p),'clearing stage 4 opens the rider colours');
    q=finish(q.p,{city:'stockholm',solo:true,result:{...run,seconds:90},today:'2026-10-05'});ok(q.gifts.includes(10)&&!owns(q.p,11)&&buy(q.p,11,'coins',99999).fail&&buy(q.p,11,'gems',10).cost===10,'clearing stage 5 gives the llama; the rhino is diamonds only');
    ok(buy(fresh(),0,'coins',300).cost===300&&relayOpen({...fresh(),owned:[1,5,6]}),'the early buddies can be bought sooner; any three buddies open the relay');}
-  ok(nextStarTime('taipei',2)===21.5&&nextStarTime('taipei',3)===null,'next star time');
+  ok(nextStarTime('taipei',2)===23&&nextStarTime('taipei',3)===null,'next star time');
   ok(buy(p,5,'coins',399).fail&&buy(p,5,'coins',400).cost===400&&buy(p,1,'coins',9999).fail,'buying');
   ok(buy(p,6,'coins',99999).fail&&buy(p,6,'gems',2).fail&&buy(p,6,'gems',3).cost===3&&owns(buy(p,6,'gems',3).p,6),'a special coat: diamonds only');
   ok(Object.values(HORSE_PRICE).filter(c=>!c.coins).length===5&&Object.values(HORSE_PRICE).every(c=>c.gems>0&&(c.coins||!c.stars)),'five diamond-only buddies (three special coats, the llama, the rhino), none of them a gift by stars');

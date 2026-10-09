@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r357';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r357';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r357';
-import {compositionRank} from '../race-composition.mjs?v=r357';
-import {ChaseRenderer} from '../race-scene.js?v=r357';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r357';
-import {cityModels} from '../approved-environment.js?v=r357';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r361';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r361';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r361';
+import {compositionRank} from '../race-composition.mjs?v=r361';
+import {ChaseRenderer} from '../race-scene.js?v=r361';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r361';
+import {cityModels} from '../approved-environment.js?v=r361';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r357';
-import {ControlRouter} from './control-router.mjs?v=r357';
-import {RaceAudio,readLatency} from '../audio.js?v=r357';
-import {addLog,raceEntry} from '../playtest.js?v=r357';
-import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt} from './slice-config.mjs?v=r357';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r361';
+import {ControlRouter} from './control-router.mjs?v=r361';
+import {RaceAudio,readLatency} from '../audio.js?v=r361';
+import {addLog,raceEntry} from '../playtest.js?v=r361';
+import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt} from './slice-config.mjs?v=r361';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -65,7 +65,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r357',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r361',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -283,7 +283,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
     renderCover('已暫停',`已跑 ${Math.round(game.distance/game.config.length*100)}% · ${wall(game.time)} · 連擊 ${game.combo} · 金幣 ${game.coinCount}`,
       [['繼續',resume],['重跑',newRun,'secondary'+far],...(practice?[['跳過，直接玩',skip,'secondary']]:[]),['換夥伴',toSetup,'secondary'+far],['離開',toHome,'secondary'+far],[soundLabel(),e=>{sound.setMuted(!sound.muted);e.target.textContent=soundLabel();},'secondary toggle']]);
   }
-  const makeGame=()=>{const g=new SliceGame({config:practice||solo?{solo:true,tempo:TEMPO,locks,pace:PACE&&!GAIT,gait:GAIT,...(BALL?{ball:true,ballFill:(BALL[1]||4)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||2.2)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.8,ballMax:.95,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO}:null),...(practice?null:getForm?.().config)}:getForm?.().config,team,rivals,chart:practice?sliceChart(600,1e9):level?.plain?EASY_CHART:null,   // the practice: the plain opening phrases for as long as it takes
+  const makeGame=()=>{const g=new SliceGame({config:practice||solo?{solo:true,tempo:TEMPO,locks,pace:PACE&&!GAIT,gait:GAIT,...(BALL?{ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO}:null),...(practice?null:getForm?.().config)}:getForm?.().config,team,rivals,chart:practice?sliceChart(600,1e9):level?.plain?EASY_CHART:null,   // the practice: the plain opening phrases for as long as it takes
     course:practice?soloCourse(city||'taipei',PRACTICE_LENGTH):city?(solo?{...soloCourse(city),...(locks.hurdle?{hurdles:[]}:null)}:relayCourse(city)):null});
     // Practice: nothing on the road but the coins; the fences and the apples wait far off for a lesson to place them.
     if(practice){g.hurdles=[0,1].map(()=>({distance:1e9,t:1e9,state:null}));g.apples=[0,1,2].map(i=>({id:'p'+i,distance:1e9,lane:0,collected:false}));}
@@ -295,7 +295,8 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   // the race shut.
   const frames=n=>Promise.race([new Promise(r=>{const f=()=>--n<0?r():requestAnimationFrame(f);f();}),new Promise(r=>setTimeout(r,1500))]);
   const sceneReady=async()=>{await Promise.race([loadsSettled(),new Promise(r=>setTimeout(r,10000))]);await frames(8);shell.classList.add('scene-ready');};
-  const stage=()=>{settle=20;renderer=new ChaseRenderer($('slice-canvas'),{controls:pads,slice:true,city});renderer.prepare(game);$('slice-canvas').addEventListener('race-render-error',pause);$('slice-canvas').addEventListener('coin-burst',e=>coinFly(e.detail));};
+  const stage=()=>{settle=20;renderer=new ChaseRenderer($('slice-canvas'),{controls:pads,slice:true,city});if(BALL)renderer.camera.setViewOffset(1,1,0,.08,1,1);   // the ball game: the whole view 8% of the screen higher, so the buddy stands clear of the ring at the foot (2026-10-08, the user: 「按鈕下移，騎士上移一點，不要疊在一起」)
+    renderer.prepare(game);$('slice-canvas').addEventListener('race-render-error',pause);$('slice-canvas').addEventListener('coin-burst',e=>coinFly(e.detail));};
   async function newRun(){
     if(phase==='loading')return;if(midRace())logRun('restart');phase='loading';
     resolver?.reset();sound.stop();cancelAnimationFrame(frameId);clearTimeout(resultTimer);clearTimeout(resumeTimer);resumeTimer=0;
@@ -388,24 +389,27 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   // The sprint button is the other thumb's. The ghost thumb shows through the countdown and until the first hold.
   let ballT=0;
   if(BALL){const SWIPE=30;
-    shell.insertAdjacentHTML('beforeend','<div id="ball-pad" aria-hidden="true"></div><div id="ball-ring" class="hint" aria-hidden="true"><u></u><i></i><b></b><span></span><em></em><s></s><strong>放開！</strong><small class="k-kick">踢</small><small class="k-l">撞</small><small class="k-r">撞</small></div>');
+    shell.insertAdjacentHTML('beforeend','<div id="ball-pad" aria-hidden="true"></div><div id="ball-ring" class="hint" aria-hidden="true"><u></u><i></i><b></b><span></span><em></em><s></s><strong>放開！</strong></div><button id="slice-skill" type="button" aria-label="技能"><i></i><i></i><i></i><b></b><span></span></button>');
+    if(!field)$('slice-skill').hidden=true;   // no rivals on this stage: nothing to use it on
+    $('slice-skill').addEventListener('pointerdown',e=>{e.preventDefault();if(phase!=='running')return;tick(simTime(performance.now()));game.useSkill();},on);
     const pad=$('ball-pad'),ring=$('ball-ring');let g=null;
     const off=(x,y)=>{ring.style.setProperty('--dx',x.toFixed(0));ring.style.setProperty('--dy',y.toFixed(0));};
     pad.addEventListener('pointerdown',e=>{if(g)return;pad.setPointerCapture(e.pointerId);g={id:e.pointerId,x:e.clientX,y:e.clientY};game.holding=true;if(phase==='running')ring.classList.remove('hint');},on);
     pad.addEventListener('pointermove',e=>{if(!g||g.id!==e.pointerId)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;off(dx,dy);
       if(Math.max(Math.abs(dx),Math.abs(dy))<SWIPE)return;g.x=e.clientX;g.y=e.clientY;setTimeout(()=>off(0,0),90);if(phase!=='running')return;
-      if(Math.abs(dx)>Math.abs(dy))lane(dx>0?1:0);else{const t=simTime(performance.now());tick(t);if(dy<0)game.jump(t);else game.kickBack();}},on);
+      if(Math.abs(dx)>Math.abs(dy))lane(dx>0?1:0);else if(dy<0){const t=simTime(performance.now());tick(t);game.jump(t);}},on);   // down does nothing now: the kick is the skill button's
     const up=e=>{if(!g||g.id!==e.pointerId)return;g=null;game.holding=false;off(0,0);};
     pad.addEventListener('pointerup',up,on);pad.addEventListener('pointercancel',up,on);
     pad.addEventListener('touchstart',e=>e.preventDefault(),{...on,passive:false});}   // iOS Safari: a long hold would bring up the text loupe and cancel the touch
   const ballHud=t=>{const ring=$('ball-ring');
     if(phase==='countdown'){ring.classList.add('hint');game.ballStep(Math.max(0,t-ballT),t);}ballT=t;
     sound.layer=Math.min(4,game.streak);   // the music fills in with the streak and thins out when it is lost
-    ring.classList.toggle('tail',phase==='running'&&!!game.behind());ring.classList.toggle('hit-l',phase==='running'&&game.canBump(0));ring.classList.toggle('hit-r',phase==='running'&&game.canBump(1));
+    {const b=$('slice-skill'),tg=phase==='running'&&game.skill>=1&&game.blown<=game.time?game.skillTarget():null,key=game.skill+(tg?tg.kind+(tg.side??''):'');
+      if(b.dataset.k!==key){b.dataset.k=key;b.dataset.n=game.skill;b.classList.toggle('on',!!tg);b.dataset.dir=tg?tg.kind==='kick'?'down':tg.side?'right':'left':'';b.querySelector('span').textContent=tg?tg.kind==='kick'?'踢':'撞':'';}}
     if(AUTO)game.holding=game.ball<.88;
-    const now=phase==='countdown'?t:game.time,k=game.ball;ring.style.setProperty('--ball',k.toFixed(3));ring.style.setProperty('--size',(k<.8?.2+.42*k/.8:k<.95?.62+.24*(k-.8)/.15:.86+.14*(k-.95)/.05).toFixed(3));   // the ball's size across the ring: the two zones are drawn wider than their share (slice.css: green .62–.86, orange .86–1)
+    const now=phase==='countdown'?t:game.time,k=game.ball,G=game.config.ballGood,M=game.config.ballMax;ring.style.setProperty('--ball',k.toFixed(3));ring.style.setProperty('--size',(k<G?.2+.42*k/G:k<M?.62+.24*(k-G)/(M-G):.86+.14*(k-M)/(1-M)).toFixed(3));   // the ball's size across the ring: the two zones are drawn wider than their share (slice.css: green .62–.86, orange .86–1)
     
-    ring.classList.toggle('held',game.holding);ring.classList.toggle('warn',k>.6);ring.classList.toggle('hot',k>=.8);ring.classList.toggle('max',k>=.95);if(ring.dataset.n!==String(game.streak)){ring.dataset.n=game.streak;ring.querySelector('s').textContent=game.streak?'×'+game.streak:'';}ring.classList.toggle('dead',game.blown>now);};
+    ring.classList.toggle('held',game.holding);ring.classList.toggle('warn',k>.6);ring.classList.toggle('hot',k>=G);ring.classList.toggle('max',k>=M);if(ring.dataset.n!==String(game.streak)){ring.dataset.n=game.streak;ring.querySelector('s').textContent=game.streak?'×'+game.streak:'';}ring.classList.toggle('dead',game.blown>now);};
   let drawn=0,settle=20;
   function frame(){
     const workStart=performance.now();
@@ -449,6 +453,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
       else if(e.type==='coin')sound.coin(+e.id.split('-')[2]||0);   // the picture: race-scene coinBurst → coinFly
       else if(e.type==='gear'){buzz('tap');sound.cue('click');}
       else if(e.type==='release'){feedback(e.max?'極限！':'漂亮！',e.max?'gold':'',e.max);buzz(e.max?'strong':'good');sound.cue('crunch');$('ball-ring').querySelector('u').animate([{scale:1,opacity:1,borderColor:'#ffd846'},{scale:1.35,opacity:0}],{duration:300,easing:'ease-out'});}
+      else if(e.type==='skill'){if(e.kind==='kick')renderer.buck();feedback(e.kind==='kick'?'踢中！':e.pushed?'擠開了！':'撞倒了！','gold',true);buzz('strong');sound.cue('crunch');renderer.dustBurst(10);}
       else if(e.type==='kickback'){renderer.buck();feedback(e.hit==null?'踢空':'踢中！',e.hit==null?'':'gold',e.hit!=null);buzz(e.hit==null?'tap':'strong');sound.cue('crunch');renderer.dustBurst(10);}
       else if(e.type==='shove'){feedback(BALL?(e.popped?(e.pushed?'擠開了！':'撞倒了！'):'彈開了'):e.pushed?'擠開了！':'撞了一下',BALL&&!e.popped?'':'gold',e.pushed);buzz('strong');sound.cue('crunch');}
       else if(e.type==='kick'){feedback(e.hit?'踹中了！':'踹空了','gold',!!e.hit);buzz(e.hit?'strong':'tap');sound.cue(e.hit?'crunch':'deny');}

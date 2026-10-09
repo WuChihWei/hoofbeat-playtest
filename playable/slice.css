@@ -604,3 +604,21 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #ball-ring b,#ball-ring.held b{opacity:.6}#ball-ring.hot.held b,#ball-ring.max.held b{opacity:.75}
 /* 2026-10-08 (the user: 「球不該是透明的，環才是」): the ball solid, the ring and its zone see-through. */
 #ball-ring b,#ball-ring.held b,#ball-ring.hot.held b,#ball-ring.max.held b{opacity:1}#ball-ring.dead b{opacity:.7}
+/* 2026-10-08, the skill button (slice-game useSkill): under the sprint button. Three pips above it are the charges; it
+   lights up, with an arrow and a word, only when there is a charge and someone to use it on. The lane dots are gone
+   (the user: 「不用顯示賽道第幾格」). The ring is back at the foot of the screen, smaller; the view is raised (slice-app). */
+.is-ball .lane-dots{display:none}
+#ball-ring{width:26%;top:auto;bottom:2%;transform:translateX(-50%)}
+#slice-skill{position:absolute;z-index:6;right:4%;bottom:9%;width:17%;aspect-ratio:1;border-radius:50%;border:calc(2 * var(--u)) solid rgb(255 255 255 / .35);background:rgb(29 33 23 / .6);color:#000;padding:0;touch-action:none;-webkit-user-select:none;user-select:none;display:grid;place-items:center}
+#slice-skill[hidden]{display:none}
+#slice-skill i{position:absolute;bottom:108%;width:16%;aspect-ratio:1;border-radius:50%;border:calc(2 * var(--u)) solid #fff;background:rgb(0 0 0 / .45)}
+#slice-skill i:nth-child(1){left:16%}#slice-skill i:nth-child(2){left:42%}#slice-skill i:nth-child(3){left:68%}
+#slice-skill[data-n="1"] i:nth-child(1),#slice-skill[data-n="2"] i:nth-child(-n+2),#slice-skill[data-n="3"] i{background:var(--ui-yellow)}
+#slice-skill b{width:46%;aspect-ratio:1;margin-top:-18%;background:rgb(255 255 255 / .4);clip-path:polygon(50% 0,100% 55%,68% 55%,68% 100%,32% 100%,32% 55%,0 55%)}
+#slice-skill:not(.on) b{clip-path:circle(22%)}
+#slice-skill[data-dir=left] b{rotate:-90deg}#slice-skill[data-dir=right] b{rotate:90deg}#slice-skill[data-dir=down] b{rotate:180deg}
+#slice-skill span{position:absolute;bottom:10%;font:700 calc(13 * var(--u))/1 var(--ui-font)}
+#slice-skill.on{background:var(--ui-yellow);border-color:#fff;box-shadow:0 0 calc(18 * var(--u)) var(--ui-yellow);animation:ball-zone .25s ease-in-out infinite alternate}#slice-skill.on b{background:#000}
+.lefty #slice-skill{right:auto;left:4%}
+/* 2026-10-08 (the user: 「圓環可以放大一點，距離還有蠻多」) */
+#ball-ring{width:32%;bottom:1.5%}
