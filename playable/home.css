@@ -426,3 +426,5 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .page-ranch .stage-loading{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-weight:600;text-shadow:var(--ui-on-scene)}
 .page-ranch .ui-nav{position:absolute;left:0;right:0;bottom:0;z-index:3}
 .ranch-hint{position:absolute;z-index:3;left:50%;bottom:calc(88 * var(--u));transform:translateX(-50%);margin:0;padding:var(--ui-s2) var(--ui-s4);border-radius:999px;font-size:calc(13 * var(--u));white-space:nowrap;pointer-events:none}
+.ranch-shots{position:absolute;z-index:3;left:var(--ui-margin);right:var(--ui-margin);top:calc(76 * var(--u))}.ranch-shots button{height:calc(38 * var(--u));font-size:calc(14 * var(--u))}
+.ranch-hint[hidden]{display:none}
