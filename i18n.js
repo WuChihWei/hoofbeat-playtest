@@ -11,7 +11,7 @@
 // ponytail: matched after rendering, not at the call sites: a text that is not in the table stays as written, and a
 // switch reloads the page (texts are only ever translated from their source form, so two Chinese texts may share an
 // English one). Upgrade path: a t() call at each site, if keeping the table in step with the texts gets hard.
-import {STRINGS} from './i18n-strings.mjs?v=r367';
+import {STRINGS} from './i18n-strings.mjs?v=r369';
 
 const KEY='hoofbeat.lang.v1',ATTRS=['aria-label','title','alt','placeholder'];
 export const lang=()=>{try{return localStorage.getItem(KEY)||(/^zh/i.test(navigator.language||'zh')?'zh':'en');}catch{return 'zh';}};

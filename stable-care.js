@@ -6,7 +6,7 @@
 // Shop items (price in coins) go into the same bag: foods are eaten by Feed (the one picked in Items), care items are
 // used from Items; two of them are one-race buffs kept on the horse (`buff`, spent by the next race).
 // Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1). Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL} from './playable/slice-config.mjs?v=r367';
+import {MAX_LEVEL} from './playable/slice-config.mjs?v=r369';
 export const ITEMS=[
   // food: +Hunger, +Mood (stamina: +Stamina)
   {id:'hay',name:'乾草',kind:'food',food:25,mood:2,price:20},{id:'carrot',name:'紅蘿蔔',kind:'food',food:15,mood:6,price:15},
@@ -22,12 +22,14 @@ export const ITEMS=[
   {id:'flyspray',name:'防蚊噴霧',kind:'care',mood:8,price:30},{id:'balm',name:'舒緩藥膏',kind:'care',stamina:15,mood:5,price:45},
   {id:'ribbonkit',name:'編鬃套組',kind:'care',mood:20,price:80},
   {id:'energybar',name:'能量棒',kind:'care',buff:{energy:10},price:60},{id:'luckyshoe',name:'幸運符',kind:'care',buff:{bonus:2},price:120},
+  // grown on the ranch, not sold (farm.mjs): wheat is reaped from the field; a seed turns up when a buddy is fed
+  {id:'wheat',name:'小麥',kind:'food',food:30,mood:6},{id:'seed',name:'小麥種子',kind:'seed'},
   // tools (not sold)
   {id:'brush',name:'刷子',kind:'tool'},{id:'bucket',name:'水桶',kind:'tool'},{id:'towel',name:'毛巾',kind:'tool'},
 ];
 export const itemEffect=it=>[it.food&&`飽足 +${it.food}`,it.mood&&`心情 +${it.mood}`,it.stamina&&`精神 +${it.stamina}`,it.clean&&`清潔 +${it.clean}`,
   it.buff?.energy&&`下一場起跑能量 +${it.buff.energy}`,it.buff?.bonus&&`下一場名次獎勵 ×${it.buff.bonus}`].filter(Boolean).join(' · ');
-const STARTER={hay:24,carrot:18,apple:12,feed:8,brush:5,bucket:10,towel:6};   // everything else starts at 0
+const STARTER={hay:24,carrot:18,apple:12,feed:8,brush:5,bucket:10,towel:6,seed:2};   // seed: two to start the field with   // everything else starts at 0
 const COOLDOWN=1200;
 export const freshCare=()=>({hunger:60,stamina:80,mood:70,clean:70,xp:0,last:0,at:0});   // at: when stamina was last settled
 const STATS=['hunger','stamina','mood','clean'];
@@ -96,7 +98,10 @@ export function afterRace(r,{rank,perfect=0},now=Date.now()){
 // A solo run is practice (2026-10-04, the user: it earns xp too): xp by the stars the run was worth (+1 per 5 perfect
 // hits), about half a relay's; no wear.
 export const SOLO_XP=[6,10,15];
-export function afterSolo(r,{stars,perfect=0}){const xp=SOLO_XP[stars-1]+Math.floor(perfect/5),next={...r,xp:r.xp+xp,buff:r.buff?.bonus?{bonus:r.buff.bonus}:undefined};return {care:next,xp,levelUp:level(next)>level(r)};}   // the energy bar is spent (home.js soloForm gave it to this run); the lucky charm waits for a relay
+// 2026-10-09: it wears the buddy too, half of a relay's (the user: 「比賽的才會掉」; with no wear nobody on the stages, all
+// solo, ever had a buddy to feed, so no seed was ever found: the ranch's round did not turn). SOLO_WEAR.
+export const SOLO_WEAR={hunger:6,stamina:12,clean:10};
+export function afterSolo(r,{stars,perfect=0}){const xp=SOLO_XP[stars-1]+Math.floor(perfect/5),next={...r,xp:r.xp+xp,hunger:clamp(r.hunger-SOLO_WEAR.hunger),stamina:clamp(r.stamina-SOLO_WEAR.stamina),clean:clamp((r.clean??70)-SOLO_WEAR.clean),buff:r.buff?.bonus?{bonus:r.buff.bonus}:undefined};return {care:next,xp,levelUp:level(next)>level(r)};}   // the energy bar is spent (home.js soloForm gave it to this run); the lucky charm waits for a relay
 
 // -> {care, items, msg} or {fail} (nothing changes on a fail). food: the item picked in the Items panel.
 // Brushing cleans the coat (+30) and cheers a little (+6 mood).
@@ -136,7 +141,7 @@ export function demo(){
   const fresh=raceForm({...freshCare(),stamina:100,mood:100,xp:0},base);ok(fresh.config.baseSpeed===12&&fresh.config.stamina===20&&fresh.config.startEnergy===30&&Math.abs(fresh.config.rhythmGain-.352)<1e-9,'form fresh');
   const worn=raceForm({...freshCare(),hunger:10,stamina:10,mood:0,xp:400},base);ok(worn.config.baseSpeed===11.4&&worn.config.boostDuration===2.1&&worn.notes.length===3,'form worn (the level is in the base numbers, not here)');
   ok(level({xp:0})===1&&level({xp:79})===2&&level({xp:99999})===MAX_LEVEL,'levels stop at the top');
-  const run=afterSolo({...freshCare(),xp:30,hunger:60},{stars:2,perfect:11});ok(run.xp===12&&run.levelUp&&run.care.hunger===60,'a solo run: xp, no wear');
+  const run=afterSolo({...freshCare(),xp:30,hunger:60},{stars:2,perfect:11});ok(run.xp===12&&run.levelUp&&run.care.hunger===54&&run.care.clean===60,'a solo run: xp, half a relay\'s wear');
   const raced=afterRace({...freshCare(),xp:35,at:1e6},{rank:1,perfect:4},1e6);ok(raced.care.stamina===55&&raced.care.hunger===48&&raced.xp===30&&raced.levelUp,'after race');
   ok(raced.care.clean===50,'clean after race');
   ok(RACE_XP.every((x,i)=>afterRace(freshCare(),{rank:i+1},1e6).xp===x),'xp for every place of the five-horse field');

@@ -431,5 +431,11 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 /* ---- the dormitory = the close-up page (2026-10-09): the ranch's tabs under its header (the row of heads moves down a row); the stall's door across the bottom, in front of the buddy:
    the 3D barn's own door, rendered to a picture (models/ranch/render_door.py), only its top showing over the care card; the painted plate is barn-plate.webp, painted for this camera (stable-view CAM) ---- */
 .page-stable .st-tray{top:calc(max(calc(20 * var(--u)),calc(env(safe-area-inset-top) + 6 * var(--u))) + 114 * var(--u))}
-.st-door{position:absolute;z-index:2;left:-2%;right:-2%;bottom:0;height:calc(278 * var(--u) + env(safe-area-inset-bottom));background:url(../assets/stable/door.webp) 50% 0/100% auto no-repeat;
+.page-stable .st-bg{background-size:auto 115%;background-position:var(--bg-x,50%) 0}.page-stable .st-decor{height:115%;left:calc((100cqw - 115cqh * 941 / 1672) * var(--bg-f,.5))}   /* the plate 7.5% lower at the buddy's feet (stable-view CAM) */
+.st-door{position:absolute;z-index:2;left:-2%;right:-2%;bottom:0;height:calc(224 * var(--u) + env(safe-area-inset-bottom));background:url(../assets/stable/door.webp) 50% 0/100% auto no-repeat;
   filter:drop-shadow(0 calc(-6 * var(--u)) calc(8 * var(--u)) rgb(40 20 5 / .35));pointer-events:none}
+/* the field's taps: what was reaped or sown rises from the finger and fades; a dot on the field's tab while a bed is ripe */
+.ranch-pop{position:absolute;z-index:6;display:flex;align-items:center;gap:calc(4 * var(--u));transform:translate(-50%,-50%);padding:calc(5 * var(--u)) calc(12 * var(--u));border-radius:999px;background:#fffdf3;color:#3a2a10;font:700 calc(17 * var(--u)) var(--ui-font);font-style:normal;box-shadow:0 calc(3 * var(--u)) calc(10 * var(--u)) #0004;pointer-events:none;white-space:nowrap;animation:ranch-pop .95s ease-out forwards}
+.ranch-pop img{width:calc(26 * var(--u));height:calc(26 * var(--u))}.ranch-pop b{font-weight:800}
+@keyframes ranch-pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}18%{opacity:1;transform:translate(-50%,-90%) scale(1.12)}30%{transform:translate(-50%,-100%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-230%) scale(1)}}
+.ranch-shots button{position:relative}.ranch-shots .has-dot::after{content:"";position:absolute;top:calc(7 * var(--u));right:calc(12 * var(--u));width:calc(9 * var(--u));height:calc(9 * var(--u));border-radius:50%;background:var(--ui-yellow);box-shadow:0 0 0 2px #0005}

@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r367';
-import {applyLook,LOOK} from '../visual-style.js?v=r367';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r369';
+import {applyLook,LOOK} from '../visual-style.js?v=r369';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -50,7 +50,10 @@ const BRUSH={scale:.8,strap:.3,bone:'Chest',at:[-.15,.1,.62],stroke:.3,dir:[0,-.
 // the buddy and the trough stand clear above the door. The plate is barn-plate.webp, the user's painting for this
 // camera (9:16, in the first plate's simple style; wall and floor meet at about 50% of its height, straw along the
 // wall to 60%: the buddy stands on the boards just in front of it, its feet at about 60%).
-const CAM={x:1.5,fill:8.44,dist:[12,22],floor:.22,tilt:9.3,fov:30,bg:.5};
+// Later that day (the user, from a phone whose browser bars leave 655 pt of height: the row of heads lay over the
+// buddy's ears): everything 7.5% of the page lower. The camera looks 2.25° less down (tilt was 9.3), the plate is drawn
+// 115% tall from its top, the door stands lower (home.css).
+const CAM={x:1.5,fill:8.44,dist:[12,22],floor:.22,tilt:7.05,fov:30,bg:.5};
 // After the 1 s Pickup: the rider clip, how long it runs, and the horse's extra neck/head pose meanwhile (radians).
 // Brush: the horse bows its forelock to the brush. Feed: neck down, head stretched out so its mouth meets the carrot.
 const ACTS={

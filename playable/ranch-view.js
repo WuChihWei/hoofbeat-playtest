@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r367';
-import {applyLook,LOOK} from '../visual-style.js?v=r367';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r369';
+import {applyLook,LOOK} from '../visual-style.js?v=r369';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -31,6 +31,9 @@ export const RANCH={
   // a worn path the ring's shape, [half-length, half-width] outside and inside, centred at y; grass tufts and flowers
   // sown over [x0, y0, x1, y1].
   path:{y:19.6,out:[8.4,4.5],in:[7.3,3.4]},meadow:{box:[-16,13,15.5,26.6],tufts:260,flowers:70},
+  // The wheat field's six beds (build_ranch.py BEDS: their middles; the soil is 4.5 × 3.3 m, its top at `top`), in the
+  // order of farm.mjs's beds; a bed is sown with rows × cols stalks (Ranch_Wheat.glb: one stalk per stage).
+  beds:{at:[[-5.6,-3.3],[0,-3.3],[5.6,-3.3],[-5.6,-7.9],[0,-7.9],[5.6,-7.9]],top:.31,rows:5,cols:9,size:[3.8,2.4]},
   zone:{x:[-12,10],y:[15,24.4]},             // where the buddies keep: the pasture behind the barn, round the sand ring
   far:360,                                    // m of grass round the site, so no view shows where the ground ends
   // Trees outside the site, [x, y, height]: behind, to the left and to the right, a few far in front. None to the
@@ -56,8 +59,8 @@ function lawn({color,light,dark}=RANCH.lawn){
     for(const dx of [-n,0,n])for(const dy of [-n,0,n]){const p=g.createRadialGradient(x+dx,y+dy,0,x+dx,y+dy,r);p.addColorStop(0,col);p.addColorStop(1,col+'00');g.globalAlpha=a;g.fillStyle=p;g.fillRect(x+dx-r,y+dy-r,r*2,r*2);}}
   return new THREE.CanvasTexture(c);
 }
-const loadScene=()=>pending??=Promise.all([new GLTFLoader().loadAsync(url('models/ranch/Ranch.glb')),new THREE.TextureLoader().loadAsync(url('textures/dirt.webp'))])
-  .then(([g,dirt])=>({scene:g.scene,grass:lawn(),dirt}),e=>{pending=null;throw e;});
+const loadScene=()=>pending??=Promise.all([new GLTFLoader().loadAsync(url('models/ranch/Ranch.glb')),new THREE.TextureLoader().loadAsync(url('textures/dirt.webp')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Wheat.glb'))])
+  .then(([g,dirt,wheat])=>({scene:g.scene,grass:lawn(),dirt,wheat:wheat.scene}),e=>{pending=null;throw e;});
 // What the overview needs, asked for ahead of time (home.js: as soon as the game is open). coats: the buddies out.
 export const preloadRanch=coats=>Promise.all([loadScene(),preloadRanchBuddies(coats)]);
 
@@ -107,9 +110,10 @@ export function route(spots,from,to){
 }
 
 // buddies: [{id, coat, hair}], everyone out. onPick(id): a buddy was tapped. shot: the shot to open on; onShot(i): it
-// changed. onSwipe(±1): a sideways swipe (when given, the page decides what comes next). → {shot(i), dispose};
+// changed. onSwipe(±1): a sideways swipe (when given, the page decides what comes next). onBed(i): a bed of the wheat
+// field was tapped, at (x, y) on the screen. → {shot(i), field(grown), dispose};
 // resolves with the first frame drawn, and only then is the canvas put on the page (nothing is seen being put together).
-export async function mountRanchView(host,{buddies=[],onPick,onShot,onSwipe,shot=0}={}){
+export async function mountRanchView(host,{buddies=[],onPick,onBed,onShot,onSwipe,shot=0}={}){
   const [assets]=await Promise.all([loadScene(),preloadRanchBuddies(buddies.map(b=>b.coat))]);
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;r.domElement.setAttribute('aria-hidden','true');
@@ -147,6 +151,17 @@ export async function mountRanchView(host,{buddies=[],onPick,onShot,onSwipe,shot
     const blades=new THREE.BufferGeometry();blades.setAttribute('position',new THREE.Float32BufferAttribute([-.09,0,0,.0,0,.03,-.13,.42,.02, .02,0,-.03,.11,0,0,.07,.5,-.03, -.03,0,.06,.05,0,.08,.16,.36,.1],3));blades.setAttribute('normal',new THREE.Float32BufferAttribute(new Array(9).fill([0,1,0]).flat(),3));   // lit like the ground they stand on, whichever way a blade leans
     sow(blades,RANCH.meadow.tufts,['#6fae55','#7dbb5d','#9bd070','#aadb7c'],[.45,.85]);
     const bloom=new THREE.CircleGeometry(.075,6).rotateX(-Math.PI/2.6).translate(0,.2,0);bloom.setAttribute('normal',new THREE.Float32BufferAttribute(new Array(bloom.attributes.position.count).fill([0,1,0]).flat(),3));sow(bloom,RANCH.meadow.flowers,['#ffffff','#f6e27a','#c9b6f2','#ffffff'],[.8,1.4]);}
+  // The wheat: every stalk of every bed has its place (a little off its row, turned its own way); a stage's mesh is
+  // drawn once, with the stalks of the beds at that stage. field(stages): one number a bed (farm.mjs stage: 0 empty).
+  const B=RANCH.beds,stalks=[],crops=[1,2,3].map(s=>{const src=assets.wheat.getObjectByName(`Wheat_${s-1}`),m=new THREE.InstancedMesh(src.geometry,SOLID,B.at.length*B.rows*B.cols);m.count=0;m.frustumCulled=false;scene.add(m);return m;});
+  {let seed=5;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647,m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0);
+    for(const [bx,by] of B.at){const bed=[];for(let r=0;r<B.rows;r++)for(let c=0;c<B.cols;c++){const k=.85+rnd()*.3;
+      bed.push(m.compose(at(bx-B.size[0]/2+B.size[0]*c/(B.cols-1)+(rnd()-.5)*.1,by-B.size[1]/2+B.size[1]*r/(B.rows-1)).setY(B.top),q.setFromAxisAngle(up,rnd()*6.28),new THREE.Vector3(1,k,1)).clone());}stalks.push(bed);}}
+  // grown: one number a bed, null (empty) or how far along it is, 0–1 (farm.mjs growth): sprouts to a third, then the
+  // green stalk, the ripe one at 1; within a stage the stalks stand taller as it goes, so the field is seen growing.
+  const tall=new THREE.Matrix4(),lift=new THREE.Matrix4();
+  function field(grown){const n=[0,0,0];grown.forEach((g,i)=>{if(g==null||!stalks[i])return;const s=g>=1?2:g>=1/3?1:0,k=s===2?1:s===1?.5+.5*(g-1/3)*1.5:.5+1.5*g;lift.makeScale(1,k,1);
+      for(const mat of stalks[i])crops[s].setMatrixAt(n[s]++,tall.multiplyMatrices(mat,lift));});crops.forEach((m,i)=>{m.count=n[i];m.instanceMatrix.needsUpdate=true;});}
   r.shadowMap.autoUpdate=false;   // the scene never moves: its shadows are drawn once (the buddies stand on a soft spot instead)
 
   // The buddies out on the pasture: each on a spot, a round shadow under it.
@@ -190,10 +205,11 @@ export async function mountRanchView(host,{buddies=[],onPick,onShot,onSwipe,shot
   el$.addEventListener('pointercancel',()=>{from=null;});
   el$.addEventListener('pointerup',e=>{if(!from)return;const dx=e.clientX-from[0],dy=e.clientY-from[1];from=null;
     if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.5){if(onSwipe)onSwipe(dx<0?1:-1);else go(now+(dx<0?1:-1));return;}
-    if(Math.hypot(dx,dy)>=8||!onPick)return;
+    if(Math.hypot(dx,dy)>=8)return;
     const box=el$.getBoundingClientRect(),v=new THREE.Vector3();let best=null,near=48;
     for(const b of herd){v.copy(b.pos);v.y+=1;v.project(cam);const d=Math.hypot((v.x+1)/2*box.width-(e.clientX-box.left),(1-v.y)/2*box.height-(e.clientY-box.top));if(d<near){near=d;best=b;}}
-    if(best)onPick(best.id);});
+    if(best&&onPick)return onPick(best.id);
+    if(onBed){let bed=-1;near=64;B.at.forEach(([x,y],i)=>{v.copy(at(x,y)).setY(B.top).project(cam);const d=Math.hypot((v.x+1)/2*box.width-(e.clientX-box.left),(1-v.y)/2*box.height-(e.clientY-box.top));if(d<near){near=d;bed=i;}});if(bed>=0)onBed(bed,e.clientX,e.clientY);}});
 
   let raf=0,last=performance.now();
   const tick=dt=>{herd.forEach(b=>stroll(b,dt));aim(dt);r.render(scene,cam);};
@@ -201,5 +217,5 @@ export async function mountRanchView(host,{buddies=[],onPick,onShot,onSwipe,shot
   herd.forEach(b=>stroll(b,0));r.shadowMap.needsUpdate=true;fit();
   host.append(el$);raf=requestAnimationFrame(frame);
   if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,spots,cur,go,step:tick};   // dev (?debug): step, to move things on in a tab that draws one frame a second
-  return {shot:go,dispose(){cancelAnimationFrame(raf);ro.disconnect();herd.forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
+  return {shot:go,field,dispose(){cancelAnimationFrame(raf);ro.disconnect();herd.forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
 }
