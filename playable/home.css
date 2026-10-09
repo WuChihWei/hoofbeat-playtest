@@ -106,7 +106,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}
 /* ---- stable: the barn plate and the 3D pair; glass over it without blur (.ui-live) ---- */
 .page-stable{display:block;background:#5a3a22;--acts-h:calc(80 * var(--u));--acts-b:max(var(--ui-s3),env(safe-area-inset-bottom))}
 .page-stable::before{display:none}
-.st-bg{position:absolute;inset:0;background:#6b4526 url(../assets/stable/bg.webp) var(--bg-x,82%) 45%/cover no-repeat}   /* x follows the camera (stable-view.js) */
+.st-bg{position:absolute;inset:0;background:#6b4526 url(../assets/stable/barn-plate.webp) var(--bg-x,50%) 50%/cover no-repeat}   /* x follows the camera (stable-view.js) */
 .page-stable .view{position:absolute;inset:0}
 .page-stable .stage-loading{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-weight:600;text-shadow:var(--ui-on-scene)}
 .st-top,.st-sheet,.st-acts{position:absolute;z-index:3}
@@ -158,9 +158,9 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}
 .swatches{display:flex;justify-content:center;gap:var(--ui-s3);margin:var(--ui-s3) 0}.swatches button{width:calc(36 * var(--u));height:calc(36 * var(--u));border-radius:50%;border:2px solid rgb(255 255 255 / .3)}
 .swatches [aria-checked=true]{border-color:var(--ui-lime);box-shadow:0 0 0 2px var(--ui-lime)}
 
-/* Stable decorations: a layer the size of bg.webp as `cover` draws it (full height, 1122/1402 wide), slid like the
+/* Stable decorations: a layer the size of barn-plate.webp as `cover` draws it (full height, 941/1672 wide), slid like the
    plate (--bg-f = the plate's x position 0..1, set by stable-view.js), so stickers stay put on the painted wall. */
-.st-decor{position:absolute;top:0;height:100%;aspect-ratio:1122/1402;left:calc((100cqw - 100cqh * 1122 / 1402) * var(--bg-f,.82));pointer-events:none}
+.st-decor{position:absolute;top:0;height:100%;aspect-ratio:941/1672;left:calc((100cqw - 100cqh * 941 / 1672) * var(--bg-f,.5));pointer-events:none}
 .st-decor i{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center}
 .st-decor img{width:100%;display:block;filter:drop-shadow(0 .4cqw .5cqw #2a18097a)}
 .st-decor b{position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);font:700 2.2cqw var(--ui-font);color:#fff3dc;text-shadow:0 1px 0 #3a2210,0 0 3px #3a2210;white-space:nowrap}
@@ -422,9 +422,14 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .home-shell{width:min(100vw,calc(var(--app-h,100dvh) * .5625),460px);height:min(var(--app-h,100dvh),216.67vw,818px)}
 /* ---- ranch overview (2026-10-09): the 3D grounds fill the frame, the sky behind them; header and nav over it (.ui-live: no blur over a live canvas) ---- */
 .page-ranch{display:block}
-.page-ranch .view{position:absolute;inset:0;background:linear-gradient(#8ec8ef,#e4f3fb 72%)}.page-ranch .view canvas{display:block;width:100%;height:100%}
+.page-ranch .view{position:absolute;inset:0;background:#8fc56a}   /* the lawn's colour as drawn: no view shows sky, and the room shot leaves the nearest ground undrawn (under the cards) */.page-ranch .view canvas{display:block;width:100%;height:100%}
 .page-ranch .stage-loading{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-weight:600;text-shadow:var(--ui-on-scene)}
 .page-ranch .ui-nav{position:absolute;left:0;right:0;bottom:0;z-index:3}
 .ranch-hint{position:absolute;z-index:3;left:50%;bottom:calc(88 * var(--u));transform:translateX(-50%);margin:0;padding:var(--ui-s2) var(--ui-s4);border-radius:999px;font-size:calc(13 * var(--u));white-space:nowrap;pointer-events:none}
 .ranch-shots{position:absolute;z-index:3;left:var(--ui-margin);right:var(--ui-margin);top:calc(76 * var(--u))}.ranch-shots button{height:calc(38 * var(--u));font-size:calc(14 * var(--u))}
 .ranch-hint[hidden]{display:none}
+/* ---- the dormitory = the close-up page (2026-10-09): the ranch's tabs under its header (the row of heads moves down a row); the stall's door across the bottom, in front of the buddy:
+   the 3D barn's own door, rendered to a picture (models/ranch/render_door.py), only its top showing over the care card; the painted plate is barn-plate.webp, painted for this camera (stable-view CAM) ---- */
+.page-stable .st-tray{top:calc(max(calc(20 * var(--u)),calc(env(safe-area-inset-top) + 6 * var(--u))) + 114 * var(--u))}
+.st-door{position:absolute;z-index:2;left:-2%;right:-2%;bottom:0;height:calc(278 * var(--u) + env(safe-area-inset-bottom));background:url(../assets/stable/door.webp) 50% 0/100% auto no-repeat;
+  filter:drop-shadow(0 calc(-6 * var(--u)) calc(8 * var(--u)) rgb(40 20 5 / .35));pointer-events:none}

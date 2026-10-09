@@ -5,25 +5,25 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r362';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r362';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r362';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r367';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r367';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r367';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
 const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
-setTimeout(()=>{barn.src='assets/stable/bg.webp';preloadRanch(out().map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
-import {lang,setLang,translate} from '../i18n.js?v=r362';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r362';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r362';
-import {mountStableView,preloadStable} from './stable-view.js?v=r362';
-import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r362';
-import {cityPictures} from '../approved-environment.js?v=r362';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r362';
+setTimeout(()=>{barn.src='assets/stable/barn-plate.webp';preloadRanch(out().map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
+import {lang,setLang,translate} from '../i18n.js?v=r367';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r367';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains} from './slice-config.mjs?v=r367';
+import {mountStableView,preloadStable} from './stable-view.js?v=r367';
+import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r367';
+import {cityPictures} from '../approved-environment.js?v=r367';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r367';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r362';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r362';
-import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r362';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r367';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r367';
+import {LEVELS,PERKS,HORSE_PRICE,STARTERS,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r367';
 
 const GHOST='hoofbeat.ghost.v4.',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -38,16 +38,19 @@ export const addCoins=n=>admin()||store.set(WALLET,String(readCoins()+n));
 const spendCoins=n=>readCoins()>=n&&(addCoins(-n),true);
 
 // Stable decorations: 2D stickers on the barn plate (assets/stable/deco/<id>.webp). slot = [centre x, centre y, width]
-// as fractions of bg.webp (1122×1402), clear of the window, the painted lantern and the buddy card. Bought in the Shop;
+// as fractions of barn-plate.webp (941×1672; 2026-10-09: the plate painted for the higher camera, the slots moved with
+// it: the wall panel right of the middle post, above and below its rail; the post itself; the post left of the window;
+// the straw by the right partition), clear of the window and the painted lantern, and inside x .12–.88 (a tall phone
+// crops the plate's sides). Bought in the Shop;
 // postcards are earned by finishing a race in their city. Owned ids: hoofbeat.decor.v1.
 const DECOR=[
-  {id:'bunting',name:'彩色三角旗',price:250,slot:[.51,.118,.17]},{id:'nameplate',name:'夥伴名牌',price:200,slot:[.465,.455,.13]},
-  {id:'rosette_blue',name:'藍色緞帶花',price:150,slot:[.10,.235,.055]},{id:'rosette_red',name:'紅色緞帶花',price:150,slot:[.17,.235,.055]},
-  {id:'rosette_gold',name:'金色緞帶花',price:150,slot:[.24,.235,.055]},{id:'trophy',name:'金色獎盃',price:400,slot:[.15,.308,.065]},
-  {id:'horseshoe_wall',name:'幸運掛飾',price:180,slot:[.88,.245,.055]},{id:'lantern',name:'掛燈',price:150,slot:[.33,.19,.04]},
-  {id:'flowerpot',name:'小花盆',price:120,slot:[.92,.66,.09]},
+  {id:'bunting',name:'彩色三角旗',price:250,slot:[.69,.085,.22]},{id:'nameplate',name:'夥伴名牌',price:200,slot:[.69,.36,.18]},
+  {id:'rosette_blue',name:'藍色緞帶花',price:150,slot:[.615,.165,.07]},{id:'rosette_red',name:'紅色緞帶花',price:150,slot:[.69,.165,.07]},
+  {id:'rosette_gold',name:'金色緞帶花',price:150,slot:[.765,.165,.07]},{id:'trophy',name:'金色獎盃',price:400,slot:[.82,.41,.085]},
+  {id:'horseshoe_wall',name:'幸運掛飾',price:180,slot:[.53,.2,.045]},{id:'lantern',name:'掛燈',price:150,slot:[.135,.2,.045]},
+  {id:'flowerpot',name:'小花盆',price:120,slot:[.83,.5,.1]},
 ];
-const POSTCARDS=['taipei','tokyo','paris','stockholm','seoul'].map((c,i)=>({id:`postcard_${c}`,city:c,slot:[.385+i*.05,.545,.042]}));
+const POSTCARDS=['taipei','tokyo','paris','stockholm','seoul'].map((c,i)=>({id:`postcard_${c}`,city:c,slot:[.6+i*.058,.235,.052]}));
 const readDecor=()=>{try{return new Set(JSON.parse(store.get(OWNED_DECOR)||'[]'))}catch{return new Set()}};
 const addDecor=id=>{const d=readDecor();d.add(id);store.set(OWNED_DECOR,JSON.stringify([...d]));};
 
@@ -227,24 +230,28 @@ function render(){
 const frame=(cls,inner)=>{app().innerHTML=`<div class="home-shell ui-root ${cls}" style="background-image:url(assets/backdrops/${profile.city}.webp${new URL(import.meta.url).search})">${inner}</div>`;return app().firstElementChild;};
 const weatherOf=w=>w.rain>0?['rain','Rain']:w.cloud>0?['cloud','Cloudy']:['sun','Sunny'];
 
-// How many buddies are out on the ranch at once: a performance number only (2026-10-09, the user: 「外面的只是他在外面玩
-// 而已」; to be measured on a phone). The ones out: the buddy last looked at, then the others owned, in roster order.
-const RANCH_OUT=6,out=()=>[horseById(profile.horse),...ROSTER.filter(h=>h.id!==profile.horse)].filter(h=>h&&owns(prog,h.id)).slice(0,RANCH_OUT);
+// The ranch (2026-10-09): every buddy owned is out on the pasture (RANCH_MAX: how many are drawn, a performance number
+// to be measured on a phone). Its tabs: the 3D shots (ranch-view RANCH.shots) with the dormitory second: that one is
+// the close-up page (#stable), opened and left like a shot, the same row of tabs on both pages (the user: one ranch,
+// not a second place behind a button).
+const RANCH_MAX=12,mine=()=>ROSTER.filter(h=>owns(prog,h.id)).slice(0,RANCH_MAX),out=mine;
+const RANCH_TABS=[{shot:0},{dorm:true,name:'宿舍'},...RANCH.shots.slice(1).map((_,i)=>({shot:i+1}))].map(t=>({...t,name:t.name??RANCH.shots[t.shot].name}));
+const ranchTabs=on=>`<div class="ui-tabs ui-panel deep ranch-shots" role="tablist" aria-label="畫面" style="--n:${RANCH_TABS.length}">${RANCH_TABS.map((t,i)=>`<button role="tab" data-rtab="${i}" aria-selected="${i===on}">${t.name}</button>`).join('')}</div>`;
 const PAGES={
   ranch(){
-    // Ranch overview (2026-10-09, stage 1 of the ranch): the 3D grounds, the buddies out walking about. A tap on a
-    // buddy opens the close-up on it (#stable, as it was: feed, brush, look, items); its back button comes here.
+    // The 3D grounds in set shots: the tabs under the header, or a sideways swipe. A tap on a buddy opens the dormitory
+    // on it.
+    const all=mine(),tabOf=shot=>RANCH_TABS.findIndex(t=>t.shot===shot);
     const el=frame('page-ranch ui-live',`<div class="view"></div><p class="stage-loading">載入牧場…</p>
       <header class="ui-header st-top"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>Ranch</h1>${wallet(readCoins(),{gems:readGems()})}</header>
-      <div class="ui-tabs ui-panel deep ranch-shots" role="tablist" aria-label="畫面" style="--n:${RANCH.shots.length}">${RANCH.shots.map((s,i)=>`<button role="tab" data-shot="${i}">${s.name}</button>`).join('')}</div>
-      <p class="ranch-hint ui-panel deep">點一下夥伴來照顧牠</p>${nav('ranch')}`);
-    // The shots (ranch-view RANCH.shots): the tabs under the header, or a sideways swipe on the scene; the one last
-    // looked at is where the ranch opens next time (this visit of the app).
+      ${ranchTabs(tabOf(PAGES.ranch.shot||0))}<p class="ranch-hint ui-panel deep">點一下夥伴，去牠的房間</p>${nav('ranch')}`);
     let view=null,alive=true;leave=()=>{alive=false;view?.dispose();};
-    const tabs=[...el.querySelectorAll('[data-shot]')],hint=el.querySelector('.ranch-hint'),mark=i=>{PAGES.ranch.shot=i;tabs.forEach((b,k)=>b.setAttribute('aria-selected',k===i));hint.hidden=RANCH.shots[i].id!=='pasture'&&RANCH.shots[i].id!=='all';};
-    mark(PAGES.ranch.shot||0);tabs.forEach((b,i)=>b.onclick=()=>{view?.shot(i);mark(i);});
-    mountRanchView(el.querySelector('.view'),{buddies:out().map(h=>({id:h.id,coat:h.coat,hair:maneOf(h.id)})),shot:PAGES.ranch.shot||0,onShot:mark,
-      onPick:id=>{stableFocus=id;profile.horse=id;saveProfile();go('stable');}})
+    const tabs=[...el.querySelectorAll('[data-rtab]')],hint=el.querySelector('.ranch-hint');
+    const mark=shot=>{PAGES.ranch.shot=shot;tabs.forEach((b,k)=>b.setAttribute('aria-selected',k===tabOf(shot)));hint.hidden=RANCH.shots[shot].id==='field';};
+    const open=i=>{const t=RANCH_TABS[i];if(!t)return;if(t.dorm)return go('stable');view?.shot(t.shot);mark(t.shot);};
+    mark(PAGES.ranch.shot||0);tabs.forEach((b,i)=>b.onclick=()=>open(i));
+    mountRanchView(el.querySelector('.view'),{buddies:all.map(h=>({id:h.id,coat:h.coat,hair:maneOf(h.id)})),shot:PAGES.ranch.shot||0,onShot:mark,
+      onSwipe:d=>open(tabOf(PAGES.ranch.shot||0)+d),onPick:id=>{stableFocus=id;profile.horse=id;saveProfile();go('stable');}})
       .then(v=>{if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();})
       .catch(e=>{console.error(e);const l=el.querySelector('.stage-loading');if(l)l.textContent='3D 無法載入';});
   },
@@ -405,8 +412,8 @@ const PAGES={
     const owned=readDecor(),deco=[...DECOR,...POSTCARDS].filter(d=>owned.has(d.id));
     const el=frame('page-stable ui-live',`<div class="st-bg" aria-hidden="true"></div><div class="st-decor" aria-hidden="true">${deco.map(d=>
         `<i data-deco="${d.id}" style="left:${d.slot[0]*100}%;top:${d.slot[1]*100}%;width:${d.slot[2]*100}%"><img src="assets/stable/deco/${d.id}.webp" alt="">${d.id==='nameplate'?'<b></b>':''}</i>`).join('')}</div><div class="view"></div><p class="stage-loading">載入牧場…</p>
-      <header class="ui-header st-top"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>Ranch</h1>${wallet(readCoins(),{gems:readGems()})}</header>
-      <div class="st-tray buddy-tray" role="list" aria-label="我的夥伴"></div><div class="ui-scrim st-scrim" hidden></div><section class="st-pop ui-modal ui-panel deep" role="dialog" aria-modal="true" hidden></section>
+      <i class="st-door" aria-hidden="true"></i><header class="ui-header st-top"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>Ranch</h1>${wallet(readCoins(),{gems:readGems()})}</header>
+      ${ranchTabs(RANCH_TABS.findIndex(t=>t.dorm))}<div class="st-tray buddy-tray" role="list" aria-label="我的夥伴"></div><div class="ui-scrim st-scrim" hidden></div><section class="st-pop ui-modal ui-panel deep" role="dialog" aria-modal="true" hidden></section>
       <i class="st-heart" aria-hidden="true"></i>
       <div class="st-foot"><section class="st-sheet ui-panel" aria-label="造型" hidden></section><aside class="st-buddy ui-panel"></aside>
         <div class="st-acts"><button class="side" data-pane="gear" aria-expanded="false"><span class="ui-icon-btn">${icon('palette')}</span>造型</button>
@@ -476,6 +483,7 @@ const PAGES={
     });
     stableFocus=null;
     leave=()=>{alive=false;window.removeEventListener('keydown',esc,true);view?.dispose();applyLook();};
+    el.querySelectorAll('[data-rtab]').forEach((b,i)=>b.onclick=()=>{const t=RANCH_TABS[i];if(t.dorm||view?.busy)return;PAGES.ranch.shot=t.shot;go('ranch',{replace:true});});   // the other tabs: that shot of the 3D ranch (this page leaves no history entry behind: back from the ranch goes home)
     paint.look=null;paint();
     const t0=performance.now();mountStableView(el.querySelector('.view')).then(v=>{store.set('hoofbeat.loadtime.ranch',((performance.now()-t0)/1000).toFixed(1));if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();paint.look=null;paint();})
       .catch(()=>{el.querySelector('.stage-loading').textContent='3D 無法載入';});
@@ -670,7 +678,7 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r362',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r367',import.meta.url);document.head.append(css);
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

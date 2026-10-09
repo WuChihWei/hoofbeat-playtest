@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r362';
-import {applyLook,LOOK} from '../visual-style.js?v=r362';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r367';
+import {applyLook,LOOK} from '../visual-style.js?v=r367';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -45,7 +45,12 @@ const BRUSH={scale:.8,strap:.3,bone:'Chest',at:[-.15,.1,.62],stroke:.3,dir:[0,-.
 // Width-fit: the camera's distance to the horse is fill / aspect (clamped to dist), so the rider's helmet to the
 // horse's tail spans ~3–97% of the width on every screen (a 390×844 phone: 18.3 m; 9:16: 15 m). x centres the pair;
 // height = floor × distance keeps the hooves on the painted floor line.
-const CAM={x:1.5,fill:8.44,dist:[12,22],floor:.1393,tilt:1.4,fov:30,bg:.82};
+// 2026-10-09 (the user: 「鏡頭要在高一點，可以看到飼料槽」: the stall's door now stands across the bottom of the page,
+// home.css .st-door): the camera higher and looking down (it was floor .1393, tilt 1.4: level with the buddy's back), so
+// the buddy and the trough stand clear above the door. The plate is barn-plate.webp, the user's painting for this
+// camera (9:16, in the first plate's simple style; wall and floor meet at about 50% of its height, straw along the
+// wall to 60%: the buddy stands on the boards just in front of it, its feet at about 60%).
+const CAM={x:1.5,fill:8.44,dist:[12,22],floor:.22,tilt:9.3,fov:30,bg:.5};
 // After the 1 s Pickup: the rider clip, how long it runs, and the horse's extra neck/head pose meanwhile (radians).
 // Brush: the horse bows its forelock to the brush. Feed: neck down, head stretched out so its mouth meets the carrot.
 const ACTS={

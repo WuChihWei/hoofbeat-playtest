@@ -1,17 +1,19 @@
 // Ranch overview (2026-10-09, the user: every buddy seen at once, loose on the grounds; the dormitory is only their home):
-// the 3D ranch seen in a few set shots (RANCH.shots: the pasture where the buddies are, the dormitory, the wheat
-// field, the whole grounds), the camera gliding from one to the next: the page's tabs or a sideways swipe change the
+// the 3D ranch seen in a few set shots (RANCH.shots: the pasture where the buddies are, the wheat field, the
+// whole grounds), the camera gliding from one to the next: the page's tabs or a sideways swipe change the
 // shot (2026-10-09, the user after playing it: 「應該是特寫的切換」; it was one far view to drag and pinch, the buddies
 // 35 px tall). The buddies that are out keep to the pasture behind the barn (RANCH.zone: 「限定他們走在某一區」) and
-// stroll a little at a time. A tap on a buddy picks it (home.js opens the close-up on it).
+// stroll a little at a time. A tap on a buddy picks it. The dormitory is not a shot here: it is the close-up page
+// (#stable: the painted barn, the buddy, feed and brush), which the page's tabs open like a shot (2026-10-09, the user:
+// a 3D room seen from the front was tried, then dropped: 「現在有宿舍背景圖、又有近景畫面，感覺步驟重複」).
 // The scene is assets/models/ranch/Ranch.glb (models/ranch/build_ranch.py: the 青禾馬廄 scene cut down to 61k triangles,
 // in metres, one node per group); the buddies are their ranch models (models/ranch/build_buddies.py: ~1.5k triangles,
-// the same rig and clips). Nothing here knows who is owned or how many may be out: the page says (home.js RANCH_OUT).
+// the same rig and clips). Nothing here knows who is owned or how many may be out: the page says (home.js mine()).
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r362';
-import {applyLook,LOOK} from '../visual-style.js?v=r362';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r367';
+import {applyLook,LOOK} from '../visual-style.js?v=r367';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -23,9 +25,12 @@ export const RANCH={
   // The shots, in the tabs' order (the first is what the ranch opens on): what the camera looks at on the ground
   // [x, y], from how far (m), from which side (az: 0 from the gate, 90 from the right) and how steeply (el).
   shots:[{id:'pasture',name:'活動場',at:[0,19.6],dist:33,az:96,el:30},
-    {id:'dorm',name:'宿舍',at:[0,3.2],dist:27,az:14,el:27},
     {id:'field',name:'麥田',at:[0,-5.4],dist:43,az:90,el:40},   // along the field from the right: its 12 m across the screen, all six beds
     {id:'all',name:'全景',at:[2,6],dist:98,az:32,el:50}],
+  // The pasture's ground (2026-10-09, the user: 「活動場應該要有草地」; the scene's sand ring, 3 m wide, filled the shot):
+  // a worn path the ring's shape, [half-length, half-width] outside and inside, centred at y; grass tufts and flowers
+  // sown over [x0, y0, x1, y1].
+  path:{y:19.6,out:[8.4,4.5],in:[7.3,3.4]},meadow:{box:[-16,13,15.5,26.6],tufts:260,flowers:70},
   zone:{x:[-12,10],y:[15,24.4]},             // where the buddies keep: the pasture behind the barn, round the sand ring
   far:360,                                    // m of grass round the site, so no view shows where the ground ends
   // Trees outside the site, [x, y, height]: behind, to the left and to the right, a few far in front. None to the
@@ -101,10 +106,10 @@ export function route(spots,from,to){
   const path=[];for(let n=to;n!==from;n=back.get(n))path.unshift(n);return path;
 }
 
-// buddies: [{id, coat, hair}], the ones out. onPick(id): a buddy was tapped. shot: the shot to open on; onShot(i): a
-// swipe changed it. → {shot(i), dispose}; resolves with the first
-// frame drawn, and only then is the canvas put on the page (nothing is seen being put together).
-export async function mountRanchView(host,{buddies=[],onPick,onShot,shot=0}={}){
+// buddies: [{id, coat, hair}], everyone out. onPick(id): a buddy was tapped. shot: the shot to open on; onShot(i): it
+// changed. onSwipe(±1): a sideways swipe (when given, the page decides what comes next). → {shot(i), dispose};
+// resolves with the first frame drawn, and only then is the canvas put on the page (nothing is seen being put together).
+export async function mountRanchView(host,{buddies=[],onPick,onShot,onSwipe,shot=0}={}){
   const [assets]=await Promise.all([loadScene(),preloadRanchBuddies(buddies.map(b=>b.coat))]);
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;r.domElement.setAttribute('aria-hidden','true');
@@ -114,13 +119,13 @@ export async function mountRanchView(host,{buddies=[],onPick,onShot,shot=0}={}){
   const rim=new THREE.DirectionalLight();rim.position.set(10,12,-20);scene.add(rim);
   applyLook(r,scene,{sun,rim,shadowMap:LOOK.shadow.stableMap});
 
-  // The scene: each group one mesh; the turf and the sand ring in the race's grass and dirt.
+  // The scene: each group one mesh.
   const made=[],trees=[];assets.scene.updateMatrixWorld(true);
   for(const g of assets.scene.children){
     if(g.name==='TREES')g.children.forEach(t=>{const b=new THREE.Box3().setFromObject(t);trees.push({x:(b.min.x+b.max.x)/2,y:-(b.min.z+b.max.z)/2,r:(b.max.x-b.min.x)/2});});
     const flat=new THREE.Group();flat.name=g.name;
-    for(const o of [...g.children]){const m=o.material?.name;if(g.name==='GROUND')continue;   // the scene's turf slab and the earth under it: the lawn below is the ground here (the two met in a visible line)
-      if(m==='Ranch_Dirt'){const t=o.clone();t.geometry=o.geometry.clone();textured(t,assets.dirt.clone(),4);made.push(t.geometry,t.material,t.material.map);scene.add(t);}else flat.add(o.clone());}
+    for(const o of [...g.children]){if(g.name==='GROUND'||g.name==='TRACK')continue;   // TRACK: the sand ring and its edge stones (the pasture's own path and meadow are made below)   // GROUND: the scene's turf slab and the earth under it (the lawn below is the ground here: the two met in a visible line)
+      flat.add(o.clone());}
     if(flat.children.length){const m=merged(flat);made.push(m.geometry);scene.add(m);}
   }
   // Beyond the site: the same grass as far as the camera can see, and a loose belt of the scene's own tree round it
@@ -130,9 +135,21 @@ export async function mountRanchView(host,{buddies=[],onPick,onShot,shot=0}={}){
     if(one){const g=one.geometry,box=g.boundingBox??(g.computeBoundingBox(),g.boundingBox),tall=box.max.y-box.min.y,belt=new THREE.InstancedMesh(g,SOLID,RANCH.belt.length),m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0);
       RANCH.belt.forEach(([x,y,h],i)=>{const k=h/tall;belt.setMatrixAt(i,m.compose(at(x,y).setY(.04-box.min.y*k),q.setFromAxisAngle(up,i*2.4),new THREE.Vector3(k,k,k)));});
       belt.castShadow=true;belt.frustumCulled=false;scene.add(belt);}}
+  // The pasture: a worn path round it, and a meadow: tufts of three blades and small flowers, each kind drawn once.
+  {const P=RANCH.path,n=56,pos=[],ix=[];for(let k=0;k<n;k++){const a=2*Math.PI*k/n,c=Math.cos(a),q=Math.sin(a);pos.push(P.out[0]*c,.06,-(P.y+P.out[1]*q),P.in[0]*c,.06,-(P.y+P.in[1]*q));const i=k*2,j=(k+1)%n*2;ix.push(i,j,i+1,j,j+1,i+1);}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();
+    const ring=textured(new THREE.Mesh(g),assets.dirt.clone(),4);ring.material.side=THREE.DoubleSide;made.push(g,ring.material,ring.material.map);scene.add(ring);
+    let seed=11;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647,[x0,y0,x1,y1]=RANCH.meadow.box,onPath=(x,y)=>{const e=(a,b)=>Math.hypot(x/a,(y-P.y)/b);return e(P.out[0]+.3,P.out[1]+.3)<1&&e(P.in[0]-.3,P.in[1]-.3)>1;};
+    const sow=(geo,count,colours,size)=>{const mat=new THREE.MeshBasicMaterial({side:THREE.DoubleSide})   /* unlit: a blade seen from behind went dark */,mesh=new THREE.InstancedMesh(geo,mat,count),m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),c=new THREE.Color();
+      for(let i=0;i<count;i++){let x,y;do{x=x0+rnd()*(x1-x0);y=y0+rnd()*(y1-y0);}while(onPath(x,y));const k=size[0]+rnd()*(size[1]-size[0]);
+        mesh.setMatrixAt(i,m.compose(at(x,y).setY(.04),q.setFromAxisAngle(up,rnd()*6.28),new THREE.Vector3(k,k,k)));mesh.setColorAt(i,c.set(colours[i%colours.length]));}
+      mesh.frustumCulled=false;made.push(geo,mat);scene.add(mesh);};
+    const blades=new THREE.BufferGeometry();blades.setAttribute('position',new THREE.Float32BufferAttribute([-.09,0,0,.0,0,.03,-.13,.42,.02, .02,0,-.03,.11,0,0,.07,.5,-.03, -.03,0,.06,.05,0,.08,.16,.36,.1],3));blades.setAttribute('normal',new THREE.Float32BufferAttribute(new Array(9).fill([0,1,0]).flat(),3));   // lit like the ground they stand on, whichever way a blade leans
+    sow(blades,RANCH.meadow.tufts,['#6fae55','#7dbb5d','#9bd070','#aadb7c'],[.45,.85]);
+    const bloom=new THREE.CircleGeometry(.075,6).rotateX(-Math.PI/2.6).translate(0,.2,0);bloom.setAttribute('normal',new THREE.Float32BufferAttribute(new Array(bloom.attributes.position.count).fill([0,1,0]).flat(),3));sow(bloom,RANCH.meadow.flowers,['#ffffff','#f6e27a','#c9b6f2','#ffffff'],[.8,1.4]);}
   r.shadowMap.autoUpdate=false;   // the scene never moves: its shadows are drawn once (the buddies stand on a soft spot instead)
 
-  // The buddies: each on a spot, a round shadow under it.
+  // The buddies out on the pasture: each on a spot, a round shadow under it.
   const spots=waypoints(trees),spot=new THREE.Mesh(new THREE.CircleGeometry(.62,20),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.2,depthWrite:false}));made.push(spot.geometry,spot.material);
   const free=(want=()=>true)=>{const taken=new Set(herd.flatMap(b=>[b.on,b.path.at(-1)]));const ok=spots.map((_,i)=>i).filter(i=>!taken.has(i)&&spots[i].next.length&&want(spots[i]));return ok[Math.floor(Math.random()*ok.length)];};
   const herd=[];
@@ -166,20 +183,23 @@ export async function mountRanchView(host,{buddies=[],onPick,onShot,shot=0}={}){
   const ro=new ResizeObserver(fit);ro.observe(host);
   const go=i=>{const n=Math.max(0,Math.min(RANCH.shots.length-1,i));if(n===now)return;now=n;onShot?.(now);};
 
-  // Touch: a sideways swipe goes to the next or the last shot, a tap that did not move picks the buddy under it.
+  // Touch: a sideways swipe asks the page for the next or the last tab (onSwipe: the dormitory is one of them), a tap
+  // that did not move picks the buddy under it.
   const el$=r.domElement;let from=null;el$.style.touchAction='none';
   el$.addEventListener('pointerdown',e=>{try{el$.setPointerCapture(e.pointerId);}catch{}from=[e.clientX,e.clientY];});
   el$.addEventListener('pointercancel',()=>{from=null;});
   el$.addEventListener('pointerup',e=>{if(!from)return;const dx=e.clientX-from[0],dy=e.clientY-from[1];from=null;
-    if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.5){go(now+(dx<0?1:-1));return;}
-    if(Math.hypot(dx,dy)<8&&onPick){const box=el$.getBoundingClientRect(),v=new THREE.Vector3();let best=null,near=48;
-      for(const b of herd){v.copy(b.pos);v.y+=1;v.project(cam);const d=Math.hypot((v.x+1)/2*box.width-(e.clientX-box.left),(1-v.y)/2*box.height-(e.clientY-box.top));if(d<near){near=d;best=b;}}
-      if(best)onPick(best.id);}});
+    if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.5){if(onSwipe)onSwipe(dx<0?1:-1);else go(now+(dx<0?1:-1));return;}
+    if(Math.hypot(dx,dy)>=8||!onPick)return;
+    const box=el$.getBoundingClientRect(),v=new THREE.Vector3();let best=null,near=48;
+    for(const b of herd){v.copy(b.pos);v.y+=1;v.project(cam);const d=Math.hypot((v.x+1)/2*box.width-(e.clientX-box.left),(1-v.y)/2*box.height-(e.clientY-box.top));if(d<near){near=d;best=b;}}
+    if(best)onPick(best.id);});
 
   let raf=0,last=performance.now();
-  function frame(now){raf=requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;herd.forEach(b=>stroll(b,dt));aim(dt);r.render(scene,cam);}
+  const tick=dt=>{herd.forEach(b=>stroll(b,dt));aim(dt);r.render(scene,cam);};
+  function frame(t){raf=requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000);last=t;tick(dt);}
   herd.forEach(b=>stroll(b,0));r.shadowMap.needsUpdate=true;fit();
   host.append(el$);raf=requestAnimationFrame(frame);
-  if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,spots,cur,go,step(dt){herd.forEach(b=>stroll(b,dt));aim(dt);r.render(scene,cam);}};   // dev (?debug): step, to move things on in a tab that draws one frame a second
+  if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,spots,cur,go,step:tick};   // dev (?debug): step, to move things on in a tab that draws one frame a second
   return {shot:go,dispose(){cancelAnimationFrame(raf);ro.disconnect();herd.forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
 }

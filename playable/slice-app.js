@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r362';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r362';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r362';
-import {compositionRank} from '../race-composition.mjs?v=r362';
-import {ChaseRenderer} from '../race-scene.js?v=r362';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r362';
-import {cityModels} from '../approved-environment.js?v=r362';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r367';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r367';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r367';
+import {compositionRank} from '../race-composition.mjs?v=r367';
+import {ChaseRenderer} from '../race-scene.js?v=r367';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r367';
+import {cityModels} from '../approved-environment.js?v=r367';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r362';
-import {ControlRouter} from './control-router.mjs?v=r362';
-import {RaceAudio,readLatency} from '../audio.js?v=r362';
-import {addLog,raceEntry} from '../playtest.js?v=r362';
-import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt} from './slice-config.mjs?v=r362';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r367';
+import {ControlRouter} from './control-router.mjs?v=r367';
+import {RaceAudio,readLatency} from '../audio.js?v=r367';
+import {addLog,raceEntry} from '../playtest.js?v=r367';
+import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt} from './slice-config.mjs?v=r367';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -65,7 +65,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r362',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r367',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;

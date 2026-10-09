@@ -59,7 +59,7 @@ export const STRINGS=[
   {zh:"這條賽道還沒跑過",en:"Not run on this track yet"},
   {zh:"四隊對手",en:"four rival teams"},
   {zh:"載入牧場…",en:"Loading the ranch…"},
-  {zh:"點一下夥伴來照顧牠",en:"Tap a buddy to care for it"},
+  {zh:"點一下夥伴，去牠的房間",en:"Tap a buddy to visit its room"},
   {zh:"活動場",en:"Pasture"},
   {zh:"宿舍",en:"Dorm"},
   {zh:"麥田",en:"Field"},

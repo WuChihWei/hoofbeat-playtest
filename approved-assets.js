@@ -8,7 +8,7 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-63';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-64';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
