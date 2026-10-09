@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.min.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
+import {MeshoptDecoder} from './vendor/meshopt_decoder.module.js';
 import {clone} from './vendor/SkeletonUtils.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 // Runtime model library (dist/assets/models/<category>/); categories mirror the source library in /models.
@@ -8,7 +9,10 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-61';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-62';  // bump when any runtime GLB is re-exported (browser cache)
+// Every runtime GLB but the tiny fence is EXT_meshopt_compression packed (lossless, about a third smaller): load them
+// through this, never a bare GLTFLoader.
+export const gltfLoader=()=>new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
@@ -22,7 +26,7 @@ export const loadsSettled=()=>loading?new Promise(r=>settled.push(r)):Promise.re
 let pending;
 // How many model files have been asked for and how many have arrived (the start card shows it while it waits).
 export const loadState={done:0,total:0};
-const fetchModel=file=>{loadState.total++;return new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
+const fetchModel=file=>{loadState.total++;return gltfLoader().loadAsync(new URL(`./assets/models/${file}?v=${MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
 const keyLoads={};
 // One presentation model by its key, once (the ranch asks for the two it needs; a race for all of them).
 const loadKey=key=>keyLoads[key]??=fetchModel(PRESENTATION_ASSETS[key]).then(gltf=>{approvedAssets.set(key,gltf);approvedAssets.set(PRESENTATION_ASSETS[key],gltf);},e=>{delete keyLoads[key];throw e;});   // by key, and by file for city dressing (preloadModels)

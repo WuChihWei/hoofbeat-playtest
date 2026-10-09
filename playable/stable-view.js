@@ -6,13 +6,12 @@
 // out, the horse stretches down and eats it in one bite. show() rebuilds the horse so PLAYER_LOOK changes apply.
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
-import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r357';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK,gltfLoader} from '../approved-assets.js?v=r357';
 import {applyLook,LOOK} from '../visual-style.js?v=r357';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
-const url=f=>new URL(`../assets/models/${f}?v=${MODEL_VERSION}`,import.meta.url).href,load=f=>new GLTFLoader().loadAsync(url(f));
+const url=f=>new URL(`../assets/models/${f}?v=${MODEL_VERSION}`,import.meta.url).href,load=f=>gltfLoader().loadAsync(url(f));
 let pending;
 // 2026-10-05 (the user): no rider in the ranch (her model was the heaviest thing it loaded) and no carrot: a feed trough
 // stands where she stood (Feed_Trough.glb, the user's model: five untextured parts, coloured here), the buddy lowers its
