@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r430';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r430';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r430';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r430';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r430';
-import {installApprovedEnvironment} from './approved-environment.js?v=r430';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r430';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r430';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r430';
-import {turnAt} from './track-projection.js?v=r430';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r430';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r430';
+import {roadHalfWidth} from './track-presentation.mjs?v=r436';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r436';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r436';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r436';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r436';
+import {installApprovedEnvironment} from './approved-environment.js?v=r436';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r436';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r436';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r436';
+import {turnAt} from './track-projection.js?v=r436';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r436';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r436';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -54,6 +54,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // until the next hit; glance: the rider's head turns to a rival passed or passing ([rad, s]); pump: a fist in the air
 // for a clean jump, a leap, taking the lead ([rad on the right upper arm, s]); tail: it flicks to the side of a hit
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
+const FINISH_SHOT={out:7,ahead:5.5,high:2,aim:2,fov:60,ease:260};   // the finish close-up: m to the side of the buddy, m up the road from it, the camera's height, the height it looks at, the lens (wide: an upright phone has to hold a buddy's length), ms it eases over
 const WIDE=(new URLSearchParams(globalThis.location?.search||'').get('wide')||'6,9,3').split(',').map(Number);   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
 const REACT={pump:[-1.7,.7],kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
@@ -134,8 +135,8 @@ export class ChaseRenderer {
       }
     }
     // preserveDrawingBuffer only for the dev capture pages (capture: true): it costs a copy every frame on phones.
-    this.r = new THREE.WebGLRenderer({canvas, antialias: !PHONE, alpha: false, preserveDrawingBuffer: capture, powerPreference: 'high-performance'});
-    this.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, PHONE ? 1.25 : 1.5));
+    this.r = new THREE.WebGLRenderer({canvas, antialias: true, alpha: false, preserveDrawingBuffer: capture, powerPreference: 'high-performance'});
+    this.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));   // 2 and antialiased on a phone too (2026-10-10: at 1.25 with no antialiasing the gold rim round the rider stepped like low resolution; the user's iPhone drew a frame in 4 ms of its 33). A slow phone comes down below
     this.r.outputColorSpace = THREE.SRGBColorSpace;
     this.r.toneMapping = THREE.ACESFilmicToneMapping;
     this.r.toneMappingExposure = .98;
@@ -311,7 +312,7 @@ export class ChaseRenderer {
     if(this.coinMeshes&&(this.coinMeshes.length!==race.coins.length||this.appleMeshes.length!==(race.apples||[]).length))return false;
     for(const m of [...this.coinMeshes||[],...this.appleMeshes||[]])m.userData.burst=false;
     this.dustParts=[];this.sparkParts=[];this.dustTime=undefined;this.pulses=[-100,-100];this.buckAt=this.winAt=this.ramAt=null;this.sliceTurn=0;this.surge=0;this.kick=0;
-    this.models.forEach(e=>{for(const k of ['sprint','gait','crouch','tuck','dustTime','dustDue','lastTime','animationTime','lastDistance','bones'])delete e[k];if(e.model.blaze)e.model.blaze.value=0;});
+    this.models.forEach(e=>{for(const k of ['sprint','gait','crouch','tuck','dustTime','dustDue','lastTime','animationTime','lastDistance','bones'])delete e[k];if(e.model.blaze)e.model.blaze.value=0;});this.finishShot=0;
     return true;
   }
   // The start gate (slice races): a stall per runner where it stands at the start, a door before each that swings open
@@ -595,7 +596,7 @@ export class ChaseRenderer {
     const model=entry.model,run=actor.running&&time>=0&&!this.reduced?1:0,fold=jump.airborne?clamp(jump.phase/.1,0,1):jump.landing||0;
     const player=role==='player'&&actor.active,target=role==='player'?race.rush(time):runner.boosting?1:0;entry.sprint=(entry.sprint??0)+(target-(entry.sprint??0))*.12;   // rush: a sprint or an apple
     const s=entry.sprint,st=player?race.stumbles.at(-1):runner.stumbleAt!=null?{t:runner.stumbleAt}:null,age=st?time-st.t:9,   // a rival's last stumble too (2026-10-08: kicked, shoved or off a fence, it showed nothing)
-      T=race.config.stumbleTime;
+      T=race.config.stumbleTime*(player?1:runner.stumbleK??1);
     const trip=age>=0&&age<T?Math.sin(Math.PI*age/T):0,phase=(entry.animationTime||0)*2*Math.PI/(model.clips.run?.duration||.77);
     const surge=player?race.surge():0,level=player?race.gait():target>0?2:1;
     const g=entry.gait=(entry.gait??level)+(level-(entry.gait??level))*.07;
@@ -783,7 +784,7 @@ export class ChaseRenderer {
     if (time > 0 && frameTime > 0 && frameTime < 100) {
       this.frameAverage = this.frameAverage * .97 + frameTime * .03;
       this.frameSamples++;
-      if (this.frameSamples > 120 && this.frameAverage > 40 && this.r.getPixelRatio() > 1) this.r.setPixelRatio(1);   // below 25 a second (the game draws 30: slice-app frame): the resolution comes down for the rest of the run
+      if (this.frameSamples > 120 && this.frameAverage > 40 && this.r.getPixelRatio() > 1) {this.r.setPixelRatio(this.r.getPixelRatio() > 1.25 ? 1.25 : 1); this.frameSamples = 0;}   // below 25 a second (the game draws 30: slice-app frame): the resolution comes down for the rest of the run
     }
     this.lastDrawTime = now;
     this.raceTime=time;this.configure(race, race.slice?0:time);
@@ -814,6 +815,13 @@ export class ChaseRenderer {
       this.kick=(this.kick||0)+((this.reduced?0:race.rush(time))-(this.kick||0))*(1-Math.exp(-Math.max(0,frameTime)/140));
       const off=clamp(1-Math.max(0,time)/REACT.launch[1],0,1),fov=c.fov+REACT.kick*this.kick-(this.reduced?0:REACT.launch[0]*off*off*(3-2*off));if(Math.abs(this.camera.fov-fov)>.01){this.camera.fov=fov;this.camera.updateProjectionMatrix();}
       this.camera.lookAt(c.x,c.targetY+high*WIDE[2]+REACT.rise[1]*lift,c.targetZ);
+      // The line crossed: the camera comes round to the buddy's front quarter for a close-up, the line behind it
+      // (FINISH_SHOT; 2026-10-10, the user). A phone is upright: square on from the side a buddy is wider than the view.
+      this.finishShot=(this.finishShot||0)+((race.finished&&!this.reduced?1:0)-(this.finishShot||0))*(1-Math.exp(-Math.max(0,frameTime)/FINISH_SHOT.ease));
+      if(this.finishShot>.002){const k=this.finishShot,e=k*k*(3-2*k),px=race.laneValue*race.config.laneSpacing,side=px>0?-1:1,m=(a,b)=>a+(b-a)*e;
+        this.camera.position.set(m(this.camera.position.x,px+side*FINISH_SHOT.out),m(this.camera.position.y,FINISH_SHOT.high),m(this.camera.position.z,HORSE_Z-FINISH_SHOT.ahead));
+        this.camera.fov=m(this.camera.fov,FINISH_SHOT.fov);this.camera.updateProjectionMatrix();
+        this.camera.lookAt(m(c.x,px),m(c.targetY,FINISH_SHOT.aim),m(c.targetZ,HORSE_Z));}
       this.canvas.dataset.composition=JSON.stringify(c);
       this.canvas.dataset.cameraSpeedEase=this.sliceCameraEase.toFixed(3);
     }

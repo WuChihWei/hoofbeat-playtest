@@ -44,7 +44,8 @@ export const SLICE_CONFIG = Object.freeze({
   stamina:20, sprintStamina:5, staminaWait:2*T, staminaRegen:1/T,
   jumpDuration:1.05, jumpLead:.45, jumpWindow:.2/1.3*T,   // the window: ±154 ms of real time, as before
   // Knocked hurdle: speed dips (up to 60%) for 0.9 simulation seconds, combo, rhythm drive and a running sprint are lost.
-  stumbleTime:.9, stumbleDip:.6,
+  stumbleTime:.9, stumbleDip:.6, knock:4,   // knock: a rival the player bumped or kicked staggers this many times as long (2026-10-10, the user: 「對手恢復太快了」). These are game seconds: .9 was under half a real second; × 4 is about 1.8 real seconds, as long as its 💫 shows
+ 
   coinRadius:.78,
   // Results: each coin picked up is worth coinValue in the wallet, plus a bonus by finishing place (1st … 5th), and
   // diamonds (gemBonus) for a podium place.

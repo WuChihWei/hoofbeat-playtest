@@ -662,3 +662,6 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 /* The daze: an emoji over the rival that was hit, turning and bobbing (slice-app dazeFrame sets its translate). */
 #slice-dizzy{position:absolute;left:0;top:0;z-index:5;pointer-events:none;font-size:calc(30 * var(--u));line-height:1;margin:calc(-34 * var(--u)) 0 0 calc(-15 * var(--u));filter:drop-shadow(0 2px 2px #0008);animation:daze 1.1s linear infinite}
 #slice-dizzy[hidden]{display:none}@keyframes daze{from{rotate:0deg;scale:1}50%{scale:1.15}to{rotate:360deg;scale:1}}
+
+/* the finish close-up (slice-app: .finish-shot on the shell): the controls and the HUD fade out of the picture */
+.slice-shell.finish-shot .slice-controls,.slice-shell.finish-shot .slice-hud,.slice-shell.finish-shot #slice-skill,.slice-shell.finish-shot #slice-rank,.slice-shell.finish-shot #slice-apples,.slice-shell.finish-shot #slice-combo,.slice-shell.finish-shot #slice-coach,.slice-shell.finish-shot #slice-final-call,.slice-shell.finish-shot #ball-pad,.slice-shell.finish-shot #slice-chase{opacity:0;transition:opacity .25s}

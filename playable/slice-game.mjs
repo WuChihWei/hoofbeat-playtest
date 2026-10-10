@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r430';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r436';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -208,7 +208,7 @@ export class SliceGame {
       this.emit('miss',{noteId:n.id,side:n.lane});
     }
   }
-  stumbleFactor(t=this.time,o=this){const s=o.stumbles.at(-1),age=t-(s?.t??-9),c=this.config;return age>=0&&age<c.stumbleTime?1-c.stumbleDip*Math.sin(Math.PI*age/c.stumbleTime):1;}
+  stumbleFactor(t=this.time,o=this){const s=o.stumbles.at(-1),age=t-(s?.t??-9),c=this.config,T=c.stumbleTime*(s?.k??1);return age>=0&&age<T?1-c.stumbleDip*Math.sin(Math.PI*age/T):1;}   // k: a runner the player knocked (bump, kick) is out of it c.knock times as long
   boostActive(t=this.time){return this.boosts.some(b=>t>=b.t&&t<b.end-1e-9);}
   boostStrength(t=this.time){return strength(this.boosts,t,this.config);}
   // An apple's speed-up, eased like a sprint; carried: a sprint or an apple has the horse; rush: how hard (the look).
@@ -248,7 +248,7 @@ export class SliceGame {
   // stumbles and whatever sprint it was on ends.
   kickBack(){const c=this.config;if(this.paused||this.finished||!c.ball||this.blown>this.time||this.time<(this.shoveAt??-9))return;
     const r=this.behind();this.ball+=c.shoveWind;this.driveSpeed*=.55;this.shoveAt=this.time+c.ballRush*4;
-    if(r){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
+    if(r){r.stumbles.push({t:this.time,k:c.knock});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
     return this.emit('kickback',{hit:r?.id??null});}
   // The gait test: one gear up or down (dir +1 / -1); not while blown.
   shift(dir){if(this.paused||this.finished||this.blown>this.time)return;const to=clamp(this.gear+dir,0,3);if(to===this.gear)return;this.gear=to;return this.emit('gear',{gear:to});}
@@ -263,7 +263,7 @@ export class SliceGame {
     return [L&&{kind:'bump',side:0,r:L},R&&{kind:'bump',side:1,r:R},B&&{kind:'kick',r:B}].filter(Boolean).sort((a,b)=>d(a.r)-d(b.r))[0]??null;}
   useSkill(){if(this.paused||this.finished||!this.config.ball)return;const t=this.skill>=1&&this.blown<=this.time?this.skillTarget():null;
     if(!t)return this.emit('skill-none',{empty:this.skill<1});
-    const r=t.r;this.skill--;r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;
+    const r=t.r;this.skill--;r.stumbles.push({t:this.time,k:this.config.knock});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;
     let pushed=false;if(t.kind==='bump'){const to=r.targetLane+(t.side?1:-1);if(Math.abs(to)<=1&&!this.occupied(r,to)){r.laneChanges.push({from:r.laneValue,to,t:this.time});r.targetLane=r.lane=to;pushed=true;}}
     return this.emit('skill',{kind:t.kind,side:t.side??null,id:r.id,pushed});}
   // The ball game's bump as it was before the skill button (unused since; kept for ?-switch tests) (2026-10-08, the user: 「撞人是一種策略但不是隨時能用的，應該是有條件用且有條件損失」): it takes a
@@ -356,7 +356,7 @@ export class SliceGame {
     const own=solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed;
     r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r));
     if(r.ram)r.speed=Math.max(4,this.speed+clamp((this.distance-r.distance)*1.5,-3,3));   // a ram: it holds on beside the player
-    if(r.targetLane%1&&r.distance>3*c.breakOut)r.speed*=.75;   // still between two lanes with no room beside it: it eases off and drops in behind
+    if(r.targetLane%1&&(!this.solo||Math.abs(r.targetLane)>1)&&r.distance>3*c.breakOut)r.speed*=.75;   // still out in an outer stall with no room beside it: it eases off and drops in behind. In a solo race only the outer ones (2026-10-10; the relay keeps its rule, its checks are tuned on it): all four easing off together stayed level, at three quarters speed for the first 9 s of stages 4 and 5, and the player was a quarter lap up
     r.laneValue=laneAt(r.laneChanges,this.time,c.laneDuration)??r.laneValue;
     if(r.stall&&r.laneValue%1===0)r.stall=false;   // in its lane: the full traffic rule from here
   }
@@ -448,7 +448,7 @@ export class SliceGame {
   metrics(){
     const L=this.config.length;
     // Rivals keep running past the line (no snap back beside the player); unfinished ones are projected.
-    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
+    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,stumbleK:r.stumbles.at(-1)?.k??1,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
       boosting:strength(r.boosts,this.time,this.config)>0,finishTime:r.finishTime??this.time+Math.max(0,L-r.distance)/Math.max(r.speed,1)}));
     const rank=1+rivals.filter(r=>this.finished?r.finishTime<this.finishTime:r.distance>this.distance+1e-9||(Math.abs(r.distance-this.distance)<=1e-9&&r.speed>this.speed)).length;
     return {player:{distance:this.distance,speed:this.speed,finishTime:this.finishTime,lane:this.laneValue},rivals,rank};

@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r430';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r430';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r430';
-import {compositionRank} from '../race-composition.mjs?v=r430';
-import {ChaseRenderer} from '../race-scene.js?v=r430';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r430';
-import {cityModels} from '../approved-environment.js?v=r430';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls,hoof} from '../race-hud.js?v=r436';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r436';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r436';
+import {compositionRank} from '../race-composition.mjs?v=r436';
+import {ChaseRenderer} from '../race-scene.js?v=r436';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r436';
+import {cityModels} from '../approved-environment.js?v=r436';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r430';
-import {ControlRouter} from './control-router.mjs?v=r430';
-import {RaceAudio,readLatency} from '../audio.js?v=r430';
-import {addLog,raceEntry} from '../playtest.js?v=r430';
-import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r430';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r436';
+import {ControlRouter} from './control-router.mjs?v=r436';
+import {RaceAudio,readLatency} from '../audio.js?v=r436';
+import {addLog,raceEntry} from '../playtest.js?v=r436';
+import {SLICE_CONFIG,sliceChart,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r436';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -65,7 +65,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const rivals=practice?PRACTICE_RIVALS:solo?fieldRivals(rivalCount+1):RIVALS,field=!practice&&rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r430',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r436',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -307,7 +307,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   const stage=()=>{settle=20;renderer=new ChaseRenderer($('slice-canvas'),{controls:pads,slice:true,city});if(BALL)renderer.camera.setViewOffset(1,1,0,.08,1,1);   // the ball game: the whole view 8% of the screen higher, so the buddy stands clear of the ring at the foot (2026-10-08, the user: 「按鈕下移，騎士上移一點，不要疊在一起」)
     renderer.prepare(game);$('slice-canvas').addEventListener('race-render-error',pause);$('slice-canvas').addEventListener('coin-burst',e=>coinFly(e.detail));};
   async function newRun(){
-    if(phase==='loading')return;if(midRace())logRun('restart');phase='loading';
+    if(phase==='loading')return;if(midRace())logRun('restart');phase='loading';document.querySelector('.slice-shell')?.classList.remove('finish-shot');
     resolver?.reset();sound.stop();cancelAnimationFrame(frameId);clearTimeout(resultTimer);clearTimeout(resumeTimer);resumeTimer=0;
     await sound.prepare();
     $('slice-result').hidden=true;document.querySelector('.slice-shell').classList.remove('is-result');
@@ -423,7 +423,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
   function frame(){
     const workStart=performance.now();
     if(workStart-drawn<29||phase==='paused'||(phase==='finished'&&!$('slice-result').hidden)||(phase==='ready'&&settle--<=0)){frameId=requestAnimationFrame(frame);return;}
-    drawn=workStart;if(phase==='running'){if(perf.last)perf.gap+=workStart-perf.last;perf.last=workStart;}
+    drawn=workStart;if(phase==='running'){if(perf.last)perf.gap+=workStart-perf.last;perf.last=workStart;}else perf.last=0;   // a pause, the results card or a retry is not a frame: its wait made frameMs read 38–41 on a second run (play log, 2026-10-10)
     const wallTime=clock.elapsed()-SLICE_CONFIG.countdown,t=wallTime*TEMPO;
     if(phase==='countdown'&&t>=0){phase='running';banner('GO!','go',520);buzz('strong');renderer.dustBurst(16);$('slice-goal').hidden=true;}
     tick(t);
@@ -579,7 +579,7 @@ export async function startSlice({onExit,tag='HOOFBEAT',city=null,team=DEFAULT_T
       banner(clean?(perfect===tally.notes?'ALL PERFECT':'FULL COMBO'):'FINISH',clean?'finish gold':'finish',900);flash('#ffffff',.55,180);sound.accent(grade);buzz(grade==='lost'?'hit':'strong');
       const show=()=>{clearTimeout(resultTimer);if(phase==='finished'&&$('slice-result').hidden)showResults(result,m,bank,grade);};
       const won=BALL&&(!field||game.metrics().rank===1);if(won)renderer.win();   // first home: the buddy rears, the fist goes up, and the result waits for it
-      resultTimer=setTimeout(show,won?1900:900);document.querySelector('.slice-shell').addEventListener('pointerdown',show,{once:true,signal:ac.signal});
+      resultTimer=setTimeout(show,won?2300:1700);document.querySelector('.slice-shell').classList.add('finish-shot');   // long enough for the camera to come round (race-scene FINISH_SHOT); the controls step asidedocument.querySelector('.slice-shell').addEventListener('pointerdown',show,{once:true,signal:ac.signal});
     }
     frameId=requestAnimationFrame(frame);
   }
