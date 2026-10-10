@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r412';
-import {applyLook,LOOK} from '../visual-style.js?v=r412';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r421';
+import {applyLook,LOOK} from '../visual-style.js?v=r421';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -228,6 +228,11 @@ export async function mountStableView(host){
   // A finger dragged across the picture turns the buddy round on the spot (2026-10-10, the user: 「宿舍裡在照顧的動物可以
   // 旋轉他嗎」): SPIN rad per px of drag; it stays as left while standing, and eases back to face the rider when an act
   // (feed, brush) begins, so the props meet the mouth and the forehead. A tap (no drag) still only wakes it.
+  // Turned, the buddy keeps its feet where there is floor: the painted floor ends at the wall behind it, and the trough
+  // stands to its left. far(yaw) / left(yaw): how far behind / to the left of its own middle its farthest foot is (m);
+  // it steps toward the camera and to the right by whatever those are more than standing as it was placed (HORSE.yaw),
+  // so no foot is ever further back or further left than then (2026-10-10, the user: its feet were in the background).
+  let feet=[],home=null;const far=yaw=>feet.reduce((m,p)=>Math.max(m,p.x*Math.sin(yaw)-p.z*Math.cos(yaw)),-9),left=yaw=>feet.reduce((m,p)=>Math.max(m,-p.x*Math.cos(yaw)-p.z*Math.sin(yaw)),-9);
   const SPIN=.012;let spin=0,drag=null;r.domElement.style.touchAction='none';
   r.domElement.addEventListener('pointerdown',e=>{drag={id:e.pointerId,x:e.clientX};try{r.domElement.setPointerCapture(e.pointerId);}catch{}});
   r.domElement.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId||job||queued)return;spin+=(e.clientX-drag.x)*SPIN;drag.x=e.clientX;});
@@ -286,7 +291,10 @@ export async function mountStableView(host){
     if(!model.species){fixHind(model.content);sharpLegs(model.content.getObjectByName('HorseBody'));}   // a llama or a rhino keeps its own leg rig: it only stands (moods)
     model.mixer.clipAction(model.clips.idle).play();
     model.content.traverse(o=>{if(o.material?.name==='Horse_ManeTail')onFloor(o.material);});
-    model.root.position.set(HORSE.x+(BUDDY[model.species]?.x??0),0,HORSE.z);model.root.rotation.y=HORSE.yaw;scene.add(model.root);
+    model.root.position.set(HORSE.x+(BUDDY[model.species]?.x??0),0,HORSE.z);model.root.rotation.y=0;scene.add(model.root);
+    // Its four feet on the floor, from its own middle (turned by nothing): where the far one stands as it is turned (far()).
+    model.root.updateMatrixWorld(true);feet=['ForeHoofL','ForeHoofR','HindHoofL','HindHoofR'].map(n=>model.content.getObjectByName(n)).filter(Boolean).map(b=>b.getWorldPosition(new THREE.Vector3()).sub(model.root.position));
+    model.root.rotation.y=HORSE.yaw;home=null;
     bones=NECK.map(n=>model.content.getObjectByName(n)).filter(Boolean).map(b=>[b,b.quaternion.clone()]);
     muzzle=findMuzzle(model.content);
     rig={};model.content.updateMatrixWorld(true);headUp.set(0,1,0).applyQuaternion(model.content.getObjectByName('Head').getWorldQuaternion(hq2).invert());   // the head's up, standing
@@ -384,7 +392,7 @@ export async function mountStableView(host){
   function frame(now){if(now-last<(job?29:46)){raf=requestAnimationFrame(frame);return;}   // 30 pictures a second while it eats or is brushed, 20 standing
     const dt=Math.min(.1,(now-last)/1000);last=now;nod=Math.max(0,nod-dt);
     moods(dt);if(job)acting(dt);
-    if(job||queued)spin+=(0-spin)*Math.min(1,dt*6);model.root.rotation.y=HORSE.yaw+spin;
+    if(job||queued)spin+=(0-spin)*Math.min(1,dt*6);model.root.rotation.y=HORSE.yaw+spin;if(feet.length){home??=model.root.position.clone();model.root.position.z=home.z+Math.max(0,far(HORSE.yaw+spin)-far(HORSE.yaw));model.root.position.x=home.x+Math.max(0,left(HORSE.yaw+spin)-left(HORSE.yaw));}
     model.mixer.update(dt);
     const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0),to=job?(job.kind==='feed'?feedPose:BUDDY[model.species]?.bow??POSE.brush):POSE.idle;   // a soft chew-nod (the bite)
     for(const [b,base] of bones){const n=b.name,p=POSE.idle[n]+(to[n]-POSE.idle[n])*w+bob*(n==='Head'?1:.3),t=(to.turn||0)*w*(TURN[n]||0);

@@ -3,6 +3,13 @@
 // 1.5 × the 1.3 it was): the buddies cover the ground, and the notes come, half as fast again (a note every 308 ms).
 // What is meant in real time (tap windows, a sprint's length, the stamina wait, an apple) is written × T.
 const T=1.95;
+// MVP (2026-10-10, the user: 「現在遊戲夠單純了嗎？」→「都照你的建議做」): what is hidden, not deleted. Off, a system keeps
+// its code and its saves; the player sees none of it. On again with one flag. gems: the second currency (every buddy has a
+// coin price now) · treats: carrot, apple, cookie (wheat is the food) · levels: buddy xp and levels (every buddy runs at
+// full strength) · missions: the three a run · daily: the day's first-run bonus and the hot streak · perks: the mane style
+// and the rider's colours as stage gifts (those stages pay coins instead) · decor: the barn's stickers and postcards ·
+// types: the straight / curve / mud label · relay: the three-buddy race.
+export const MVP=Object.freeze({gems:false,treats:false,levels:false,missions:false,daily:false,perks:false,decor:false,types:false,relay:false});
 export const SLICE_CONFIG = Object.freeze({
   // Three-leg relay, about 75 wall seconds: one horse per leg (SLICE_LEGS), handoffs and the finish by distance.
   legLength:540, baseSpeed:12, countdown:3, tempo:T, fixedStep:1/120,

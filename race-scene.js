@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r412';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r412';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r412';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r412';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r412';
-import {installApprovedEnvironment} from './approved-environment.js?v=r412';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r412';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r412';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r412';
-import {turnAt} from './track-projection.js?v=r412';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r412';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r412';
+import {roadHalfWidth} from './track-presentation.mjs?v=r421';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r421';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r421';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r421';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r421';
+import {installApprovedEnvironment} from './approved-environment.js?v=r421';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r421';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r421';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r421';
+import {turnAt} from './track-projection.js?v=r421';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r421';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r421';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -22,7 +22,7 @@ const BEAT_COLORS = ['#fff071', '#46dee2'];
 // sprint) and + `sprint` in a sprint. seat: how much of the authored half-seat (RacePose) from upright to tucked.
 // max: the most bend there is room for over the horse's neck (a stumble on top of a full tuck). On horse_new3 (a higher,
 // fuller crest than the first horse's) with rider_new2: past ~.75 the helmet goes into the neck (crouch was .45, sprint .1).
-export const POSTURE={ride:.45,crouch:.25,sprint:.05,max:.95,split:[.6,.2,.2,-.3],seat:[.6,1],tripLean:.35,reach:.02,tripPitch:.2,tripRoll:.06};
+export const POSTURE={ride:.45,crouch:.25,sprint:.3,max:1.05,split:[.6,.2,.2,-.3],seat:[.6,1],tripLean:.35,reach:.02,rush:[.07,.07],tripPitch:.2,tripRoll:.06,rival:[2.4,.3],wind:[.22,.14,.1]};   // sprint: the rider folds flat over the neck (2026-10-10, the user: the sprint did not read; it was .05) · rush: in a sprint the buddy's nose goes down this much more (rad) and it runs this much lower (m) · rival: a rival that is hit rolls this many times more than a stumble and swerves this far (m) · wind: the kick's wind-up, the first share of its time: rump down (rad), body down (m)
 // The racing stride, three gaits by how hard the horse is running: 小跑步 (trot) → 大跑步 (canter) → 奔跑 (gallop). The
 // player's horse: slice-game gait(); rivals canter and gallop in a sprint.
 // All from the one Gallop clip: each leg bone's turn away from its standing pose is
@@ -597,8 +597,11 @@ export class ChaseRenderer {
     const trip=age>=0&&age<T?Math.sin(Math.PI*age/T):0,phase=(entry.animationTime||0)*2*Math.PI/(model.clips.run?.duration||.77);
     const surge=player?race.surge():0,level=player?race.gait():target>0?2:1;
     const g=entry.gait=(entry.gait??level)+(level-(entry.gait??level))*.07;
-    model.root.rotation.x+=run*(gait(STRIDE.rock,g)*Math.sin(phase)-POSTURE.reach*(1+s))-POSTURE.tripPitch*trip;   // reach: nose a little down, more in a sprint
-    model.root.rotation.z=POSTURE.tripRoll*trip*Math.sin(age*4*Math.PI/T);
+    model.root.rotation.x+=run*(gait(STRIDE.rock,g)*Math.sin(phase)-POSTURE.reach*(1+s)-POSTURE.rush[0]*s)-POSTURE.tripPitch*trip;   // reach: nose a little down, more in a sprint
+    model.root.position.y-=run*POSTURE.rush[1]*s;
+    // A rival that is hit (kicked, bumped, off a fence) staggers: it rolls further than the player's own stumble and swerves.
+    const hard=player?1:POSTURE.rival[0];model.root.rotation.z=POSTURE.tripRoll*hard*trip*Math.sin(age*4*Math.PI/T);
+    if(!player&&trip){const h=model.root.rotation.y,sw=POSTURE.rival[1]*trip*Math.sin(age*2*Math.PI/T);model.root.position.x+=Math.cos(h)*sw;model.root.position.z-=Math.sin(h)*sw;}
     // A hit on the beat (the pads' pulse): the player's horse drives forward a little and dips its nose.
     const hit=role==='player'&&actor.active?run*Math.max(...this.pulses.map((at,l)=>this.pulseStrength[l]*clamp(1-(time-at)/.32,0,1))):0;
     if(hit){const h=model.root.rotation.y;model.root.position.x-=Math.sin(h)*STRIDE.push*hit;model.root.position.z-=Math.cos(h)*STRIDE.push*hit;model.root.rotation.x-=.025*hit;}
@@ -647,7 +650,9 @@ export class ChaseRenderer {
       // turned from where the gallop has them (r336 turned them: the kick looked different at every point of the stride,
       // folded under the tail at some; the user: 「後踢有問題」). A bone runs along its +Y; BUCK is the way each segment
       // points in the buddy's own space (y up, z forward) at the top of the kick.
-      if(this.buckAt!=null){const k=bell((time-this.buckAt)/.5);if(k>.01){R.rotation.x-=.3*k;R.position.y+=.25*k;R.updateMatrixWorld(true);
+      if(this.buckAt!=null){const u=(time-this.buckAt)/.6,[share,sink,drop]=POSTURE.wind,w=bell(u/share),k=bell((u-share*.8)/(1-share*.8));   // the wind-up: it sits back on its haunches, then lets fly
+        if(w>.01){R.rotation.x+=sink*w;R.position.y-=drop*w;}
+        if(k>.01){R.rotation.x-=.3*k;R.position.y+=.25*k;R.updateMatrixWorld(true);
         const base=model.content?.getObjectByName('Root')??R;base.getWorldQuaternion(BUCK_Q);const turn=Math.min(1,k*1.6);
         for(const side of ['L','R'])for(const [n,d] of BUCK){const bone=(entry.bones??={})[n+side]??=model.content?.getObjectByName(n+side)??null;if(!bone)continue;
           bone.parent.updateWorldMatrix(true,false);BUCK_Y.set(...d).normalize().applyQuaternion(BUCK_Q);BUCK_X.set(1,0,0).applyQuaternion(BUCK_Q);BUCK_X.addScaledVector(BUCK_Y,-BUCK_X.dot(BUCK_Y)).normalize();

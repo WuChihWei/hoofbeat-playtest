@@ -435,7 +435,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .res-newsline{margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:calc(4 * var(--u))}.res-newsline:empty{display:none}
 .res-newsline .ui-tag{height:calc(24 * var(--u));padding:0 calc(10 * var(--u));font-size:var(--ui-t-label)}.res-newsline .gem{display:inline-grid;width:1em;height:1em}
 .res-rewards{padding:calc(14 * var(--u)) calc(8 * var(--u)) calc(16 * var(--u))}.res-rewards h2{margin:0 0 calc(10 * var(--u));text-align:center;font-size:var(--ui-t-name);font-weight:600}
-.res-rewards>div{display:grid;grid-template-columns:repeat(5,1fr)}.res-rewards>div>div{display:grid;justify-items:center;align-content:start;gap:calc(4 * var(--u));padding:0 calc(2 * var(--u))}.res-rewards>div>div+div{border-left:1px solid #2b2b2b}
+.res-rewards>div{display:grid;grid-template-columns:repeat(var(--n,5),1fr)}.res-rewards>div>div{display:grid;justify-items:center;align-content:start;gap:calc(4 * var(--u));padding:0 calc(2 * var(--u))}.res-rewards>div>div+div{border-left:1px solid #2b2b2b}
 .res-rewards small{font-size:var(--ui-t-tag);color:var(--ui-grey);white-space:nowrap}.res-rewards img{height:calc(34 * var(--u))}.res-rewards b{font-size:calc(17 * var(--u));font-weight:700;font-variant-numeric:tabular-nums}
 .res-rank{list-style:none;margin:0;padding:0;display:grid;gap:calc(4 * var(--u))}.res-rank .ui-pillrow{height:calc(42 * var(--u));padding:0 calc(20 * var(--u)) 0 calc(16 * var(--u))}
 .res-rank .rk{width:calc(14 * var(--u));font-weight:700;font-size:var(--ui-t-name)}.res-rank img{width:calc(30 * var(--u));height:calc(30 * var(--u));border-radius:50%;object-fit:cover;object-position:50% 25%;background:#000}

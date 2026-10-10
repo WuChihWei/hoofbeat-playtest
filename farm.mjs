@@ -3,9 +3,15 @@
 // real time (it grows while the game is closed: only the moment it was sown is kept); a ripe bed gives `yield` wheat, a
 // food that is not sold. One crop, two taps (sow, reap), nothing withers: staying away costs nothing.
 // Seeds and wheat are counted in the item bag (stable-care ITEMS `seed`, `wheat`); the beds live in hoofbeat.farm.v1.
-export const FARM=Object.freeze({beds:6,
+// The ranch grows with the buddies owned (2026-10-10, the user: 「簡單容易理解的機制」「同意做」): the ranch's level is how many
+// buddies there are; every buddy opens `each` beds (to `beds` at most), every `stalls` buddies a dormitory. Nothing else
+// unlocks anything. bedsFor / dormsFor / pensFor: what a ranch of n buddies has (pens: the layout's fenced fields,
+// [across, deep] each, four beds a pen and the odd two in a last one).
+export const FARM=Object.freeze({beds:12,each:2,stalls:6,
   grow:45e3,   // playtest build: 45 seconds, to feel the whole round in one go (2026-10-09, the user: 「快速版先不要等那麼久」; it was 20 minutes; meant: a few hours)
   yield:3,raceSeeds:1});   // raceSeeds: what a finished race brings home
+export const bedsFor=n=>Math.min(FARM.beds,Math.max(1,n)*FARM.each),dormsFor=n=>Math.max(1,Math.ceil(n/FARM.stalls));
+export const pensFor=beds=>[...Array(Math.floor(beds/4)).fill([2,2]),...(beds%4?[[2,1]]:[])];
 const KEY='hoofbeat.farm.v1';
 export const freshFarm=()=>({beds:Array(FARM.beds).fill(null)});   // a bed: null (empty) or {at: when it was sown, ms}
 export function readFarm(storage){
@@ -19,6 +25,7 @@ export const growth=(bed,now=Date.now())=>!bed?0:Math.min(1,Math.max(0,(now-bed.
 export const secondsLeft=(bed,now=Date.now())=>Math.max(1,Math.ceil((FARM.grow-(now-bed.at))/1000));
 // A tap on bed i → {farm, items, did: 'sow' | 'reap'}, or {fail, secs?} (nothing changes on a fail).
 export function tend(farm,items,i,now=Date.now()){
+  if(!(i>=0&&i<farm.beds.length))return {fail:'?'};
   const bed=farm.beds[i],s=stage(bed,now),beds=[...farm.beds],bag={...items};
   if(s===0){if(!(bag.seed>0))return {fail:'沒有種子：去商店買，或跑比賽拿'};bag.seed--;beds[i]={at:now};return {farm:{beds},items:bag,did:'sow'};}
   if(s===3){bag.wheat=(bag.wheat||0)+FARM.yield;beds[i]=null;return {farm:{beds},items:bag,did:'reap'};}

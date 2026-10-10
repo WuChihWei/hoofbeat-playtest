@@ -14,8 +14,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r412';
-import {applyLook,LOOK} from '../visual-style.js?v=r412';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r421';
+import {applyLook,LOOK} from '../visual-style.js?v=r421';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -49,15 +49,18 @@ export const RANCH={
   field:{rail:'#b8834c',post:'#8c5c34',frame:'#7a5030',soil:'#553620',shut:'#b7a184',
     fill:{green:['#4f8f32',.16,.36],ripe:['#bf8a17',.44,.44]},
     earth:{color:'#c8a071',light:'#d6b184',dark:'#b58c5d',round:1.1}},
-  meadow:{tufts:900,flowers:120,clumps:46},              // grass tufts and small flowers sown on the lawns, not on the blocks, the earth or the barn's walk
+  meadow:{tufts:1000,flowers:220,clumps:40},              // grass tufts and small flowers sown on the lawns, not on the blocks, the earth or the barn's walk
   far:420,                                    // m of grass round the strip, so no view shows where the ground ends
   // Props on the ground (2026-10-10, the user's reference: hay bales, barrels, logs, rocks about the yard): kind, x, y, turn.
   // plants: the trees' models in turn after the scene's round one; a prop of these kinds is that model, `tall` m high, on a patch [half width, half depth]
   plants:{trees:['Tree_A','Pine_A','Tree_B','Pine_B'],hedge:{mesh:'Hedge',tall:.9,patch:[1.5,.5]},cone:{mesh:'Cone',tall:1.5,patch:[.5,.5]},urn:{mesh:'Urn',tall:1.3,patch:[.4,.4]}},
   props:[['bales',12.6,-3.2,.2],['barrel',-11.6,1.6,0],['barrel',-12.4,.6,0],['logs',-11,-6.5,.5],['rocks',-9.5,-9,0],['rocks',22,-14,.6],['logs',21.5,-9.5,-.4],
     ['urn',-2.7,-.55,0],['urn',2.7,-.55,0],['hedge',-6.2,-.55,0],['hedge',6.2,-.55,0],['cone',-9.4,-.55,0],['cone',9.6,-.55,0]],   // the user's topiary set, along the barn's front
+  apart:2,stuck:1.5,stand:2.6,                // two buddies out are never nearer than `apart` m (centre to centre); one that has waited `stuck` s for the way to clear turns back; where one stands or is going, no other stops within `stand` m (a buddy is 2.5 m long: not on the next spot, the one across the corner is fine)
   grid:2.1,room:.9,                           // waypoints every `grid` m, `room` m clear of everything
-  lawn:{color:'#84bd4a',light:'#9ad05a',dark:'#72aa40',tile:28},   // the ground: a warm, full green, soft patches a few metres across
+  light:{sun:['#ffe2b8',2.1],rim:['#fff1dc',.5],env:.8},   // [colour, intensity]
+  edge:[.55,.5],                              // the worn ground fades into the grass: a rim this much wider (m), this opaque
+  lawn:{color:'#84bd4a',light:'#a2d660',dark:'#68a03a',tile:28},   // the ground: a warm, full green, soft patches a few metres across
 };
 // Where everything is, for these pens ([beds across, beds along] each, from the barn towards the gate) and `dorms`
 // dormitories (all in the scene's metres):
@@ -156,12 +159,17 @@ export function waypoints(trees=[],R=layout()){
   const ix=new Map();spots.forEach((p,i)=>{if(p.next.length)ix.set(i,ix.size);});
   return [...ix.keys()].map(old=>({x:spots[old].x,y:spots[old].y,next:spots[old].next.map(n=>ix.get(n))}));
 }
-export function route(spots,from,to){
+// shut: spots a route may not pass through (another buddy stands there).
+export function route(spots,from,to,shut){
   const back=new Map([[from,-1]]),queue=[from];
-  for(let k=0;k<queue.length&&!back.has(to);k++)for(const n of spots[queue[k]].next)if(!back.has(n)){back.set(n,queue[k]);queue.push(n);}
+  for(let k=0;k<queue.length&&!back.has(to);k++)for(const n of spots[queue[k]].next)if(!back.has(n)&&!shut?.has(n)){back.set(n,queue[k]);queue.push(n);}
   if(!back.has(to))return [];
   const path=[];for(let n=to;n!==from;n=back.get(n))path.unshift(n);return path;
 }
+// Buddies do not walk through each other: a step from [x, z] to [nx, nz] is not taken when it would bring the buddy
+// within `apart` of another one and nearer to it than it is now (walking away from a neighbour is always allowed, so
+// two that were dropped side by side can part).
+export const crowded=(x,z,nx,nz,others,apart=RANCH.apart)=>others.some(o=>{const d=Math.hypot(o.x-nx,o.z-nz);return d<apart&&d<Math.hypot(o.x-x,o.z-z);});
 
 // buddies: [{id, coat, hair, stall?, at?}]: everyone drawn. stall: the stall it is in (0…, six a dormitory), or none:
 // it is out, at `at` [x, y] if given, else on a free spot. doors: {stall: true | false}, the doors the player has set
@@ -184,6 +192,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   Object.assign(sun.shadow.camera,{left:-span,right:span,top:span,bottom:-span,near:1,far:120});scene.add(sun,sun.target);
   const rim=new THREE.DirectionalLight();rim.position.copy(at(10,midY+20)).setY(12);scene.add(rim);
   applyLook(r,scene,{sun,rim,shadowMap:LOOK.shadow.stableMap});
+  {const G=RANCH.light;sun.color.set(G.sun[0]);sun.intensity=G.sun[1];rim.color.set(G.rim[0]);rim.intensity=G.rim[1];scene.environmentIntensity=G.env;}   // a late-afternoon sun: warmer and stronger than the stable's, less sky light, so the shadows read
   const made=[],keep=o=>{made.push(o);return o;};assets.scene.updateMatrixWorld(true);
 
   // The model: the yard's things and the hay shed once; the barn once for every dormitory, each `dorm` m behind the last.
@@ -209,8 +218,9 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   // The ground: grass as far as the camera can see; the worn earth under the field and the track from its gate out
   // through the lawn, drawn like the lawn in earth colours, round-cornered.
   {const plane=new THREE.Mesh(keep(new THREE.PlaneGeometry(RANCH.far,RANCH.far).rotateX(-Math.PI/2)));plane.position.copy(at(0,midY)).setY(.04);textured(plane,assets.grass.clone(),RANCH.lawn.tile);keep(plane.material);keep(plane.material.map);scene.add(plane);
-    const R=F.earth.round;for(const [x0,y0,x1,y1] of L.earth){const sh=new THREE.Shape();sh.moveTo(x0+R,-y1);sh.lineTo(x1-R,-y1);sh.quadraticCurveTo(x1,-y1,x1,-y1+R);sh.lineTo(x1,-y0-R);sh.quadraticCurveTo(x1,-y0,x1-R,-y0);sh.lineTo(x0+R,-y0);sh.quadraticCurveTo(x0,-y0,x0,-y0-R);sh.lineTo(x0,-y1+R);sh.quadraticCurveTo(x0,-y1,x0+R,-y1);
-      const m=textured(new THREE.Mesh(keep(new THREE.ShapeGeometry(sh,5).rotateX(Math.PI/2))),lawn(F.earth),14);m.position.y=.05;m.material.side=THREE.DoubleSide;keep(m.material);keep(m.material.map);scene.add(m);}}
+    const R=F.earth.round,E=RANCH.edge[0],soil=keep(lawn(F.earth)),worn=([x0,y0,x1,y1],y,opacity)=>{const sh=new THREE.Shape();sh.moveTo(x0+R,-y1);sh.lineTo(x1-R,-y1);sh.quadraticCurveTo(x1,-y1,x1,-y1+R);sh.lineTo(x1,-y0-R);sh.quadraticCurveTo(x1,-y0,x1-R,-y0);sh.lineTo(x0+R,-y0);sh.quadraticCurveTo(x0,-y0,x0,-y0-R);sh.lineTo(x0,-y1+R);sh.quadraticCurveTo(x0,-y1,x0+R,-y1);
+      const m=textured(new THREE.Mesh(keep(new THREE.ShapeGeometry(sh,5).rotateX(Math.PI/2))),soil.clone(),14);m.position.y=y;m.material.side=THREE.DoubleSide;if(opacity<1){m.material.transparent=true;m.material.opacity=opacity;m.material.depthWrite=false;}keep(m.material);keep(m.material.map);m.receiveShadow=true;scene.add(m);};
+    for(const e of L.earth)worn([e[0]-E,e[1]-E,e[2]+E,e[3]+E],.045,RANCH.edge[1]);for(const e of L.earth)worn(e,.05,1);}   // a paler rim first, the path on it: the edge is two soft steps, not a cut line
   // The props: plain shapes coloured on their vertices, one mesh.
   {const parts=[],c=new THREE.Color(),m4=new THREE.Matrix4(),add=(g,x,y,z,col,turn=0,sx=1,sy=1,sz=1)=>{g=g.toNonIndexed();g.deleteAttribute('uv');c.set(col);const n=g.attributes.position.count,a=new Float32Array(n*3);for(let i=0;i<n;i++)a.set([c.r,c.g,c.b],i*3);g.setAttribute('color',new THREE.BufferAttribute(a,3));
       g.applyMatrix4(m4.compose(at(x,y).setY(z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),turn),new THREE.Vector3(sx,sy,sz)));parts.push(g);};
@@ -243,7 +253,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
       mesh.frustumCulled=false;scene.add(mesh);};
     const blades=new THREE.BufferGeometry();blades.setAttribute('position',new THREE.Float32BufferAttribute([-.09,0,0,.0,0,.03,-.13,.42,.02, .02,0,-.03,.11,0,0,.07,.5,-.03, -.03,0,.06,.05,0,.08,.16,.36,.1],3));
     sow(blades,Math.round(RANCH.meadow.tufts*(L.back-L.lawn[1])/42*1.3),['#72aa40','#84bd4a','#a3d660','#b6e26e'],[.55,1.1]);
-    {const clump=assets.plants.getObjectByName('Grass')?.geometry;if(clump)sow(clump,Math.round(RANCH.meadow.clumps*(L.back-L.lawn[1])/42),null,[.45,.85],SOLID);}   // the user's grass model, a few big clumps among the tufts
+    {const clump=assets.plants.getObjectByName('Grass')?.geometry;if(clump)sow(clump,Math.round(RANCH.meadow.clumps*(L.back-L.lawn[1])/42),null,[.7,1.2],SOLID);}   // the user's grass model, a few big clumps among the tufts
     sow(new THREE.CircleGeometry(.075,6).rotateX(-Math.PI/2.6).translate(0,.2,0),Math.round(RANCH.meadow.flowers*(L.back-L.lawn[1])/42*1.3),['#ffffff','#f6e27a','#c9b6f2','#ffffff'],[.8,1.4]);}
   // The wheat: every stalk of every bed that can be used has its place (a little off its row, turned its own way); a
   // stage's mesh is drawn once, with the stalks of the beds at that stage; under them a block, so a bed reads as one
@@ -264,7 +274,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   const spots=waypoints(trees,L),spot=new THREE.Mesh(keep(new THREE.CircleGeometry(.62,20)),keep(new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.2,depthWrite:false})));
   const dress=b=>{const model=createApprovedHorse(0,b.coat,false,b.hair,true,true);model.seat.visible=false;
     model.root.scale.setScalar(RANCH.size);model.root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});return model;};
-  const free=(want=()=>true)=>{const taken=new Set(herd.filter(b=>b.stall==null).flatMap(b=>[b.on,b.path.at(-1)]));const ok=spots.map((_,i)=>i).filter(i=>!taken.has(i)&&spots[i].next.length&&want(spots[i]));return ok[Math.floor(Math.random()*ok.length)];};
+  const free=(want=()=>true,me)=>{const taken=herd.filter(b=>b.stall==null&&b!==me).flatMap(b=>[b.on,b.path.at(-1)]).filter(i=>i!=null).map(i=>spots[i]);const ok=spots.map((_,i)=>i).filter(i=>taken.every(t=>Math.hypot(t.x-spots[i].x,t.y-spots[i].y)>=RANCH.stand)&&spots[i].next.length&&want(spots[i]));return ok[Math.floor(Math.random()*ok.length)];};
   const nearest=(x,y)=>spots.reduce((best,s,i)=>Math.hypot(s.x-x,s.y-y)<Math.hypot(spots[best].x-x,spots[best].y-y)?i:best,0);
   // Everyone: in its stall (looking out over its door, standing) or out (on a spot, a round shadow under it).
   const herd=[],inStall=b=>{const [cx,d]=stallAt(b.stall);b.pos.copy(at(cx,D.stand+d));b.yaw=Math.PI;b.path=[];b.go=0;b.under.visible=false;};
@@ -282,12 +292,15 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   hung.forEach((_,k)=>swing(k));
   function stroll(b,dt){
     if(b.stall!=null||b===held){b.step.setEffectiveWeight(0);b.idle.setEffectiveWeight(1);b.model.mixer.update(dt);b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);return;}
-    if(!b.path.length){b.wait-=dt;if(b.wait<=0){const here=spots[b.on],to=free(s=>Math.hypot(s.x-here.x,s.y-here.y)<RANCH.hop);if(to!=null)b.path=route(spots,b.on,to);b.wait=RANCH.rest[0]+Math.random()*(RANCH.rest[1]-RANCH.rest[0]);}}
+    if(!b.path.length){b.wait-=dt;if(b.wait<=0){const here=spots[b.on],to=free(s=>s!==here&&Math.hypot(s.x-here.x,s.y-here.y)<RANCH.hop,b);if(to!=null)b.path=route(spots,b.on,to,new Set(herd.filter(o=>o!==b&&o.stall==null).map(o=>o.on)));b.wait=RANCH.rest[0]+Math.random()*(RANCH.rest[1]-RANCH.rest[0]);}}
     let moving=0;
     if(b.path.length){const s=spots[b.path[0]],dx=s.x-b.pos.x,dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces -z at yaw 0
       const off=Math.atan2(Math.sin(want-b.yaw),Math.cos(want-b.yaw));b.yaw+=Math.sign(off)*Math.min(Math.abs(off),RANCH.turn*dt);
       moving=Math.max(0,Math.cos(off));const stepLen=Math.min(d,RANCH.walk*moving*dt);   // it turns on the spot first, then walks
-      if(d>.05){b.pos.x+=dx/d*stepLen;b.pos.z+=dz/d*stepLen;}else{b.on=b.path.shift();}}
+      if(d<=.05)b.on=b.path.shift();
+      else if(crowded(b.pos.x,b.pos.z,b.pos.x+dx/d*stepLen,b.pos.z+dz/d*stepLen,herd.filter(o=>o!==b&&o.stall==null&&o!==held).map(o=>o.pos))){   // someone in the way: it waits, then turns back to the spot it left
+        moving=0;b.held=(b.held||0)+dt;if(b.held>RANCH.stuck){b.held=0;b.path=b.path[0]===b.on?[]:[b.on];b.wait=RANCH.rest[0]*Math.random();}}
+      else{b.held=0;b.pos.x+=dx/d*stepLen;b.pos.z+=dz/d*stepLen;}}
     b.go+=((moving>.3?1:0)-b.go)*Math.min(1,dt*6);b.step.setEffectiveWeight(b.go);b.idle.setEffectiveWeight(1-b.go);b.model.mixer.update(dt);
     b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);
   }
@@ -327,7 +340,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
     if(held){const b=held;
       const x=b.pos.x,y=-b.pos.z,k=stallUnder(x,y);
       if(k>=0){if(herd.some(o=>o!==b&&o.stall===k))return back();held=null;b.stall=k;delete set[k];inStall(b);if(was.stall!=null)delete set[was.stall];hung.forEach((_,i)=>swing(i));onMove?.(b.id,{stall:k});return;}
-      if(blocked(x,y))return back();
+      if(blocked(x,y)||herd.some(o=>o!==b&&o.stall==null&&Math.hypot(o.pos.x-x,o.pos.z+y)<RANCH.apart))return back();   // not on a pen, a building, a tree, or another buddy
       held=null;b.pos.y=0;b.on=nearest(x,y);b.wait=RANCH.rest[0]+Math.random()*RANCH.rest[1];if(was.stall!=null)delete set[was.stall];hung.forEach((_,i)=>swing(i));onMove?.(b.id,{at:[+x.toFixed(2),+y.toFixed(2)]});return;}
     if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.5){onSwipe?.(dx<0?1:-1);return;}
     if(moved>=10)return;

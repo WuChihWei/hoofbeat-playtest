@@ -7,14 +7,14 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL} from './playable/slice-config.mjs?v=r412';
+import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r421';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
   {id:'wheat',name:'小麥',kind:'food',food:30},{id:'seed',name:'小麥種子',kind:'seed',price:10},
   // treats: a little filling, a little xp
-  {id:'carrot',name:'紅蘿蔔',kind:'food',food:10,xp:2,price:15},{id:'apple',name:'蘋果',kind:'food',food:10,xp:3,price:20},
-  {id:'cookie',name:'夥伴餅乾',kind:'food',food:15,xp:5,price:35},
+  ...[{id:'carrot',name:'紅蘿蔔',kind:'food',food:10,xp:2,price:15},{id:'apple',name:'蘋果',kind:'food',food:10,xp:3,price:20},
+  {id:'cookie',name:'夥伴餅乾',kind:'food',food:15,xp:5,price:35}].map(i=>MVP.treats?i:{...i,kind:'hidden',hidden:true}),   // MVP: wheat is the food
   // tools (not sold)
   {id:'brush',name:'刷子',kind:'tool'},
   // hidden for the MVP (kept so a save's counts survive)
@@ -41,7 +41,7 @@ export function readItems(storage){
 export function saveCare(storage,care,items){
   try{storage.setItem('hoofbeat.care.v2',JSON.stringify(care));storage.setItem('hoofbeat.items.v1',JSON.stringify(items));return true}catch{return false}
 }
-export const XP_LEVEL=40,level=r=>Math.min(MAX_LEVEL,1+Math.floor(r.xp/XP_LEVEL));   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
+export const XP_LEVEL=40,level=r=>MVP.levels?Math.min(MAX_LEVEL,1+Math.floor(r.xp/XP_LEVEL)):MAX_LEVEL;   // MVP: every buddy at full strength (xp still counts, unseen)   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
 export const recover=r=>r;   // nothing comes back by itself any more (it was the stamina's rest); kept for its callers
 // Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: the rhythm still decides).
 // base: the race config with this buddy's numbers at its level (slice-config racing()).
