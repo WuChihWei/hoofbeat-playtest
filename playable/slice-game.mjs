@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r421';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r426';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -136,6 +136,34 @@ export class SliceGame {
     this.targetLane=next;this.laneChanges.push(change);
     return this.emit('lane',{side,to:next});
   }
+  // A rival's ram (2026-10-10, the user: 「對手撞你」「不要有明顯的符號提示，要有明顯的身體提示」「一個完整的撞可能三秒，在一點五秒的時候
+  // 可以反應」「不用閃，因為換道就可以躲」「但要有給反應時間」). config.ram {time, react, gap} (simulation s) switches it on.
+  // A rival running beside the player comes over at it: `time` from its first lean to the hit, its body telling the
+  // whole way (race-scene: it rolls toward the player and drifts over; it is across its lane line at `react`, so
+  // `time - react` is left to get out of the way). The way out is the game's own: change lane. Nothing new to press.
+  //   still beside it at the hit   the player stumbles, loses its sprint and its built-up drive, and is put a lane
+  //                                over when there is room
+  //   a lane away by then          it hits nothing: once it is across its line (`react`) it is committed and stumbles
+  //                                itself; before that it only calls the ram off
+  //   also out of it               a sprint (it cannot hold on beside a sprinting buddy), or knocking it first (the skill)
+  // It only starts one when the player has a free lane on the far side to go to.
+  rammer(){return this.rivals.find(r=>r.ram)??null;}
+  ramStep(r){const c=this.config,R=c.ram;
+    if(!R||this.finished)return;
+    const reach=c.followGap*(r.ram?1.6:1.3),beside=!r.stall&&r.finishTime===null&&Math.abs(r.distance-this.distance)<reach,apart=Math.abs(r.targetLane-this.targetLane);   // it picks the player up a little way off and closes (rivalStep holds it beside)
+    if(!r.ram){const out=this.targetLane+Math.sign(this.targetLane-r.targetLane);   // the lane the player would get away into
+      if(this.time<(this.ramNext??R.first)||this.rammer()||!beside||apart!==1||r.targetLane%1||Math.abs(r.laneValue-r.targetLane)>1e-6||Math.abs(this.laneValue-this.targetLane)>1e-6
+        ||Math.abs(out)>1||this.occupied(this,out)||this.stumbleFactor(this.time,r)<1||this.stumbleFactor()<1||this.boostActive()||this.blown>this.time||this.jumps.length&&this.time-this.jumps.at(-1).t<c.jumpDuration)return;
+      r.ram={t:this.time,side:r.targetLane>this.targetLane?1:0};this.emit('ram-start',{id:r.id,side:r.ram.side});return;}
+    const u=this.time-r.ram.t,side=r.ram.side,end=(why,data)=>{r.ram=null;this.ramNext=this.time+R.gap*(.7+.6*hash(this.time,r.phase+3));this.emit(why,{id:r.id,side,...data});};
+    if(this.stumbleFactor(this.time,r)<1)return end('ram-broken');   // knocked first
+    const there=beside&&apart===1&&!this.boostActive();
+    if(!there&&u<R.react)return end('ram-off');                       // not committed yet: it lets it go
+    if(u<R.time)return;
+    if(!there){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;return end('ram-miss');}   // it threw itself at nothing
+    this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:this.time});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;
+    const to=this.targetLane+(side?-1:1);let pushed=false;if(Math.abs(to)<=1&&!this.occupied(this,to)){this.laneChanges.push({from:this.laneAt(this.time),to,t:this.time});this.targetLane=to;pushed=true;}
+    end('rammed',{pushed});}
   // Traffic, the same for every runner. Lane `to` is taken near `self` if another runner is in it (within laneOverlap)
   // or heading into it, closer than a horse length plus what the two could close up during a lane change.
   runners(){return [this,...this.rivals];}
@@ -161,6 +189,7 @@ export class SliceGame {
   // its line. A blocker (r.block) up to 25 m ahead of the player moves onto the lane the player was in blockReaction
   // ago (it sees where the player is, not what was pressed) once there is room: it holds position.
   rivalLanes(r){
+    if(r.ram)return;   // coming over at the player: ramStep moves it
     if(this.time<(r.think??0)||Math.abs(r.laneValue-r.targetLane)>1e-6)return;r.think=this.time+.4;
     const c=this.config,go=to=>{r.laneChanges.push({from:r.laneValue,to,t:this.time});r.targetLane=to;};
     if(r.targetLane%1){if(r.distance>=c.breakOut){const to=[...new Set([Math.floor(r.targetLane),Math.ceil(r.targetLane)].map(l=>Math.max(-1,Math.min(1,l))))].sort((a,b)=>Math.abs(a-r.targetLane)-Math.abs(b-r.targetLane)).find(l=>!this.occupied(r,l));if(to!==undefined){go(to);r.lane=to;}}return;}   // out of the stalls: into the lane beside it
@@ -326,6 +355,7 @@ export class SliceGame {
     if(solo)r.driveSpeed+=(r.drive-r.driveSpeed)*(1-Math.exp(-(r.drive<r.driveSpeed?this.solo.fall:this.solo.response)*dt));
     const own=solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed;
     r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r));
+    if(r.ram)r.speed=Math.max(4,this.speed+clamp((this.distance-r.distance)*1.5,-3,3));   // a ram: it holds on beside the player
     if(r.targetLane%1&&r.distance>3*c.breakOut)r.speed*=.75;   // still between two lanes with no room beside it: it eases off and drops in behind
     r.laneValue=laneAt(r.laneChanges,this.time,c.laneDuration)??r.laneValue;
     if(r.stall&&r.laneValue%1===0)r.stall=false;   // in its lane: the full traffic rule from here
@@ -377,7 +407,7 @@ export class SliceGame {
       this.drafting=this.drafts(this);this.rest(this,dt);
       if(this.drafting&&!this.boostActive()){const had=this.segments();this.energy=Math.min(this.cap(),this.energy+c.draftTrickle*dt);if(this.segments()>had)this.emit('charged',{segments:this.segments()});}   // a segment filled by drafting counts like one filled by a hit
       this.speed=this.leapPace(this,Math.max(4,own+c.boostSpeed*this.boostStrength(mid)+(c.appleSpeed||0)*this.appleStrength(mid))*this.affinity*this.stumbleFactor(mid));
-      for(const r of this.rivals){this.rivalLanes(r);this.rivalStep(r,dt,mid);}
+      for(const r of this.rivals){this.rivalLanes(r);this.rivalStep(r,dt,mid);this.ramStep(r);}
       const back=this.rivals.map(r=>r.distance),wasBlocked=this.blockedBy;this.move(dt);
       if(this.blockedBy&&!wasBlocked)this.emit('blocked',{by:this.blockedBy.id});
       for(const [i,r] of this.rivals.entries()){const b=back[i];
@@ -418,7 +448,7 @@ export class SliceGame {
   metrics(){
     const L=this.config.length;
     // Rivals keep running past the line (no snap back beside the player); unfinished ones are projected.
-    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,
+    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
       boosting:strength(r.boosts,this.time,this.config)>0,finishTime:r.finishTime??this.time+Math.max(0,L-r.distance)/Math.max(r.speed,1)}));
     const rank=1+rivals.filter(r=>this.finished?r.finishTime<this.finishTime:r.distance>this.distance+1e-9||(Math.abs(r.distance-this.distance)<=1e-9&&r.speed>this.speed)).length;
     return {player:{distance:this.distance,speed:this.speed,finishTime:this.finishTime,lane:this.laneValue},rivals,rank};

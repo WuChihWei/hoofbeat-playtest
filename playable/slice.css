@@ -631,10 +631,24 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .is-ball #ball-ring{width:var(--ctl-ring);bottom:3%;background:var(--ctl-bg)}
 .is-ball #slice-charge{left:71%!important;top:74%!important;width:var(--ctl-btn)!important;background:var(--ctl-bg);border:calc(2 * var(--u)) solid var(--ctl-edge);box-shadow:none}
 .lefty.is-ball #slice-charge{left:29%!important}
-.is-ball .charge-btn.ready{background:var(--ui-yellow);color:#000;border-color:#fff}
+/* a sprint is there to use: the button is yellow and glows (2026-10-10, the user: 「現在能衝刺的按鈕看不清楚」; the rule above set its
+   background by id, so `ready` never showed: it stayed dark with only a thin arc lit) */
+.is-ball #slice-charge.ready{background:var(--ui-yellow);color:#000;border-color:#fff;box-shadow:0 0 calc(20 * var(--u)) var(--ui-yellow);animation:charge-ready .7s ease-in-out infinite alternate}
+.is-ball #slice-charge.ready.tired{background:var(--ctl-bg);color:#fff;border-color:var(--ctl-edge);box-shadow:none;animation:none}   /* a segment stored, no stamina for it yet: not pressable, not yellow */
+.is-ball #slice-charge.sprinting{background:#fff;color:#000;box-shadow:0 0 calc(18 * var(--u)) #fff;animation:none}
+@keyframes charge-ready{from{scale:1}to{scale:1.12}}
+@media(prefers-reduced-motion:reduce){.is-ball #slice-charge.ready{animation:none}}
 .is-ball #slice-skill{width:var(--ctl-btn);right:4%;bottom:9%;background:var(--ctl-bg);border-color:var(--ctl-edge)}
 .is-ball #slice-skill.on{background:var(--ui-yellow);border-color:#fff}
 #slice-skill:active{scale:.9}
+/* How many bumps are stored, as plain as the sprint's (2026-10-10, the user: the three dots over the button could not be
+   read): the same black count badge on the button's corner; the dots bigger, the ones held yellow and glowing, the
+   empty ones dark; with none stored the whole button is dim, with some it is lit (white rim), in reach of someone yellow. */
+#slice-skill em.charge-count{position:absolute;left:-5%;top:-5%;right:auto;bottom:auto;display:grid;place-items:center;width:38%;height:38%;border-radius:50%;background:#000;color:#fff;font:800 3.6cqw/1 var(--ui-font);font-style:normal}
+#slice-skill i{width:22%;bottom:112%;border-color:rgb(255 255 255 / .55);background:rgb(0 0 0 / .6)}
+#slice-skill i:nth-child(1){left:8%}#slice-skill i:nth-child(2){left:39%}#slice-skill i:nth-child(3){left:70%}
+#slice-skill[data-n="1"] i:nth-child(1),#slice-skill[data-n="2"] i:nth-child(-n+2),#slice-skill[data-n="3"] i{background:var(--ui-yellow);border-color:#fff;box-shadow:0 0 calc(8 * var(--u)) var(--ui-yellow)}
+.is-ball #slice-skill[data-n="0"]{opacity:.5}.is-ball #slice-skill:not([data-n="0"]):not(.on){border-color:#fff}.is-ball #slice-skill:not([data-n="0"]):not(.on) b{background:#fff}
 /* A sprint is seen as long as it lasts: the edge of the picture glows lime and pulses (.is-rush on the shell; the
    flash's own element, which a hit still flashes over). Streaks round the edge were tried first (a conic gradient
    under a radial mask): they did not draw in the app's WebView. */

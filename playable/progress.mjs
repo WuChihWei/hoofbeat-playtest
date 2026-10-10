@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r421';
+import {MVP} from './slice-config.mjs?v=r426';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -34,9 +34,9 @@ import {MVP} from './slice-config.mjs?v=r421';
 export const LEVELS=Object.freeze([
   {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},lesson:[0,1],silver:26.5,gold:23},
   {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},lesson:[1,3],silver:27.5,gold:24.5},
-  {city:'paris',rivals:2,tempo:1.75,locks:{},lesson:[3,5],silver:47,gold:41},
-  {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:45,gold:38.5},
-  {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:45,gold:38.5},
+  {city:'paris',rivals:2,tempo:1.75,locks:{},lesson:[3,5],silver:47,gold:41,ram:[3,1.5,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two], real seconds
+  {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:45,gold:38.5,ram:[3,1.5,11]},
+  {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:45,gold:38.5,ram:[3,1.5,9]},
 ]);
 export const RELAY_BUDDIES=3;   // the relay (a three-buddy team race) opens once the player has three buddies (2026-10-05: it was 3 stars, when every player started with three)
 export const STAR_REWARD={coins:50,gems:1};   // each star, the first time it is earned

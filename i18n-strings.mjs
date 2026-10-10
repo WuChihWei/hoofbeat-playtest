@@ -61,6 +61,8 @@ export const STRINGS=[
   {zh:"載入牧場…",en:"Loading the ranch…"},
   {zh:"拖夥伴到想放的地方",en:"Drag a buddy where you like"},
   {zh:"牧場 Lv {0}",en:"Ranch Lv {0}",p:1},
+  {zh:"被撞了！",en:"Rammed!"},
+  {zh:"躲開了！",en:"Dodged!"},
   {zh:"過關獎勵 +{0}",en:"Stage bonus +{0}",p:1},
   {zh:"用金幣解鎖",en:"Unlock with coins"},
   {zh:"{0} 金幣",en:"{0} coins",p:1},
