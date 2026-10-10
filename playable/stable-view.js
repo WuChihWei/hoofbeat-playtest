@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r426';
-import {applyLook,LOOK} from '../visual-style.js?v=r426';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r430';
+import {applyLook,LOOK} from '../visual-style.js?v=r430';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -36,7 +36,7 @@ const POSE={idle:{NeckLower:.12,NeckUpper:.07,Head:.04,turn:0},
 // it stands (x). The llama bows like the horse, but its neck starts low on its chest and carries its head a long way
 // forward: it stands back, or its forehead is in her helmet. The rhino's head hangs below her hands: it lifts its chin to them
 // (negative angles; its short neck takes that, the horse's does not).
-const BUDDY={cow:{x:.3,wide:.25,bow:{NeckLower:-.15,NeckUpper:-.1,Head:-.05,turn:0},feed:{NeckLower:.35,NeckUpper:.2,Head:.05,turn:0}},bear:{x:.4,wide:.35,bow:{NeckLower:-.25,NeckUpper:-.1,Head:-.1,turn:0},feed:{NeckLower:.1,NeckUpper:.08,Head:.1,turn:0}},zebra:{x:.1,wide:.05},llama:{x:.25,wide:.2,feed:{NeckLower:.95,NeckUpper:.5,Head:-.15,turn:0}},rhino:{x:.45,wide:.3,bow:{NeckLower:-.3,NeckUpper:-.15,Head:-.1,turn:0},feed:{NeckLower:.12,NeckUpper:.1,Head:.12,turn:0}}};   // wide: how much further out than the horse's its flank is (the brush)
+const BUDDY={cow:{x:.3,wide:.25,bow:{NeckLower:-.15,NeckUpper:-.1,Head:-.05,turn:0},feed:{NeckLower:.35,NeckUpper:.2,Head:.05,turn:0}},bear:{x:.4,wide:.35,bow:{NeckLower:-.25,NeckUpper:-.1,Head:-.1,turn:0},feed:{NeckLower:.1,NeckUpper:.08,Head:.1,turn:0}},zebra:{x:.1,wide:.05},llama:{x:.25,wide:.2,feed:{NeckLower:.95,NeckUpper:.5,Head:-.15,turn:0}},rhino:{x:.45,wide:.3,bow:{NeckLower:-.3,NeckUpper:-.15,Head:-.1,turn:0},feed:{NeckLower:.12,NeckUpper:.1,Head:.12,turn:0}},wolf:{x:.3,wide:.2,bow:{NeckLower:-.2,NeckUpper:-.1,Head:-.05,turn:0},feed:{NeckLower:.2,NeckUpper:.1,Head:.1,turn:0}}};   // wide: how much further out than the horse's its flank is (the brush)
 const NECK=['NeckLower','NeckUpper','Head'],TURN={NeckLower:-.6,NeckUpper:-.4};   // turn sign: -Z bends toward the rider
 const BRUSH={scale:.8,strap:.3,bone:'Chest',at:[-.15,.1,.62],stroke:.3,dir:[0,-.35,-1]};   // 2026-10-05 (the user: nobody holds it now, it just brushes the body a few times): at: from the Spine bone to the flank the camera sees; stroke: how far along the body each way; dir: where the bristles point   // Scrub_Brush.glb: strap at +Y .3, bristles down; face: aim 55% muzzle → poll;
 // settle: s into Comb (the crossfade from Pickup) after which the brush stays fixed in the hand

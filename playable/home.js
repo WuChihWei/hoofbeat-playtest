@@ -5,26 +5,26 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r426';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r426';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r426';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r430';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r430';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r430';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
 const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
 setTimeout(()=>{barn.src='assets/stable/barn-plate.webp';preloadRanch(owned().slice(0,14).map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
-import {lang,setLang,translate} from '../i18n.js?v=r426';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,soloForm as careForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r426';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains,MVP} from './slice-config.mjs?v=r426';
-import {mountStableView,preloadStable} from './stable-view.js?v=r426';
-import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r426';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r426';
-import {cityPictures} from '../approved-environment.js?v=r426';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r426';
+import {lang,setLang,translate} from '../i18n.js?v=r430';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,soloForm as careForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r430';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains,MVP} from './slice-config.mjs?v=r430';
+import {mountStableView,preloadStable} from './stable-view.js?v=r430';
+import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r430';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r430';
+import {cityPictures} from '../approved-environment.js?v=r430';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r430';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r426';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r426';
-import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r426';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r430';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r430';
+import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r430';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -80,6 +80,7 @@ const ROSTER=[
   {id:12,name:'Bruno',type:'mud',coat:12,stats:{Speed:.6,Stamina:.9,Handling:.72,Accel:.5}},   // the bear
   {id:13,name:'Zigzag',type:'straight',coat:13,stats:{Speed:.8,Stamina:.7,Handling:.68,Accel:.7}},   // the zebra
   {id:14,name:'Daisy',type:'mud',coat:14,stats:{Speed:.58,Stamina:.92,Handling:.7,Accel:.45}},   // the cow
+  {id:15,name:'Frost',type:'curve',coat:15,stats:{Speed:.74,Stamina:.86,Handling:.8,Accel:.72}},   // the wolf
 ];
 const DIFF=['','入門','進階','挑戰'];
 const defaults={name:'Rider',horse:1,city:'taipei',gear:{},order:[1,0,2]};   // new players start on the ★1 course   // order: relay legs 1–3 (horse ids)   // gear: {material: colour} from GEAR (approved-assets)
@@ -423,6 +424,7 @@ const PAGES={
     const bank=r=>{const all=readSolo(),best=all[key]||0,newBest=!best||r.finishTime<best,seconds=r.finishTime/tempoOf(c.id);
       if(newBest){all[key]=+r.finishTime.toFixed(3);store.set(SOLO_BEST,JSON.stringify(all));if(r.trace)store.set(GHOST+key,JSON.stringify(r.trace));}
       const f=finish(prog,{city:c.id,solo:true,result:{...r,seconds},today:today()});prog=f.p;saveProg();addCoins(r.coins+f.coins);addGems(f.gems);
+      const bestCombo=+store.get(BEST)||0;store.set(BEST,String(Math.max(bestCombo,r.bestCombo||0)));   // the settings page's 「最高連擊」 (2026-10-10: only the relay wrote it)
       const a=afterSolo(care[h.id],{stars:f.runStars,perfect:r.perfect});care[h.id]=a.care;bag={...bag,seed:(bag.seed||0)+FARM.raceSeeds};saveCare({setItem:store.set},care,bag);
       // The hot streak: runs in a row that got somewhere (a new best or a new star); each one pays a little more, up to five.
       const hot=MVP.daily&&(newBest||f.newStars)?Math.min(5,(+store.get(HOT)||0)+1):0;store.set(HOT,String(hot));const hotCoins=hot>1?hot*10:0;if(hotCoins)addCoins(hotCoins);
@@ -715,7 +717,8 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r426',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r430',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r430');   // a frame counter in the corner (fps.js)
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

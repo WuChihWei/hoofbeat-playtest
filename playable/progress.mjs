@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r426';
+import {MVP} from './slice-config.mjs?v=r430';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -51,7 +51,7 @@ export const STAR_REWARD={coins:50,gems:1};   // each star, the first time it is
 export const STARTERS=Object.freeze([1]);
 // MVP (slice-config MVP.gems off): every buddy has a coin price, the diamond one waits (a race pays 20–40 coins).
 export const HORSE_PRICE=Object.freeze({0:{coins:300,gems:2,stage:1},2:{coins:600,gems:3,stage:3},5:{coins:400,gems:2,stars:5},6:{coins:1000,gems:3},7:{coins:800,gems:4,stars:9},4:{coins:1200,gems:5},
-  3:{coins:1400,gems:7,stars:12},8:{coins:1800,gems:9},9:{coins:2400,gems:12,stars:15},10:{coins:1600,gems:12,stage:5},11:{coins:2000,gems:10},12:{coins:2200,gems:8},13:{coins:2600,gems:10},14:{coins:2000,gems:8}});
+  3:{coins:1400,gems:7,stars:12},8:{coins:1800,gems:9},9:{coins:2400,gems:12,stars:15},10:{coins:1600,gems:12,stage:5},11:{coins:2000,gems:10},12:{coins:2200,gems:8},13:{coins:2600,gems:10},14:{coins:2000,gems:8},15:{coins:2400,gems:9}});
 export const PERK_COINS=100;   // MVP.perks off: a stage that gave a perk pays this instead
 export const PERKS=Object.freeze({mane:{stage:2,id:'long'},rider:{stage:4}});
 

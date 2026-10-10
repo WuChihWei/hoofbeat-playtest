@@ -8,7 +8,7 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-77';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-79';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
@@ -59,6 +59,7 @@ export const COATS=Object.freeze([
   {name:'Bear',species:'bear',model:'animal_part/bear/HOOFBEAT_Bear_Mobile.glb'},
   {name:'Zebra',species:'zebra',model:'animal_part/zebra/HOOFBEAT_Zebra_Mobile.glb'},   // modelled plain: its stripes, the bear's muzzle and the cow's patches are drawn (MARKS)
   {name:'Cow',species:'cow',model:'animal_part/cow/HOOFBEAT_Cow_Mobile.glb'},
+  {name:'Wolf',species:'wolf',model:'animal_part/wolf/HOOFBEAT_Wolf_Mobile.glb'},
 ]);
 // Their models load only for a player who rides or looks at one (0.9 MB each; rivals are horses, so the _Far files stay unused).
 export const preloadBuddies=coats=>preloadModels(coats.map(c=>COATS[c]?.model).filter(Boolean));
@@ -90,6 +91,7 @@ const EYES={
   rhino:{lidColor:'#a09089',open:.95,shut:-.62,curve:.25,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.86,.58],aim:[.72,-.18],turn:.1,white:1}},
   bear:{lidColor:'#a5633f',open:.65,low:-.55,shut:-.62,curve:.3,lash:.2,iris:{color:['#3a2216','#1a0f0a'],size:[1,.5],aim:[.9,-.1],turn:.1}},   // the sheet: a dark bead, no white
   cow:{lidColor:'#f3eee6',open:.95,shut:-.62,curve:.35,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.95,.52],aim:[.75,-.12],turn:.1}},
+  wolf:{lidColor:'#efe7dc',open:.75,low:-.6,shut:-.62,curve:.3,lash:.4,iris:{color:['#1d1512','#0b0807'],size:[.95,.5],aim:[.9,-.1],turn:.1}},   // the sheet: big dark oval eyes, almost no white (aim 1.2 looked cross-eyed: white on the outer side)
   zebra:{lidColor:'#ece3d4',open:.95,shut:-.62,curve:.4,lash:.9,iris:{color:['#2a1a12','#140c08'],size:[.95,.55],aim:[.6,-.15],turn:.1}}};   // white: its lids are folds with gaps between them
 // Coat markings from rest-pose position/normal, so they stay painted on while the skin deforms (concept sheet):
 // dark hooves, soft muzzle and the coat's markings above. Soft-toy shading like the sheet: coat lighter along the back,
@@ -169,7 +171,8 @@ function maneTail(m,c){
 // Markings of the other animals, from rest position (model units: y up, z toward the nose), so they stay painted on
 // while the skin deforms; drawn before <color_fragment> so the baked AO darkens them too. MARKS: material → [cache key,
 // GLSL that sets diffuseColor.rgb from p]; colours linear. The portraits paint the same (animal_portrait.py).
-const NOISE=`float hM(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+const NOISE=`float segM(vec3 p,vec3 a,vec3 b){vec3 d=b-a;return length(p-a-d*clamp(dot(p-a,d)/dot(d,d),0.,1.));}
+float hM(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
   float nM(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hM(i),hM(i+vec3(1,0,0)),f.x),mix(hM(i+vec3(0,1,0)),hM(i+vec3(1,1,0)),f.x),f.y),mix(mix(hM(i+vec3(0,0,1)),hM(i+vec3(1,0,1)),f.x),mix(hM(i+vec3(0,1,1)),hM(i+vec3(1,1,1)),f.x),f.y),f.z);}
   float cM(float v){return smoothstep(-1.,1.,v/max(fwidth(v)*1.5,1e-4));}`;
 function markings(m,[key,glsl]){m.onBeforeCompile=sh=>{
@@ -191,6 +194,19 @@ const MARKS={
     float u=(1.-smoothstep(.8,.95,p.y))*smoothstep(-.9,-.75,p.z)*(1.-smoothstep(-.35,-.2,p.z))*(1.-smoothstep(.25,.35,abs(p.x)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.82,.47,.41),u);
     float nose=smoothstep(1.48,1.56,p.z)*(1.-smoothstep(1.45,1.55,p.y));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.79,.40,.33),nose);
     float nos=1.-smoothstep(.04,.055,length(vec2(abs(p.x)-.09,(p.y-1.42)*1.6))),mouth=(1.-smoothstep(.01,.02,abs(p.y-1.3+.1*abs(p.x))))*(1.-smoothstep(.18,.22,abs(p.x)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.10,.08),nose*max(nos,mouth));`],
+  // the wolf's sheet (a husky): grey over the back, the upper neck, the head above the brows and the cheeks behind the eyes, the top of the tail; cream everywhere else
+  // (game units: eyes at (±.15,1.48,1.10), nose z 1.27–1.32 y 1.15–1.21, ear tips y 2.05, tail root z -.72). The grey comes down between the
+  // eyes in a V, the cheeks are grey behind the eyes' outer corners, and two cream spots sit over the eyes (the husky's brows)
+  Wolf_Fur:['wolf4',`float j=nM(p*2.2)*.12-.06,line=.95+.35*smoothstep(.6,1.0,p.z)+j;
+    float body=smoothstep(line-.1,line+.06,p.y)*(1.-smoothstep(1.0,1.1,p.z));
+    float brow=1.6+j+.6*max(0.,p.z-1.22),vee=(1.-smoothstep(.04,.09,abs(p.x)))*smoothstep(1.42,1.5,p.y)*(1.-smoothstep(1.18,1.26,p.z));
+    float cheek=smoothstep(.22,.27,abs(p.x))*(1.-smoothstep(1.12,1.2,p.z))*smoothstep(1.1,1.2,p.y-.4*(1.-smoothstep(.9,1.05,p.z)));
+    float spot=(1.-smoothstep(.05,.08,length(vec2(abs(p.x)-.15,(p.y-1.66)*1.3))))*smoothstep(1.0,1.04,p.z)*(1.-smoothstep(1.18,1.22,p.z));
+    float head=smoothstep(.95,1.05,p.z)*max(max(smoothstep(brow-.04,brow+.04,p.y),vee),cheek)*(1.-spot);
+    float tc=1.15+(p.z+.72)*1.15+j,tail=(1.-smoothstep(-.72,-.62,p.z))*smoothstep(tc-.06,tc+.06,p.y);
+    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.32,.31,.34),max(max(body,head),tail));
+    vec3 q=vec3(abs(p.x),p.y,p.z);float st=min(min(segM(q,vec3(.44,1.22,.50),vec3(.40,1.03,.63)),segM(q,vec3(.40,1.03,.63),vec3(.37,.94,.68))),min(min(segM(q,vec3(.37,.94,.68),vec3(.30,.88,.74)),segM(q,vec3(.30,.88,.74),vec3(.20,.81,.79))),segM(q,vec3(.20,.81,.79),vec3(.05,.74,.79))));
+    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.069,.025,.013),1.-smoothstep(.05,.065,st));`],   // the chest strap is modelled into the body (one piece with the fur): painted leather (#4a2c1e) along its path
   // the llama's sheet: a small dark nose and a mouth line (the model has neither)
   Llama_Wool:['llama2',`float nose=1.-smoothstep(.045,.06,length(vec3(p.x,(p.y-2.16)*1.2,p.z-1.43))),mouth=(1.-smoothstep(.008,.016,abs(p.y-1.99-.15*abs(p.x))))*(1.-smoothstep(.09,.12,abs(p.x)))*smoothstep(1.3,1.36,p.z);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.06,.045,.04),max(nose,mouth));`],
   // the rhino's sheet: two nostrils and a mouth line
