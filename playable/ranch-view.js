@@ -14,8 +14,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r389';
-import {applyLook,LOOK} from '../visual-style.js?v=r389';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r397';
+import {applyLook,LOOK} from '../visual-style.js?v=r397';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -26,7 +26,7 @@ export const RANCH={
   fov:45,ease:4.5,                            // the camera's lens; how fast it glides to a shot (1/s)
   // The camera: `all` looks up the strip (el: how steeply down; az: a little from the right, so the barn shows a side;
   // dist: the field's width fills the picture); `field` looks at the beds from the front, steeper.
-  cam:{all:{dist:48,az:20,el:38},field:{el:48},near:{h:3.4,fov:60}},   // near: the low shot, from the lane beside the first pen, h m up, across the second pen and the lawn to the far country, a wider lens (layout() places it)   // az: from the right, like a farm game's view (the user's reference): the barn shows its front and a side, the plots are diamonds
+  cam:{all:{dist:48,az:20,el:38},field:{el:48}},
   // Where a buddy may stand is also where the opening view shows it: inside this part of the picture (-1…1 across and
   // up, on the tallest phone: `aspect`), clear of the header and tabs above and the nav below.
   seen:{aspect:390/844,x:[-.95,.95],y:[-.74,.56]},
@@ -51,10 +51,6 @@ export const RANCH={
     earth:{color:'#c8a071',light:'#d6b184',dark:'#b58c5d',round:1.1}},
   meadow:{tufts:900,flowers:120},              // grass tufts and small flowers sown on the lawns, not on the blocks, the earth or the barn's walk
   far:420,                                    // m of grass round the strip, so no view shows where the ground ends
-  // The far country behind the low shot (2026-10-10, the user: 「遠景可以補2D圖」, their painting: sky, hills, a line of
-  // pines, 3:1, its bottom edge the trees' feet): one picture standing `off` m beyond what the shot looks at, `wide` m
-  // across, the painting at its foot and its sky colour carried on up to `tall` m.
-  backdrop:{file:'ranch/far.webp',off:200,wide:180,tall:110},
   // Props on the ground (2026-10-10, the user's reference: hay bales, barrels, logs, rocks about the yard): kind, x, y, turn.
   props:[['bales',12.6,-3.2,.2],['barrel',-11.6,1.6,0],['barrel',-12.4,.6,0],['logs',-11,-6.5,.5],['rocks',-9.5,-9,0],['rocks',22,-14,.6],['logs',21.5,-9.5,-.4]],
   grid:2.1,room:.9,                           // waypoints every `grid` m, `room` m clear of everything
@@ -92,10 +88,8 @@ export function layout({pens=[[2,2],[2,1]],dorms=1}={}){
   // The field's shot: the same way round, steeper, just far enough for every pen's corners to fit between the tabs and the nav.
   const corners=fences.flatMap(([a,b,c,d])=>[[a,b],[c,b],[a,d],[c,d]]),fieldShot={at:[(field[0]+field[2])/2,(field[1]+field[3])/2],dist:40,az:A.az,el:RANCH.cam.field.el};
   for(let k=0;k<4;k++){const p=corners.map(([x,y])=>inShot(fieldShot,x,y,asp));fieldShot.dist*=Math.max(...p.map(([u])=>Math.abs(u)/.96),...p.map(([,v])=>v/.55),...p.map(([,v])=>-v/.7));}
-  const N=RANCH.cam.near,from=[xs[0]+S.lane/2,fences[0][1]+4],to=[field[0]+6,lawn[3]-6],dx=from[0]-to[0],dy=from[1]-to[1],flat=Math.hypot(dx,dy);
-  const nearShot={at:to,dist:Math.hypot(flat,N.h),az:Math.atan2(dx,-dy)*180/Math.PI,el:Math.atan2(N.h,flat)*180/Math.PI,fov:N.fov};
   return {pens:fences,dorms,beds,field,lawn,site:{x:[field[0]-9,field[2]+9],y:[lawn[3]-S.below,S.street[1]]},blocks,barns,earth,trees:kept,props:RANCH.props,open,back,up:U,
-    slide:[0,Math.max(0,(back-6-look[1])/U[1]-6)],fieldShot,nearShot};   // slide: how far up the picture the view's middle may go
+    slide:[0,Math.max(0,(back-6-look[1])/U[1]-6)],fieldShot};   // slide: how far up the picture the view's middle may go
 }
 const url=f=>new URL(`../assets/${f}?v=${MODEL_VERSION}`,import.meta.url).href;
 let pending;
@@ -109,12 +103,8 @@ function lawn({color,light,dark}=RANCH.lawn){
     for(const dx of [-n,0,n])for(const dy of [-n,0,n]){const p=g.createRadialGradient(x+dx,y+dy,0,x+dx,y+dy,r);p.addColorStop(0,col);p.addColorStop(1,col+'00');g.globalAlpha=a;g.fillStyle=p;g.fillRect(x+dx-r,y+dy-r,r*2,r*2);}}
   return new THREE.CanvasTexture(c);
 }
-const loadScene=()=>pending??=Promise.all([new GLTFLoader().loadAsync(url('models/ranch/Ranch.glb')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Wheat.glb')),new THREE.ImageLoader().loadAsync(url(RANCH.backdrop.file))])
-  .then(([g,wheat,far])=>({scene:g.scene,grass:lawn(),wheat:wheat.scene,far:farCountry(far)}),e=>{pending=null;throw e;});
-// The backdrop's picture, its sky carried on up: the painting at the foot of a taller canvas, the rest its own top row.
-function farCountry(img){const B=RANCH.backdrop,w=1024,h=Math.round(w*B.tall/B.wide),ih=Math.round(w*img.height/img.width),c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');
-  g.drawImage(img,0,h-ih,w,ih);const top=g.getImageData(0,h-ih+1,w,1);g.putImageData(top,0,0);for(let y=1;y<h-ih;y++)g.drawImage(c,0,0,w,1,0,y,w,1);
-  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
+const loadScene=()=>pending??=Promise.all([new GLTFLoader().loadAsync(url('models/ranch/Ranch.glb')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Wheat.glb'))])
+  .then(([g,wheat])=>({scene:g.scene,grass:lawn(),wheat:wheat.scene}),e=>{pending=null;throw e;});
 // What the overview needs, asked for ahead of time (home.js: as soon as the game is open). coats: the buddies out.
 export const preloadRanch=coats=>Promise.all([loadScene(),preloadRanchBuddies(coats)]);
 
@@ -177,7 +167,7 @@ export function route(spots,from,to){
 // the user: 「拖移牧場裡的動物並放到任意地點…而不是點擊便進入宿舍」「點擊宿舍的門可以打開或關閉」「拖拉動物進去或出來」);
 // a drop on a pen, a building, a tree or a stall already taken puts it back. A buddy out strolls on from where it is.
 // pens, dorms: the pens of beds and how many dormitories there are (layout); open: how many of the beds can be used
-// (the rest are shown shut). shot: 'all', 'field' or 'near', what to open on.
+// (the rest are shown shut). shot: 'all' or 'field', what to open on.
 // onMove(id, {stall} | {at: [x, y]}): a buddy was set down. onDoor(stall, open): a door was tapped. onBed(i, x, y):
 // a bed that can be used was tapped, at (x, y) on the screen. onSwipe(±1): a sideways swipe.
 // → {shot(name), field(grown), dispose}; resolves with the first frame drawn, and only then is the canvas put on the
@@ -218,10 +208,6 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   {const plane=new THREE.Mesh(keep(new THREE.PlaneGeometry(RANCH.far,RANCH.far).rotateX(-Math.PI/2)));plane.position.copy(at(0,midY)).setY(.04);textured(plane,assets.grass.clone(),RANCH.lawn.tile);keep(plane.material);keep(plane.material.map);scene.add(plane);
     const R=F.earth.round;for(const [x0,y0,x1,y1] of L.earth){const sh=new THREE.Shape();sh.moveTo(x0+R,-y1);sh.lineTo(x1-R,-y1);sh.quadraticCurveTo(x1,-y1,x1,-y1+R);sh.lineTo(x1,-y0-R);sh.quadraticCurveTo(x1,-y0,x1-R,-y0);sh.lineTo(x0+R,-y0);sh.quadraticCurveTo(x0,-y0,x0,-y0-R);sh.lineTo(x0,-y1+R);sh.quadraticCurveTo(x0,-y1,x0+R,-y1);
       const m=textured(new THREE.Mesh(keep(new THREE.ShapeGeometry(sh,5).rotateX(Math.PI/2))),lawn(F.earth),14);m.position.y=.05;m.material.side=THREE.DoubleSide;keep(m.material);keep(m.material.map);scene.add(m);}}
-  // The far country: the painting stands beyond the low shot's middle, square to it, its foot on the ground (the steep
-  // shots never see that far up; drawn without the light, as painted).
-  {const B=RANCH.backdrop,N=L.nearShot,az=N.az*rad0;const m=new THREE.Mesh(keep(new THREE.PlaneGeometry(B.wide,B.tall)),keep(new THREE.MeshBasicMaterial({map:assets.far,toneMapped:false})));
-    m.position.copy(at(N.at[0]-Math.sin(az)*B.off,N.at[1]+Math.cos(az)*B.off)).setY(B.tall/2-.5);m.rotation.y=az;scene.add(m);}
   // The props: plain shapes coloured on their vertices, one mesh.
   {const parts=[],c=new THREE.Color(),m4=new THREE.Matrix4(),add=(g,x,y,z,col,turn=0,sx=1,sy=1,sz=1)=>{g=g.toNonIndexed();g.deleteAttribute('uv');c.set(col);const n=g.attributes.position.count,a=new Float32Array(n*3);for(let i=0;i<n;i++)a.set([c.r,c.g,c.b],i*3);g.setAttribute('color',new THREE.BufferAttribute(a,3));
       g.applyMatrix4(m4.compose(at(x,y).setY(z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),turn),new THREE.Vector3(sx,sy,sz)));parts.push(g);};
@@ -304,7 +290,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   // The camera: the view up the strip (its middle slides along it, where a drag left it) or the field's shot; it
   // glides to whichever is asked for (every number eased on its own).
   const cam=new THREE.PerspectiveCamera(RANCH.fov,1,2,500),rad=Math.PI/180,mid=new THREE.Vector3(),dir=new THREE.Vector3();
-  const SHOTS={field:'fieldShot',near:'nearShot'};let now=SHOTS[shot]?shot:'all',slide=L.slide[0],W=1,H=1;
+  const SHOTS={field:'fieldShot'};let now=SHOTS[shot]?shot:'all',slide=L.slide[0],W=1,H=1;
   const view=()=>{const s=SHOTS[now]?L[SHOTS[now]]:{...L.open,at:[L.open.at[0]+slide*L.up[0],L.open.at[1]+slide*L.up[1]]};return {x:s.at[0],y:s.at[1],dist:s.dist,az:s.az,el:s.el,fov:s.fov??RANCH.fov};},cur=view();
   function aim(dt=0){const to=view(),k=dt?1-Math.exp(-dt*RANCH.ease):0;for(const n in cur)cur[n]+=(to[n]-cur[n])*k;
     if(cam.fov!==cur.fov){cam.fov=cur.fov;cam.updateProjectionMatrix();}

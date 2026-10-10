@@ -1,42 +1,30 @@
-// Stable care (stable page mock): per buddy Hunger / Stamina / Mood / Clean (0-100) + xp (level), one shared item bag.
-// Feed eats one food item; Brush needs a brush (not used up). Care feeds the race (raceForm) and the race feeds care
-// back (afterRace): racing tires the buddy and makes it hungry, and earns xp. Stamina comes back on its own over time.
-// `stamina` here is how rested the buddy is: 精神 in the UI since 2026-10-04 (體力 is the buddy's own Stamina number,
-// its sprint pool in a race: slice-config buddyStats).
-// Shop items (price in coins) go into the same bag: foods are eaten by Feed (the one picked in Items), care items are
-// used from Items; two of them are one-race buffs kept on the horse (`buff`, spent by the next race).
-// Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1). Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL} from './playable/slice-config.mjs?v=r389';
+// Stable care: per buddy Hunger and Clean (0-100) + xp (level), one shared item bag. Two numbers, both only worn by
+// racing (2026-10-10, the user, on the MVP: 「精神、心情拿掉」; there were four, and the solo stages read none of them):
+//   Hunger  fed with wheat from the ranch's field (a treat fills a little and teaches a little)
+//   Clean   brushed (the brush is not used up)
+// Both are felt in every race, solo and relay (raceForm): a hungry buddy starts with less energy and runs slower, a
+// dusty one builds its combo slower. Racing wears both and earns xp (afterRace, afterSolo).
+// MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
+// them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
+// Icons: assets/stable/item_<id>.webp.
+import {MAX_LEVEL} from './playable/slice-config.mjs?v=r397';
 export const ITEMS=[
-  // food: +Hunger, +Mood (stamina: +Stamina). Wheat, grown on the ranch, is the food that fills (below); what the shop
-  // sells are treats, each with something of its own (2026-10-10, the user: 「小麥是基本食物，其他的食物道具都是特殊的」):
-  // the plain filling foods (hay, pellets, oats, alfalfa, beet) are no longer sold; what a save holds of them can be fed.
-  {id:'hay',name:'乾草',kind:'food',food:25,mood:2},{id:'carrot',name:'紅蘿蔔',kind:'food',food:15,mood:6,price:15},
-  {id:'apple',name:'蘋果',kind:'food',food:15,mood:8,price:15},{id:'feed',name:'飼料',kind:'food',food:35,mood:2},
-  {id:'oats',name:'燕麥',kind:'food',food:30,mood:3},{id:'alfalfa',name:'苜蓿',kind:'food',food:28,mood:4},
-  {id:'sugar',name:'方糖',kind:'food',food:5,mood:12,price:15},{id:'mint',name:'薄荷糖',kind:'food',food:5,mood:10,price:15},
-  {id:'cookie',name:'夥伴餅乾',kind:'food',food:10,mood:10,price:25},{id:'pear',name:'西洋梨',kind:'food',food:15,mood:7,price:20},
-  {id:'watermelon',name:'西瓜',kind:'food',food:12,mood:9,price:25},{id:'beet',name:'甜菜粕',kind:'food',food:35,mood:2},
-  {id:'mash',name:'溫熱麥麩粥',kind:'food',food:25,mood:6,stamina:10,price:45},
-  // care: used from Items
-  {id:'shampoo',name:'洗毛精',kind:'care',mood:5,clean:40,price:40},{id:'vitamin',name:'維他命',kind:'care',stamina:20,price:50},
-  {id:'electrolyte',name:'電解水',kind:'care',stamina:30,price:70},{id:'hoofoil',name:'護足油',kind:'care',mood:8,price:30},
-  {id:'flyspray',name:'防蚊噴霧',kind:'care',mood:8,price:30},{id:'balm',name:'舒緩藥膏',kind:'care',stamina:15,mood:5,price:45},
-  {id:'ribbonkit',name:'編鬃套組',kind:'care',mood:20,price:80},
-  {id:'energybar',name:'能量棒',kind:'care',buff:{energy:10},price:60},{id:'luckyshoe',name:'幸運符',kind:'care',buff:{bonus:2},price:120},
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
-  // from a race (2026-10-10, the user: 「種子靠金幣買或比賽買」; a feed used to turn one up by chance)
-  {id:'wheat',name:'小麥',kind:'food',food:30,mood:6},{id:'seed',name:'小麥種子',kind:'seed',price:10},
+  // from a race
+  {id:'wheat',name:'小麥',kind:'food',food:30},{id:'seed',name:'小麥種子',kind:'seed',price:10},
+  // treats: a little filling, a little xp
+  {id:'carrot',name:'紅蘿蔔',kind:'food',food:10,xp:2,price:15},{id:'apple',name:'蘋果',kind:'food',food:10,xp:3,price:20},
+  {id:'cookie',name:'夥伴餅乾',kind:'food',food:15,xp:5,price:35},
   // tools (not sold)
-  {id:'brush',name:'刷子',kind:'tool'},{id:'bucket',name:'水桶',kind:'tool'},{id:'towel',name:'毛巾',kind:'tool'},
+  {id:'brush',name:'刷子',kind:'tool'},
+  // hidden for the MVP (kept so a save's counts survive)
+  ...['hay','feed','oats','alfalfa','sugar','mint','pear','watermelon','beet','mash','shampoo','vitamin','electrolyte','hoofoil','flyspray','balm','ribbonkit','energybar','luckyshoe','bucket','towel'].map(id=>({id,name:id,kind:'hidden',hidden:true})),
 ];
-export const itemEffect=it=>[it.food&&`飽足 +${it.food}`,it.mood&&`心情 +${it.mood}`,it.stamina&&`精神 +${it.stamina}`,it.clean&&`清潔 +${it.clean}`,
-  it.buff?.energy&&`下一場起跑能量 +${it.buff.energy}`,it.buff?.bonus&&`下一場名次獎勵 ×${it.buff.bonus}`].filter(Boolean).join(' · ');
-const STARTER={wheat:8,seed:3,carrot:3,apple:2,brush:5,bucket:10,towel:6};   // wheat to feed with and seeds to sow at the start, a few treats; everything else starts at 0
+export const itemEffect=it=>[it.food&&`飽足 +${it.food}`,it.xp&&`經驗 +${it.xp}`].filter(Boolean).join(' · ');
+const STARTER={wheat:8,seed:3,carrot:2,brush:1};   // wheat to feed with and seeds to sow at the start; everything else starts at 0
 const COOLDOWN=1200;
-export const freshCare=()=>({hunger:60,stamina:80,mood:70,clean:70,xp:0,last:0,at:0});   // at: when stamina was last settled
-const STATS=['hunger','stamina','mood','clean'];
-const STAMINA_PER_MIN=10;   // playtest build: full from empty in ~10 min, so back-to-back test races are not all tired (was 2: ~50 min)
+export const freshCare=()=>({hunger:60,clean:70,xp:0,last:0});
+const STATS=['hunger','clean'];
 const clamp=v=>Math.max(0,Math.min(100,Math.round(v)));
 
 // ids: every horse the player owns (home.js ROSTER); a horse new to the save starts fresh.
@@ -44,7 +32,7 @@ export function readCare(storage,ids=[0,1,2]){
   let saved={};try{saved=JSON.parse(storage.getItem('hoofbeat.care.v2')||'{}')}catch{}
   return Object.fromEntries(ids.map(id=>{const r=freshCare(),s=saved[id]||{};
     for(const k of STATS)if(Number.isFinite(s[k]))r[k]=clamp(s[k]);
-    if(Number.isFinite(s.xp))r.xp=Math.max(0,s.xp);if(Number.isFinite(s.at))r.at=s.at;if(s.buff)r.buff=s.buff;return [id,recover(r)];}));
+    if(Number.isFinite(s.xp))r.xp=Math.max(0,s.xp);return [id,r];}));
 }
 export function readItems(storage){
   let saved={};try{saved=JSON.parse(storage.getItem('hoofbeat.items.v1')||'{}')}catch{}
@@ -54,60 +42,38 @@ export function saveCare(storage,care,items){
   try{storage.setItem('hoofbeat.care.v2',JSON.stringify(care));storage.setItem('hoofbeat.items.v1',JSON.stringify(items));return true}catch{return false}
 }
 export const XP_LEVEL=40,level=r=>Math.min(MAX_LEVEL,1+Math.floor(r.xp/XP_LEVEL));   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
-// Stamina the horse has rested back since `at`.
-export function recover(r,now=Date.now()){
-  if(!r.at)return {...r,at:now};
-  return {...r,stamina:clamp(r.stamina+(now-r.at)/60000*STAMINA_PER_MIN),at:now};
-}
-
-// Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: rhythm still decides).
-// base: the race config with this buddy's numbers at its level (slice-config racing(): base speed, rhythm gains, stamina).
-//   hunger < 30   base speed -5% (hungry)                   mood    rhythm gain ×0.9 (0) … ×1.1 (100)
-//   clean < 30    rhythm gain ×0.95 (muddy coat)            stamina (精神)  start energy = 30% of it (0–30 of 50);
-//                                                                    below 25 the sprint is 30% shorter (tired)
+export const recover=r=>r;   // nothing comes back by itself any more (it was the stamina's rest); kept for its callers
+// Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: the rhythm still decides).
+// base: the race config with this buddy's numbers at its level (slice-config racing()).
+//   hunger   start energy = FORM.energy of it; under FORM.low the speed falls, to ×FORM.speed at 0
+//   clean    under FORM.low the combo builds slower (solo: accel; relay: the rhythm gains), to ×FORM.combo at 0
+export const FORM={low:50,speed:.9,combo:.8,energy:.3};
+const dip=(v,to)=>v>=FORM.low?1:to+(1-to)*v/FORM.low;
 export function raceForm(r,base){
-  const speed=r.hunger<30?.95:1,dirty=r.clean<30,mood=(.9+.2*r.mood/100)*(dirty?.95:1),tired=r.stamina<25;
-  const config={baseSpeed:+(base.baseSpeed*speed).toFixed(3),rhythmGain:base.rhythmGain*mood,goodRhythmGain:base.goodRhythmGain*mood,stamina:base.stamina,
-    startEnergy:Math.min(base.energyMax,Math.round(r.stamina*.3)+(r.buff?.energy||0)),boostDuration:+(base.boostDuration*(tired?.7:1)).toFixed(3),
-    placeBonus:base.placeBonus.map(b=>b*(r.buff?.bonus||1))};
+  const speed=dip(r.hunger,FORM.speed),combo=dip(r.clean,FORM.combo);
+  const config={baseSpeed:+(base.baseSpeed*speed).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),
+    stamina:base.stamina,startEnergy:Math.min(base.energyMax,Math.round(r.hunger*FORM.energy)),boostDuration:base.boostDuration,placeBonus:base.placeBonus};
   const notes=[`起跑能量 ${config.startEnergy}`];
-  if(r.hunger<30)notes.push('肚子餓：速度變慢');if(tired)notes.push('疲累：衝刺縮短');if(dirty)notes.push('毛髒了：節奏變差');
-  if(r.buff?.energy)notes.push(`能量棒 +${r.buff.energy}`);if(r.buff?.bonus)notes.push(`幸運符：名次獎勵 ×${r.buff.bonus}`);
+  if(speed<1)notes.push(`肚子餓：速度 −${Math.round((1-speed)*100)}%`);if(combo<1)notes.push(`毛髒了：連擊 −${Math.round((1-combo)*100)}%`);
   return {config,notes};
 }
-// Relay form: every leg runs on its own buddy's form (bases[k]: that buddy's numbers; speed, rhythm, stamina, sprint
-// length, as raceForm); the start energy is the first buddy's, and buffs count from any of the three (energy bars add
-// up, the best lucky charm applies).
+// Solo form: the one buddy's, given to the game as its leg (slice-game legForm reads config.legs[0]).
+export function soloForm(r,base){const f=raceForm(r,base);return {config:{startEnergy:f.config.startEnergy,legs:[{baseSpeed:f.config.baseSpeed,accel:f.config.accel}]},notes:f.notes};}
+// Relay form: every leg runs on its own buddy's form; the start energy is the first buddy's.
 export function relayForm(rs,bases,names=rs.map((_,i)=>`#${i+1}`)){
-  const forms=rs.map((r,i)=>raceForm(r,bases[i])),bonus=Math.max(1,...rs.map(r=>r.buff?.bonus||1)),base=bases[0];
-  const startEnergy=Math.min(base.energyMax,Math.round(rs[0].stamina*.3)+rs.reduce((s,r)=>s+(r.buff?.energy||0),0));
-  const config={...forms[0].config,startEnergy,placeBonus:base.placeBonus.map(b=>b*bonus),
-    legs:forms.map(({config:c})=>({baseSpeed:c.baseSpeed,rhythmGain:c.rhythmGain,goodRhythmGain:c.goodRhythmGain,stamina:c.stamina,boostDuration:c.boostDuration}))};
-  // Cover line, short: the start energy, then only what holds a horse back (hungry / tired / muddy).
-  const warn=forms.map((f,i)=>[names[i],f.notes.filter(n=>/^(肚子餓|疲累|毛髒了)/.test(n)).map(n=>n.split('：')[0].replace('了',''))]).filter(([,w])=>w.length);
-  const notes=[`起跑能量 ${startEnergy}`,...warn.map(([n,w])=>`${n}：${w.join('、')}`)];
-  if(bonus>1)notes.push(`幸運符：名次獎勵 ×${bonus}`);
-  return {config,notes};
+  const forms=rs.map((r,i)=>raceForm(r,bases[i])),base=bases[0];
+  const config={...forms[0].config,legs:forms.map(({config:c})=>({baseSpeed:c.baseSpeed,rhythmGain:c.rhythmGain,goodRhythmGain:c.goodRhythmGain,accel:c.accel,stamina:c.stamina,boostDuration:c.boostDuration}))};
+  const warn=forms.map((f,i)=>[names[i],f.notes.filter(n=>/^(肚子餓|毛髒了)/.test(n)).map(n=>n.split('：')[0].replace('了',''))]).filter(([,w])=>w.length);
+  return {config,notes:[`起跑能量 ${config.startEnergy}`,...warn.map(([n,w])=>`${n}：${w.join('、')}`)]};
 }
-// After a race: -12 hunger, -25 stamina, -20 clean (dust), mood up for a top-two finish, xp by place 1st–5th (+1 per 5
-// perfect hits): a good 2nd place ≈ 27 xp, so a level (40 xp) takes about two good races.
-export const RACE_XP=[30,20,12,8,5];
-export function afterRace(r,{rank,perfect=0},now=Date.now()){
-  const c=recover(r,now),xp=RACE_XP[rank-1]+Math.floor(perfect/5),lv=level(c);
-  const next={...c,buff:undefined,hunger:clamp(c.hunger-12),stamina:clamp(c.stamina-25),mood:clamp(c.mood+(rank===1?6:rank===2?2:0)),
-    clean:clamp((c.clean??70)-20),xp:c.xp+xp};
-  return {care:next,xp,levelUp:level(next)>lv};
-}
-// A solo run is practice (2026-10-04, the user: it earns xp too): xp by the stars the run was worth (+1 per 5 perfect
-// hits), about half a relay's; no wear.
-export const SOLO_XP=[6,10,15];
-// 2026-10-09: it wears the buddy too, half of a relay's (the user: 「比賽的才會掉」; with no wear nobody on the stages, all
-// solo, ever had a buddy to feed, so no seed was ever found: the ranch's round did not turn). SOLO_WEAR.
-export const SOLO_WEAR={hunger:6,stamina:12,clean:10};
-export function afterSolo(r,{stars,perfect=0}){const xp=SOLO_XP[stars-1]+Math.floor(perfect/5),next={...r,xp:r.xp+xp,hunger:clamp(r.hunger-SOLO_WEAR.hunger),stamina:clamp(r.stamina-SOLO_WEAR.stamina),clean:clamp((r.clean??70)-SOLO_WEAR.clean),buff:r.buff?.bonus?{bonus:r.buff.bonus}:undefined};return {care:next,xp,levelUp:level(next)>level(r)};}   // the energy bar is spent (home.js soloForm gave it to this run); the lucky charm waits for a relay
+// What a race costs and earns. WEAR: hunger and clean lost (a relay leg, a solo run): a wheat (+30) feeds about two solo
+// runs, a brushing (+30) cleans as many. xp by place 1st–5th (relay) or by the run's stars (solo), +1 per 5 perfect hits.
+export const RACE_XP=[30,20,12,8,5],SOLO_XP=[6,10,15],WEAR={relay:{hunger:20,clean:20},solo:{hunger:15,clean:12}};
+const worn=(r,w,xp)=>{const next={...r,hunger:clamp(r.hunger-w.hunger),clean:clamp(r.clean-w.clean),xp:r.xp+xp};return {care:next,xp,levelUp:level(next)>level(r)};};
+export const afterRace=(r,{rank,perfect=0})=>worn(r,WEAR.relay,RACE_XP[rank-1]+Math.floor(perfect/5));
+export const afterSolo=(r,{stars,perfect=0})=>worn(r,WEAR.solo,SOLO_XP[stars-1]+Math.floor(perfect/5));
 
-// -> {care, items, msg} or {fail} (nothing changes on a fail). food: the item picked in the Items panel.
-// Brushing cleans the coat (+30) and cheers a little (+6 mood).
+// -> {care, items, msg, levelUp?} or {fail} (nothing changes on a fail). food: the item picked in the Items panel.
 export function careAction(record,items,action,food='wheat',now=Date.now()){
   if(now-record.last<COOLDOWN)return {fail:'慢一點，讓牠休息一下'};
   const r={...record,last:now},bag={...items};
@@ -115,48 +81,13 @@ export function careAction(record,items,action,food='wheat',now=Date.now()){
     const it=ITEMS.find(i=>i.id===food&&i.food&&bag[i.id]>0);   // the food asked for and no other: a treat is never eaten for want of wheat
     if(!it)return {fail:'沒有小麥了：去麥田收成'};
     if(r.hunger>=100)return {fail:'已經吃飽了'};
-    bag[it.id]--;r.hunger=clamp(r.hunger+it.food);r.mood=clamp(r.mood+it.mood);r.stamina=clamp(r.stamina+(it.stamina||0));
-    return {care:r,items:bag,msg:`吃了${it.name}`,item:it.id};
-  }
-  if(action==='use'){   // `food` names the care item here
-    const it=ITEMS.find(i=>i.id===food&&i.kind==='care');
-    if(!it||!bag[it.id])return {fail:'沒有這個道具'};
-    if(it.buff&&Object.keys(it.buff).some(k=>r.buff?.[k]))return {fail:'下一場已經有這個效果了'};
-    bag[it.id]--;r.mood=clamp(r.mood+(it.mood||0));r.stamina=clamp(r.stamina+(it.stamina||0));r.clean=clamp((r.clean??70)+(it.clean||0));if(it.buff)r.buff={...r.buff,...it.buff};
-    return {care:r,items:bag,msg:`用了${it.name}`,item:it.id};
+    bag[it.id]--;r.hunger=clamp(r.hunger+it.food);r.xp+=it.xp||0;
+    return {care:r,items:bag,msg:`吃了${it.name}`,item:it.id,levelUp:level(r)>level(record)};
   }
   if(action==='brush'){
     if(!bag.brush)return {fail:'需要一把刷子'};
-    r.mood=clamp(r.mood+6);r.clean=clamp((r.clean??70)+30);return {care:r,items:bag,msg:'刷得閃閃發亮'};
+    if(r.clean>=100)return {fail:'已經很乾淨了'};
+    r.clean=clamp(r.clean+30);return {care:r,items:bag,msg:'刷得閃閃發亮'};
   }
   return {fail:'?'};
-}
-
-// self-check: copy to a .mjs and run  node -e "import('./x.mjs').then(m=>m.demo())"
-export function demo(){
-  const mem=new Map(),st={getItem:k=>mem.get(k)??null,setItem:(k,v)=>mem.set(k,v)},ok=(c,m)=>{if(!c)throw new Error(m)};
-  const care=readCare(st),items=readItems(st),r0=care[1];
-  const fed=careAction(r0,items,'feed','carrot',1e6);ok(fed.items.carrot===17&&fed.care.hunger===75,'feed');
-  ok(careAction(fed.care,fed.items,'feed','carrot',1e6+100).fail,'cooldown');
-  const br=careAction(r0,{...items,brush:0},'brush','carrot',1e6);ok(br.fail,'no brush');
-  saveCare(st,{...care,1:fed.care},fed.items);ok(readItems(st).carrot===17&&readCare(st)[1].hunger===75,'persist');
-  const base={baseSpeed:12,rhythmGain:.32,goodRhythmGain:.22,stamina:20,boostDuration:3,energyMax:50,placeBonus:[50,30,15]};
-  const fresh=raceForm({...freshCare(),stamina:100,mood:100,xp:0},base);ok(fresh.config.baseSpeed===12&&fresh.config.stamina===20&&fresh.config.startEnergy===30&&Math.abs(fresh.config.rhythmGain-.352)<1e-9,'form fresh');
-  const worn=raceForm({...freshCare(),hunger:10,stamina:10,mood:0,xp:400},base);ok(worn.config.baseSpeed===11.4&&worn.config.boostDuration===2.1&&worn.notes.length===3,'form worn (the level is in the base numbers, not here)');
-  ok(level({xp:0})===1&&level({xp:79})===2&&level({xp:99999})===MAX_LEVEL,'levels stop at the top');
-  const run=afterSolo({...freshCare(),xp:30,hunger:60},{stars:2,perfect:11});ok(run.xp===12&&run.levelUp&&run.care.hunger===54&&run.care.clean===60,'a solo run: xp, half a relay\'s wear');
-  const raced=afterRace({...freshCare(),xp:35,at:1e6},{rank:1,perfect:4},1e6);ok(raced.care.stamina===55&&raced.care.hunger===48&&raced.xp===30&&raced.levelUp,'after race');
-  ok(raced.care.clean===50,'clean after race');
-  ok(RACE_XP.every((x,i)=>afterRace(freshCare(),{rank:i+1},1e6).xp===x),'xp for every place of the five-horse field');
-  const brushed=careAction({...r0,clean:10},items,'brush','carrot',1e6).care;ok(brushed.clean===40&&brushed.mood===76,'brush cleans');
-  const muddy=raceForm({...freshCare(),stamina:100,mood:100,clean:0,xp:0},base);ok(muddy.config.startEnergy===30&&Math.abs(muddy.config.rhythmGain-.3344)<1e-9&&muddy.notes.length===2,'form dirty');
-  ok(recover({...freshCare(),stamina:10,at:0+1},1+60000*2).stamina===10+2*STAMINA_PER_MIN,'rest');
-  const bag={...items,energybar:1,luckyshoe:1},used=careAction(r0,bag,'use','energybar',1e6);ok(used.care.buff.energy===10&&used.items.energybar===0,'use buff');
-  ok(careAction(used.care,{...used.items,energybar:1},'use','energybar',1e7).fail,'buff once');
-  const lucky=careAction(used.care,used.items,'use','luckyshoe',1e7).care,bf=raceForm({...lucky,stamina:100},base);
-  ok(bf.config.startEnergy===40&&bf.config.placeBonus[0]===100,'buff form');ok(afterRace(lucky,{rank:2},1e7).care.buff===undefined,'buff spent');
-  ok(readItems(st).oats===0&&ITEMS.every(i=>i.kind==='tool'||i.price>0),'shop stock');
-  const relay=relayForm([{...freshCare(),stamina:100},{...freshCare(),hunger:10,buff:{energy:10}},{...freshCare(),stamina:10,buff:{bonus:2}}],[base,base,{...base,stamina:35}],['A','B','C']);
-  ok(relay.config.startEnergy===40&&relay.config.legs[1].baseSpeed===11.4&&relay.config.legs[2].boostDuration===2.1&&relay.config.legs[2].stamina===35&&relay.config.placeBonus[0]===100,'relay form: each leg its own buddy');
-  console.log('stable-care ok');
 }

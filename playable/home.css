@@ -366,7 +366,7 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .st-sheet:not([hidden])+.st-buddy{display:none}   /* the look sheet takes the card's place: the buddy stays in view */
 .st-buddy{width:auto;min-width:0;display:block;padding:calc(16 * var(--u)) calc(22 * var(--u)) calc(18 * var(--u));border-radius:var(--ui-r-lg)}
 .st-buddy .ui-card-head{margin-bottom:calc(12 * var(--u))}.st-buddy .ui-card-head b{font-size:var(--ui-t-name);font-weight:600;line-height:1.4}
-.st-stats{grid-template-columns:repeat(4,1fr);gap:calc(14 * var(--u));padding:0}
+.st-stats{grid-template-columns:repeat(var(--n,2),1fr);gap:calc(18 * var(--u));padding:0}   /* two since 2026-10-10 (hunger, clean); --n for more */
 .st-stat{display:flex;gap:calc(6 * var(--u))}.st-stat svg{flex:none;color:#fff}.st-stat .ui-bar{flex:1}
 .st-acts{gap:calc(22 * var(--u))}
 .st-acts .side .ui-icon-btn{width:var(--ui-h);height:var(--ui-h);padding:calc(15 * var(--u))}
@@ -429,8 +429,6 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .ranch-shots{position:absolute;z-index:3;left:var(--ui-margin);right:var(--ui-margin);top:calc(76 * var(--u))}.ranch-shots button{height:calc(38 * var(--u));font-size:calc(14 * var(--u))}
 .ranch-hint[hidden]{display:none}
 .ranch-crops{position:absolute;z-index:3;right:var(--ui-margin);top:calc(134 * var(--u));display:flex;gap:var(--ui-gap)}.ranch-crops[hidden]{display:none}
-.ranch-eye{position:absolute;z-index:3;right:var(--ui-margin);bottom:calc(140 * var(--u));background:var(--ui-glass-dark);color:#fff}
-.ranch-eye[aria-pressed="true"]{background:var(--ui-accent,#7be06a);color:#000}
 .ui-wallet.crop{padding-left:calc(6 * var(--u))}.ui-wallet.crop img{width:calc(22 * var(--u));height:calc(22 * var(--u));margin-right:calc(4 * var(--u));object-fit:contain}
 /* ---- the dormitory = the close-up page (2026-10-09): the ranch's tabs under its header (the row of heads moves down a row); the stall's door across the bottom, in front of the buddy:
    the 3D barn's own door, rendered to a picture (models/ranch/render_door.py), only its top showing over the care card; the painted plate is barn-plate.webp, painted for this camera (stable-view CAM) ---- */

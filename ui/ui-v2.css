@@ -92,7 +92,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge lo
 .ui-nav span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}   /* icons only: the label stays for screen readers */
 .ui-nav svg{width:calc(18 * var(--u));height:calc(18 * var(--u))}
 .ui-nav [aria-current]{background:var(--ui-yellow);color:#000}
-.ui-tabs{display:inline-grid;gap:0;padding:calc(6 * var(--u));background:var(--ui-glass-dark);-webkit-backdrop-filter:var(--ui-blur);backdrop-filter:var(--ui-blur)}
+.ui-tabs{display:inline-grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:0;padding:calc(6 * var(--u));background:var(--ui-glass-dark);-webkit-backdrop-filter:var(--ui-blur);backdrop-filter:var(--ui-blur)}
 .ui-tabs button{height:var(--ui-h-sm);padding:0 calc(18 * var(--u));font-weight:400;font-size:var(--ui-t-body);color:#fff;white-space:nowrap}
 .ui-tabs [aria-selected=true]{background:var(--ui-green);color:#000}
 .ui-rail [aria-expanded=true] .ui-icon-btn{background:var(--ui-green);color:#000}
@@ -229,3 +229,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge lo
 .ui-prize p{margin:0;font-weight:600;font-size:var(--ui-t-page);line-height:1.35;text-align:center;color:#fff;animation:chest-show .3s 2.85s both}
 .ui-prize .ui-btn{min-width:60%;margin-top:calc(10 * var(--u));animation:chest-show .3s 3.05s both}
 .ui-prize.at-2 :is(p,.ui-btn){animation:none}
+
+/* The row (2026-10-10, the user: 「該取空間寬度間隔多少後有多少按鈕，用除的方式也要設計好…可插拔的 ui component」): a container
+   divides its width into --n equal cells with --gap between and --pad round; a cell is (width − 2·pad − (n−1)·gap) / n,
+   whatever n is. .ui-tabs and .ui-nav are rows (their --n is set inline by the page); any other strip of equal controls
+   is <div class="ui-row" style="--n:4">. Buttons inside need no width of their own. */
+.ui-row{--n:2;--gap:calc(8 * var(--u));--pad:calc(6 * var(--u));display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gap);padding:var(--pad);box-sizing:border-box;width:100%}
+.ui-row>*{min-width:0}
