@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r397';
-import {applyLook,LOOK} from '../visual-style.js?v=r397';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r412';
+import {applyLook,LOOK} from '../visual-style.js?v=r412';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -36,7 +36,7 @@ const POSE={idle:{NeckLower:.12,NeckUpper:.07,Head:.04,turn:0},
 // it stands (x). The llama bows like the horse, but its neck starts low on its chest and carries its head a long way
 // forward: it stands back, or its forehead is in her helmet. The rhino's head hangs below her hands: it lifts its chin to them
 // (negative angles; its short neck takes that, the horse's does not).
-const BUDDY={llama:{x:.25,wide:.2,feed:{NeckLower:.95,NeckUpper:.5,Head:-.15,turn:0}},rhino:{x:.45,wide:.3,bow:{NeckLower:-.3,NeckUpper:-.15,Head:-.1,turn:0},feed:{NeckLower:.12,NeckUpper:.1,Head:.12,turn:0}}};   // wide: how much further out than the horse's its flank is (the brush)
+const BUDDY={cow:{x:.3,wide:.25,bow:{NeckLower:-.15,NeckUpper:-.1,Head:-.05,turn:0},feed:{NeckLower:.35,NeckUpper:.2,Head:.05,turn:0}},bear:{x:.4,wide:.35,bow:{NeckLower:-.25,NeckUpper:-.1,Head:-.1,turn:0},feed:{NeckLower:.1,NeckUpper:.08,Head:.1,turn:0}},zebra:{x:.1,wide:.05},llama:{x:.25,wide:.2,feed:{NeckLower:.95,NeckUpper:.5,Head:-.15,turn:0}},rhino:{x:.45,wide:.3,bow:{NeckLower:-.3,NeckUpper:-.15,Head:-.1,turn:0},feed:{NeckLower:.12,NeckUpper:.1,Head:.12,turn:0}}};   // wide: how much further out than the horse's its flank is (the brush)
 const NECK=['NeckLower','NeckUpper','Head'],TURN={NeckLower:-.6,NeckUpper:-.4};   // turn sign: -Z bends toward the rider
 const BRUSH={scale:.8,strap:.3,bone:'Chest',at:[-.15,.1,.62],stroke:.3,dir:[0,-.35,-1]};   // 2026-10-05 (the user: nobody holds it now, it just brushes the body a few times): at: from the Spine bone to the flank the camera sees; stroke: how far along the body each way; dir: where the bristles point   // Scrub_Brush.glb: strap at +Y .3, bristles down; face: aim 55% muzzle → poll;
 // settle: s into Comb (the crossfade from Pickup) after which the brush stays fixed in the hand
@@ -225,6 +225,13 @@ export async function mountStableView(host){
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));   // 2026-10-06: was 2 (the phone ran hot)r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;
   r.domElement.setAttribute('aria-hidden','true');host.append(r.domElement);
+  // A finger dragged across the picture turns the buddy round on the spot (2026-10-10, the user: 「宿舍裡在照顧的動物可以
+  // 旋轉他嗎」): SPIN rad per px of drag; it stays as left while standing, and eases back to face the rider when an act
+  // (feed, brush) begins, so the props meet the mouth and the forehead. A tap (no drag) still only wakes it.
+  const SPIN=.012;let spin=0,drag=null;r.domElement.style.touchAction='none';
+  r.domElement.addEventListener('pointerdown',e=>{drag={id:e.pointerId,x:e.clientX};try{r.domElement.setPointerCapture(e.pointerId);}catch{}});
+  r.domElement.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId||job||queued)return;spin+=(e.clientX-drag.x)*SPIN;drag.x=e.clientX;});
+  for(const t of ['pointerup','pointercancel'])r.domElement.addEventListener(t,()=>{drag=null;});
   const scene=new THREE.Scene();
   // Unified look (visual-style.js), aimed like the plate: warm key from the open door up right, rim from behind.
   const sun=new THREE.DirectionalLight();sun.position.set(6,9,7);sun.castShadow=true;sun.shadow.bias=-.0004;sun.shadow.normalBias=.02;
@@ -377,6 +384,7 @@ export async function mountStableView(host){
   function frame(now){if(now-last<(job?29:46)){raf=requestAnimationFrame(frame);return;}   // 30 pictures a second while it eats or is brushed, 20 standing
     const dt=Math.min(.1,(now-last)/1000);last=now;nod=Math.max(0,nod-dt);
     moods(dt);if(job)acting(dt);
+    if(job||queued)spin+=(0-spin)*Math.min(1,dt*6);model.root.rotation.y=HORSE.yaw+spin;
     model.mixer.update(dt);
     const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0),to=job?(job.kind==='feed'?feedPose:BUDDY[model.species]?.bow??POSE.brush):POSE.idle;   // a soft chew-nod (the bite)
     for(const [b,base] of bones){const n=b.name,p=POSE.idle[n]+(to[n]-POSE.idle[n])*w+bob*(n==='Head'?1:.3),t=(to.turn||0)*w*(TURN[n]||0);
@@ -397,7 +405,7 @@ export async function mountStableView(host){
   // show: the ranch page can change the buddy without leaving (its row of heads, 2026-10-05), so the model of the one
   // asked for is loaded first; a later request wins, and nothing is shown once the view is gone.
   let gone=false;
-  if(window.__stable)window.__stable.act=(kind,t=.7,img)=>{setFood(img);job={kind,t,ate:false,peaked:true};};   // dev (?debug): jump into an act at t s (a hidden tab draws one frame at a time)
+  if(window.__stable){window.__stable.act=(kind,t=.7,img)=>{setFood(img);job={kind,t,ate:false,peaked:true};};Object.defineProperty(window.__stable,'spin',{get:()=>spin,configurable:true});}   // dev (?debug): jump into an act at t s (a hidden tab draws one frame at a time)
   const api={show:()=>{const c=PLAYER_LOOK.coat;Promise.all([preloadKeys(needs()),preloadBuddies([c])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
     react(kind,onPeak,foodImg){if(job||queued||!ACTS[kind])return;api.wake();if(kind==='feed')setFood(foodImg);const go=()=>{job={kind,t:0,ate:false,peaked:false,onPeak};};
       if(fore||hind)queued=go;else go();},

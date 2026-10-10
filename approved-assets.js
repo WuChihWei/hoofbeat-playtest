@@ -8,7 +8,7 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-70';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-77';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
@@ -56,6 +56,9 @@ export const COATS=Object.freeze([
   // her face is in its wool (seen from the side at a jump's top, in a gallop and in a sprint).
   {name:'Llama',species:'llama',model:'animal_part/llama/HOOFBEAT_Llama_Mobile.glb',forward:.3},
   {name:'Rhino',species:'rhino',model:'animal_part/rhino/HOOFBEAT_Rhino_Mobile.glb'},
+  {name:'Bear',species:'bear',model:'animal_part/bear/HOOFBEAT_Bear_Mobile.glb'},
+  {name:'Zebra',species:'zebra',model:'animal_part/zebra/HOOFBEAT_Zebra_Mobile.glb'},   // modelled plain: its stripes, the bear's muzzle and the cow's patches are drawn (MARKS)
+  {name:'Cow',species:'cow',model:'animal_part/cow/HOOFBEAT_Cow_Mobile.glb'},
 ]);
 // Their models load only for a player who rides or looks at one (0.9 MB each; rivals are horses, so the _Far files stay unused).
 export const preloadBuddies=coats=>preloadModels(coats.map(c=>COATS[c]?.model).filter(Boolean));
@@ -83,8 +86,11 @@ export const preloadRanchBuddies=coats=>preloadModels([...new Set(coats.map(ranc
 const EYE_MATS=['Buddy_Eye','Horse_Eye','Horse_Iris','Horse_Pupil'];
 const EYES={
   horse:{open:.95,shut:-.72,curve:.45,lash:.9,iris:{color:['#5e3822','#26140c'],size:[1,.47],aim:[.48591,-.19938],turn:.25}},   // aim: where its pupil faces point + [.2,-.1], to the digit (the horse looks as it did before EYES)
-  llama:{lidColor:'#f1dfcb',open:.95,shut:-.55,curve:.45,lash:.9,iris:{color:['#17110f','#0a0707'],size:[.84,.4],aim:[.9,-.14],turn:.1}},   // black: its pupil does not show
-  rhino:{lidColor:'#a09089',open:.95,shut:-.62,curve:.25,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.86,.58],aim:[.72,-.18],turn:.1,white:1}}};   // white: its lids are folds with gaps between them
+  llama:{lidColor:'#f1dfcb',open:.42,low:-.38,shut:-.55,curve:.6,lash:.9,iris:{color:['#17110f','#0a0707'],size:[.6,.34],aim:[.9,-.14],turn:.1}},   // the sheet: a small almond eye, lids above and below   // black: its pupil does not show
+  rhino:{lidColor:'#a09089',open:.95,shut:-.62,curve:.25,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.86,.58],aim:[.72,-.18],turn:.1,white:1}},
+  bear:{lidColor:'#a5633f',open:.65,low:-.55,shut:-.62,curve:.3,lash:.2,iris:{color:['#3a2216','#1a0f0a'],size:[1,.5],aim:[.9,-.1],turn:.1}},   // the sheet: a dark bead, no white
+  cow:{lidColor:'#f3eee6',open:.95,shut:-.62,curve:.35,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.95,.52],aim:[.75,-.12],turn:.1}},
+  zebra:{lidColor:'#ece3d4',open:.95,shut:-.62,curve:.4,lash:.9,iris:{color:['#2a1a12','#140c08'],size:[.95,.55],aim:[.6,-.15],turn:.1}}};   // white: its lids are folds with gaps between them
 // Coat markings from rest-pose position/normal, so they stay painted on while the skin deforms (concept sheet):
 // dark hooves, soft muzzle and the coat's markings above. Soft-toy shading like the sheet: coat lighter along the back,
 // deeper toward belly and legs. The markings are drawn before <color_fragment> so the baked AO (vertex colour)
@@ -160,6 +166,35 @@ function maneTail(m,c){
   m.customProgramCacheKey=()=>'hoofbeat-tail';
 }
 // Saddle pad (fit_tack.py): diamond quilting like the sheet, drawn from rest position so it stays put while skinned.
+// Markings of the other animals, from rest position (model units: y up, z toward the nose), so they stay painted on
+// while the skin deforms; drawn before <color_fragment> so the baked AO darkens them too. MARKS: material → [cache key,
+// GLSL that sets diffuseColor.rgb from p]; colours linear. The portraits paint the same (animal_portrait.py).
+const NOISE=`float hM(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+  float nM(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hM(i),hM(i+vec3(1,0,0)),f.x),mix(hM(i+vec3(0,1,0)),hM(i+vec3(1,1,0)),f.x),f.y),mix(mix(hM(i+vec3(0,0,1)),hM(i+vec3(1,0,1)),f.x),mix(hM(i+vec3(0,1,1)),hM(i+vec3(1,1,1)),f.x),f.y),f.z);}
+  float cM(float v){return smoothstep(-1.,1.,v/max(fwidth(v)*1.5,1e-4));}`;
+function markings(m,[key,glsl]){m.onBeforeCompile=sh=>{
+    sh.vertexShader='varying vec3 vRest;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvRest=position;');
+    sh.fragmentShader='varying vec3 vRest;\n'+NOISE+'\n'+sh.fragmentShader.replace('#include <color_fragment>',`{vec3 p=vRest;${glsl}}\n#include <color_fragment>`);};
+  m.customProgramCacheKey=()=>'hoofbeat-'+key;m.needsUpdate=true;}
+const MARKS={
+  // the zebra's sheet: broad dark warm-grey bands on cream, about nine down the body leaning back over the rump, across
+  // the neck and the face, rings on the legs; black muzzle and hooves (the model is plain)
+  Zebra_Coat:['zebra7',`float wN=smoothstep(.55,.62,p.z)*smoothstep(1.3,1.38,p.y)*(1.-smoothstep(.95,1.02,p.z)),wH=smoothstep(.95,1.02,p.z)*smoothstep(1.2,1.28,p.y),wL=1.-smoothstep(.8,1.1,p.y);
+    float f=p.z+.5*(p.y-1.3)*(1.-smoothstep(-.9,-.1,p.z));f=mix(f,.83*p.y+.55*p.z,wN);f=mix(f,.69*p.z-.72*p.y,wH);f=mix(f,p.y,wL);f+=.05*sin(p.x*7.+p.y*3.);
+    float k=cM(sin(f*mix(20.,34.,wH))-mix(.1,.55,wH));k=max(k,max(smoothstep(1.76,1.83,p.z),1.-smoothstep(.1,.14,p.y)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.040,.034,.030),k);`],
+  // the bear's sheet: a cream muzzle round the nose
+  Bear_Fur:['bear3',`float k=1.-smoothstep(.26,.34,distance(p*vec3(1.,1.5,1.),vec3(0.,1.8,1.6)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.82,.67,.50),k);`],
+  // the cow's sheet: brown patches on white, the cheeks brown and the face's middle and forelock white, legs white
+  // below the knee; a pink udder
+  Cow_Hide:['cow4',`float n=nM(p*1.6+vec3(2.3,.7,1.1))*.7+nM(p*3.8)*.3,head=smoothstep(.85,1.,p.z);
+    float k=mix(cM(n-.53),smoothstep(.1,.16,abs(p.x))*(1.-smoothstep(1.5,1.65,p.z)),head)*smoothstep(.6,.8,p.y);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.26,.10,.04),k);
+    float u=(1.-smoothstep(.8,.95,p.y))*smoothstep(-.9,-.75,p.z)*(1.-smoothstep(-.35,-.2,p.z))*(1.-smoothstep(.25,.35,abs(p.x)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.82,.47,.41),u);
+    float nose=smoothstep(1.48,1.56,p.z)*(1.-smoothstep(1.45,1.55,p.y));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.79,.40,.33),nose);
+    float nos=1.-smoothstep(.04,.055,length(vec2(abs(p.x)-.09,(p.y-1.42)*1.6))),mouth=(1.-smoothstep(.01,.02,abs(p.y-1.3+.1*abs(p.x))))*(1.-smoothstep(.18,.22,abs(p.x)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.10,.08),nose*max(nos,mouth));`],
+  // the llama's sheet: a small dark nose and a mouth line (the model has neither)
+  Llama_Wool:['llama2',`float nose=1.-smoothstep(.045,.06,length(vec3(p.x,(p.y-2.16)*1.2,p.z-1.43))),mouth=(1.-smoothstep(.008,.016,abs(p.y-1.99-.15*abs(p.x))))*(1.-smoothstep(.09,.12,abs(p.x)))*smoothstep(1.3,1.36,p.z);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.06,.045,.04),max(nose,mouth));`],
+  // the rhino's sheet: two nostrils and a mouth line
+  Rhino_Skin:['rhino2',`float nos=(1.-smoothstep(.045,.06,length(vec2(abs(p.x)-.11,(p.y-.5)*1.4))))*step(1.4,p.z),mouth=(1.-smoothstep(.01,.02,abs(p.y-.36+.1*abs(p.x))))*(1.-smoothstep(.22,.27,abs(p.x)))*smoothstep(1.4,1.48,p.z);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.06,.05,.045),max(nos,mouth));`]};   // the pink nose: the model's own 'muzzle' part is the white blaze down the face
 function quilt(m){
   m.onBeforeCompile=sh=>{
     sh.vertexShader='varying vec3 vQ;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvQ=position;');
@@ -334,6 +369,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
       if(m.name==='Horse_ManeTail'){m.color.set(look.mane);maneTail(m,look);gloss(m);}
       if(player&&PLAYER_LOOK.gear[m.name])m.color.set(PLAYER_LOOK.gear[m.name]);
       if(m.name==='Tack_Pad')quilt(m);
+      if(MARKS[m.name])markings(m,MARKS[m.name]);
       // Toy rider (rider_clean.py): every part carries its sheet colour; the player's gear comes from the Stable,
       // the rivals wear team shirts (Willow green, Luna pink, Hazel orange, Rio blue).
       if(m.name==='Rider_Shirt'&&!player)m.color.set(['#ffffff','#4d9a58','#c23b66','#e08a2e','#4467c4'][variant]);
@@ -394,7 +430,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
 // on its vertices, so it renders as before. Positions are baked through each part's bind matrix (the rider's differs
 // from the horse's). Only the coat, mane/tail and the merged mesh cast shadows. → the new geometries and material, for
 // the caller to dispose. The model's eyes.update no longer applies (the race never calls it).
-const OWN_SHADER=new Set(['Horse_Coat','Horse_ManeTail','Horse_Eye','Buddy_Eye']),RACE_GLOSS=1;   // clay: the race no longer shines the parts up (was .78)
+const OWN_SHADER=new Set(['Horse_Coat','Horse_ManeTail','Horse_Eye','Buddy_Eye',...Object.keys(MARKS)]),RACE_GLOSS=1;   // clay: the race no longer shines the parts up (was .78)
 // Race look, the horse and rider (the city mock-ups, references/style/city_*.webp: a soft velvet toy with a full,
 // stranded tail), added to the coat / mane-tail / merged shaders in the race only (the stable keeps the plain ones):
 //   fuzz     light caught along the silhouette, like a short nap ([coat, hair, rider and tack], × the surface colour)

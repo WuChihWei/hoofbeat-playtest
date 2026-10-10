@@ -49,7 +49,7 @@ export const STAR_REWARD={coins:50,gems:1};   // each star, the first time it is
 // early ones can also be bought sooner. PERKS: what is not a buddy.
 export const STARTERS=Object.freeze([1]);
 export const HORSE_PRICE=Object.freeze({0:{coins:300,gems:2,stage:1},2:{coins:600,gems:3,stage:3},5:{coins:400,gems:2,stars:5},6:{gems:3},7:{coins:800,gems:4,stars:9},4:{gems:5},
-  3:{coins:1400,gems:7,stars:12},8:{gems:9},9:{coins:2400,gems:12,stars:15},10:{gems:12,stage:5},11:{gems:10}});
+  3:{coins:1400,gems:7,stars:12},8:{gems:9},9:{coins:2400,gems:12,stars:15},10:{gems:12,stage:5},11:{gems:10},12:{gems:8},13:{gems:10},14:{gems:8}});
 export const PERKS=Object.freeze({mane:{stage:2,id:'long'},rider:{stage:4}});
 
 export const fresh=()=>({stars:{},owned:[...STARTERS],runs:0,jumps:0,day:null,streak:0});
@@ -163,7 +163,7 @@ function demo(){
   ok(nextStarTime('taipei',2)===23&&nextStarTime('taipei',3)===null,'next star time');
   ok(buy(p,5,'coins',399).fail&&buy(p,5,'coins',400).cost===400&&buy(p,1,'coins',9999).fail,'buying');
   ok(buy(p,6,'coins',99999).fail&&buy(p,6,'gems',2).fail&&buy(p,6,'gems',3).cost===3&&owns(buy(p,6,'gems',3).p,6),'a special coat: diamonds only');
-  ok(Object.values(HORSE_PRICE).filter(c=>!c.coins).length===5&&Object.values(HORSE_PRICE).every(c=>c.gems>0&&(c.coins||!c.stars)),'five diamond-only buddies (three special coats, the llama, the rhino), none of them a gift by stars');
+  ok(Object.values(HORSE_PRICE).filter(c=>!c.coins).length===8&&Object.values(HORSE_PRICE).every(c=>c.gems>0&&(c.coins||!c.stars)),'five diamond-only buddies (three special coats, the llama, the rhino), none of them a gift by stars');
   p.stars.tokyo=2;f=finish(p,{city:'tokyo',solo:true,result:{...run,seconds:60},today:'2026-10-05'});ok(f.gifts.join()==='5'&&owns(f.p,5),'five stars gift Buckskin');
   ok(restore({owned:[9,77],stars:{taipei:9}}).owned.join()==='1,9,0'&&restore({owned:[1,0,2]}).owned.join()==='1,0,2'&&restore(null).stars.taipei===0&&restore({stars:{taipei:9}}).stars.taipei===3,'restore');
   ok(nextGoal(fresh(),0).kind==='level'&&nextGoal(fresh(),0).city==='tokyo','the next goal of a new player is level 2');

@@ -14,8 +14,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r397';
-import {applyLook,LOOK} from '../visual-style.js?v=r397';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r412';
+import {applyLook,LOOK} from '../visual-style.js?v=r412';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -49,10 +49,13 @@ export const RANCH={
   field:{rail:'#b8834c',post:'#8c5c34',frame:'#7a5030',soil:'#553620',shut:'#b7a184',
     fill:{green:['#4f8f32',.16,.36],ripe:['#bf8a17',.44,.44]},
     earth:{color:'#c8a071',light:'#d6b184',dark:'#b58c5d',round:1.1}},
-  meadow:{tufts:900,flowers:120},              // grass tufts and small flowers sown on the lawns, not on the blocks, the earth or the barn's walk
+  meadow:{tufts:900,flowers:120,clumps:46},              // grass tufts and small flowers sown on the lawns, not on the blocks, the earth or the barn's walk
   far:420,                                    // m of grass round the strip, so no view shows where the ground ends
   // Props on the ground (2026-10-10, the user's reference: hay bales, barrels, logs, rocks about the yard): kind, x, y, turn.
-  props:[['bales',12.6,-3.2,.2],['barrel',-11.6,1.6,0],['barrel',-12.4,.6,0],['logs',-11,-6.5,.5],['rocks',-9.5,-9,0],['rocks',22,-14,.6],['logs',21.5,-9.5,-.4]],
+  // plants: the trees' models in turn after the scene's round one; a prop of these kinds is that model, `tall` m high, on a patch [half width, half depth]
+  plants:{trees:['Tree_A','Pine_A','Tree_B','Pine_B'],hedge:{mesh:'Hedge',tall:.9,patch:[1.5,.5]},cone:{mesh:'Cone',tall:1.5,patch:[.5,.5]},urn:{mesh:'Urn',tall:1.3,patch:[.4,.4]}},
+  props:[['bales',12.6,-3.2,.2],['barrel',-11.6,1.6,0],['barrel',-12.4,.6,0],['logs',-11,-6.5,.5],['rocks',-9.5,-9,0],['rocks',22,-14,.6],['logs',21.5,-9.5,-.4],
+    ['urn',-2.7,-.55,0],['urn',2.7,-.55,0],['hedge',-6.2,-.55,0],['hedge',6.2,-.55,0],['cone',-9.4,-.55,0],['cone',9.6,-.55,0]],   // the user's topiary set, along the barn's front
   grid:2.1,room:.9,                           // waypoints every `grid` m, `room` m clear of everything
   lawn:{color:'#84bd4a',light:'#9ad05a',dark:'#72aa40',tile:28},   // the ground: a warm, full green, soft patches a few metres across
 };
@@ -77,7 +80,7 @@ export function layout({pens=[[2,2],[2,1]],dorms=1}={}){
   fences.forEach((f,i)=>{const x0=xs[i],yb=f[1]-S.lane-.6,xn=i+1<xs.length?xs[i+1]:xl;earth.push([x0,yb,x0+S.lane,i?fences[i-1][1]-.6:S.street[0]],[x0,yb,xn+S.lane,f[1]-.6]);});
   earth.push([xl,lawn[1]-6,xl+S.lane,fences.at(-1)[1]-.6]);
   const barns=Array.from({length:dorms},(_,k)=>k*S.dorm),back=S.barn[3]+(dorms-1)*S.dorm;
-  const blocks=[...barns.map(d=>[S.barn[0],S.barn[1]+d,S.barn[2],S.barn[3]+d]),S.shed,S.trough,...fences,...RANCH.props.map(([,x,y])=>[x-1.4,y-1.2,x+1.4,y+1.2])];   // a prop takes about a 3 × 2.5 m patch
+  const blocks=[...barns.map(d=>[S.barn[0],S.barn[1]+d,S.barn[2],S.barn[3]+d]),S.shed,S.trough,...fences,...RANCH.props.map(([k,x,y])=>{const [w,d]=RANCH.plants[k]?.patch??[1.4,1.2];return [x-w,y-d,x+w,y+d];})];   // a prop takes about a 3 × 2.5 m patch, a plant its own
   // Trees: clumps along both edges of the picture (the picture is narrower nearer the camera), beside each dormitory, a row behind the last.
   let n=0;const rnd=()=>(n=(n*9301+49297)%233280)/233280,trees=[],edge=v=>Math.max(8.4,8.6+v*.13);
   for(let k=0;k<2;k++)for(let v=vl-S.lawn[1]/2-12;v<6;v+=5.5+rnd()*2)trees.push([...seen((k?1:-1)*(edge(v)+rnd()*2.5),v+rnd()*2),5.2+rnd()*1.4]);
@@ -103,8 +106,8 @@ function lawn({color,light,dark}=RANCH.lawn){
     for(const dx of [-n,0,n])for(const dy of [-n,0,n]){const p=g.createRadialGradient(x+dx,y+dy,0,x+dx,y+dy,r);p.addColorStop(0,col);p.addColorStop(1,col+'00');g.globalAlpha=a;g.fillStyle=p;g.fillRect(x+dx-r,y+dy-r,r*2,r*2);}}
   return new THREE.CanvasTexture(c);
 }
-const loadScene=()=>pending??=Promise.all([new GLTFLoader().loadAsync(url('models/ranch/Ranch.glb')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Wheat.glb'))])
-  .then(([g,wheat])=>({scene:g.scene,grass:lawn(),wheat:wheat.scene}),e=>{pending=null;throw e;});
+const loadScene=()=>pending??=Promise.all([new GLTFLoader().loadAsync(url('models/ranch/Ranch.glb')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Wheat.glb')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Plants.glb'))])
+  .then(([g,wheat,plants])=>({scene:g.scene,grass:lawn(),wheat:wheat.scene,plants:plants.scene}),e=>{pending=null;throw e;});
 // What the overview needs, asked for ahead of time (home.js: as soon as the game is open). coats: the buddies out.
 export const preloadRanch=coats=>Promise.all([loadScene(),preloadRanchBuddies(coats)]);
 
@@ -212,33 +215,35 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   {const parts=[],c=new THREE.Color(),m4=new THREE.Matrix4(),add=(g,x,y,z,col,turn=0,sx=1,sy=1,sz=1)=>{g=g.toNonIndexed();g.deleteAttribute('uv');c.set(col);const n=g.attributes.position.count,a=new Float32Array(n*3);for(let i=0;i<n;i++)a.set([c.r,c.g,c.b],i*3);g.setAttribute('color',new THREE.BufferAttribute(a,3));
       g.applyMatrix4(m4.compose(at(x,y).setY(z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),turn),new THREE.Vector3(sx,sy,sz)));parts.push(g);};
     const HAY='#e9c75a',BAND='#c99a3a',WOOD='#8c5c34',CUT='#d9b27a',STONE='#b9b6a8';
+    const plant=(name,x,y,turn,h)=>{const src=assets.plants.getObjectByName(name)?.geometry;if(!src)return;const g0=src.index?src.toNonIndexed():src,n=g0.attributes.position.count,g=new THREE.BufferGeometry();   // a plant keeps its own vertex colours
+      for(const k of ['position','normal','color']){const A=g0.attributes[k],out=new Float32Array(n*3);for(let i=0;i<n;i++)out.set([A.getX(i),A.getY(i),A.getZ(i)],i*3);g.setAttribute(k,new THREE.BufferAttribute(out,3));}
+      g.applyMatrix4(m4.compose(at(x,y).setY(.04),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),turn),new THREE.Vector3(h,h,h)));parts.push(g);};
     for(const [kind,x,y,turn] of L.props){
+      if(RANCH.plants[kind]){plant(RANCH.plants[kind].mesh,x,y,turn,RANCH.plants[kind].tall);continue;}
       if(kind==='bales'){for(const [dx,dy,dz] of [[-.7,0,.45],[.7,0,.45],[0,.95,.45],[0,.45,1.35]]){const cx=x+dx*Math.cos(turn)-dy*Math.sin(turn),cy=y+dx*Math.sin(turn)+dy*Math.cos(turn);add(new THREE.BoxGeometry(1.3,.9,.9),cx,cy,dz,HAY,turn);add(new THREE.BoxGeometry(1.32,.14,.92),cx,cy,dz,BAND,turn);}}
       if(kind==='barrel'){add(new THREE.CylinderGeometry(.42,.38,1.05,10),x,y,.52,WOOD,turn);add(new THREE.CylinderGeometry(.44,.44,.08,10),x,y,.3,'#4a4a50',turn);add(new THREE.CylinderGeometry(.44,.44,.08,10),x,y,.78,'#4a4a50',turn);}
       if(kind==='logs'){for(const [dx,dz] of [[-.4,.3],[.4,.3],[0,.82]]){const cx=x+dx*Math.cos(turn),cy=y+dx*Math.sin(turn);add(new THREE.CylinderGeometry(.32,.32,2.6,9).rotateX(Math.PI/2),cx,cy,dz,WOOD,turn);add(new THREE.CylinderGeometry(.26,.26,2.62,9).rotateX(Math.PI/2),cx,cy,dz,CUT,turn);}}
       if(kind==='rocks'){add(new THREE.IcosahedronGeometry(.7,0),x,y,.25,STONE,turn,1,.6,1);add(new THREE.IcosahedronGeometry(.45,0),x+.9,y-.3,.18,STONE,turn+.8,1,.6,1);add(new THREE.IcosahedronGeometry(.3,0),x-.6,y+.7,.12,STONE,turn+2,1,.6,1);}}
     if(parts.length){const m=new THREE.Mesh(keep(mergeGeometries(parts)),SOLID);m.castShadow=m.receiveShadow=true;parts.forEach(g=>g.dispose());scene.add(m);}}
-  // The trees: the model's round tree, and every third one a pine made here (three cones on a trunk, coloured on its
-  // vertices: the user's reference mixes the two; 2026-10-10, 「最低mvp驗證就好」: no pine model), each kind drawn once.
+  // The trees: five kinds in turn, the scene's round tree and the user's four (Ranch_Plants.glb, models/ranch/
+  // build_plants.py: 1 unit tall, coloured on their vertices), each kind drawn once.
   const one=assets.scene.getObjectByName('TREES')?.children[0],trees=[];
-  if(one){const g=one.geometry,b=g.boundingBox??(g.computeBoundingBox(),g.boundingBox),tall=b.max.y-b.min.y,wide=(b.max.x-b.min.x)/2/tall;
-    const pine=(()=>{const parts=[],c=new THREE.Color(),tint=(geo,col)=>{geo=geo.toNonIndexed();geo.deleteAttribute('uv');c.set(col);const n=geo.attributes.position.count,a=new Float32Array(n*3);for(let i=0;i<n;i++)a.set([c.r,c.g,c.b],i*3);geo.setAttribute('color',new THREE.BufferAttribute(a,3));parts.push(geo);};
-      tint(new THREE.CylinderGeometry(.09,.12,.3,7).translate(0,.15,0),'#8a5a32');
-      [[.46,.5,.2,'#4f8f3a'],[.38,.45,.5,'#5a9c3e'],[.28,.42,.78,'#6aae44']].forEach(([r,h,y,col])=>tint(new THREE.ConeGeometry(r,h,8).translate(0,y+h/2,0),col));
-      const geo=mergeGeometries(parts);parts.forEach(x=>x.dispose());return keep(geo);})();   // 1.2 units tall, the crown .46 wide
-    const isPine=i=>i%3===2,round=new THREE.InstancedMesh(g,SOLID,L.trees.filter((_,i)=>!isPine(i)).length),pines=new THREE.InstancedMesh(pine,SOLID,L.trees.filter((_,i)=>isPine(i)).length),m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),n=[0,0];
-    L.trees.forEach(([x,y,h],i)=>{if(isPine(i)){pines.setMatrixAt(n[1]++,m.compose(at(x,y).setY(.04),q.setFromAxisAngle(up,i*2.4),new THREE.Vector3(h/1.2,h/1.2,h/1.2)));trees.push({x,y,r:.46*h/1.2});}
-      else{round.setMatrixAt(n[0]++,m.compose(at(x,y).setY(.04-b.min.y*h/tall),q.setFromAxisAngle(up,i*2.4),new THREE.Vector3(h/tall,h/tall,h/tall)));trees.push({x,y,r:wide*h});}});
-    for(const t of [round,pines]){t.castShadow=true;t.frustumCulled=false;scene.add(t);}}
+  {const kinds=[one,...RANCH.plants.trees.map(n=>assets.plants.getObjectByName(n))].filter(Boolean).map(o=>{const g=o.geometry,b=g.boundingBox??(g.computeBoundingBox(),g.boundingBox),tall=b.max.y-b.min.y;return {g,tall,low:b.min.y,wide:(b.max.x-b.min.x)/2/tall};});
+    const m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0);
+    kinds.forEach((k,j)=>{const mine=L.trees.map((t,i)=>[t,i]).filter(([,i])=>i%kinds.length===j),mesh=new THREE.InstancedMesh(k.g,SOLID,mine.length);
+      mine.forEach(([[x,y,h],i],n)=>{const sc=h/k.tall;mesh.setMatrixAt(n,m.compose(at(x,y).setY(.04-k.low*sc),q.setFromAxisAngle(up,i*2.4),new THREE.Vector3(sc,sc,sc)));});
+      mesh.castShadow=true;mesh.frustumCulled=false;scene.add(mesh);});
+    if(kinds.length)L.trees.forEach(([x,y,h],i)=>trees.push({x,y,r:kinds[i%kinds.length].wide*h}));}
   // The lawns: tufts of three blades and small flowers, each kind drawn once (unlit: a blade seen from behind went
   // dark), anywhere on the strip that is not a block, the earth or the barn's walk.
   {let seed=11;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647,walks=L.barns.map(d=>[-10.4,.5+d,10.5,4.2+d]),off=(x,y)=>[...L.blocks,...L.earth,...walks].some(([a,b,c,d])=>x>a-.3&&x<c+.3&&y>b-.3&&y<d+.3);
-    const sow=(geo,count,colours,size)=>{const X=[Math.min(-20,L.lawn[0]),Math.max(20,L.lawn[2])];const mat=keep(new THREE.MeshBasicMaterial({side:THREE.DoubleSide})),mesh=new THREE.InstancedMesh(keep(geo),mat,count),m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),c=new THREE.Color();
+    const sow=(geo,count,colours,size,own)=>{const X=[Math.min(-20,L.lawn[0]),Math.max(20,L.lawn[2])];const mat=own??keep(new THREE.MeshBasicMaterial({side:THREE.DoubleSide})),mesh=new THREE.InstancedMesh(keep(geo),mat,count),m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),c=new THREE.Color();
       for(let i=0;i<count;i++){let x,y;do{x=X[0]+rnd()*(X[1]-X[0]);y=L.lawn[1]-2+rnd()*(L.back+3-L.lawn[1]);}while(off(x,y));const k=size[0]+rnd()*(size[1]-size[0]);
-        mesh.setMatrixAt(i,m.compose(at(x,y).setY(.04),q.setFromAxisAngle(up,rnd()*6.28),new THREE.Vector3(k,k,k)));mesh.setColorAt(i,c.set(colours[i%colours.length]));}
+        mesh.setMatrixAt(i,m.compose(at(x,y).setY(.04),q.setFromAxisAngle(up,rnd()*6.28),new THREE.Vector3(k,k,k)));if(colours)mesh.setColorAt(i,c.set(colours[i%colours.length]));}
       mesh.frustumCulled=false;scene.add(mesh);};
     const blades=new THREE.BufferGeometry();blades.setAttribute('position',new THREE.Float32BufferAttribute([-.09,0,0,.0,0,.03,-.13,.42,.02, .02,0,-.03,.11,0,0,.07,.5,-.03, -.03,0,.06,.05,0,.08,.16,.36,.1],3));
     sow(blades,Math.round(RANCH.meadow.tufts*(L.back-L.lawn[1])/42*1.3),['#72aa40','#84bd4a','#a3d660','#b6e26e'],[.55,1.1]);
+    {const clump=assets.plants.getObjectByName('Grass')?.geometry;if(clump)sow(clump,Math.round(RANCH.meadow.clumps*(L.back-L.lawn[1])/42),null,[.45,.85],SOLID);}   // the user's grass model, a few big clumps among the tufts
     sow(new THREE.CircleGeometry(.075,6).rotateX(-Math.PI/2.6).translate(0,.2,0),Math.round(RANCH.meadow.flowers*(L.back-L.lawn[1])/42*1.3),['#ffffff','#f6e27a','#c9b6f2','#ffffff'],[.8,1.4]);}
   // The wheat: every stalk of every bed that can be used has its place (a little off its row, turned its own way); a
   // stage's mesh is drawn once, with the stalks of the beds at that stage; under them a block, so a bed reads as one
