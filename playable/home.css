@@ -428,6 +428,10 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .ranch-hint{position:absolute;z-index:3;left:50%;bottom:calc(88 * var(--u));transform:translateX(-50%);margin:0;padding:var(--ui-s2) var(--ui-s4);border-radius:999px;font-size:calc(13 * var(--u));white-space:nowrap;pointer-events:none}
 .ranch-shots{position:absolute;z-index:3;left:var(--ui-margin);right:var(--ui-margin);top:calc(76 * var(--u))}.ranch-shots button{height:calc(38 * var(--u));font-size:calc(14 * var(--u))}
 .ranch-hint[hidden]{display:none}
+.ranch-crops{position:absolute;z-index:3;right:var(--ui-margin);top:calc(134 * var(--u));display:flex;gap:var(--ui-gap)}.ranch-crops[hidden]{display:none}
+.ranch-eye{position:absolute;z-index:3;right:var(--ui-margin);bottom:calc(140 * var(--u));background:var(--ui-glass-dark);color:#fff}
+.ranch-eye[aria-pressed="true"]{background:var(--ui-accent,#7be06a);color:#000}
+.ui-wallet.crop{padding-left:calc(6 * var(--u))}.ui-wallet.crop img{width:calc(22 * var(--u));height:calc(22 * var(--u));margin-right:calc(4 * var(--u));object-fit:contain}
 /* ---- the dormitory = the close-up page (2026-10-09): the ranch's tabs under its header (the row of heads moves down a row); the stall's door across the bottom, in front of the buddy:
    the 3D barn's own door, rendered to a picture (models/ranch/render_door.py), only its top showing over the care card; the painted plate is barn-plate.webp, painted for this camera (stable-view CAM) ---- */
 .page-stable .st-tray{top:calc(max(calc(20 * var(--u)),calc(env(safe-area-inset-top) + 6 * var(--u))) + 114 * var(--u))}

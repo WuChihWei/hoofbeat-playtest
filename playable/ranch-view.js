@@ -14,8 +14,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r383';
-import {applyLook,LOOK} from '../visual-style.js?v=r383';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r385';
+import {applyLook,LOOK} from '../visual-style.js?v=r385';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -26,7 +26,7 @@ export const RANCH={
   fov:45,ease:4.5,                            // the camera's lens; how fast it glides to a shot (1/s)
   // The camera: `all` looks up the strip (el: how steeply down; az: a little from the right, so the barn shows a side;
   // dist: the field's width fills the picture); `field` looks at the beds from the front, steeper.
-  cam:{all:{dist:39,az:20,el:38},field:{el:48},near:{h:3.4,fov:60}},   // near: the low shot, from the lane beside the first pen, h m up, across the second pen and the lawn to the far country, a wider lens (layout() places it)   // az: from the right, like a farm game's view (the user's reference): the barn shows its front and a side, the plots are diamonds
+  cam:{all:{dist:48,az:20,el:38},field:{el:48},near:{h:3.4,fov:60}},   // near: the low shot, from the lane beside the first pen, h m up, across the second pen and the lawn to the far country, a wider lens (layout() places it)   // az: from the right, like a farm game's view (the user's reference): the barn shows its front and a side, the plots are diamonds
   // Where a buddy may stand is also where the opening view shows it: inside this part of the picture (-1…1 across and
   // up, on the tallest phone: `aspect`), clear of the header and tabs above and the nav below.
   seen:{aspect:390/844,x:[-.95,.95],y:[-.74,.56]},
@@ -39,7 +39,7 @@ export const RANCH={
   // bed: a bed's soil [across, along], pitch: bed to bed, pad: the outer beds to the fence. front: the opening view looks
   // this far up the picture from the lawn's middle (a long strip's barn is out of the top: a drag brings it in). Any
   // more dormitories `dorm` m behind the first.
-  strip:{bed:[3.5,3.2],pitch:[4.1,4.1],pad:1,pens:[7.3,4.2],street:[-5.6,-1.6],lane:3.6,lawn:[26,10],front:20.7,below:1,top:.31,dorm:17,
+  strip:{bed:[3.5,3.2],pitch:[4.1,4.1],pad:1,pens:[7.3,4.2],street:[-5.6,-1.6],lane:3.6,lawn:[26,10],front:28,below:1,top:.31,dorm:17,
     walk:.6,barn:[-10.6,3.1,10.5,13.4],shed:[10.3,.3,14.6,13.1],trough:[11.1,-1.2,13.3,-.1]},
   stalks:{rows:8,cols:11,size:[3.1,2.8],fat:1.55},
   stalls:{x:[-7.5,-4.5,-1.5,1.5,4.5,7.5],hinge:-1.29,y:3.66,open:-1.2,stand:6},   // the dormitory's stalls (the model's): their middles, the door's hinge from a middle and its y, how far a door swings (rad), where a buddy in stands (y)   // a bed is sown with rows × cols stalks (Ranch_Wheat.glb: one stalk per stage), drawn fatter than modelled (the ears are what is seen from above)

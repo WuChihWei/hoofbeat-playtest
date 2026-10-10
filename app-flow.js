@@ -1,8 +1,8 @@
 // App entry: the home shell (routes Home / Race / Stable / Tracks / Settings). ?race=1 jumps straight into a race.
-import './i18n.js?v=r383';   // the language switch: translates the page's texts as they appear
-import {startSlice} from './playable/slice-app.js?v=r383';
-import {startHome} from './playable/home.js?v=r383';
-import {watchErrors} from './playtest.js?v=r383';
+import './i18n.js?v=r385';   // the language switch: translates the page's texts as they appear
+import {startSlice} from './playable/slice-app.js?v=r385';
+import {startHome} from './playable/home.js?v=r385';
+import {watchErrors} from './playtest.js?v=r385';
 
 watchErrors();   // playtest build: script errors go into the test log (Settings → 測試紀錄)
 
