@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r437';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r437';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r437';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r437';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r437';
-import {installApprovedEnvironment} from './approved-environment.js?v=r437';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r437';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r437';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r437';
-import {turnAt} from './track-projection.js?v=r437';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r437';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r437';
+import {roadHalfWidth} from './track-presentation.mjs?v=r439';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r439';
+import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r439';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r439';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r439';
+import {installApprovedEnvironment} from './approved-environment.js?v=r439';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r439';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r439';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r439';
+import {turnAt} from './track-projection.js?v=r439';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r439';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r439';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -136,7 +136,7 @@ export class ChaseRenderer {
     }
     // preserveDrawingBuffer only for the dev capture pages (capture: true): it costs a copy every frame on phones.
     this.r = new THREE.WebGLRenderer({canvas, antialias: true, alpha: false, preserveDrawingBuffer: capture, powerPreference: 'high-performance'});
-    this.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, PHONE ? 1.5 : 2));   // a phone: 1.5 (2026-10-10: at 2 the user's iPhone held its frames but ran warm)   // 2 and antialiased on a phone too (2026-10-10: at 1.25 with no antialiasing the gold rim round the rider stepped like low resolution; the user's iPhone drew a frame in 4 ms of its 33). A slow phone comes down below
+    this.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, +new URLSearchParams(location.search).get('res') || (PHONE ? 1.5 : 2)));   // ?res=1 | 1.25 | 1.5: to compare on a phone (2026-10-10)   // a phone: 1.5 (2026-10-10: at 2 the user's iPhone held its frames but ran warm)   // 2 and antialiased on a phone too (2026-10-10: at 1.25 with no antialiasing the gold rim round the rider stepped like low resolution; the user's iPhone drew a frame in 4 ms of its 33). A slow phone comes down below
     this.r.outputColorSpace = THREE.SRGBColorSpace;
     this.r.toneMapping = THREE.ACESFilmicToneMapping;
     this.r.toneMappingExposure = .98;
