@@ -6,15 +6,17 @@
 // Shop items (price in coins) go into the same bag: foods are eaten by Feed (the one picked in Items), care items are
 // used from Items; two of them are one-race buffs kept on the horse (`buff`, spent by the next race).
 // Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1). Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL} from './playable/slice-config.mjs?v=r385';
+import {MAX_LEVEL} from './playable/slice-config.mjs?v=r389';
 export const ITEMS=[
-  // food: +Hunger, +Mood (stamina: +Stamina)
-  {id:'hay',name:'乾草',kind:'food',food:25,mood:2,price:20},{id:'carrot',name:'紅蘿蔔',kind:'food',food:15,mood:6,price:15},
-  {id:'apple',name:'蘋果',kind:'food',food:15,mood:8,price:15},{id:'feed',name:'飼料',kind:'food',food:35,mood:2,price:35},
-  {id:'oats',name:'燕麥',kind:'food',food:30,mood:3,price:30},{id:'alfalfa',name:'苜蓿',kind:'food',food:28,mood:4,price:30},
+  // food: +Hunger, +Mood (stamina: +Stamina). Wheat, grown on the ranch, is the food that fills (below); what the shop
+  // sells are treats, each with something of its own (2026-10-10, the user: 「小麥是基本食物，其他的食物道具都是特殊的」):
+  // the plain filling foods (hay, pellets, oats, alfalfa, beet) are no longer sold; what a save holds of them can be fed.
+  {id:'hay',name:'乾草',kind:'food',food:25,mood:2},{id:'carrot',name:'紅蘿蔔',kind:'food',food:15,mood:6,price:15},
+  {id:'apple',name:'蘋果',kind:'food',food:15,mood:8,price:15},{id:'feed',name:'飼料',kind:'food',food:35,mood:2},
+  {id:'oats',name:'燕麥',kind:'food',food:30,mood:3},{id:'alfalfa',name:'苜蓿',kind:'food',food:28,mood:4},
   {id:'sugar',name:'方糖',kind:'food',food:5,mood:12,price:15},{id:'mint',name:'薄荷糖',kind:'food',food:5,mood:10,price:15},
   {id:'cookie',name:'夥伴餅乾',kind:'food',food:10,mood:10,price:25},{id:'pear',name:'西洋梨',kind:'food',food:15,mood:7,price:20},
-  {id:'watermelon',name:'西瓜',kind:'food',food:12,mood:9,price:25},{id:'beet',name:'甜菜粕',kind:'food',food:35,mood:2,price:35},
+  {id:'watermelon',name:'西瓜',kind:'food',food:12,mood:9,price:25},{id:'beet',name:'甜菜粕',kind:'food',food:35,mood:2},
   {id:'mash',name:'溫熱麥麩粥',kind:'food',food:25,mood:6,stamina:10,price:45},
   // care: used from Items
   {id:'shampoo',name:'洗毛精',kind:'care',mood:5,clean:40,price:40},{id:'vitamin',name:'維他命',kind:'care',stamina:20,price:50},
@@ -22,14 +24,15 @@ export const ITEMS=[
   {id:'flyspray',name:'防蚊噴霧',kind:'care',mood:8,price:30},{id:'balm',name:'舒緩藥膏',kind:'care',stamina:15,mood:5,price:45},
   {id:'ribbonkit',name:'編鬃套組',kind:'care',mood:20,price:80},
   {id:'energybar',name:'能量棒',kind:'care',buff:{energy:10},price:60},{id:'luckyshoe',name:'幸運符',kind:'care',buff:{bonus:2},price:120},
-  // grown on the ranch, not sold (farm.mjs): wheat is reaped from the field; a seed turns up when a buddy is fed
-  {id:'wheat',name:'小麥',kind:'food',food:30,mood:6},{id:'seed',name:'小麥種子',kind:'seed'},
+  // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
+  // from a race (2026-10-10, the user: 「種子靠金幣買或比賽買」; a feed used to turn one up by chance)
+  {id:'wheat',name:'小麥',kind:'food',food:30,mood:6},{id:'seed',name:'小麥種子',kind:'seed',price:10},
   // tools (not sold)
   {id:'brush',name:'刷子',kind:'tool'},{id:'bucket',name:'水桶',kind:'tool'},{id:'towel',name:'毛巾',kind:'tool'},
 ];
 export const itemEffect=it=>[it.food&&`飽足 +${it.food}`,it.mood&&`心情 +${it.mood}`,it.stamina&&`精神 +${it.stamina}`,it.clean&&`清潔 +${it.clean}`,
   it.buff?.energy&&`下一場起跑能量 +${it.buff.energy}`,it.buff?.bonus&&`下一場名次獎勵 ×${it.buff.bonus}`].filter(Boolean).join(' · ');
-const STARTER={hay:24,carrot:18,apple:12,feed:8,brush:5,bucket:10,towel:6,seed:2};   // seed: two to start the field with   // everything else starts at 0
+const STARTER={wheat:8,seed:3,carrot:3,apple:2,brush:5,bucket:10,towel:6};   // wheat to feed with and seeds to sow at the start, a few treats; everything else starts at 0
 const COOLDOWN=1200;
 export const freshCare=()=>({hunger:60,stamina:80,mood:70,clean:70,xp:0,last:0,at:0});   // at: when stamina was last settled
 const STATS=['hunger','stamina','mood','clean'];
@@ -105,12 +108,12 @@ export function afterSolo(r,{stars,perfect=0}){const xp=SOLO_XP[stars-1]+Math.fl
 
 // -> {care, items, msg} or {fail} (nothing changes on a fail). food: the item picked in the Items panel.
 // Brushing cleans the coat (+30) and cheers a little (+6 mood).
-export function careAction(record,items,action,food='carrot',now=Date.now()){
+export function careAction(record,items,action,food='wheat',now=Date.now()){
   if(now-record.last<COOLDOWN)return {fail:'慢一點，讓牠休息一下'};
   const r={...record,last:now},bag={...items};
   if(action==='feed'){
-    const it=ITEMS.find(i=>i.id===food&&i.food&&bag[i.id]>0)||ITEMS.find(i=>i.food&&bag[i.id]>0);
-    if(!it)return {fail:'沒有飼料了'};
+    const it=ITEMS.find(i=>i.id===food&&i.food&&bag[i.id]>0);   // the food asked for and no other: a treat is never eaten for want of wheat
+    if(!it)return {fail:'沒有小麥了：去麥田收成'};
     if(r.hunger>=100)return {fail:'已經吃飽了'};
     bag[it.id]--;r.hunger=clamp(r.hunger+it.food);r.mood=clamp(r.mood+it.mood);r.stamina=clamp(r.stamina+(it.stamina||0));
     return {care:r,items:bag,msg:`吃了${it.name}`,item:it.id};

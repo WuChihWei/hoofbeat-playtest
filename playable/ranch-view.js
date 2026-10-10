@@ -14,8 +14,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r385';
-import {applyLook,LOOK} from '../visual-style.js?v=r385';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r389';
+import {applyLook,LOOK} from '../visual-style.js?v=r389';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -170,15 +170,20 @@ export function route(spots,from,to){
   const path=[];for(let n=to;n!==from;n=back.get(n))path.unshift(n);return path;
 }
 
-// buddies: [{id, coat, hair}], everyone out; inside: the dormitory's stalls, six a dormitory, each a buddy that is in
-// ({id, coat, hair}) or null: its door is shut when a buddy is in, open when not (2026-10-10, the user: 「把一些動物放在
-// 宿舍裡，若有動物則房門關若沒動物則房門開」). pens, dorms: the pens of beds and how many dormitories there are
-// (layout); open: how many of the beds can be used (the rest are shown shut). shot: 'all' or 'field', what to open on.
-// onPick(id): a buddy was tapped. onBed(i, x, y): a bed that can be used was tapped, at (x, y) on the screen.
-// onSwipe(±1): a sideways swipe. → {shot(name), field(grown), dispose}; resolves with the first frame drawn, and only
-// then is the canvas put on the page (nothing is seen being put together).
-export async function mountRanchView(host,{buddies=[],inside=[],pens,dorms=1,open,onPick,onBed,onSwipe,shot='all'}={}){
-  const [assets]=await Promise.all([loadScene(),preloadRanchBuddies([...buddies,...inside.filter(Boolean)].map(b=>b.coat))]),L=layout({pens,dorms}),S=RANCH.strip,F=RANCH.field;open??=L.beds.length;
+// buddies: [{id, coat, hair, stall?, at?}]: everyone drawn. stall: the stall it is in (0…, six a dormitory), or none:
+// it is out, at `at` [x, y] if given, else on a free spot. doors: {stall: true | false}, the doors the player has set
+// open or shut; the others are shut when a buddy is in and open when not. The player moves the buddies: a drag
+// carries one over the ground and sets it down where the finger lifts, or in the stall it is dropped on (2026-10-10,
+// the user: 「拖移牧場裡的動物並放到任意地點…而不是點擊便進入宿舍」「點擊宿舍的門可以打開或關閉」「拖拉動物進去或出來」);
+// a drop on a pen, a building, a tree or a stall already taken puts it back. A buddy out strolls on from where it is.
+// pens, dorms: the pens of beds and how many dormitories there are (layout); open: how many of the beds can be used
+// (the rest are shown shut). shot: 'all', 'field' or 'near', what to open on.
+// onMove(id, {stall} | {at: [x, y]}): a buddy was set down. onDoor(stall, open): a door was tapped. onBed(i, x, y):
+// a bed that can be used was tapped, at (x, y) on the screen. onSwipe(±1): a sideways swipe.
+// → {shot(name), field(grown), dispose}; resolves with the first frame drawn, and only then is the canvas put on the
+// page (nothing is seen being put together).
+export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open,onMove,onDoor,onBed,onSwipe,shot='all'}={}){
+  const [assets]=await Promise.all([loadScene(),preloadRanchBuddies(buddies.map(b=>b.coat))]),L=layout({pens,dorms}),S=RANCH.strip,F=RANCH.field;open??=L.beds.length;
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;r.domElement.setAttribute('aria-hidden','true');
   const scene=new THREE.Scene(),midY=(L.lawn[1]+L.back)/2,span=(L.back-L.lawn[1])/2+30,rad0=Math.PI/180;
@@ -192,11 +197,12 @@ export async function mountRanchView(host,{buddies=[],inside=[],pens,dorms=1,ope
   for(const g of assets.scene.children){if(!['BARN','SHED','YARD'].includes(g.name))continue;
     const flat=new THREE.Group();flat.name=g.name;g.children.forEach(o=>flat.add(o.clone()));const m=merged(flat);keep(m.geometry);
     if(g.name==='BARN')L.barns.forEach(d=>{const b=d?m.clone():m;b.position.z=-d;scene.add(b);});else scene.add(m);}
-  // The stall doors: the model's one door (DOOR: hung at its hinge, the hinge on the stall's left), one on every stall of
-  // every dormitory, shut when a buddy is in, else swung out onto the walk.
-  const D=RANCH.stalls,doorGroup=assets.scene.getObjectByName('DOOR');
+  // The stall doors: the model's one door (DOOR: hung at its hinge, the hinge on the stall's left), one on every stall
+  // of every dormitory; swing(k) sets it as the player left it, or else shut on a buddy and open on an empty stall.
+  const D=RANCH.stalls,doorGroup=assets.scene.getObjectByName('DOOR'),hung=[],set={...doors},stallAt=k=>[D.x[k%D.x.length],L.barns[Math.floor(k/D.x.length)]];
   if(doorGroup){const flat=new THREE.Group();doorGroup.children.forEach(o=>flat.add(o.clone()));const one=merged(flat);keep(one.geometry);
-    L.barns.forEach((d,k)=>D.x.forEach((cx,i)=>{const door=one.clone();door.position.copy(at(cx+D.hinge,D.y+d));door.rotation.y=inside[k*D.x.length+i]?0:D.open;scene.add(door);}));}
+    L.barns.forEach((d,k)=>D.x.forEach((cx,i)=>{const door=one.clone();door.position.copy(at(cx+D.hinge,D.y+d));scene.add(door);hung[k*D.x.length+i]=door;}));}
+  const isOpen=k=>set[k]??!herd.some(b=>b.stall===k),swing=k=>{if(hung[k])hung[k].rotation.y=isOpen(k)?D.open:0;};
   // Made here, one mesh of plain boxes coloured on their vertices: the beds (a frame and its soil; a bed not opened is
   // only pale soil) and the rail fence round each pen, a post every 2.4 m or so.
   {const parts=[],c=new THREE.Color(),box=(x,y,z,w,h,d,col)=>{const g=new THREE.BoxGeometry(w,h,d).toNonIndexed();g.deleteAttribute('uv');g.translate(x,z,-y);c.set(col);
@@ -267,23 +273,24 @@ export async function mountRanchView(host,{buddies=[],inside=[],pens,dorms=1,ope
   const spots=waypoints(trees,L),spot=new THREE.Mesh(keep(new THREE.CircleGeometry(.62,20)),keep(new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.2,depthWrite:false})));
   const dress=b=>{const model=createApprovedHorse(0,b.coat,false,b.hair,true,true);model.seat.visible=false;
     model.root.scale.setScalar(RANCH.size);model.root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});return model;};
-  // The buddies in: each in its stall, looking out over its door, standing (the idle clip), nowhere to go.
-  const stalled=[];
-  inside.forEach((b,k)=>{if(!b)return;const d=L.barns[Math.floor(k/D.x.length)],cx=D.x[k%D.x.length];if(d==null)return;
-    const model=dress(b),idle=model.mixer.clipAction(model.clips.idle).play();model.mixer.update(Math.random()*3);
-    model.root.position.copy(at(cx,D.stand+d));model.root.rotation.y=Math.PI;scene.add(model.root);stalled.push({id:b.id,model,idle,pos:model.root.position});});
-  const free=(want=()=>true)=>{const taken=new Set(herd.flatMap(b=>[b.on,b.path.at(-1)]));const ok=spots.map((_,i)=>i).filter(i=>!taken.has(i)&&spots[i].next.length&&want(spots[i]));return ok[Math.floor(Math.random()*ok.length)];};
-  const herd=[];
+  const free=(want=()=>true)=>{const taken=new Set(herd.filter(b=>b.stall==null).flatMap(b=>[b.on,b.path.at(-1)]));const ok=spots.map((_,i)=>i).filter(i=>!taken.has(i)&&spots[i].next.length&&want(spots[i]));return ok[Math.floor(Math.random()*ok.length)];};
+  const nearest=(x,y)=>spots.reduce((best,s,i)=>Math.hypot(s.x-x,s.y-y)<Math.hypot(spots[best].x-x,spots[best].y-y)?i:best,0);
+  // Everyone: in its stall (looking out over its door, standing) or out (on a spot, a round shadow under it).
+  const herd=[],inStall=b=>{const [cx,d]=stallAt(b.stall);b.pos.copy(at(cx,D.stand+d));b.yaw=Math.PI;b.path=[];b.go=0;b.under.visible=false;};
   for(const b of buddies){
-    const on=free();if(on==null)break;   // more buddies than spots: the rest stay in
-    const model=dress(b);
-    const trot=approvedAssets.get(ranchFile(b.coat)).animations.find(a=>a.name==='Trot'),idle=model.mixer.clipAction(model.clips.idle).play(),step=model.mixer.clipAction(trot).play();
+    const model=dress(b),trot=approvedAssets.get(ranchFile(b.coat)).animations.find(a=>a.name==='Trot'),idle=model.mixer.clipAction(model.clips.idle).play(),step=model.mixer.clipAction(trot).play();
     step.setEffectiveWeight(0);step.timeScale=RANCH.trot;model.mixer.update(Math.random()*3);
-    const p=spots[on],under=spot.clone();under.rotation.x=-Math.PI/2;
-    const me={id:b.id,model,idle,step,on,path:[],wait:Math.random()*RANCH.rest[1],go:0,yaw:Math.random()*6.28,pos:at(p.x,p.y),under};
-    model.root.position.copy(me.pos);model.root.rotation.y=me.yaw;scene.add(model.root,under);herd.push(me);
+    const under=spot.clone();under.rotation.x=-Math.PI/2;
+    const me={id:b.id,model,idle,step,stall:null,on:0,path:[],wait:Math.random()*RANCH.rest[1],go:0,yaw:Math.random()*6.28,pos:new THREE.Vector3(),under};
+    const taken=k=>herd.some(o=>o.stall===k);
+    if(b.stall!=null&&stallAt(b.stall)[1]!=null&&!taken(b.stall)){me.stall=b.stall;inStall(me);}
+    else if(b.at){me.pos.copy(at(...b.at));me.on=nearest(...b.at);}
+    else{const on=free();if(on==null){const k=hung.findIndex((_,k)=>!taken(k));if(k<0)continue;me.stall=k;inStall(me);}else{me.on=on;me.pos.copy(at(spots[on].x,spots[on].y));}}   // more buddies than spots: into a free stall, or not drawn
+    scene.add(model.root,under);herd.push(me);
   }
+  hung.forEach((_,k)=>swing(k));
   function stroll(b,dt){
+    if(b.stall!=null||b===held){b.step.setEffectiveWeight(0);b.idle.setEffectiveWeight(1);b.model.mixer.update(dt);b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);return;}
     if(!b.path.length){b.wait-=dt;if(b.wait<=0){const here=spots[b.on],to=free(s=>Math.hypot(s.x-here.x,s.y-here.y)<RANCH.hop);if(to!=null)b.path=route(spots,b.on,to);b.wait=RANCH.rest[0]+Math.random()*(RANCH.rest[1]-RANCH.rest[0]);}}
     let moving=0;
     if(b.path.length){const s=spots[b.path[0]],dx=s.x-b.pos.x,dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces -z at yaw 0
@@ -307,26 +314,41 @@ export async function mountRanchView(host,{buddies=[],inside=[],pens,dorms=1,ope
   const ro=new ResizeObserver(fit);ro.observe(host);
   const go=name=>{now=SHOTS[name]?name:'all';};
 
-  // Touch: in the view up the strip a drag up or down slides it along; a sideways swipe asks the page for the next
-  // or the last tab; a tap that did not move picks the buddy under it, or else the bed.
-  const el$=r.domElement;let from=null,last2=null,moved=0;el$.style.touchAction='none';
-  el$.addEventListener('pointerdown',e=>{try{el$.setPointerCapture(e.pointerId);}catch{}from=last2=[e.clientX,e.clientY];moved=0;});
+  // Touch: a finger down on a buddy carries it (lifted a little; where it may not be set down it goes back); elsewhere
+  // a drag up or down slides the view along (the overview), a sideways swipe asks the page for the next or the last
+  // tab, and a tap that did not move swings the stall door under it, or else tends the bed.
+  const el$=r.domElement;let from=null,last2=null,moved=0,held=null,was=null;el$.style.touchAction='none';
+  const v=new THREE.Vector3(),ray=new THREE.Raycaster(),ground=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
+  const off=(e,p)=>{const box=el$.getBoundingClientRect();v.copy(p).project(cam);return Math.hypot((v.x+1)/2*box.width-(e.clientX-box.left),(1-v.y)/2*box.height-(e.clientY-box.top));};
+  const under=e=>{const box=el$.getBoundingClientRect();ray.setFromCamera({x:(e.clientX-box.left)/box.width*2-1,y:1-(e.clientY-box.top)/box.height*2},cam);return ray.ray.intersectPlane(ground,hit);};
+  const blocked=(x,y)=>L.blocks.some(([a,b,c,d])=>x>a-.4&&x<c+.4&&y>b-.4&&y<d+.4)||trees.some(t=>Math.hypot(x-t.x,y-t.y)<t.r*.6);
+  const stallUnder=(x,y)=>hung.findIndex((_,k)=>{const [cx,d]=stallAt(k);return Math.abs(x-cx)<1.5&&y>S.walk+d-1&&y<S.barn[3]+d;});
+  el$.addEventListener('pointerdown',e=>{try{el$.setPointerCapture(e.pointerId);}catch{}from=last2=[e.clientX,e.clientY];moved=0;
+    let near=48;held=null;for(const b of herd){const d=off(e,hit.copy(b.pos).setY(b.pos.y+1));if(d<near){near=d;held=b;}}
+    if(held)was={stall:held.stall,pos:held.pos.clone(),on:held.on,yaw:held.yaw};});
   el$.addEventListener('pointermove',e=>{if(!from)return;const dy=e.clientY-last2[1];moved+=Math.abs(e.clientX-last2[0])+Math.abs(dy);last2=[e.clientX,e.clientY];
-    if(now==='all'&&Math.abs(e.clientY-from[1])>Math.abs(e.clientX-from[0]))slide=Math.max(L.slide[0],Math.min(L.slide[1],slide+dy*2*cur.dist*Math.tan(RANCH.fov*rad/2)/H/Math.sin(cur.el*rad)));});   // the ground under the finger follows it
-  el$.addEventListener('pointercancel',()=>{from=null;});
+    if(held){if(moved<10||!under(e))return;if(held.stall!=null){const k=held.stall;held.stall=null;swing(k);}held.path=[];held.under.visible=true;held.pos.set(hit.x,.5,hit.z);return;}
+    if(now==='all'&&Math.abs(e.clientY-from[1])>Math.abs(e.clientX-from[0]))slide=Math.max(L.slide[0],Math.min(L.slide[1],slide+dy*2*cur.dist*Math.tan(cur.fov*rad/2)/H/Math.sin(cur.el*rad)));});   // the ground under the finger follows it
+  const back=()=>{if(!held)return;held.pos.copy(was.pos);held.on=was.on;held.yaw=was.yaw;held.stall=was.stall;if(was.stall!=null)inStall(held);hung.forEach((_,k)=>swing(k));held=null;};
+  el$.addEventListener('pointercancel',()=>{from=null;back();});
   el$.addEventListener('pointerup',e=>{if(!from)return;const dx=e.clientX-from[0],dy=e.clientY-from[1];from=null;
+    if(held&&moved<10)held=null;                                             // a tap on a buddy is a tap on what is under it (a door, a bed): its room is the dormitory's tab
+    if(held){const b=held;
+      const x=b.pos.x,y=-b.pos.z,k=stallUnder(x,y);
+      if(k>=0){if(herd.some(o=>o!==b&&o.stall===k))return back();held=null;b.stall=k;delete set[k];inStall(b);if(was.stall!=null)delete set[was.stall];hung.forEach((_,i)=>swing(i));onMove?.(b.id,{stall:k});return;}
+      if(blocked(x,y))return back();
+      held=null;b.pos.y=0;b.on=nearest(x,y);b.wait=RANCH.rest[0]+Math.random()*RANCH.rest[1];if(was.stall!=null)delete set[was.stall];hung.forEach((_,i)=>swing(i));onMove?.(b.id,{at:[+x.toFixed(2),+y.toFixed(2)]});return;}
     if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.5){onSwipe?.(dx<0?1:-1);return;}
     if(moved>=10)return;
-    const box=el$.getBoundingClientRect(),v=new THREE.Vector3(),far=p=>Math.hypot((v.x+1)/2*box.width-(e.clientX-box.left),(1-v.y)/2*box.height-(e.clientY-box.top));let best=null,near=48;
-    for(const b of [...herd,...stalled]){v.copy(b.pos);v.y+=1;v.project(cam);const d=far();if(d<near){near=d;best=b;}}
-    if(best&&onPick)return onPick(best.id);
-    if(onBed){let bed=-1;near=64;L.beds.slice(0,open).forEach(([x,y],i)=>{v.copy(at(x,y)).setY(S.top).project(cam);const d=far();if(d<near){near=d;bed=i;}});if(bed>=0)onBed(bed,e.clientX,e.clientY);}});
+    let door=-1,near=40;hung.forEach((_,k)=>{const [cx,d]=stallAt(k),dist=off(e,hit.copy(at(cx,D.y+d)).setY(.9));if(dist<near){near=dist;door=k;}});
+    if(door>=0){set[door]=!isOpen(door);swing(door);onDoor?.(door,set[door]);return;}
+    if(onBed){let bed=-1;near=64;L.beds.slice(0,open).forEach(([x,y],i)=>{const d=off(e,hit.copy(at(x,y)).setY(S.top));if(d<near){near=d;bed=i;}});if(bed>=0)onBed(bed,e.clientX,e.clientY);}});
 
   let raf=0,last=performance.now();
-  const tick=dt=>{herd.forEach(b=>stroll(b,dt));stalled.forEach(b=>b.model.mixer.update(dt));aim(dt);r.render(scene,cam);};
+  const tick=dt=>{herd.forEach(b=>stroll(b,dt));aim(dt);r.render(scene,cam);};
   function frame(t){raf=requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000);last=t;tick(dt);}
   herd.forEach(b=>stroll(b,0));r.shadowMap.needsUpdate=true;fit();
   host.append(el$);raf=requestAnimationFrame(frame);
-  if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,spots,cur,L,go,set slide(v){slide=v;},get slide(){return slide;},step:tick};   // dev (?debug): step, to move things on in a tab that draws one frame a second
-  return {shot:go,field,dispose(){cancelAnimationFrame(raf);ro.disconnect();[...herd,...stalled].forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
+  if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,hung,spots,cur,L,go,set slide(v){slide=v;},get slide(){return slide;},step:tick};   // dev (?debug): step, to move things on in a tab that draws one frame a second
+  return {shot:go,field,dispose(){cancelAnimationFrame(raf);ro.disconnect();herd.forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
 }

@@ -1,4 +1,4 @@
-import {PRESENTATION as P} from './presentation-config.mjs?v=r385';
+import {PRESENTATION as P} from './presentation-config.mjs?v=r389';
 // Screen-space presentation only. Does not read or mutate note state or game time.
 export const PRESENTATION_LOOKAHEAD=P.rhythm.lookahead;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
