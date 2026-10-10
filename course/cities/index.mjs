@@ -1,11 +1,11 @@
 // City packs: everything one city needs, in one file each (see taipei.mjs for the annotated format).
 // Add a city: copy a pack to cities/<id>.mjs and edit its four parts (1 track · 2 weather · 3 dressing · 4 backdrop),
 // put the backdrop at assets/backdrops/<id>.webp, and list the pack below. `node dist/course/check.mjs` validates it.
-import taipei from './taipei.mjs?v=r369';
-import tokyo from './tokyo.mjs?v=r369';
-import paris from './paris.mjs?v=r369';
-import stockholm from './stockholm.mjs?v=r369';
-import seoul from './seoul.mjs?v=r369';
+import taipei from './taipei.mjs?v=r383';
+import tokyo from './tokyo.mjs?v=r383';
+import paris from './paris.mjs?v=r383';
+import stockholm from './stockholm.mjs?v=r383';
+import seoul from './seoul.mjs?v=r383';
 
 export const CITIES=Object.freeze([taipei,tokyo,paris,stockholm,seoul]);
 export const cityById=id=>CITIES.find(c=>c.id===id);

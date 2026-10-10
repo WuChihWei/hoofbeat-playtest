@@ -6,7 +6,7 @@
 // Shop items (price in coins) go into the same bag: foods are eaten by Feed (the one picked in Items), care items are
 // used from Items; two of them are one-race buffs kept on the horse (`buff`, spent by the next race).
 // Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1). Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL} from './playable/slice-config.mjs?v=r369';
+import {MAX_LEVEL} from './playable/slice-config.mjs?v=r383';
 export const ITEMS=[
   // food: +Hunger, +Mood (stamina: +Stamina)
   {id:'hay',name:'乾草',kind:'food',food:25,mood:2,price:20},{id:'carrot',name:'紅蘿蔔',kind:'food',food:15,mood:6,price:15},

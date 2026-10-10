@@ -172,3 +172,11 @@ function demo(){
   console.log('PASS: progress (levels, stars, missions, daily bonus, horses)');
 }
 if(typeof process!=='undefined'&&process.argv[1]?.endsWith('progress.mjs'))demo();
+
+// Who is out on the ranch, of the buddies owned (2026-10-10, the user: 「有些馬可以待在宿舍裡不用所有的都出來，20%或超過6再出來」
+// 「我是說或是20%出來就好」): everyone up to six; past that one in five (two at the least), a window round the list that
+// moves on one buddy an hour, so each has its turn out; never more than RANCH_MAX (how many the ranch draws: a
+// performance number, to be measured on a phone).
+export const RANCH_MAX=8,RANCH_ALL=6,RANCH_SHARE=.2,RANCH_LEAST=2;
+export function whoIsOut(owned,hour=Math.floor(Date.now()/36e5)){if(owned.length<=RANCH_ALL)return owned.slice(0,RANCH_MAX);
+  const n=Math.min(RANCH_MAX,Math.max(RANCH_LEAST,Math.round(owned.length*RANCH_SHARE))),start=hour%owned.length;return owned.slice(start).concat(owned.slice(0,start)).slice(0,n);}
