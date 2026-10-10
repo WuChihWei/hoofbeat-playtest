@@ -1,16 +1,16 @@
-import {fencePose} from './track-presentation.mjs?v=r441';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r441';
+import {fencePose} from './track-presentation.mjs?v=r442';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r442';
 import * as THREE from './vendor/three.module.min.js';
-import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r441';
+import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r442';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {approvedAssets,scenePictures} from './approved-assets.js?v=r441';
-import {HORSE_Z,roadPose} from './race-world.js?v=r441';
-import {cityById,CITIES} from './course/cities/index.mjs?v=r441';
-import {modelFor} from './course/assets.mjs?v=r441';
+import {approvedAssets,scenePictures} from './approved-assets.js?v=r442';
+import {HORSE_Z,roadPose} from './race-world.js?v=r442';
+import {cityById,CITIES} from './course/cities/index.mjs?v=r442';
+import {modelFor} from './course/assets.mjs?v=r442';
 // The release tag the page loaded this module with (?v=…): the paintings and cards carry it too, so a picture replaced
 // under the same name is fetched again instead of coming from the browser's cache.
 const TAG=new URL(import.meta.url).search;
-import {installFarBackground,sunDirection} from './far-background.js?v=r441';
+import {installFarBackground,sunDirection} from './far-background.js?v=r442';
 
 // The race dressing comes from the city pack (course/cities/<id>.mjs): barrier, prop rows, treeline, weather, backdrop.
 const packFor=id=>cityById(id)||cityById('stockholm')||CITIES[0];
@@ -203,7 +203,7 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
  const aimSun=()=>{sun.target.position.set(0,0,HORSE_Z-10);sun.position.copy(sun.target.position).addScaledVector(SUN,60);sun.target.updateMatrixWorld();};
  aimSun();  // set before applyLook: the sky glow is baked toward the sun
  applyLook(r.r,r.scene,{sun,fill:hemi,rim,shadowMap:LOOK.shadow.raceMap});
- if(new URLSearchParams(globalThis.location?.search||'').get('shadow')==='0'){r.r.shadowMap.enabled=false;sun.castShadow=false;}   // ?shadow=0: no shadow map, the ground blobs only (to compare heat on a phone, 2026-10-10: the map redraws the player's 27,000 skinned triangles every picture)
+ if(new URLSearchParams(globalThis.location?.search||'').get('shadow')!=='1'){r.r.shadowMap.enabled=false;sun.castShadow=false;}   // the race has no shadow map (2026-10-10, the user: 「陰影應該是簡單帶一個透明黑色橢圓在地上就好」): every runner has its ground blob (race-scene shadowMaterial). The map redrew the player's 27,000 skinned triangles every picture. ?shadow=1: the map again, to compare
  if(BG&&hemi)hemi.color.lerp(new THREE.Color(BG.ambientColor),LOOK.race.skyFill);   // the fill takes a little of the painted sky
  // Race look (LOOK.race): stronger key against less fill / sky light, stronger rim, the saturation grade.
  if(hemi)hemi.intensity=LOOK.race.fill;r.scene.environmentIntensity=LOOK.race.env;rim.intensity=LOOK.race.rim;

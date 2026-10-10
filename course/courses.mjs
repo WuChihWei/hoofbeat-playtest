@@ -3,8 +3,8 @@
 // Start/Finish is s = 0. Race = 2 laps, 3 horses: handoffs at the end of the Relay Zone on each lap, then the line.
 // Gameplay positions are metres along ONE lap and lanes (-1|0|+1); they never name assets.
 import {buildTrack,closeLoop} from './track.mjs';
-import {THEMES} from './themes.mjs?v=r441';
-import {CITIES} from './cities/index.mjs?v=r441';
+import {THEMES} from './themes.mjs?v=r442';
+import {CITIES} from './cities/index.mjs?v=r442';
 
 export const RELAY_ZONE=40;  // metres of straight where the handoff happens
 const trail=(s,lane,n=3,gap=7)=>Array.from({length:n},(_,i)=>({s:s+i*gap,lane}));  // lane-change coin runs
