@@ -642,3 +642,11 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 
 /* the finish close-up (slice-app: .finish-shot on the shell): the controls and the HUD fade out of the picture */
 .slice-shell.finish-shot .slice-controls,.slice-shell.finish-shot .slice-hud,.slice-shell.finish-shot #slice-skill,.slice-shell.finish-shot #slice-rank,.slice-shell.finish-shot #slice-apples,.slice-shell.finish-shot #slice-combo,.slice-shell.finish-shot #slice-coach,.slice-shell.finish-shot #slice-final-call,.slice-shell.finish-shot #ball-pad,.slice-shell.finish-shot #slice-chase{opacity:0;transition:opacity .25s}
+/* The ring says what a swipe does (2026-10-11, the user's sketch): the two lane arrows and JUMP sit on the green band
+   itself (they were outside the ring, the jump an arrow above it). A stage that has no lane change or no hurdles yet
+   does not show its word. */
+#ball-ring::before,#ball-ring::after{right:auto;translate:-50% -50%;color:#10140c;opacity:.85;font-size:calc(24 * var(--u))}
+#ball-ring::before{left:13%;z-index:1}#ball-ring::after{left:87%}
+#ball-ring.hit-l::before,#ball-ring.hit-r::after{color:#fff;opacity:1;font-size:calc(30 * var(--u))}
+#ball-ring i::before{content:'JUMP';left:50%;top:13%;bottom:auto;translate:-50% -50%;rotate:none;color:#10140c;opacity:1;font:800 calc(11 * var(--u))/1 var(--ui-font);letter-spacing:.04em}
+.no-lanes #ball-ring::before,.no-lanes #ball-ring::after,.no-jump #ball-ring i::before{content:none}

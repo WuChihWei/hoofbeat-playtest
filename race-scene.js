@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r503';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r503';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r503';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r503';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r503';
-import {installApprovedEnvironment} from './approved-environment.js?v=r503';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r503';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r503';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r503';
-import {turnAt} from './track-projection.js?v=r503';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r503';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r503';
+import {roadHalfWidth} from './track-presentation.mjs?v=r506';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r506';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r506';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r506';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r506';
+import {installApprovedEnvironment} from './approved-environment.js?v=r506';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r506';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r506';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r506';
+import {turnAt} from './track-projection.js?v=r506';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r506';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r506';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -56,7 +56,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
 const FINISH_SHOT={out:7,ahead:5.5,high:2,aim:2,fov:60,ease:260};   // the finish close-up: m to the side of the buddy, m up the road from it, the camera's height, the height it looks at, the lens (wide: an upright phone has to hold a buddy's length), ms it eases over
 const WIDE=[6,9,3];   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
-const REACT={pump:[-1.7,.7],push:1.5,lean:.26,glance:.6,reach:2,kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
+const REACT={daze:[.5,2.5],pump:[-1.7,.7],push:1.5,lean:.26,glance:.6,reach:2,kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
 // by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
 // road per hit of the streak (to 16), none nearer than `from` m ahead of the horse (a glow that near fills the screen).
@@ -604,6 +604,8 @@ export class ChaseRenderer {
   // stride itself follows ground covered). A knocked hurdle is a clear stumble: nose down, a dip, the rider thrown
   // forward, a wobble, then straight back to running.
   racePosture(entry,race,role,runner,time,actor,jump){
+    // A runner that was bumped (stumble.hit) keeps its running pose: it only runs slower, with the daze over its head
+    // (2026-10-11, the user: the hit buddy shook). The nose-down, dip and roll are for a hurdle, a pop and the poop.
     // Leg bones the kick or the win turned last frame go back to what they were, unless the animation has written them
     // since (it only writes a bone whose value changed): without this a frame that stands still (a pause, the finish, a
     // buddy whose legs the stride below does not touch) kept the kicked legs, and the stride took them for the gallop's.
@@ -612,13 +614,18 @@ export class ChaseRenderer {
     const player=role==='player'&&actor.active,target=role==='player'?race.rush(time):runner.boosting?1:0;entry.sprint=(entry.sprint??0)+(target-(entry.sprint??0))*.12;   // rush: a sprint or an apple
     const s=entry.sprint,st=player?race.stumbles.at(-1):runner.stumbleAt!=null?{t:runner.stumbleAt}:null,age=st?time-st.t:9,   // a rival's last stumble too (2026-10-08: kicked, shoved or off a fence, it showed nothing)
       T=race.config.stumbleTime*(player?1:runner.stumbleK??1);
-    const trip=age>=0&&age<T?Math.sin(Math.PI*age/T):0,phase=(entry.animationTime||0)*2*Math.PI/(model.clips.run?.duration||.77);
+    const trip=age>=0&&age<T&&!(player?st.hit:runner.stumbleHit)?Math.sin(Math.PI*age/T):0,phase=(entry.animationTime||0)*2*Math.PI/(model.clips.run?.duration||.77);
     const surge=player?race.surge():0,level=player?race.gait():target>0?2:1;
     const g=entry.gait=(entry.gait??level)+(level-(entry.gait??level))*.07;
     model.root.rotation.x+=run*(gait(STRIDE.rock,g)*Math.sin(phase)-POSTURE.reach*(1+s)-POSTURE.rush[0]*s)-POSTURE.tripPitch*trip;   // reach: nose a little down, more in a sprint
     model.root.position.y-=run*POSTURE.rush[1]*s;
     // A rival that is hit (kicked, bumped, off a fence) staggers: it rolls further than the player's own stumble and swerves.
     const hard=player?1:POSTURE.rival[0];model.root.rotation.z=POSTURE.tripRoll*hard*trip*Math.sin(age*4*Math.PI/T);
+    // Bumped (stumble.hit): only its head goes from side to side while it is slowed (2026-10-11, the user), about the
+    // world's up so every buddy's rig does the same. REACT.daze: [rad, swings a second].
+    const hitK=st&&age>=0&&age<T&&(player?st.hit:runner.stumbleHit)&&!this.reduced?Math.sin(Math.PI*age/T):0,head=hitK?(entry.bones??={}).Head??=model.content?.getObjectByName('Head')??null:null;
+    if(head){const x={b:head,was:head.quaternion.clone(),set:null};entry.kept.push(x);head.getWorldQuaternion(ARM_W);
+      head.quaternion.multiply(ARM_Q.setFromAxisAngle(FORWARD.set(0,1,0).applyQuaternion(ARM_W.invert()).normalize(),REACT.daze[0]*hitK*Math.sin(age*2*Math.PI*REACT.daze[1])));x.set=head.quaternion.clone();}
     if(!player&&trip){const h=model.root.rotation.y,sw=POSTURE.rival[1]*trip*Math.sin(age*2*Math.PI/T);model.root.position.x+=Math.cos(h)*sw;model.root.position.z-=Math.sin(h)*sw;}
     // A hit on the beat (the pads' pulse): the player's horse drives forward a little and dips its nose.
     const hit=role==='player'&&actor.active?run*Math.max(...this.pulses.map((at,l)=>this.pulseStrength[l]*clamp(1-(time-at)/.32,0,1))):0;

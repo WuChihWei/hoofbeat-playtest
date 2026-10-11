@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r503';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r506';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -144,7 +144,7 @@ export class SliceGame {
     if(!there&&u<R.react)return end('ram-off');                       // not committed yet: it lets it go
     if(u<R.time)return;
     if(!there){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;return end('ram-miss');}   // it threw itself at nothing
-    this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:this.time});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;
+    this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:this.time,hit:true});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;
     end('rammed',{pushed:false});}   // it staggers where it is: nobody who is hit is moved to another lane (2026-10-11, the user)
   // Traffic, the same for every runner. Lane `to` is taken near `self` if another runner is in it (within laneOverlap)
   // or heading into it, closer than a horse length plus what the two could close up during a lane change.
@@ -223,7 +223,7 @@ export class SliceGame {
   // stumbles and whatever sprint it was on ends.
   kickBack(){const c=this.config;if(this.paused||this.finished||!c.ball||this.blown>this.time||this.time<(this.shoveAt??-9))return;
     const r=this.behind();this.ball+=c.shoveWind;this.driveSpeed*=.55;this.shoveAt=this.time+c.ballRush*4;
-    if(r){r.stumbles.push({t:this.time,k:c.knock});r.grudge=this.time+c.stumbleTime*c.knock+2*c.tempo;r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
+    if(r){r.stumbles.push({t:this.time,k:c.knock,hit:true});r.grudge=this.time+c.stumbleTime*c.knock+2*c.tempo;r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
     return this.emit('kickback',{hit:r?.id??null});}
   // The gait test: one gear up or down (dir +1 / -1); not while blown.
   // The gait test: changing lane into a runner alongside at a canter or faster shoves it. With room on its far side it
@@ -247,7 +247,7 @@ export class SliceGame {
   skillLand(){const t=this.swing,r=t.r,c=this.config;this.swing=null;
     const there=this.stumbleFactor()>=1&&r.finishTime===null&&(t.kind==='kick'?this.behind()===r:Math.abs(r.distance-this.distance)<c.hitReach*1.6&&Math.abs(Math.abs(r.laneValue-this.laneValue)-1)<c.laneOverlap&&(r.laneValue>this.laneValue)===!!t.side);
     if(!there)return this.emit('skill-miss',{kind:t.kind,side:t.side??null,id:r.id});
-    r.stumbles.push({t:this.time,k:c.knock});r.grudge=this.time+c.stumbleTime*c.knock+2*c.tempo;   // grudge: until 2 s after it is on its feet again (ramStep: config.ram.back)
+    r.stumbles.push({t:this.time,k:c.knock,hit:true});r.grudge=this.time+c.stumbleTime*c.knock+2*c.tempo;   // grudge: until 2 s after it is on its feet again (ramStep: config.ram.back)
     r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;
     return this.emit('skill',{kind:t.kind,side:t.side??null,id:r.id,pushed:false});}   // it staggers in its own lane (2026-10-11, the user: the one hit does not change lane)
   // The runner alongside in that lane (the skill button's bump: skillTarget).
@@ -370,7 +370,7 @@ export class SliceGame {
   metrics(){
     const L=this.config.length;
     // Rivals keep running past the line (no snap back beside the player); unfinished ones are projected.
-    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,stumbleK:r.stumbles.at(-1)?.k??1,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
+    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,stumbleK:r.stumbles.at(-1)?.k??1,stumbleHit:!!r.stumbles.at(-1)?.hit,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
       boosting:strength(r.boosts,this.time,this.config)>0,finishTime:r.finishTime??this.time+Math.max(0,L-r.distance)/Math.max(r.speed,1)}));
     const rank=1+rivals.filter(r=>this.finished?r.finishTime<this.finishTime:r.distance>this.distance+1e-9||(Math.abs(r.distance-this.distance)<=1e-9&&r.speed>this.speed)).length;
     return {player:{distance:this.distance,speed:this.speed,finishTime:this.finishTime,lane:this.laneValue},rivals,rank};
