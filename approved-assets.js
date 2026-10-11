@@ -8,7 +8,7 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-79';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-86';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
@@ -87,12 +87,12 @@ export const preloadRanchBuddies=coats=>preloadModels([...new Set(coats.map(ranc
 const EYE_MATS=['Buddy_Eye','Horse_Eye','Horse_Iris','Horse_Pupil'];
 const EYES={
   horse:{open:.95,shut:-.72,curve:.45,lash:.9,iris:{color:['#5e3822','#26140c'],size:[1,.47],aim:[.48591,-.19938],turn:.25}},   // aim: where its pupil faces point + [.2,-.1], to the digit (the horse looks as it did before EYES)
-  llama:{lidColor:'#f1dfcb',open:.42,low:-.38,shut:-.55,curve:.6,lash:.9,iris:{color:['#17110f','#0a0707'],size:[.6,.34],aim:[.9,-.14],turn:.1}},   // the sheet: a small almond eye, lids above and below   // black: its pupil does not show
+  llama:{lidColor:'#e6cfae',open:.95,shut:-.55,curve:.4,lash:.9,iris:{color:['#2a1a12','#0a0707'],size:[.9,.55],aim:[.9,-.14],turn:.1,white:.98}},   // the sheet: a small almond eye, lids above and below   // black: its pupil does not show
   rhino:{lidColor:'#a09089',open:.95,shut:-.62,curve:.25,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.86,.58],aim:[.72,-.18],turn:.1,white:1}},
-  bear:{lidColor:'#a5633f',open:.65,low:-.55,shut:-.62,curve:.3,lash:.2,iris:{color:['#3a2216','#1a0f0a'],size:[1,.5],aim:[.9,-.1],turn:.1}},   // the sheet: a dark bead, no white
-  cow:{lidColor:'#f3eee6',open:.95,shut:-.62,curve:.35,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.95,.52],aim:[.75,-.12],turn:.1}},
-  wolf:{lidColor:'#efe7dc',open:.75,low:-.6,shut:-.62,curve:.3,lash:.4,iris:{color:['#1d1512','#0b0807'],size:[.95,.5],aim:[.9,-.1],turn:.1}},   // the sheet: big dark oval eyes, almost no white (aim 1.2 looked cross-eyed: white on the outer side)
-  zebra:{lidColor:'#ece3d4',open:.95,shut:-.62,curve:.4,lash:.9,iris:{color:['#2a1a12','#140c08'],size:[.95,.55],aim:[.6,-.15],turn:.1}}};   // white: its lids are folds with gaps between them
+  bear:{lidColor:'#8f5433',open:.95,shut:-.62,curve:.3,lash:.6,iris:{color:['#2a1810','#0d0705'],size:[.9,.55],aim:[.9,-.1],turn:.1,white:.98}},   // the sheet: a dark bead, no white
+  cow:{lidColor:'#8a4a2a',open:.95,shut:-.62,curve:.35,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.9,.52],aim:[.75,-.12],turn:.1,white:1.05}},
+  wolf:{lidColor:'#4f4846',open:.95,shut:-.62,curve:.3,lash:.8,iris:{color:['#3a2418','#0b0807'],size:[.92,.5],aim:[.9,-.1],turn:.1,white:.9}},   // the sheet: big dark oval eyes, almost no white (aim 1.2 looked cross-eyed: white on the outer side)
+  zebra:{lidColor:'#d9d2c8',open:.95,shut:-.62,curve:.4,lash:.9,iris:{color:['#2a1a12','#140c08'],size:[.9,.55],aim:[.6,-.15],turn:.1,white:1}}};   // white: its lids are folds with gaps between them
 // Coat markings from rest-pose position/normal, so they stay painted on while the skin deforms (concept sheet):
 // dark hooves, soft muzzle and the coat's markings above. Soft-toy shading like the sheet: coat lighter along the back,
 // deeper toward belly and legs. The markings are drawn before <color_fragment> so the baked AO (vertex colour)
@@ -179,38 +179,7 @@ function markings(m,[key,glsl]){m.onBeforeCompile=sh=>{
     sh.vertexShader='varying vec3 vRest;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvRest=position;');
     sh.fragmentShader='varying vec3 vRest;\n'+NOISE+'\n'+sh.fragmentShader.replace('#include <color_fragment>',`{vec3 p=vRest;${glsl}}\n#include <color_fragment>`);};
   m.customProgramCacheKey=()=>'hoofbeat-'+key;m.needsUpdate=true;}
-const MARKS={
-  // the zebra's sheet: broad dark warm-grey bands on cream, about nine down the body leaning back over the rump, across
-  // the neck and the face, rings on the legs; black muzzle and hooves (the model is plain)
-  Zebra_Coat:['zebra7',`float wN=smoothstep(.55,.62,p.z)*smoothstep(1.3,1.38,p.y)*(1.-smoothstep(.95,1.02,p.z)),wH=smoothstep(.95,1.02,p.z)*smoothstep(1.2,1.28,p.y),wL=1.-smoothstep(.8,1.1,p.y);
-    float f=p.z+.5*(p.y-1.3)*(1.-smoothstep(-.9,-.1,p.z));f=mix(f,.83*p.y+.55*p.z,wN);f=mix(f,.69*p.z-.72*p.y,wH);f=mix(f,p.y,wL);f+=.05*sin(p.x*7.+p.y*3.);
-    float k=cM(sin(f*mix(20.,34.,wH))-mix(.1,.55,wH));k=max(k,max(smoothstep(1.76,1.83,p.z),1.-smoothstep(.1,.14,p.y)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.040,.034,.030),k);`],
-  // the bear's sheet: a cream muzzle round the nose
-  Bear_Fur:['bear3',`float k=1.-smoothstep(.26,.34,distance(p*vec3(1.,1.5,1.),vec3(0.,1.8,1.6)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.82,.67,.50),k);`],
-  // the cow's sheet: brown patches on white, the cheeks brown and the face's middle and forelock white, legs white
-  // below the knee; a pink udder
-  Cow_Hide:['cow4',`float n=nM(p*1.6+vec3(2.3,.7,1.1))*.7+nM(p*3.8)*.3,head=smoothstep(.85,1.,p.z);
-    float k=mix(cM(n-.53),smoothstep(.1,.16,abs(p.x))*(1.-smoothstep(1.5,1.65,p.z)),head)*smoothstep(.6,.8,p.y);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.26,.10,.04),k);
-    float u=(1.-smoothstep(.8,.95,p.y))*smoothstep(-.9,-.75,p.z)*(1.-smoothstep(-.35,-.2,p.z))*(1.-smoothstep(.25,.35,abs(p.x)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.82,.47,.41),u);
-    float nose=smoothstep(1.48,1.56,p.z)*(1.-smoothstep(1.45,1.55,p.y));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.79,.40,.33),nose);
-    float nos=1.-smoothstep(.04,.055,length(vec2(abs(p.x)-.09,(p.y-1.42)*1.6))),mouth=(1.-smoothstep(.01,.02,abs(p.y-1.3+.1*abs(p.x))))*(1.-smoothstep(.18,.22,abs(p.x)));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.10,.08),nose*max(nos,mouth));`],
-  // the wolf's sheet (a husky): grey over the back, the upper neck, the head above the brows and the cheeks behind the eyes, the top of the tail; cream everywhere else
-  // (game units: eyes at (±.15,1.48,1.10), nose z 1.27–1.32 y 1.15–1.21, ear tips y 2.05, tail root z -.72). The grey comes down between the
-  // eyes in a V, the cheeks are grey behind the eyes' outer corners, and two cream spots sit over the eyes (the husky's brows)
-  Wolf_Fur:['wolf4',`float j=nM(p*2.2)*.12-.06,line=.95+.35*smoothstep(.6,1.0,p.z)+j;
-    float body=smoothstep(line-.1,line+.06,p.y)*(1.-smoothstep(1.0,1.1,p.z));
-    float brow=1.6+j+.6*max(0.,p.z-1.22),vee=(1.-smoothstep(.04,.09,abs(p.x)))*smoothstep(1.42,1.5,p.y)*(1.-smoothstep(1.18,1.26,p.z));
-    float cheek=smoothstep(.22,.27,abs(p.x))*(1.-smoothstep(1.12,1.2,p.z))*smoothstep(1.1,1.2,p.y-.4*(1.-smoothstep(.9,1.05,p.z)));
-    float spot=(1.-smoothstep(.05,.08,length(vec2(abs(p.x)-.15,(p.y-1.66)*1.3))))*smoothstep(1.0,1.04,p.z)*(1.-smoothstep(1.18,1.22,p.z));
-    float head=smoothstep(.95,1.05,p.z)*max(max(smoothstep(brow-.04,brow+.04,p.y),vee),cheek)*(1.-spot);
-    float tc=1.15+(p.z+.72)*1.15+j,tail=(1.-smoothstep(-.72,-.62,p.z))*smoothstep(tc-.06,tc+.06,p.y);
-    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.32,.31,.34),max(max(body,head),tail));
-    vec3 q=vec3(abs(p.x),p.y,p.z);float st=min(min(segM(q,vec3(.44,1.22,.50),vec3(.40,1.03,.63)),segM(q,vec3(.40,1.03,.63),vec3(.37,.94,.68))),min(min(segM(q,vec3(.37,.94,.68),vec3(.30,.88,.74)),segM(q,vec3(.30,.88,.74),vec3(.20,.81,.79))),segM(q,vec3(.20,.81,.79),vec3(.05,.74,.79))));
-    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.069,.025,.013),1.-smoothstep(.05,.065,st));`],   // the chest strap is modelled into the body (one piece with the fur): painted leather (#4a2c1e) along its path
-  // the llama's sheet: a small dark nose and a mouth line (the model has neither)
-  Llama_Wool:['llama2',`float nose=1.-smoothstep(.045,.06,length(vec3(p.x,(p.y-2.16)*1.2,p.z-1.43))),mouth=(1.-smoothstep(.008,.016,abs(p.y-1.99-.15*abs(p.x))))*(1.-smoothstep(.09,.12,abs(p.x)))*smoothstep(1.3,1.36,p.z);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.06,.045,.04),max(nose,mouth));`],
-  // the rhino's sheet: two nostrils and a mouth line
-  Rhino_Skin:['rhino2',`float nos=(1.-smoothstep(.045,.06,length(vec2(abs(p.x)-.11,(p.y-.5)*1.4))))*step(1.4,p.z),mouth=(1.-smoothstep(.01,.02,abs(p.y-.36+.1*abs(p.x))))*(1.-smoothstep(.22,.27,abs(p.x)))*smoothstep(1.4,1.48,p.z);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.06,.05,.045),max(nos,mouth));`]};   // the pink nose: the model's own 'muzzle' part is the white blaze down the face
+const MARKS={};   // none since 2026-10-11: every buddy but the horse wears a skin map carried over from Tripo's textured copy of its model (build_animal.py A['skin'], tools/skin_map.py). A buddy without one can still be painted here: {Material_Name:[key, GLSL on p, the rest position]}
 function quilt(m){
   m.onBeforeCompile=sh=>{
     sh.vertexShader='varying vec3 vQ;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvQ=position;');
@@ -431,7 +400,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
   const bounds=new THREE.Box3().setFromObject(content,true),size=bounds.getSize(new THREE.Vector3());
   fit.scale.setScalar(3.3/(look.species?2.885:size.y));fit.position.y=-bounds.min.y*fit.scale.y;   // 2.885: the horse's height, so the other animals keep their own size beside it (the rhino is 61% as tall)
   // Authored Gallop has no root displacement. Existing runner controls own all movement.
-  const mixer=new THREE.AnimationMixer(content),clips={run:horse.animations.find(a=>a.name==='Gallop'),idle:horse.animations.find(a=>a.name==='Idle')};
+  const mixer=new THREE.AnimationMixer(content),clips={run:horse.animations.find(a=>a.name==='Gallop'),idle:horse.animations.find(a=>a.name==='Idle'),walk:horse.animations.find(a=>a.name==='Walk')};   // walk: the stable's arrival (stable-view ARRIVE)
   if(!clips.run)throw new Error('Approved horse lacks Gallop');
   const bindings={Front_Upper:['ForeUpper.L','ForeUpper.R'],Front_Lower:['ForeLower.L','ForeLower.R'],Front_Hoof:['ForeHoof.L','ForeHoof.R'],Hind_Upper:['HindUpper.L','HindUpper.R'],Hind_Lower:['HindLower.L','HindLower.R'],Hind_Hoof:['HindHoof.L','HindHoof.R'],Neck:['NeckLower']};
   const poseBones=Object.entries(bindings).flatMap(([role,names])=>names.map(name=>({role,bone:content.getObjectByName(name.replaceAll('.','')),axis:new THREE.Vector3(1,0,0),sign:1}))).filter(b=>b.bone?.isBone);
@@ -461,7 +430,7 @@ const soft=i=>`{float fz=pow(1.-abs(dot(normal,normalize(vViewPosition))),2.5);t
 const also=(m,key,fn)=>{const base=m.onBeforeCompile,k=m.customProgramCacheKey();m.onBeforeCompile=function(sh,r){base.call(this,sh,r);fn(sh);};m.customProgramCacheKey=()=>k+key+JSON.stringify(RACE_FUR);m.needsUpdate=true;};
 export function mergeForRace(model){
   const own=[],plain=[];
-  for(const asset of [model.content,model.riderContent])asset.traverse(o=>{if(o.isSkinnedMesh)(OWN_SHADER.has(o.material.name)?own:plain).push(o);});
+  for(const asset of [model.content,model.riderContent])asset.traverse(o=>{if(o.isSkinnedMesh)(OWN_SHADER.has(o.material.name)||o.material.map?own:plain).push(o);});   // a material with a skin map (build_animal A['skin']) keeps it: the merged mesh has one flat material
   const skin=own[0]?.skeleton,made=[],blaze=model.blaze={value:0};   // blaze: RACE_FUR blaze, 0–1 (race-scene sets it)
   const add=(g,material,skeleton,bindMatrix,parent,cast)=>{const m=new THREE.SkinnedMesh(g,material);m.bind(skeleton,bindMatrix);
     m.frustumCulled=false;m.castShadow=cast;m.receiveShadow=true;parent.add(m);made.push(g);return m;};

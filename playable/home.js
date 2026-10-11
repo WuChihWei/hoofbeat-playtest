@@ -5,26 +5,26 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r442';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r442';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r442';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r460';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r460';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r460';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
 const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
 setTimeout(()=>{barn.src='assets/stable/barn-plate.webp';preloadRanch(owned().slice(0,14).map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
-import {lang,setLang,translate} from '../i18n.js?v=r442';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,soloForm as careForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r442';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains,MVP} from './slice-config.mjs?v=r442';
-import {mountStableView,preloadStable} from './stable-view.js?v=r442';
-import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r442';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r442';
-import {cityPictures} from '../approved-environment.js?v=r442';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r442';
+import {lang,setLang,translate} from '../i18n.js?v=r460';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,soloForm as careForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r460';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains,MVP} from './slice-config.mjs?v=r460';
+import {mountStableView,preloadStable} from './stable-view.js?v=r460';
+import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r460';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r460';
+import {cityPictures} from '../approved-environment.js?v=r460';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r460';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r442';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r442';
-import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r442';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r460';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r460';
+import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r460';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -118,6 +118,15 @@ const maneOf=id=>HAIR.some(x=>x.id===profile.manes?.[id])&&maneOpen(prog,profile
 // What clearing a stage gives (progress.mjs: a buddy by its price's `stage`, or a PERK), as words; '' when nothing.
 const stageGift=n=>{const b=Object.entries(HORSE_PRICE).find(([,c])=>c.stage===n);return b?horseById(+b[0]).name:!Object.values(PERKS).some(x=>x.stage===n)?'':MVP.perks?(PERKS.mane.stage===n?HAIR.find(x=>x.id===PERKS.mane.id).name:'騎士服裝顏色'):`${PERK_COINS} 金幣`;};
 let care=readCare({getItem:store.get},ROSTER.map(h=>h.id)),bag=readItems({getItem:store.get});
+let justRan=null;   // {id, at, won}: the buddy of the last solo run, this session
+if(/[?&]debug\b/.test(location.search))window.__home={ran:(id,won=true)=>{justRan={id,at:Date.now(),won};}};   // dev: as if that buddy had just run
+// While you were away (SPEC 11 P2): back on the ranch after AWAY ms, its line first says the one thing that waits for
+// you (wheat ripe > a hungry buddy > a dusty one), for AWAY_SAY ms. Nothing new is counted: the field and the care bars.
+const SEEN='hoofbeat.seen.v1',AWAY=5*60e3,AWAY_SAY=3500;
+function awayNews(ripe){const was=+store.get(SEEN)||0,now=Date.now();store.set(SEEN,String(now));if(!was||now-was<AWAY)return null;
+  const need=k=>owned().map(h=>[h,care[h.id]?.[k]??100]).filter(([,v])=>v<40).sort((a,b)=>a[1]-b[1])[0]?.[0];
+  if(ripe)return `你不在的時候，${ripe} 格麥子熟了`;const hungry=need('hunger');if(hungry)return `${hungry.name} 餓了，在等你`;const dusty=need('clean');if(dusty)return `${dusty.name} 想刷毛了`;return null;}
+setInterval(()=>{if(document.visibilityState==='visible'&&/^#(ranch|stable)/.test(location.hash))store.set(SEEN,String(Date.now()));},30e3);   // on the ranch you are not away
 // Amounts of money are written the way games do: the currency's icon, then the number (never the word). A diamond is
 // worth about 200 coins (the prices in progress.mjs HORSE_PRICE keep to that); the game does not state the rate or
 // exchange them, and some things sell for diamonds only (the three special coats, progress.mjs HORSE_PRICE).
@@ -275,13 +284,14 @@ const PAGES={
       <header class="ui-header st-top"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>Ranch</h1>${wallet(readCoins(),{gems:gemsShown()})}</header>
       ${ranchTabs(tabOf(PAGES.ranch.shot))}<div class="ranch-level ui-wallet" aria-label="牧場等級"><b>Lv ${lv}</b></div><div class="ranch-crops">${cropPills(bag)}</div><p class="ranch-hint ui-panel deep"></p>${nav('ranch')}`),toast=toaster(el);
     let view=null,alive=true;const grow=setInterval(()=>show(),1000);leave=()=>{alive=false;clearInterval(grow);view?.dispose();};
-    const tabs=[...el.querySelectorAll('[data-rtab]')],hint=el.querySelector('.ranch-hint');
+    const tabs=[...el.querySelectorAll('[data-rtab]')],hint=el.querySelector('.ranch-hint');let news;
     // The wheat field (farm.mjs): a tap on an empty bed sows a seed, on a ripe one reaps it; the line over the nav says
     // what can be done (on the field's shot), the crops are redrawn every few seconds as they grow.
     const show=()=>{view?.field(farm.beds.slice(0,beds).map(b=>b?growth(b):null));el.querySelector('[data-seed]').textContent=bag.seed||0;el.querySelector('[data-wheat]').textContent=bag.wheat||0;say();};
     const say=()=>{const id=PAGES.ranch.shot,st=farm.beds.slice(0,beds).map(b=>stage(b)),ripe=st.filter(s=>s===3).length;
       tabs[tabOf('field')]?.classList.toggle('has-dot',ripe>0);
-      hint.textContent=id!=='field'?`牧場 Lv ${lv} · ${nextBuddy()}`:ripe?`${ripe} 格熟了 · 點一下收成`:st.includes(0)?(bag.seed>0?`種子 ×${bag.seed} · 點空的田種下`:'沒有種子 · 商店買或比賽拿'):'麥子在長 · 晚點再來';};
+      if(news===undefined){news=awayNews(ripe);if(news)setTimeout(()=>{news=null;if(alive)say();},AWAY_SAY);}
+      hint.textContent=news?news:id!=='field'?`牧場 Lv ${lv} · ${nextBuddy()}`:ripe?`${ripe} 格熟了 · 點一下收成`:st.includes(0)?(bag.seed>0?`種子 ×${bag.seed} · 點空的田種下`:'沒有種子 · 商店買或比賽拿'):'麥子在長 · 晚點再來';};
     const mark=shot=>{PAGES.ranch.shot=shot;tabs.forEach((b,k)=>b.setAttribute('aria-selected',k===tabOf(shot)));say();};
     // What a tap on a bed did, shown where the finger was: the wheat reaped rises and fades, a seed drops in.
     const pop=(x,y,html)=>{const box=el.getBoundingClientRect(),p=document.createElement('i');p.className='ranch-pop';p.innerHTML=html;p.style.left=`${x-box.left}px`;p.style.top=`${y-box.top}px`;el.append(p);p.onanimationend=()=>p.remove();};
@@ -291,7 +301,7 @@ const PAGES={
     const open=i=>{const t=RANCH_TABS[i];if(!t)return;if(t.dorm)return go('stable');view?.shot(t.shot);mark(t.shot);};
     mark(PAGES.ranch.shot);tabs.forEach((b,i)=>b.onclick=()=>open(i));
     const R=readRanch();
-    mountRanchView(el.querySelector('.view'),{buddies:placed(R,dorms).map(([h,where])=>({id:h.id,coat:h.coat,hair:maneOf(h.id),...where})),doors:R.doors,pens,dorms,open:beds,shot:PAGES.ranch.shot,
+    mountRanchView(el.querySelector('.view'),{buddies:placed(R,dorms).map(([h,where])=>({id:h.id,coat:h.coat,hair:maneOf(h.id),...where,ran:justRan?.id===h.id&&Date.now()-justRan.at<60e3?{left:60-(Date.now()-justRan.at)/1000,won:justRan.won}:null})),doors:R.doors,pens,dorms,open:beds,shot:PAGES.ranch.shot,
       onSwipe:d=>open(tabOf(PAGES.ranch.shot)+d),onBed:bed,onMove:(id,where)=>{R.place[id]=where;for(const k in R.doors)delete R.doors[k];saveRanch(R);},onDoor:(k,on)=>{R.doors[k]=on;saveRanch(R);}})
       .then(v=>{if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();show();})
       .catch(e=>{console.error(e);const l=el.querySelector('.stage-loading');if(l)l.textContent='3D 無法載入';});
@@ -425,6 +435,7 @@ const PAGES={
       if(newBest){all[key]=+r.finishTime.toFixed(3);store.set(SOLO_BEST,JSON.stringify(all));if(r.trace)store.set(GHOST+key,JSON.stringify(r.trace));}
       const f=finish(prog,{city:c.id,solo:true,result:{...r,seconds},today:today()});prog=f.p;saveProg();addCoins(r.coins+f.coins);addGems(f.gems);
       const bestCombo=+store.get(BEST)||0;store.set(BEST,String(Math.max(bestCombo,r.bestCombo||0)));   // the settings page's 「最高連擊」 (2026-10-10: only the relay wrote it)
+      justRan={id:h.id,at:Date.now(),won:r.rank==null||r.rank===1};   // the ranch shows it for a minute (ranch-view RANCH.ran)
       const a=afterSolo(care[h.id],{stars:f.runStars,perfect:r.perfect});care[h.id]=a.care;bag={...bag,seed:(bag.seed||0)+FARM.raceSeeds};saveCare({setItem:store.set},care,bag);
       // The hot streak: runs in a row that got somewhere (a new best or a new star); each one pays a little more, up to five.
       const hot=MVP.daily&&(newBest||f.newStars)?Math.min(5,(+store.get(HOT)||0)+1):0;store.set(HOT,String(hot));const hotCoins=hot>1?hot*10:0;if(hotCoins)addCoins(hotCoins);
@@ -504,7 +515,7 @@ const PAGES={
       sheet.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{const c=b.dataset.color;
         if(c===g.colors[0])delete profile.gear[part];else profile.gear[part]=c;saveProfile();paint();});
       sheet.querySelectorAll('[data-mane]').forEach(b=>b.onclick=()=>{profile.manes={...profile.manes,[h.id]:b.dataset.mane};saveProfile();paint();});   // this buddy's own
-      const look=h.coat+mane+JSON.stringify(profile.gear);if(look!==paint.look){paint.look=look;applyLook(h);view?.show();}
+      const look=h.coat+mane+JSON.stringify(profile.gear);if(look!==paint.look){paint.look=look;applyLook(h);const come=paint.who!==h.id;paint.who=h.id;view?.show(cr.hunger<40?'hungry':cr.hunger>80&&cr.clean>80?'happy':null,come);}   // how it greets you (stable-view ARRIVE)
     }
     el.querySelectorAll('[data-pane]').forEach(b=>b.onclick=()=>{pane=pane===b.dataset.pane?null:b.dataset.pane;paint();});
     el.querySelector('.st-scrim').onclick=()=>{pane=null;paint();};
@@ -524,7 +535,7 @@ const PAGES={
     leave=()=>{alive=false;window.removeEventListener('keydown',esc,true);view?.dispose();applyLook();};
     el.querySelectorAll('[data-rtab]').forEach((b,i)=>b.onclick=()=>{const t=RANCH_TABS[i];if(t.dorm||view?.busy)return;PAGES.ranch.shot=t.shot;go('ranch',{replace:true});});   // the other tabs: that shot of the 3D ranch (this page leaves no history entry behind: back from the ranch goes home)
     paint.look=null;paint();
-    const t0=performance.now();mountStableView(el.querySelector('.view')).then(v=>{store.set('hoofbeat.loadtime.ranch',((performance.now()-t0)/1000).toFixed(1));if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();paint.look=null;paint();})
+    const t0=performance.now();mountStableView(el.querySelector('.view')).then(v=>{store.set('hoofbeat.loadtime.ranch',((performance.now()-t0)/1000).toFixed(1));if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();paint.look=paint.who=null;paint();})
       .catch(()=>{el.querySelector('.stage-loading').textContent='3D 無法載入';});
   },
 
@@ -717,8 +728,8 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r442',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r442');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r460',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r460');   // a frame counter in the corner (fps.js)
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

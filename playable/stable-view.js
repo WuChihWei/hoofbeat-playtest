@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r442';
-import {applyLook,LOOK} from '../visual-style.js?v=r442';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r460';
+import {applyLook,LOOK} from '../visual-style.js?v=r460';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -271,6 +271,10 @@ export async function mountStableView(host){
 
   const cam=new THREE.PerspectiveCamera(CAM.fov,1,.3,60),page=host.closest('.page-stable');
   let model=null,bones=[],muzzle=null,raf=0,last=performance.now(),nod=0,job=null,w=0;   // w: act's neck pose weight
+  // It comes to you (2026-10-10, SPEC 11 P1): opened, the dorm shows the buddy walking in from ARRIVE.from m back along
+  // its own line, ARRIVE.time s, and then, by how it is (home.js show(mood)): hungry, its head goes down to the trough
+  // once; fed and clean, two glad nods; else it just stands and looks at you.
+  const ARRIVE={from:2.2,time:1.6,fade:.3,hungry:[1.4,.75],happy:[1,.09]};let arrive=null,greet=null,walking=null,mood=null,coming=true;
   // Mood state: fore / hind: how far each end is down (0 standing … 1 lying); still: s since the last touch; rear: s into
   // a rear (-1: none); queued: an act (or a rear) waiting for the horse to be up.
   let resting=false,fore=0,hind=0,still=0,restAfter=0,rear=-1,queued=null,joy=false,rig={},poses={},body=null;
@@ -289,7 +293,9 @@ export async function mountStableView(host){
     if(model)scene.remove(model.root);
     model=createApprovedHorse(0,null,false,null,true);model.seat.visible=false;
     if(!model.species){fixHind(model.content);sharpLegs(model.content.getObjectByName('HorseBody'));}   // a llama or a rhino keeps its own leg rig: it only stands (moods)
-    model.mixer.clipAction(model.clips.idle).play();
+    const idle=model.mixer.clipAction(model.clips.idle).play();walking=null;arrive=greet=null;
+    if(coming&&model.clips.walk&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const c=model.clips.walk.clone();c.tracks=c.tracks.filter(t=>!/^Root\./.test(t.name));   // in place: the root is moved here
+      walking=model.mixer.clipAction(c);walking.play();idle.setEffectiveWeight(0);arrive={t:0,idle};}
     model.content.traverse(o=>{if(o.material?.name==='Horse_ManeTail')onFloor(o.material);});
     model.root.position.set(HORSE.x+(BUDDY[model.species]?.x??0),0,HORSE.z);model.root.rotation.y=0;scene.add(model.root);
     // Its four feet on the floor, from its own middle (turned by nothing): where the far one stands as it is turned (far()).
@@ -389,15 +395,21 @@ export async function mountStableView(host){
     cam.fov=CAM.fov;cam.aspect=w/h;cam.updateProjectionMatrix();}
   const ro=new ResizeObserver(fit);ro.observe(host);
   const q=new THREE.Quaternion(),e=new THREE.Euler();
-  function frame(now){if(now-last<(job?29:46)){raf=requestAnimationFrame(frame);return;}   // 30 pictures a second while it eats or is brushed, 20 standing
+  function frame(now){if(now-last<(job||arrive||greet?29:46)){raf=requestAnimationFrame(frame);return;}   // 30 pictures a second while it eats or is brushed, 20 standing
     const dt=Math.min(.1,(now-last)/1000);last=now;nod=Math.max(0,nod-dt);
     moods(dt);if(job)acting(dt);
     if(job||queued)spin+=(0-spin)*Math.min(1,dt*6);model.root.rotation.y=HORSE.yaw+spin;if(feet.length){home??=model.root.position.clone();model.root.position.z=home.z+Math.max(0,far(HORSE.yaw+spin)-far(HORSE.yaw));model.root.position.x=home.x+Math.max(0,left(HORSE.yaw+spin)-left(HORSE.yaw));}
+    if(arrive){const k=Math.min(1,(arrive.t+=dt)/ARRIVE.time),back=ARRIVE.from*(1-k),yaw=HORSE.yaw+spin;   // steady steps, the last of them into its place
+      model.root.position.x+=Math.sin(yaw)*back;model.root.position.z+=Math.cos(yaw)*back;   // + : the model's nose is its −z, so this is behind it
+      if(k>=1){walking.fadeOut(ARRIVE.fade);arrive.idle.reset().setEffectiveWeight(1).fadeIn(ARRIVE.fade).play();arrive=null;greet=mood?{kind:mood,t:0}:null;}}
+    if(greet&&window.__stable?.greetAt!=null){greet.t=window.__stable.greetAt;window.__stable.greetAt=null;}
+    if(greet&&(greet.t+=dt)>ARRIVE[greet.kind][0])greet=null;
     model.mixer.update(dt);
-    const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0),to=job?(job.kind==='feed'?feedPose:BUDDY[model.species]?.bow??POSE.brush):POSE.idle;   // a soft chew-nod (the bite)
-    for(const [b,base] of bones){const n=b.name,p=POSE.idle[n]+(to[n]-POSE.idle[n])*w+bob*(n==='Head'?1:.3),t=(to.turn||0)*w*(TURN[n]||0);
+    const gk=greet?Math.sin(Math.PI*greet.t/ARRIVE[greet.kind][0]):0,hungry=greet?.kind==='hungry',glad=greet?.kind==='happy'?Math.sin(greet.t/ARRIVE.happy[0]*Math.PI*4)*ARRIVE.happy[1]*gk:0;
+    const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0)+glad,to=job?(job.kind==='feed'?feedPose:BUDDY[model.species]?.bow??POSE.brush):hungry?feedPose:POSE.idle,ww=job?w:hungry?gk*ARRIVE.hungry[1]:0;   // a soft chew-nod (the bite)
+    if(!arrive){for(const [b,base] of bones){const n=b.name,p=POSE.idle[n]+(to[n]-POSE.idle[n])*ww+bob*(n==='Head'?1:.3),t=(to.turn||0)*ww*(TURN[n]||0);
       b.quaternion.copy(base).multiply(q.setFromEuler(e.set(p,0,t)));}   // from rest every frame: the idle clip doesn't key these
-    moodPose();watch(cam.position,smooth(fore));if(body?.morphTargetInfluences)body.morphTargetInfluences[0]=smooth(hind);model.updateAttachment();
+    moodPose();}watch(cam.position,smooth(fore));if(body?.morphTargetInfluences)body.morphTargetInfluences[0]=smooth(hind);model.updateAttachment();
     model.eyes.update(dt,cam.position);   // it looks at whoever is looking at it
     if(brush.visible)aimProps();
     food.quaternion.copy(cam.quaternion);
@@ -413,13 +425,14 @@ export async function mountStableView(host){
   // show: the ranch page can change the buddy without leaving (its row of heads, 2026-10-05), so the model of the one
   // asked for is loaded first; a later request wins, and nothing is shown once the view is gone.
   let gone=false;
+  if(window.__stable)window.__stable.come=(t=0,m=null,g=null)=>{mood=m;coming=true;show();fit();if(g!=null){arrive.t=ARRIVE.time;window.__stable.greetAt=g;}else arrive.t=t;};   // dev: the arrival at t s, or (g) its greeting at g s
   if(window.__stable){window.__stable.act=(kind,t=.7,img)=>{setFood(img);job={kind,t,ate:false,peaked:true};};Object.defineProperty(window.__stable,'spin',{get:()=>spin,configurable:true});}   // dev (?debug): jump into an act at t s (a hidden tab draws one frame at a time)
-  const api={show:()=>{const c=PLAYER_LOOK.coat;Promise.all([preloadKeys(needs()),preloadBuddies([c])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
-    react(kind,onPeak,foodImg){if(job||queued||!ACTS[kind])return;api.wake();if(kind==='feed')setFood(foodImg);const go=()=>{job={kind,t:0,ate:false,peaked:false,onPeak};};
+  const api={show:(m,come=true)=>{mood=m||null;coming=come;const c=PLAYER_LOOK.coat;/* come: a buddy just opened or picked walks in; a new mane or saddle on the same one does not */Promise.all([preloadKeys(needs()),preloadBuddies([c])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
+    react(kind,onPeak,foodImg){if(job||queued||arrive||!ACTS[kind])return;greet=null;api.wake();if(kind==='feed')setFood(foodImg);const go=()=>{job={kind,t:0,ate:false,peaked:false,onPeak};};
       if(fore||hind)queued=go;else go();},
     wake(){still=0;restAfter=soon();resting=false;},   // any touch: stand up (if lying) and start the rest timer over
     cheer(){api.wake();joy=true;},                // a bar just filled: rear for joy once it is up and done
-    get busy(){return !!(job||queued);},
+    get busy(){return !!(job||queued||arrive);},
     dispose(){gone=true;cancelAnimationFrame(raf);ro.disconnect();r.dispose();r.domElement.remove();page?.style.removeProperty('--bg-x');page?.style.removeProperty('--bg-f');}};
   if(window.__stable)window.__stable.show=api.show;
   return api;

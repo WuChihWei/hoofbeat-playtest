@@ -14,14 +14,25 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r442';
-import {applyLook,LOOK} from '../visual-style.js?v=r442';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r460';
+import {applyLook,LOOK} from '../visual-style.js?v=r460';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
 export const RANCH={
   size:.85,                                   // a buddy is 3.3 units tall in the race's scale: 2.05 m to the ears here
   walk:1.5,turn:3.2,trot:.75,                 // m/s, rad/s, the Trot clip's rate at a walk
+  ran:{slow:.6,neck:.15,drink:3,bounce:[.07,9],near:2,stop:1},   // the one just back from a race (SPEC 11 P3): its walk × slow, its neck this far down, s it stands getting its breath, the winner's bounce [m, rad/s]; another buddy passing within `near` m stops `stop` s
+  // A small thing of its own (SPEC 11 P4, the cheap one: head, neck and tail only): a buddy standing gets a roll every `after` s:
+  // one in `odds` it does it, over `time` s. Per species, [bone, 'x' (nod: + is down) | 'z' (turn / swish), rad, rad/s (0: held)].
+  fidget:{after:6,odds:1/3,time:3,
+    horse:[['NeckLower','x',.55,0],['NeckUpper','x',.35,0],['Head','x',.12,0],['Head','x',.05,11]],             // grazes
+    llama:[['NeckUpper','z',.45,0],['Head','z',.5,0]],                                                          // turns to look
+    rhino:[['Head','z',.16,9],['NeckUpper','z',.08,9]],                                                         // shakes its head
+    bear:[['NeckLower','x',-.2,0],['Head','x',-.28,0],['Head','z',.1,5]],                                       // nose up, sniffing
+    zebra:[['Tail01','z',.6,10],['Tail02','z',.5,10]],                                                          // swishes its tail
+    cow:[['NeckLower','x',.1,0],['Head','x',.06,12],['Tail01','z',.35,4]],                                      // chews
+    wolf:[['NeckLower','x',-.3,0],['NeckUpper','x',-.25,0],['Head','x',-.35,0]]},                               // lifts its head
   rest:[4,14],hop:7,                          // s standing at a spot before the next stroll; a stroll goes no farther than this (m)
   fov:45,ease:4.5,                            // the camera's lens; how fast it glides to a shot (1/s)
   // The camera: `all` looks up the strip (el: how steeply down; az: a little from the right, so the barn shows a side;
@@ -283,6 +294,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
     step.setEffectiveWeight(0);step.timeScale=RANCH.trot;model.mixer.update(Math.random()*3);
     const under=spot.clone();under.rotation.x=-Math.PI/2;
     const me={id:b.id,model,idle,step,stall:null,on:0,path:[],wait:Math.random()*RANCH.rest[1],go:0,yaw:Math.random()*6.28,pos:new THREE.Vector3(),under};
+    if(b.ran){const neck=model.content.getObjectByName('NeckLower');me.ran={left:b.ran.left,won:!!b.ran.won,neck,base:neck?.quaternion.clone(),t:0};}   // just back from a race (home.js): tired for `left` s more
     const taken=k=>herd.some(o=>o.stall===k);
     if(b.stall!=null&&stallAt(b.stall)[1]!=null&&!taken(b.stall)){me.stall=b.stall;inStall(me);}
     else if(b.at){me.pos.copy(at(...b.at));me.on=nearest(...b.at);}
@@ -290,19 +302,41 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
     scene.add(model.root,under);herd.push(me);
   }
   hung.forEach((_,k)=>swing(k));
+  const tiltQ=new THREE.Quaternion(),tiltE=new THREE.Euler();
+  // (Walking it to the water trough was tried and dropped, 2026-10-10: the trough is off the right of an upright
+  // phone's view and the nearest free spot is 10 m from it, so the buddy only walked out of the picture.)
+  for(const b of herd)if(b.ran&&b.stall==null){b.path=[];b.wait=RANCH.ran.drink+2;}   // it stands and gets its breath first
+  const tired=()=>herd.find(o=>o.ran&&o.stall==null);
+  function fidget(b,dt,still){const F=RANCH.fidget;
+    if(!still){b.stood=0;if(b.fid){for(const [bone,base] of b.fid.bones)bone.quaternion.copy(base);b.fid=null;}return;}
+    b.stood=(b.stood||0)+dt;
+    if(!b.fid&&b.stood>F.after){b.stood=0;if(Math.random()<F.odds)b.fid={t:0,bones:null};}   // a roll every `after` s it goes on standing (one in its stall never walks)
+    if(!b.fid)return;
+    const moves=F[b.model.species||'horse']||[];b.fid.bones??=[...new Set(moves.map(m=>m[0]))].map(n=>b.model.content.getObjectByName(n)).filter(Boolean).map(o=>[o,o.quaternion.clone()]);
+    const t=b.fid.t+=dt,k=Math.sin(Math.PI*Math.min(1,t/F.time)),env=Math.min(1,k*2.5);   // up, held, back down
+    for(const [bone,base] of b.fid.bones){tiltE.set(0,0,0);for(const [n,axis,amp,f] of moves)if(n===bone.name)tiltE[axis]+=amp*env*(f?Math.sin(t*f):1);bone.quaternion.copy(base).multiply(tiltQ.setFromEuler(tiltE));}
+    if(t>=F.time){for(const [bone,base] of b.fid.bones)bone.quaternion.copy(base);b.fid=null;b.stood=0;}
+  }
   function stroll(b,dt){
-    if(b.stall!=null||b===held){b.step.setEffectiveWeight(0);b.idle.setEffectiveWeight(1);b.model.mixer.update(dt);b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);return;}
+    if(b.ran){b.ran.t+=dt;if((b.ran.left-=dt)<=0){if(b.ran.neck)b.ran.neck.quaternion.copy(b.ran.base);b.step.timeScale=RANCH.trot;b.ran=null;}}
+    const slow=b.ran?RANCH.ran.slow:1;if(b.ran)b.step.timeScale=RANCH.trot*slow;
+    if(!b.ran&&b.stall==null&&b!==held){const o=tired();if(o&&!b.met&&Math.hypot(o.pos.x-b.pos.x,o.pos.z-b.pos.z)<RANCH.ran.near){b.met=true;b.pause=RANCH.ran.stop;}}
+    if(b.pause>0)b.pause-=dt;
+    if(b.stall!=null||b===held){b.step.setEffectiveWeight(0);b.idle.setEffectiveWeight(1);b.model.mixer.update(dt);b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);fidget(b,dt,b!==held);return;}   // in its stall it has its small thing too
     if(!b.path.length){b.wait-=dt;if(b.wait<=0){const here=spots[b.on],to=free(s=>s!==here&&Math.hypot(s.x-here.x,s.y-here.y)<RANCH.hop,b);if(to!=null)b.path=route(spots,b.on,to,new Set(herd.filter(o=>o!==b&&o.stall==null).map(o=>o.on)));b.wait=RANCH.rest[0]+Math.random()*(RANCH.rest[1]-RANCH.rest[0]);}}
     let moving=0;
-    if(b.path.length){const s=spots[b.path[0]],dx=s.x-b.pos.x,dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces -z at yaw 0
+    if(b.path.length&&!(b.pause>0)){const s=spots[b.path[0]],dx=s.x-b.pos.x,dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces -z at yaw 0
       const off=Math.atan2(Math.sin(want-b.yaw),Math.cos(want-b.yaw));b.yaw+=Math.sign(off)*Math.min(Math.abs(off),RANCH.turn*dt);
-      moving=Math.max(0,Math.cos(off));const stepLen=Math.min(d,RANCH.walk*moving*dt);   // it turns on the spot first, then walks
+      moving=Math.max(0,Math.cos(off));const stepLen=Math.min(d,RANCH.walk*slow*moving*dt);   // it turns on the spot first, then walks
       if(d<=.05)b.on=b.path.shift();
       else if(crowded(b.pos.x,b.pos.z,b.pos.x+dx/d*stepLen,b.pos.z+dz/d*stepLen,herd.filter(o=>o!==b&&o.stall==null&&o!==held).map(o=>o.pos))){   // someone in the way: it waits, then turns back to the spot it left
         moving=0;b.held=(b.held||0)+dt;if(b.held>RANCH.stuck){b.held=0;b.path=b.path[0]===b.on?[]:[b.on];b.wait=RANCH.rest[0]*Math.random();}}
       else{b.held=0;b.pos.x+=dx/d*stepLen;b.pos.z+=dz/d*stepLen;}}
     b.go+=((moving>.3?1:0)-b.go)*Math.min(1,dt*6);b.step.setEffectiveWeight(b.go);b.idle.setEffectiveWeight(1-b.go);b.model.mixer.update(dt);
     b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);
+    fidget(b,dt,b.go<.05&&!b.path.length&&!b.ran&&!(b.pause>0));
+    if(b.ran){if(b.ran.neck)b.ran.neck.quaternion.copy(b.ran.base).multiply(tiltQ.setFromEuler(tiltE.set(RANCH.ran.neck*(1+1.2*Math.max(0,1-b.ran.t/RANCH.ran.drink)*(.6+.4*Math.sin(b.ran.t*7))),0,0)));   // head low; lower and heaving for the first `drink` s (out of breath)
+      if(b.ran.won)b.model.root.position.y+=Math.abs(Math.sin(b.ran.t*RANCH.ran.bounce[1]))*RANCH.ran.bounce[0]*b.go;}   // the winner: a spring in its step
   }
 
   // The camera: the view up the strip (its middle slides along it, where a drag left it) or the field's shot; it
@@ -353,6 +387,6 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,dorms=1,open
   function frame(t){raf=requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000);last=t;tick(dt);}
   herd.forEach(b=>stroll(b,0));r.shadowMap.needsUpdate=true;fit();
   host.append(el$);raf=requestAnimationFrame(frame);
-  if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,hung,spots,cur,L,go,set slide(v){slide=v;},get slide(){return slide;},step:tick};   // dev (?debug): step, to move things on in a tab that draws one frame a second
+  if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,hung,spots,cur,L,go,fidget:id=>{const b=herd.find(o=>o.id===id);if(b){b.path=[];b.wait=9;b.fid={t:0,bones:null};}},set slide(v){slide=v;},get slide(){return slide;},step:tick};   // dev (?debug): step, to move things on in a tab that draws one frame a second
   return {shot:go,field,dispose(){cancelAnimationFrame(raf);ro.disconnect();herd.forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
 }
