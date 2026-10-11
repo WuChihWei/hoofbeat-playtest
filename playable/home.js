@@ -5,26 +5,26 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r460';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r460';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r460';
+import {startSlice,TUTORIAL} from './slice-app.js?v=r462';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r462';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r462';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
 const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
 setTimeout(()=>{barn.src='assets/stable/barn-plate.webp';preloadRanch(owned().slice(0,14).map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
-import {lang,setLang,translate} from '../i18n.js?v=r460';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,soloForm as careForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r460';
-import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains,MVP} from './slice-config.mjs?v=r460';
-import {mountStableView,preloadStable} from './stable-view.js?v=r460';
-import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r460';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r460';
-import {cityPictures} from '../approved-environment.js?v=r460';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r460';
+import {lang,setLang,translate} from '../i18n.js?v=r462';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,relayForm,soloForm as careForm,afterRace,afterSolo,recover} from '../stable-care.js?v=r462';
+import {SLICE_CONFIG,AFFINITY,TERRAIN_NAME,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,legMains,MVP} from './slice-config.mjs?v=r462';
+import {mountStableView,preloadStable} from './stable-view.js?v=r462';
+import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r462';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r462';
+import {cityPictures} from '../approved-environment.js?v=r462';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r462';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r460';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r460';
-import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r460';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r462';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r462';
+import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r462';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -462,7 +462,7 @@ const PAGES={
     // (white while their sheet is open). Look is a sheet in the card's place, the stage stays live; Items is a black
     // sheet with three tabs (food to pick for Feed, care items used on tap, tools).
     care=readCare({getItem:store.get},ROSTER.map(h=>h.id));   // stamina rested back since the last visit
-    let index=Math.max(0,ROSTER.findIndex(h=>h.id===(stableFocus??profile.horse))),pane=null,food='wheat',picked=false,view=null,alive=true;   // the feed button feeds wheat, the ranch's own food, unless a treat was picked from the items
+    let index=Math.max(0,ROSTER.findIndex(h=>h.id===(stableFocus??profile.horse))),pane=null,food='wheat',picked=false,view=null,alive=true;const came=new Set();   // the buddies that have already walked in on this visit to the dorm: picked again, one just stands there (2026-10-11, the user). Gone with the page   // the feed button feeds wheat, the ranch's own food, unless a treat was picked from the items
     const maned=()=>MVP.perks&&!COATS[ROSTER[index].coat].species;let part=maned()?'mane':GEAR[0].mat,kind='food';   // MVP: no mane styles   // part: 'mane' (this buddy's mane and tail style; a llama or a rhino has none) or a GEAR material
     const owned=readDecor(),deco=MVP.decor?[...DECOR,...POSTCARDS].filter(d=>owned.has(d.id)):[];
     const el=frame('page-stable ui-live',`<div class="st-bg" aria-hidden="true"></div><div class="st-decor" aria-hidden="true">${deco.map(d=>
@@ -515,7 +515,7 @@ const PAGES={
       sheet.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{const c=b.dataset.color;
         if(c===g.colors[0])delete profile.gear[part];else profile.gear[part]=c;saveProfile();paint();});
       sheet.querySelectorAll('[data-mane]').forEach(b=>b.onclick=()=>{profile.manes={...profile.manes,[h.id]:b.dataset.mane};saveProfile();paint();});   // this buddy's own
-      const look=h.coat+mane+JSON.stringify(profile.gear);if(look!==paint.look){paint.look=look;applyLook(h);const come=paint.who!==h.id;paint.who=h.id;view?.show(cr.hunger<40?'hungry':cr.hunger>80&&cr.clean>80?'happy':null,come);}   // how it greets you (stable-view ARRIVE)
+      const look=h.coat+mane+JSON.stringify(profile.gear);if(look!==paint.look){paint.look=look;applyLook(h);const come=!came.has(h.id);came.add(h.id);view?.show(cr.hunger<40?'hungry':cr.hunger>80&&cr.clean>80?'happy':null,come);}   // how it greets you (stable-view ARRIVE)
     }
     el.querySelectorAll('[data-pane]').forEach(b=>b.onclick=()=>{pane=pane===b.dataset.pane?null:b.dataset.pane;paint();});
     el.querySelector('.st-scrim').onclick=()=>{pane=null;paint();};
@@ -535,7 +535,7 @@ const PAGES={
     leave=()=>{alive=false;window.removeEventListener('keydown',esc,true);view?.dispose();applyLook();};
     el.querySelectorAll('[data-rtab]').forEach((b,i)=>b.onclick=()=>{const t=RANCH_TABS[i];if(t.dorm||view?.busy)return;PAGES.ranch.shot=t.shot;go('ranch',{replace:true});});   // the other tabs: that shot of the 3D ranch (this page leaves no history entry behind: back from the ranch goes home)
     paint.look=null;paint();
-    const t0=performance.now();mountStableView(el.querySelector('.view')).then(v=>{store.set('hoofbeat.loadtime.ranch',((performance.now()-t0)/1000).toFixed(1));if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();paint.look=paint.who=null;paint();})
+    const t0=performance.now();mountStableView(el.querySelector('.view')).then(v=>{store.set('hoofbeat.loadtime.ranch',((performance.now()-t0)/1000).toFixed(1));if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();paint.look=null;paint();})
       .catch(()=>{el.querySelector('.stage-loading').textContent='3D 無法載入';});
   },
 
@@ -728,8 +728,8 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r460',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r460');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r462',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r462');   // a frame counter in the corner (fps.js)
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

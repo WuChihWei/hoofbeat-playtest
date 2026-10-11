@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r460';
+import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r462';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race

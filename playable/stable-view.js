@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r460';
-import {applyLook,LOOK} from '../visual-style.js?v=r460';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r462';
+import {applyLook,LOOK} from '../visual-style.js?v=r462';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -274,7 +274,7 @@ export async function mountStableView(host){
   // It comes to you (2026-10-10, SPEC 11 P1): opened, the dorm shows the buddy walking in from ARRIVE.from m back along
   // its own line, ARRIVE.time s, and then, by how it is (home.js show(mood)): hungry, its head goes down to the trough
   // once; fed and clean, two glad nods; else it just stands and looks at you.
-  const ARRIVE={from:2.2,time:1.6,fade:.3,hungry:[1.4,.75],happy:[1,.09]};let arrive=null,greet=null,walking=null,mood=null,coming=true;
+  const ARRIVE={from:2.2,leg:1.69,time:1.6,fade:.3,hungry:[1.4,.75],happy:[1,.09]};let arrive=null,greet=null,walking=null,mood=null,coming=true;
   // Mood state: fore / hind: how far each end is down (0 standing … 1 lying); still: s since the last touch; rear: s into
   // a rear (-1: none); queued: an act (or a rear) waiting for the horse to be up.
   let resting=false,fore=0,hind=0,still=0,restAfter=0,rear=-1,queued=null,joy=false,rig={},poses={},body=null;
@@ -295,12 +295,13 @@ export async function mountStableView(host){
     if(!model.species){fixHind(model.content);sharpLegs(model.content.getObjectByName('HorseBody'));}   // a llama or a rhino keeps its own leg rig: it only stands (moods)
     const idle=model.mixer.clipAction(model.clips.idle).play();walking=null;arrive=greet=null;
     if(coming&&model.clips.walk&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const c=model.clips.walk.clone();c.tracks=c.tracks.filter(t=>!/^Root\./.test(t.name));   // in place: the root is moved here
-      walking=model.mixer.clipAction(c);walking.play();idle.setEffectiveWeight(0);arrive={t:0,idle};}
+      walking=model.mixer.clipAction(c);walking.play();idle.setEffectiveWeight(0);arrive={t:0,idle,from:ARRIVE.from};}
     model.content.traverse(o=>{if(o.material?.name==='Horse_ManeTail')onFloor(o.material);});
     model.root.position.set(HORSE.x+(BUDDY[model.species]?.x??0),0,HORSE.z);model.root.rotation.y=0;scene.add(model.root);
     // Its four feet on the floor, from its own middle (turned by nothing): where the far one stands as it is turned (far()).
     model.root.updateMatrixWorld(true);feet=['ForeHoofL','ForeHoofR','HindHoofL','HindHoofR'].map(n=>model.content.getObjectByName(n)).filter(Boolean).map(b=>b.getWorldPosition(new THREE.Vector3()).sub(model.root.position));
     model.root.rotation.y=HORSE.yaw;home=null;
+    if(arrive){const sh=model.content.getObjectByName('ForeUpperL');if(sh)arrive.from=ARRIVE.from*sh.getWorldPosition(new THREE.Vector3()).y/ARRIVE.leg;}   // as far as its own legs walk in that time: the clip's stride is the horse's × its leg length (ARRIVE.leg: the horse's shoulder, m), and at the horse's pace a wolf's feet slid (2026-10-11, the user: 「狼的動畫腳有點怪」)
     bones=NECK.map(n=>model.content.getObjectByName(n)).filter(Boolean).map(b=>[b,b.quaternion.clone()]);
     muzzle=findMuzzle(model.content);
     rig={};model.content.updateMatrixWorld(true);headUp.set(0,1,0).applyQuaternion(model.content.getObjectByName('Head').getWorldQuaternion(hq2).invert());   // the head's up, standing
@@ -399,7 +400,7 @@ export async function mountStableView(host){
     const dt=Math.min(.1,(now-last)/1000);last=now;nod=Math.max(0,nod-dt);
     moods(dt);if(job)acting(dt);
     if(job||queued)spin+=(0-spin)*Math.min(1,dt*6);model.root.rotation.y=HORSE.yaw+spin;if(feet.length){home??=model.root.position.clone();model.root.position.z=home.z+Math.max(0,far(HORSE.yaw+spin)-far(HORSE.yaw));model.root.position.x=home.x+Math.max(0,left(HORSE.yaw+spin)-left(HORSE.yaw));}
-    if(arrive){const k=Math.min(1,(arrive.t+=dt)/ARRIVE.time),back=ARRIVE.from*(1-k),yaw=HORSE.yaw+spin;   // steady steps, the last of them into its place
+    if(arrive){const k=Math.min(1,(arrive.t+=dt)/ARRIVE.time),back=arrive.from*(1-k),yaw=HORSE.yaw+spin;   // steady steps, the last of them into its place
       model.root.position.x+=Math.sin(yaw)*back;model.root.position.z+=Math.cos(yaw)*back;   // + : the model's nose is its −z, so this is behind it
       if(k>=1){walking.fadeOut(ARRIVE.fade);arrive.idle.reset().setEffectiveWeight(1).fadeIn(ARRIVE.fade).play();arrive=null;greet=mood?{kind:mood,t:0}:null;}}
     if(greet&&window.__stable?.greetAt!=null){greet.t=window.__stable.greetAt;window.__stable.greetAt=null;}

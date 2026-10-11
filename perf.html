@@ -1,5 +1,5 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>效能測試</title>
-<link rel="stylesheet" href="ui/ui.css?v=r460"><link rel="stylesheet" href="playable/slice.css?v=r460">
+<link rel="stylesheet" href="ui/ui.css?v=r462"><link rel="stylesheet" href="playable/slice.css?v=r462">
 <style>#perf{position:absolute;z-index:20;left:8px;right:8px;top:max(8px,env(safe-area-inset-top));padding:10px 12px;border-radius:14px;background:#000c;color:#fff;font:13px/1.45 system-ui}
 #perf table{width:100%;border-collapse:collapse}#perf td,#perf th{padding:2px 4px;text-align:right}#perf td:first-child,#perf th:first-child{text-align:left}
 #perf button{margin:8px 6px 0 0;padding:8px 12px;border:0;border-radius:10px;background:#d9ff4f;color:#151810;font-weight:700}</style></head>
@@ -8,14 +8,14 @@
 // Test build only (Settings → 效能測試): the race renderer on a real course, running like a race for a few seconds per
 // setting, each one switching one cost off, to see on the phone itself what holds the frame rate down. Per setting:
 // fps, frame interval p95, JS ms per frame (simulation + draw submit), triangles and draw calls.
-import {preloadPresentation,preloadModels} from './approved-assets.js?v=r460';
-import {cityModels} from './approved-environment.js?v=r460';
-import {ChaseRenderer} from './race-scene.js?v=r460';
-import {SliceGame} from './playable/slice-game.mjs?v=r460';
-import {fieldRivals} from './playable/slice-config.mjs?v=r460';
-import {relayCourse} from './course/courses.mjs?v=r460';
-import {raceHudMarkup,raceControlsMarkup} from './race-hud.js?v=r460';
-import {PHONE} from './presentation-config.mjs?v=r460';
+import {preloadPresentation,preloadModels} from './approved-assets.js?v=r462';
+import {cityModels} from './approved-environment.js?v=r462';
+import {ChaseRenderer} from './race-scene.js?v=r462';
+import {SliceGame} from './playable/slice-game.mjs?v=r462';
+import {fieldRivals} from './playable/slice-config.mjs?v=r462';
+import {relayCourse} from './course/courses.mjs?v=r462';
+import {raceHudMarkup,raceControlsMarkup} from './race-hud.js?v=r462';
+import {PHONE} from './presentation-config.mjs?v=r462';
 const out=document.getElementById('perf'),city=new URLSearchParams(location.search).get('city')||'paris',rivals=fieldRivals(5);
 await Promise.all([preloadPresentation(),preloadModels(cityModels(city))]);
 document.querySelector('main').insertAdjacentHTML('beforeend',raceHudMarkup(rivals)+raceControlsMarkup());
