@@ -142,6 +142,8 @@ export const STRINGS=[
   {zh:"蓄力鈕在左手邊",en:"Charge button on the left"},
   {zh:"比賽操作",en:"Race controls"},
   {zh:"準備撞！",en:"Bump coming!"},
+  {zh:"踩到水了",en:"In the water"},
+  {zh:"踩到了！",en:"Stepped in it!"},
   {zh:"準備踢！",en:"Kick coming!"},
   {zh:"撲空了",en:"Missed"},
   {zh:"牠叫 {0}。要改名嗎？",en:"This is {0}. Give it a new name?",p:1},

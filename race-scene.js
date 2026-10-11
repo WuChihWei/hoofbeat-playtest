@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r502';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r502';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r502';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r502';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r502';
-import {installApprovedEnvironment} from './approved-environment.js?v=r502';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r502';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r502';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r502';
-import {turnAt} from './track-projection.js?v=r502';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r502';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r502';
+import {roadHalfWidth} from './track-presentation.mjs?v=r503';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r503';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r503';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r503';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r503';
+import {installApprovedEnvironment} from './approved-environment.js?v=r503';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r503';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r503';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r503';
+import {turnAt} from './track-projection.js?v=r503';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r503';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r503';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -926,7 +926,7 @@ export class ChaseRenderer {
           for(let d=0;d<S.drops&&this.sparkParts.length<SPARKS.max;d++){const a=r()*6.2832,v=S.speed[0]+r()*(S.speed[1]-S.speed[0]);
             this.sparkParts.push({x:p.x+(r()-.5)*.8,y:.15,z:p.z+(r()-.3)*1.6,vx:Math.cos(a)*v*.7,vy:1.6+r()*v,vz:Math.abs(Math.sin(a))*v*.6+1,age:0,life:S.life*(.7+r()*.6),size:S.size,a:.95,c:S.colors[d%3]});}}}
     });
-    (race.poops||[]).forEach((o,i)=>{const m=this.poopMeshes?.[i];if(!m)return;const gap=o.distance-race.distance;m.visible=gap>-PAST&&gap<150;if(!m.visible)return;const p=roadPose(HORSE_Z-gap,turn,o.lane*race.config.laneSpacing);m.position.set(p.x,.02,p.z);m.rotation.set(0,p.heading+i,0);});
+    (race.poops||[]).forEach((o,i)=>{const m=this.poopMeshes?.[i];if(!m)return;const gap=o.distance-race.distance;m.visible=gap>-PAST&&gap<150;if(!m.visible)return;const p=roadPose(HORSE_Z-gap,turn,o.lane*race.config.laneSpacing);m.position.set(p.x,.02,p.z);m.rotation.set(0,p.heading+i,0);m.scale.y=POOP.scale*POOP.squat*(o.hit?.4:1);});   // trodden on: flat
     this.coinGlow.sync(this.camera,this.r.domElement.height,glow);
     // The street lamps light up down the road with the streak (one more pair a hit, to 16), and go dark on a miss.
     const lit=Math.min(race.combo||0,16)*REACT.lamp.reach;let lamps=0;

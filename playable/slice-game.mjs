@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r502';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r503';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -48,8 +48,10 @@ export class SliceGame {
     this.coins=coins.map(c=>({...c,collected:false}));this.coinCount=0;
     this.apples=(c.solo?sliceApples(course):[]).map(a=>({...a,collected:false}));this.appleCount=0;this.rushes=[];   // rushes: the apples' speed-ups {t, end}
     // Hazards (2026-10-11, the user: water instead of mud, a dropping instead of a bad apple): config.hazards {puddles:
-    // [{distance, lane, length m}], poops: [{distance, lane}]}. Only where they are, so far: race-scene draws them; what
-    // they do to a runner is not written yet.
+    // [{distance, lane, length m}], poops: [{distance, lane}]}. A puddle slows whoever steps in it (puddleSlow) while
+    // it is in and for wetTime after; a dropping is a short stumble (slip) for whoever treads on it, nothing else lost. A jump clears
+    // both: in the air nothing touches the ground. A rival is caught by each one in its lane with chance 1 - skill (it
+    // steps round the rest), fixed per rival and hazard like its hurdles (wet, hazardStep).
     this.puddles=(c.hazards?.puddles||[]).map((p,i)=>({id:'w'+i,length:4.2,...p}));this.poops=(c.hazards?.poops||[]).map((p,i)=>({id:'p'+i,...p,hit:false}));
     if(c.locks?.lane)for(const x of [...this.coins,...this.apples])x.lane=0;   // no lane changes yet: everything to pick up is straight ahead
     this.rhythmDrive=0;this.rhythmSpeed=0;this.lastRhythm=-Infinity;this.finishTime=null;this.lastRank=null;
@@ -83,6 +85,20 @@ export class SliceGame {
   bendAhead(d=this.distance){let s=0;for(let k=0;k<13;k++)s+=sectionAt(d+15+k*5,this.course).bend;return s/13;}
   legStart(k){return k?this.course.relays[k-1]:0;}
   legEnd(k){return k<2?this.course.relays[k]:this.course.length;}
+  // In the air (a jump, a leap): the player. Rivals hop hurdles only; their hazards go by skill (caught).
+  airborne(t=this.time){const j=this.jumps.at(-1);return !!j&&t>=j.t&&t-j.t<this.config.jumpDuration;}
+  caught(r,k){return hash(k+.7,r.phase+5)<1-r.skill;}
+  // The puddle `o` is in (the player unless airborne; a rival if it is one it is caught by), or null. slowed: in one, or
+  // out of one less than wetTime ago (o.wetUntil).
+  slowed(o,t=this.time){if(this.wet(o,t))o.wetUntil=t+this.config.wetTime*this.config.tempo;return t<(o.wetUntil??-9);}
+  wet(o,t=this.time){const c=this.config,me=o===this;if(me&&this.airborne(t))return null;
+    return this.puddles.find((p,k)=>o.distance>=p.distance&&o.distance<=p.distance+p.length&&Math.abs(o.laneValue-p.lane)<c.hazardReach&&(me||this.caught(o,k)))??null;}
+  // A dropping crossed between `from` and o.distance: a slip. The player's is said (the 'poop' event).
+  hazardStep(o,from,lane,t){const c=this.config,me=o===this;
+    this.poops.forEach((p,k)=>{if(p.distance<=from||p.distance>o.distance||Math.abs(lane-p.lane)>=c.hazardReach)return;
+      if(me?this.airborne(t):!this.caught(o,k+50))return;
+      p.hit=true;o.stumbles.push({t,k:c.slip});if(me)this.emit('poop',{id:p.id});});
+    if(me){const w=this.wet(this,t)?.id??null;if(w&&w!==this.wetIn)this.emit('puddle',{id:w});this.wetIn=w;}}
   // Stamina, the same for every runner: a pool of the buddy's own size (o.pool); a sprint takes sprintStamina off as it
   // starts, and from staminaWait after the last one ended it comes back at staminaRegen / s.
   fresh(o=this){return o.stamina>=this.config.sprintStamina-1e-9;}
@@ -280,7 +296,7 @@ export class SliceGame {
     if(solo&&c.ball)r.drive=(r.blown??-9)>mid?this.solo.floor:(r.form.top??this.solo.top)*(c.ballLo+(c.ballHi-c.ballLo)*(.12+.7*r.skill))*(1+c.ballGain*c.ballStack*r.skill*.7*Math.min(1,mid/(c.ballFill*6)));   // the ball test: a rival holds its ball at a steady share of the limit and builds a share of the streak, both by its skill
     if(solo)r.driveSpeed+=(r.drive-r.driveSpeed)*(1-Math.exp(-(r.drive<r.driveSpeed?this.solo.fall:this.solo.response)*dt));
     const own=(solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed)*(c.rivalPace??1);   // rivalPace: the settings page's 對手強度 (slice-app RIVAL_PACE)
-    r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r));
+    r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r)*(this.slowed(r,mid)?c.puddleSlow:1));
     if(r.ram)r.speed=Math.max(4,this.speed+clamp((this.distance-r.distance)*1.5,-3,3));   // a ram: it holds on beside the player
     if(r.targetLane%1&&(!this.solo||Math.abs(r.targetLane)>1)&&r.distance>3*c.breakOut)r.speed*=.75;   // still out in an outer stall with no room beside it: it eases off and drops in behind. In a solo race only the outer ones (2026-10-10; the relay keeps its rule, its checks are tuned on it): all four easing off together stayed level, at three quarters speed for the first 9 s of stages 4 and 5, and the player was a quarter lap up
     r.laneValue=laneAt(r.laneChanges,this.time,c.laneDuration)??r.laneValue;
@@ -312,7 +328,7 @@ export class SliceGame {
       // Drafting: right behind a horse in the lane → energy builds faster toward a leap (config draft*).
       this.drafting=this.drafts(this);this.rest(this,dt);
       if(this.drafting&&!this.boostActive()){const had=this.segments();this.energy=Math.min(this.cap(),this.energy+c.draftTrickle*dt);if(this.segments()>had)this.emit('charged',{segments:this.segments()});}   // a segment filled by drafting counts like one filled by a hit
-      this.speed=this.leapPace(this,Math.max(4,own+c.boostSpeed*this.boostStrength(mid)+(c.appleSpeed||0)*this.appleStrength(mid))*this.affinity*this.stumbleFactor(mid));
+      this.speed=this.leapPace(this,Math.max(4,own+c.boostSpeed*this.boostStrength(mid)+(c.appleSpeed||0)*this.appleStrength(mid))*this.affinity*this.stumbleFactor(mid)*(this.slowed(this,mid)?c.puddleSlow:1));
       for(const r of this.rivals){this.rivalLanes(r);this.rivalStep(r,dt,mid);this.ramStep(r);}
       const back=this.rivals.map(r=>r.distance),wasBlocked=this.blockedBy;this.move(dt);
       if(this.blockedBy&&!wasBlocked)this.emit('blocked',{by:this.blockedBy.id});
@@ -321,13 +337,14 @@ export class SliceGame {
         // player's stumble (the dip, the sprint and the rhythm drive lost).
         for(const [k,h] of this.hurdles.entries())if(!r.jumped.has(h)&&(h.distance-r.distance)/r.speed<=c.jumpLead&&h.distance>b){r.jumped.add(h);r.jumps.push({t:this.time});r.hop=this.time;
           if(hash(k+.25,r.phase+1)<(1-r.skill)/3)r.trip=h;}
+        this.hazardStep(r,b,r.laneValue,this.time);
         if(r.trip&&r.distance>=r.trip.distance){r.trip=null;r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;this.emit('rival-trip',{id:r.id});}
         for(const a of this.apples)if(!a.collected&&a.distance>b&&a.distance<=r.distance&&Math.abs(a.lane-r.laneValue)*c.laneSpacing<=c.coinRadius){a.collected=true;r.rushes.push({t:this.time,end:this.time+c.appleTime});}   // an apple it runs over is its own (the player's rule)
         if(r.leg<2&&r.distance>=this.course.relays[r.leg]){r.leg++;r.energy=0;r.form=r.forms[r.leg];r.pool=r.stamina=r.form.stamina;r.restAt=0;}
         if(!r.finishTime&&r.distance>=c.length)r.finishTime=this.time+dt*(c.length-r.distance)/(r.distance-b);}
       this.time+=dt;this.laneValue=this.laneAt(this.time);
       if(this.swing&&this.time>=this.swing.t+c.skillTime)this.skillLand();
-      this.collectSweep(before,this.distance,oldLane,this.laneValue);
+      this.collectSweep(before,this.distance,oldLane,this.laneValue);this.hazardStep(this,before,this.laneValue,this.time);
       for(const h of this.hurdles){
         if(h.state||before>=h.distance||this.distance<h.distance)continue;
         const crossed=this.time-dt+dt*(h.distance-before)/(this.distance-before),j=this.jumps.at(-1);
