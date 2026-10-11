@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r477';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r477';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r477';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r477';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r477';
-import {installApprovedEnvironment} from './approved-environment.js?v=r477';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r477';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r477';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r477';
-import {turnAt} from './track-projection.js?v=r477';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r477';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r477';
+import {roadHalfWidth} from './track-presentation.mjs?v=r478';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r478';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r478';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r478';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r478';
+import {installApprovedEnvironment} from './approved-environment.js?v=r478';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r478';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r478';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r478';
+import {turnAt} from './track-projection.js?v=r478';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r478';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r478';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -552,6 +552,11 @@ export class ChaseRenderer {
         // its bones and its animation every frame for nothing (up to four of them while the player leads).
         const unseen=race.slice&&role!=='player'&&actor.z-HORSE_Z>PAST+RUNNER_LENGTH;
         model.root.visible = actor.opacity > 0&&!unseen; model.root.position.set(p.x, .025+jump.height-.05*(jump.crouch||0)-.09*(jump.landing||0), p.z); model.root.rotation.set(jump.pitch+(collision?-.09:0),p.heading,0);
+        // The slide of a bump (entry.pose3[2], worked out with the pose below): put on here, every picture. Inside the pose
+        // it was added only when a rival's pose was worked out, 30 times a second, and the rival flickered between its
+        // lane and the slide (2026-10-11, the user).
+        entry.slide=(entry.slide??0)+((!this.reduced&&entry.pushDir?REACT.reach*(entry.pose3?.[2]??0)*entry.pushDir:0)-(entry.slide??0))*.5;const slide=Math.abs(entry.slide)>.002?entry.slide:0;   // eased every picture toward the pose's value: a rival's is new only 30 times a second
+        if(slide){model.root.position.x+=Math.cos(p.heading)*slide;model.root.position.z-=Math.sin(p.heading)*slide;}
         if (actor.active){
           this.runnerLabels[index].position.set(p.x,3.77*scale+jump.height,p.z-.45);
           this.canvas.dataset[role+'Z']=p.z.toFixed(3);
@@ -583,7 +588,7 @@ export class ChaseRenderer {
         // Full gallop (the player: a sprint, an apple or the top gait; a rival: its sprint): the gold rim (approved-assets RACE_FUR blaze).
         if(model.blaze){const want=role==='player'?+(race.gait?.()===2):+!!runner.boosting;model.blaze.value+=(want-model.blaze.value)*.14;}
         if(race.slice&&actor.active&&actor.running&&time>=0&&!jump.airborne&&!this.reduced)this.kickDust(entry,p,runner,race,time);
-        shadow.visible = model.root.visible; shadow.position.set(p.x, .018, p.z); shadow.rotation.set(-Math.PI / 2, 0, -p.heading); shadow.material.opacity = actor.opacity*(1-jump.height*.27);shadow.scale.setScalar((scale/1.18)*(1+jump.height*.12));
+        shadow.visible = model.root.visible; shadow.position.set(model.root.position.x, .018, model.root.position.z); shadow.rotation.set(-Math.PI / 2, 0, -p.heading); shadow.material.opacity = actor.opacity*(1-jump.height*.27);shadow.scale.setScalar((scale/1.18)*(1+jump.height*.12));
       }
     }
   }
@@ -639,7 +644,6 @@ export class ChaseRenderer {
       entry.pushT??=time;const dtp=Math.max(0,time-entry.pushT);entry.pushT=time;entry.pose3??=[0,0,0];
       entry.pose3=entry.pose3.map((v,k)=>want[k]>=v?want[k]:Math.max(want[k],v-dtp/(back[k]*T)));}   // [arm, body, slide]: out as the warning runs, back over .25 / .4 / .55 s
     entry.push=entry.pose3[0];entry.pushArm=entry.pushDir>0?1:0;const leanK=entry.pose3[1];
-    if(entry.pose3[2]>.001&&entry.pushDir&&!this.reduced){const off=REACT.reach*entry.pose3[2],R0=model.root,h=R0.rotation.y;R0.position.x+=Math.cos(h)*off*entry.pushDir;R0.position.z-=Math.sin(h)*off*entry.pushDir;}
     FORWARD.set(0,0,-1).applyQuaternion(model.root.quaternion);
     entry.back.forEach((bone,i)=>{
       entry.backBase??=[];entry.backSet??=[];
