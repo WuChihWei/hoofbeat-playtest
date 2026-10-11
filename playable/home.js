@@ -5,24 +5,24 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice} from './slice-app.js?v=r516';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r516';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r516';
+import {startSlice} from './slice-app.js?v=r530';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r530';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r530';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
 const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
 setTimeout(()=>{barn.src='assets/stable/barn-plate.webp';preloadRanch(owned().slice(0,14).map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
-import {lang,setLang,translate} from '../i18n.js?v=r516';
-import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,XP_LEVEL,soloForm as careForm,afterRace,afterSolo} from '../stable-care.js?v=r516';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP} from './slice-config.mjs?v=r516';
-import {mountStableView,preloadStable} from './stable-view.js?v=r516';
-import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r516';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast} from '../farm.mjs?v=r516';
-import {cityPictures} from '../approved-environment.js?v=r516';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r516';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r516';
-import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased} from './progress.mjs?v=r516';
+import {lang,setLang,translate} from '../i18n.js?v=r530';
+import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,XP_LEVEL,soloForm as careForm,afterRace,afterSolo} from '../stable-care.js?v=r530';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK} from './slice-config.mjs?v=r530';
+import {mountStableView,preloadStable} from './stable-view.js?v=r530';
+import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r530';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast} from '../farm.mjs?v=r530';
+import {cityPictures} from '../approved-environment.js?v=r530';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r530';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r530';
+import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased} from './progress.mjs?v=r530';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -146,6 +146,7 @@ const bestOn=city=>{const v=Object.entries(readSolo()).filter(([k])=>k.startsWit
 // for every buddy (STAT_FULL): bright to what it uses now, dim to its own top.
 const lvOf=h=>level(care[h.id]??{xp:0}),lv=h=>MVP.levels?`LV ${lvOf(h)}`:'',sub=h=>[MVP.types?TYPE_NAME[h.type]:'',lv(h)].filter(Boolean).join(' · ');   // MVP: no level, no type label
 const STAT_NAME={Speed:'速度',Accel:'加速',Stamina:'體力'};
+const PERK_TEXT={water:'不怕水窪：踩到水不會變慢',tough:'皮粗肉厚：被撞恢復快一倍',quick:'出手快：撞人更快打到'},perkOf=h=>BUDDY_PERK[COATS[h.coat]?.species]||null;
 const statRows=h=>{const st=buddyStats(h.stats,lvOf(h));return `<div class="buddy-stats">${Object.entries(STAT_NAME).map(([k,name])=>`<div><span>${name}</span><i style="--now:${st[k].now/STAT_FULL*100}%;--full:${st[k].full/STAT_FULL*100}%"></i><b>${st[k].now}<small>/${st[k].full}</small></b></div>`).join('')}</div>`;};
 // A runner of the player's for the race: its look and its numbers (slice-game: stats and level; race-scene: coat and mane).
 const racer=h=>({id:h.id,name:h.name,coat:h.coat,type:h.type,stats:h.stats,level:lvOf(h),hair:maneOf(h.id)});
@@ -313,12 +314,15 @@ const PAGES={
     let huts=devHuts?autoHuts(devHuts):[...new Set((R.huts??autoHuts(need)).filter(p=>Number.isInteger(p)&&p>=0))].slice(0,need),offers=[];
     if(!devHuts){while(huts.length<need){offers=hutOffers(huts);if(offers.length!==1)break;huts.push(offers[0]);offers=[];}
       if(String(huts)!==String(R.huts)){R.huts=huts;saveRanch(R);}}
-    const build=plot=>{if(!offers.includes(plot))return;R.huts=[...huts,plot];saveRanch(R);render();};
+    let pick=null;const build=plot=>{if(!offers.includes(plot))return;R.huts=[...huts,plot];saveRanch(R);render();};
     if(offers.length===2){const who=owned()[huts.length],p=document.createElement('div');p.className='ranch-build ui-panel deep';
       p.innerHTML=`<p><b>${esc(who?.name||'新夥伴')} 的小屋蓋在哪裡？</b><small>蓋了就不能搬</small></p><div><button class="ui-btn" data-build="0">蓋在左邊</button><button class="ui-btn" data-build="1">蓋在右邊</button></div>`;
-      el.append(p);hint.hidden=true;p.querySelectorAll('[data-build]').forEach(b=>b.onclick=()=>build(offers[+b.dataset.build]));PAGES.ranch.shot='all';}
+      el.append(p);hint.hidden=true;PAGES.ranch.shot='all';const first=p.innerHTML;
+      const ask=()=>{p.innerHTML=first;p.querySelectorAll('[data-build]').forEach(b=>b.onclick=()=>sure(+b.dataset.build));};
+      const sure=k=>{p.innerHTML=`<p><b>確定蓋在${k?'右邊':'左邊'}嗎？</b><small>蓋了就不能搬</small></p><div><button class="ui-btn" data-no>再想想</button><button class="ui-btn primary" data-yes>確定</button></div>`;p.querySelector('[data-no]').onclick=ask;p.querySelector('[data-yes]').onclick=()=>build(offers[k]);};   // asked once more: it cannot be moved (2026-10-11)
+      pick=plot=>sure(offers.indexOf(plot));ask();}
     mountRanchView(el.querySelector('.view'),{buddies:placed(R,huts.length).map(([h,where])=>({id:h.id,coat:h.coat,hair:maneOf(h.id),...where,ran:justRan?.id===h.id&&Date.now()-justRan.at<60e3?{left:60-(Date.now()-justRan.at)/1000,won:justRan.won}:null})),doors:R.doors,pens,huts,offers,open:beds,shot:PAGES.ranch.shot,
-      onOffer:build,onBed:bed,onPond:hook,onMove:(id,where)=>{R.place[id]=where;for(const k in R.doors)delete R.doors[k];saveRanch(R);},onDoor:(k,on)=>{R.doors[k]=on;saveRanch(R);}})
+      onOffer:plot=>pick?.(plot),onBed:bed,onPond:hook,onMove:(id,where)=>{R.place[id]=where;for(const k in R.doors)delete R.doors[k];saveRanch(R);},onDoor:(k,on)=>{R.doors[k]=on;saveRanch(R);}})
       .then(v=>{if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();show();})
       .catch(e=>{console.error(e);const l=el.querySelector('.stage-loading');if(l)l.textContent='3D 無法載入';});
   },
@@ -378,7 +382,7 @@ const PAGES={
       el.querySelectorAll('[data-for]').forEach(x=>x.hidden=x.dataset.for!==profile.mode);
       if(solo){
         const h=horseById(see),has=owns(prog,h.id),best=bests[`${c.id}:${h.id}`],p=HORSE_PRICE[h.id],st=buddyStats(h.stats,lvOf(h)),next=nextStarTime(c.id,prog.stars[c.id]||0);
-        el.querySelector('.pickcard').innerHTML=`<div class="ui-card-head"><b>${h.name}</b><span>${lv(h)}</span></div>
+        el.querySelector('.pickcard').innerHTML=`<div class="ui-card-head"><b>${h.name}</b><span>${lv(h)}</span></div>${perkOf(h)?`<p class="pick-perk"><i>特長</i><span>${PERK_TEXT[perkOf(h)]}</span></p>`:''}
           <dl class="ui-data"><h3>能力<i>現在 / 上限</i></h3>${Object.entries(STAT_NAME).map(([k,name])=>`<span>${name}</span><b>${st[k].now}</b><b>${st[k].full}</b>`).join('')}</dl>
           ${has?`<dl class="ui-data"><h3>這條賽道<i>最佳 / 下一顆星</i></h3><span>秒</span><b>${best?(best/tempoOf(profile.city)).toFixed(1):'–'}</b><b>${next??'–'}</b></dl>`
             :`<p class="pickprice">${MVP.gems?`${p.coins?`${coin}${p.coins} 或 `:''}${GEM}${p.gems}`:`${coin}${p.coins}`}${p.stars?` · 集滿 ${p.stars} ★ 免費`:p.stage?` · 破第 ${p.stage} 關送`:''}</p>`}`;
@@ -422,7 +426,7 @@ const PAGES={
       const f=finish(prog,{city:c.id,solo:false,result:r,today:today()});prog=f.p;saveProg();addCoins(f.coins);addGems(f.gems);
       return {total:readCoins(),gems:gemsShown(),newCombo:r.bestCombo>best,best:old?.time||0,newBest,xp:runs[0].xp,level:level(care[team[0].id]),levelUp:runs.some(a=>a.levelUp),notes:worn,...rewards(f,c.id,null)};
     };
-    session=await startSlice({city:c.id,solo:true,relay:true,ease:eased(prog,c.id,false),stage:L,team:team.map(racer),getForm:form,onFinish:bank,getBest:()=>readRelay()[c.id]?.time,getBrief:()=>brief(c,false),lean:prog.runs>=3,
+    session=await startSlice({city:c.id,solo:true,relay:true,perks:team.map(perkOf),ease:eased(prog,c.id,false),stage:L,team:team.map(racer),getForm:form,onFinish:bank,getBest:()=>readRelay()[c.id]?.time,getBrief:()=>brief(c,false),lean:prog.runs>=3,
       tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · RELAY`,
       onExit:(result,dest)=>{if(location.hash!=='#play')return;  // already navigated away (back gesture)
         if(newBuddy!=null){stableFocus=newBuddy;go('stable',{replace:true});return;}   // a buddy came with this run: it walks in first
@@ -452,7 +456,7 @@ const PAGES={
     // What the ranch gives a solo run (2026-10-06: a tester could not feel the items; they only reached the relay): the start
     // energy, from how rested the buddy is (精神) plus an energy bar. Only ever a help: nothing here slows a solo run.
     const soloForm=()=>careForm(care[h.id],{...SLICE_CONFIG,...racing(buddyStats(h.stats,lvOf(h)))});   // this buddy's own numbers at its level, then its care: felt on every stage (2026-10-10; the first two had none)
-    session=await startSlice({city:c.id,solo:true,stage:L,thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
+    session=await startSlice({city:c.id,solo:true,stage:L,perks:[perkOf(h)],thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
       tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
       onExit:(result,dest)=>{if(location.hash!=='#solo')return;  // already navigated away (back gesture)
         if(newBuddy!=null){stableFocus=newBuddy;go('stable',{replace:true});return;}   // a buddy came with this run: it walks in first
@@ -722,8 +726,8 @@ PAGES.collection=PAGES.horses;   // old links
 
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r516',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r516');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r530',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r530');   // a frame counter in the corner (fps.js)
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

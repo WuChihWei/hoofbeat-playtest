@@ -451,3 +451,6 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .shop-sell{display:grid;gap:var(--ui-s3);padding:0 0 var(--ui-s5)}.shop-sell button{width:100%;text-align:left;border:0;color:inherit;font:inherit}.shop-sell button[disabled]{opacity:.5}
 .shop-sell img{width:calc(34 * var(--u));height:calc(34 * var(--u));object-fit:contain}
 .shop-sell i{font-style:normal}
+.pick-perk{margin:0 0 var(--ui-s3);display:flex;align-items:center;gap:var(--ui-s2);font-size:calc(13 * var(--u))}.pick-perk i{font-style:normal;font-weight:700;border-radius:99px;padding:calc(3 * var(--u)) calc(9 * var(--u));background:var(--ui-yellow);color:#000;white-space:nowrap}
+/* The ranch's picture, more saturated (2026-10-11, the user): on the canvas, so the page's own controls keep their colours. */
+.page-ranch .view canvas{filter:saturate(1.28) contrast(1.03)}

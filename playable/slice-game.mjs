@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r516';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r530';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -90,7 +90,12 @@ export class SliceGame {
   caught(r,k){return hash(k+.7,r.phase+5)<1-r.skill;}
   // The puddle `o` is in (the player unless airborne; a rival if it is one it is caught by), or null. slowed: in one, or
   // out of one less than wetTime ago (o.wetUntil).
-  slowed(o,t=this.time){if(this.wet(o,t))o.wetUntil=t+this.config.wetTime*this.config.tempo;return t<(o.wetUntil??-9);}
+  // What the player's buddy is good at (config.perks: one a leg, or config.perk; 2026-10-11): 'water' a puddle does not
+  // slow it (the rhino, the cow) · 'tough' rammed, it is back on its feet in half the time (the bear) · 'quick' its bump
+  // lands in .6 of the time (the wolf). The rivals have none.
+  perk(){const p=this.config.perks;return Array.isArray(p)?p[this.leg]:this.config.perk;}
+  skillWait(){return (this.config.skillTime||0)*(this.perk()==='quick'?.6:1);}
+  slowed(o,t=this.time){if(o===this&&this.perk()==='water')return false;if(this.wet(o,t))o.wetUntil=t+this.config.wetTime*this.config.tempo;return t<(o.wetUntil??-9);}
   wet(o,t=this.time){const c=this.config,me=o===this;if(me&&this.airborne(t))return null;
     return this.puddles.find((p,k)=>o.distance>=p.distance&&o.distance<=p.distance+p.length&&Math.abs(o.laneValue-p.lane)<c.hazardReach&&(me||this.caught(o,k)))??null;}
   // A dropping crossed between `from` and o.distance: a slip. The player's is said (the 'poop' event).
@@ -98,7 +103,7 @@ export class SliceGame {
     this.poops.forEach((p,k)=>{if(p.distance<=from||p.distance>o.distance||Math.abs(lane-p.lane)>=c.hazardReach)return;
       if(me?this.airborne(t):!this.caught(o,k+50))return;
       p.hit=true;o.stumbles.push({t,k:c.slip});if(me)this.emit('poop',{id:p.id});});
-    if(me){const w=this.wet(this,t)?.id??null;if(w&&w!==this.wetIn)this.emit('puddle',{id:w});this.wetIn=w;}}
+    if(me){const w=this.wet(this,t)?.id??null;if(w&&w!==this.wetIn)this.emit('puddle',{id:w,dry:this.perk()==='water'});this.wetIn=w;}}
   // Stamina, the same for every runner: a pool of the buddy's own size (o.pool); a sprint takes sprintStamina off as it
   // starts, and from staminaWait after the last one ended it comes back at staminaRegen / s.
   fresh(o=this){return o.stamina>=this.config.sprintStamina-1e-9;}
@@ -144,7 +149,7 @@ export class SliceGame {
     if(!there&&u<R.react)return end('ram-off');                       // not committed yet: it lets it go
     if(u<R.time)return;
     if(!there){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;return end('ram-miss');}   // it threw itself at nothing
-    this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:this.time,hit:true});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;
+    this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:this.time,hit:true,k:this.perk()==='tough'?.5:1});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;
     end('rammed',{pushed:false});}   // it staggers where it is: nobody who is hit is moved to another lane (2026-10-11, the user)
   // Traffic, the same for every runner. Lane `to` is taken near `self` if another runner is in it (within laneOverlap)
   // or heading into it, closer than a horse length plus what the two could close up during a lane change.
@@ -212,7 +217,7 @@ export class SliceGame {
     if(this.wasHeld&&!this.holding&&at>=0&&this.ball>=c.ballGood&&this.blown<=at){const max=this.ball>=c.ballMax;
       this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.skill=Math.min(3,this.skill+(max?2:1));this.ball=c.ballBack;this.rushes.push({t:at,end:at+c.ballRush*(max?2:1)});this.emit('release',{max,streak:this.streak});}
     this.wasHeld=this.holding;
-    this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill:-dt/c.ballFall));
+    this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill*(this.form.charge??1):-dt/c.ballFall));
     if(this.ball>=1){this.ball=0;this.streak=Math.floor(this.streak/2);this.blown=at+c.ballPop;if(at>=0)this.stumbles.push({t:at});this.emit('blown');}   // spent: it stumbles
     this.drive=this.blown>at?S.floor:S.top*(c.ballLo+(c.ballHi-c.ballLo)*this.ball)*(1+c.ballGain*this.streak);
     if(at<0)this.driveSpeed=this.drive;}
@@ -343,7 +348,7 @@ export class SliceGame {
         if(r.leg<2&&r.distance>=this.course.relays[r.leg]){r.leg++;r.energy=0;r.form=r.forms[r.leg];r.pool=r.stamina=r.form.stamina;r.restAt=0;}
         if(!r.finishTime&&r.distance>=c.length)r.finishTime=this.time+dt*(c.length-r.distance)/(r.distance-b);}
       this.time+=dt;this.laneValue=this.laneAt(this.time);
-      if(this.swing&&this.time>=this.swing.t+c.skillTime)this.skillLand();
+      if(this.swing&&this.time>=this.swing.t+this.skillWait())this.skillLand();
       this.collectSweep(before,this.distance,oldLane,this.laneValue);this.hazardStep(this,before,this.laneValue,this.time);
       for(const h of this.hurdles){
         if(h.state||before>=h.distance||this.distance<h.distance)continue;

@@ -3,11 +3,11 @@
 //   Hunger  fed with wheat from the ranch's field (a treat fills a little and teaches a little)
 //   Clean   brushed (the brush is not used up)
 // Both are felt in every race, solo and relay (raceForm): a hungry buddy starts with less energy and runs slower, a
-// dusty one builds its combo slower. Racing wears both and earns xp (afterRace, afterSolo).
+// dusty one fills its ball slower. Racing wears both and earns xp (afterRace, afterSolo).
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r516';
+import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r530';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -55,23 +55,23 @@ export const recover=r=>r;   // nothing comes back by itself any more (it was th
 // Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: the rhythm still decides).
 // base: the race config with this buddy's numbers at its level (slice-config racing()).
 //   hunger   start energy = FORM.energy of it; under FORM.low the speed falls, to ×FORM.speed at 0
-//   clean    under FORM.low the combo builds slower (solo: accel; relay: the rhythm gains), to ×FORM.combo at 0
+//   clean    under FORM.low the ball fills slower (charge), to ×FORM.combo at 0
 export const FORM={low:50,speed:.9,combo:.8,energy:.3};
 const dip=(v,to)=>v>=FORM.low?1:to+(1-to)*v/FORM.low;
 export function raceForm(r,base){
   const speed=dip(r.hunger,FORM.speed),combo=dip(r.clean,FORM.combo);
-  const config={baseSpeed:+(base.baseSpeed*speed).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),
+  const config={baseSpeed:+(base.baseSpeed*speed).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)
     stamina:base.stamina,startEnergy:Math.min(base.energyMax,Math.round(r.hunger*FORM.energy)),boostDuration:base.boostDuration,placeBonus:base.placeBonus};
   const notes=[`起跑能量 ${config.startEnergy}`];
-  if(speed<1)notes.push(`肚子餓：速度 −${Math.round((1-speed)*100)}%`);if(combo<1)notes.push(`毛髒了：連擊 −${Math.round((1-combo)*100)}%`);
+  if(speed<1)notes.push(`肚子餓：速度 −${Math.round((1-speed)*100)}%`);if(combo<1)notes.push(`毛髒了：集氣慢 ${Math.round((1-combo)*100)}%`);
   return {config,notes};
 }
 // Solo form: the one buddy's, given to the game as its leg (slice-game legForm reads config.legs[0]).
-export function soloForm(r,base){const f=raceForm(r,base);return {config:{startEnergy:f.config.startEnergy,legs:[{baseSpeed:f.config.baseSpeed,accel:f.config.accel}]},notes:f.notes};}
+export function soloForm(r,base){const f=raceForm(r,base);return {config:{startEnergy:f.config.startEnergy,legs:[{baseSpeed:f.config.baseSpeed,accel:f.config.accel,charge:f.config.charge}]},notes:f.notes};}
 // Relay form: every leg runs on its own buddy's form; the start energy is the first buddy's.
 export function relayForm(rs,bases,names=rs.map((_,i)=>`#${i+1}`)){
   const forms=rs.map((r,i)=>raceForm(r,bases[i])),base=bases[0];
-  const config={...forms[0].config,legs:forms.map(({config:c})=>({baseSpeed:c.baseSpeed,rhythmGain:c.rhythmGain,goodRhythmGain:c.goodRhythmGain,accel:c.accel,stamina:c.stamina,boostDuration:c.boostDuration}))};
+  const config={...forms[0].config,legs:forms.map(({config:c})=>({baseSpeed:c.baseSpeed,rhythmGain:c.rhythmGain,goodRhythmGain:c.goodRhythmGain,accel:c.accel,charge:c.charge,stamina:c.stamina,boostDuration:c.boostDuration}))};
   const warn=forms.map((f,i)=>[names[i],f.notes.filter(n=>/^(肚子餓|毛髒了)/.test(n)).map(n=>n.split('：')[0].replace('了',''))]).filter(([,w])=>w.length);
   return {config,notes:[`起跑能量 ${config.startEnergy}`,...warn.map(([n,w])=>`${n}：${w.join('、')}`)]};
 }

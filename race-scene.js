@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r516';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r516';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r516';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r516';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r516';
-import {installApprovedEnvironment} from './approved-environment.js?v=r516';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r516';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r516';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r516';
-import {turnAt} from './track-projection.js?v=r516';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r516';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r516';
+import {roadHalfWidth} from './track-presentation.mjs?v=r530';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r530';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r530';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r530';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r530';
+import {installApprovedEnvironment} from './approved-environment.js?v=r530';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r530';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r530';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r530';
+import {turnAt} from './track-projection.js?v=r530';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r530';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r530';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -613,7 +613,7 @@ export class ChaseRenderer {
     const model=entry.model,run=actor.running&&time>=0&&!this.reduced?1:0,fold=jump.airborne?clamp(jump.phase/.1,0,1):jump.landing||0;
     const player=role==='player'&&actor.active,target=role==='player'?race.rush(time):runner.boosting?1:0;entry.sprint=(entry.sprint??0)+(target-(entry.sprint??0))*.12;   // rush: a sprint or an apple
     const s=entry.sprint,st=player?race.stumbles.at(-1):runner.stumbleAt!=null?{t:runner.stumbleAt}:null,age=st?time-st.t:9,   // a rival's last stumble too (2026-10-08: kicked, shoved or off a fence, it showed nothing)
-      T=race.config.stumbleTime*(player?1:runner.stumbleK??1);
+      T=race.config.stumbleTime*(player?st?.k??1:runner.stumbleK??1);
     const trip=age>=0&&age<T&&!(player?st.hit:runner.stumbleHit)?Math.sin(Math.PI*age/T):0,phase=(entry.animationTime||0)*2*Math.PI/(model.clips.run?.duration||.77);
     const surge=player?race.surge():0,level=player?race.gait():target>0?2:1;
     const g=entry.gait=(entry.gait??level)+(level-(entry.gait??level))*.07;
@@ -927,6 +927,10 @@ export class ChaseRenderer {
       const off=w.lane*race.config.laneSpacing;
       for(let k=0;k<=n;k++)for(let side=0;side<2;side++){const p=roadPose(HORSE_Z-gap-w.length*k/n,turn,off+(side?1:-1)*P.width/2),j=k*6+side*3;P.data[j]=p.x;P.data[j+1]=PUDDLE.y;P.data[j+2]=p.z;}
       P.geo.attributes.position.needsUpdate=true;
+      // A rival in it throws water up too (2026-10-11), fewer drops, where it is on the road.
+      if(!this.reduced)for(const rv of race.rivals||[]){const ahead=rv.distance-race.distance;if(ahead<-6||ahead>90||rv.distance<w.distance||rv.distance>w.distance+w.length||Math.abs((rv.lane??0)-w.lane)>=.45||time-((this.rivalSplash??={})[rv.id]??-9)<PUDDLE.splash.every*1.5)continue;
+        this.rivalSplash[rv.id]=time;const S=PUDDLE.splash,r=Math.random,p=roadPose(HORSE_Z-ahead,turn,(rv.lane??0)*race.config.laneSpacing);
+        for(let d=0;d<3&&this.sparkParts.length<SPARKS.max;d++){const a=r()*6.2832,v=S.speed[0]+r()*(S.speed[1]-S.speed[0]);this.sparkParts.push({x:p.x+(r()-.5)*.8,y:.15,z:p.z+(r()-.3)*1.6,vx:Math.cos(a)*v*.7,vy:1.6+r()*v,vz:Math.abs(Math.sin(a))*v*.6+1,age:0,life:S.life*(.7+r()*.6),size:S.size,a:.95,c:S.colors[d%3]});}}
       // The player in it: water thrown up from under its hooves, for as long as it is in.
       if(gap<=1&&gap>=-w.length-1&&Math.abs((race.laneValue??0)-w.lane)<.45&&!this.reduced&&race.speed>3&&!(this.playerJump>.25)){
         if(time-(this.splashAt??-9)>=PUDDLE.splash.every){this.splashAt=time;const S=PUDDLE.splash,r=Math.random,p=roadPose(HORSE_Z,turn,(race.laneValue??0)*race.config.laneSpacing);

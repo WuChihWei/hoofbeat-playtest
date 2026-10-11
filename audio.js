@@ -1,5 +1,5 @@
-import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r516';
-import {racePhase} from './race-session.js?v=r516';
+import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r530';
+import {racePhase} from './race-session.js?v=r530';
 
 // A tune everyone knows for each city (2026-10-06, the user; all long out of copyright), played over the rhythm section
 // in place of the made-up lead: [semitones from C5, length in half-beats] (null: a rest), looped from the first note of
@@ -31,7 +31,7 @@ export function buildScore(race){
     const next=race.notes[i+1];if(race.slice&&next)for(let t=note.t+.6;t<next.t-.3;t+=.6)events.push({t:COUNTDOWN+t/tempo,kind:'beat',i,leg:note.leg,phase:racePhase(t),rest:true,fill:true});});
   for(const lap of (race.slice?[]:[1,2]))events.push({t:COUNTDOWN+lap*LEG_SECONDS,kind:'relay'});
   for(const n of race.notes)events.push({t:COUNTDOWN+n.t/tempo,kind:'note',lane:n.lane});
-  const tune=race.slice&&MELODY[race.course?.id];
+  const tune=race.slice&&MELODY[race.course?.id?.replace(/\d+$/,'')];   // a second stage in a city (taipei2) has the city's tune
   if(tune)for(let t=1,k=0,end=race.notes.at(-1)?.t??0;t<end;k++){const [st,len]=tune[k%tune.length];if(st!==null)events.push({t:COUNTDOWN+t/tempo,kind:'melody',f:523.25*2**(st/12),len:len*.3/tempo});t+=len*.3;}
   for(const h of (race.slice?[]:race.hurdles)){
     events.push({t:COUNTDOWN+h.t-JUMP_LEAD-1,kind:'approach'});
@@ -119,7 +119,7 @@ export class RaceAudio {
     const source=this.context.createBufferSource();source.buffer=this.noiseBuffer;this.voice(source,at,duration,volume);
   }
   start(getElapsed,race) {
-    this.stop();this.next=0;this.layer=0;this.finalStretch=false;this.surge=0;this.beatGap=.6/(race.config?.tempo??1);this.music=MUSIC[race.course?.id]??MUSIC.taipei;this.getElapsed=getElapsed;this.events=buildScore(race);this.melody=this.events.some(e=>e.kind==='melody');this.end=race.slice?Infinity:COUNTDOWN+DURATION;   // the relay ends by distance
+    this.stop();this.next=0;this.layer=0;this.finalStretch=false;this.surge=0;this.beatGap=.6/(race.config?.tempo??1);this.music=MUSIC[race.course?.id?.replace(/\d+$/,'')]??MUSIC.taipei;this.getElapsed=getElapsed;this.events=buildScore(race);this.melody=this.events.some(e=>e.kind==='melody');this.end=race.slice?Infinity:COUNTDOWN+DURATION;   // the relay ends by distance
     if(!this.context)return;
     this.timer=setInterval(()=>this.schedule(),25);this.schedule();
   }

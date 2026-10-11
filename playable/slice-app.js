@@ -1,15 +1,15 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r516';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r516';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r516';
-import {compositionRank} from '../race-composition.mjs?v=r516';
-import {ChaseRenderer} from '../race-scene.js?v=r516';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r516';
-import {cityModels} from '../approved-environment.js?v=r516';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r530';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r530';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r530';
+import {compositionRank} from '../race-composition.mjs?v=r530';
+import {ChaseRenderer} from '../race-scene.js?v=r530';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r530';
+import {cityModels} from '../approved-environment.js?v=r530';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r516';
-import {RaceAudio} from '../audio.js?v=r516';
-import {addLog,raceEntry} from '../playtest.js?v=r516';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r516';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r530';
+import {RaceAudio} from '../audio.js?v=r530';
+import {addLog,raceEntry} from '../playtest.js?v=r530';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r530';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -43,13 +43,13 @@ const APPLE='<svg class="apple-ico" viewBox="0 0 24 24" aria-hidden="true"><path
 const BUZZ={tap:['impact',{style:'LIGHT'},12],hit:['impact',{style:'MEDIUM'},22],strong:['impact',{style:'HEAVY'},[25,30,25]],good:['notification',{type:'SUCCESS'},[10,20,10]],bad:['notification',{type:'ERROR'},30]};
 const buzz=kind=>{const [method,options,pattern]=BUZZ[kind],native=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.nativePromise;
   if(native)native('Haptics',method,options).catch(()=>{});else navigator.vibrate?.(pattern);};
-export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,thumb=false,arrows=null,rivalCount=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
+export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,thumb=false,arrows=null,perks=null,rivalCount=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
   const TEMPO=level?.tempo??SLICE_CONFIG.tempo,BALL=/[?&]ball=([\d.,]+)/.exec(location.search)?.[1].split(',').map(Number)||[1],   // 2026-10-07 (the user: 「就改成這遊戲方法」): the ball is the game; ?ball=1,fill,fall,pop (real seconds) tunes it
   locks={...level?.locks};
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r516',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r530',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -184,7 +184,10 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const COURSE=()=>city?(!relay?{...soloCourse(city),...(locks.hurdle?{hurdles:[]}:null)}:relayCourse(city)):null;
   // ?hazards=1 (dev): a puddle and a dropping by turns every 70 m, lane after lane, on any stage, to look at them.
   const sampleHazards=L=>{const puddles=[],poops=[];for(let d=90,k=0;d<L-60;d+=70,k++)(k%2?poops:puddles).push({distance:d,lane:k%3-1});return {puddles,poops};};
-  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,skillTime:.8*TEMPO,rivalPace:ease?.95:1,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards??(/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null)},team,rivals,chart:level?.plain?EASY_CHART:null,
+  // A stage's own (progress.mjs LEVELS hazards {puddle: [first, step], poop: [first, step]}): one every `step` m from
+  // `first`, lane after lane, none within 14 m of a hurdle or in the last 60 m.
+  const levelHazards=(H,course)=>{const lay=(rule,turn)=>{const out=[];if(rule)for(let d=rule[0],k=0;d<course.length-60;d+=rule[1],k++)if(!(course.hurdles||[]).some(h=>Math.abs(h-d)<14))out.push({distance:d,lane:(k*2+turn)%3-1});return out;};return {puddles:lay(H.puddle,0),poops:lay(H.poop,1)};};
+  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:ease?.95:1,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?levelHazards(level.hazards,course):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null},team,rivals,chart:level?.plain?EASY_CHART:null,
     course});
     return g;};
   // The scene is shown complete or not at all (2026-10-06, the user: the race was seen being put together: its sky, ground
@@ -284,7 +287,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       // A hurdle: how clean the take-off was (error from the ideal moment; the window is ±jumpWindow).
       else if(e.type==='clear'){const off=Math.abs(e.error??0)/game.config.jumpWindow;landClear=true;
         if(off<=.35){feedback('完美起跳！','gold',true);buzz('good');}else feedback(off>=.75?'好險！':'CLEAR!','green');}
-      else if(e.type==='puddle'){feedback('踩到水了','hint');sound.cue('deny');buzz('tap');}
+      else if(e.type==='puddle'){if(e.dry)feedback('不怕水！','gold');else{feedback('踩到水了','hint');sound.cue('deny');}buzz('tap');}
       else if(e.type==='poop'){feedback('踩到了！','warn',true);shake(5,220);sound.collision();buzz('bad');}
       else if(e.type==='obstacle-miss'){mark('hit');feedback('絆到了！','warn',true);sound.collision();sound.dropLayer();buzz('bad');landAt=0;streak=0;}
       // Passed, then back in front within 5 s: "won it back", its own moment.
@@ -293,7 +296,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       else if(e.type==='boost'){feedback('SPRINT!','sprint',true);sound.accent('sprint');buzz('strong');flash('#d9ff4f',.6,360);renderer.dustBurst(14,true);pop(chargeBtn);}
       else if(e.type==='coin')sound.coin(+e.id.split('-')[2]||0);   // the picture: race-scene coinBurst → coinFly
       else if(e.type==='release'){feedback(e.max?'極限！':'漂亮！',e.max?'gold':'',e.max);buzz(e.max?'strong':'good');sound.cue('crunch');$('ball-ring').querySelector('u').animate([{scale:1,opacity:1,borderColor:'#ffd846'},{scale:1.35,opacity:0}],{duration:300,easing:'ease-out'});}
-      else if(e.type==='skill-start'){const T=game.config.skillTime;if(e.kind==='kick')renderer.buck(T-.35);else renderer.ram(e.side,T);   // the kick lands with the hit; the arm is all the way out at it
+      else if(e.type==='skill-start'){const T=game.skillWait();if(e.kind==='kick')renderer.buck(T-.35);else renderer.ram(e.side,T);   // the kick lands with the hit; the arm is all the way out at it
         feedback(e.kind==='kick'?'準備踢！':'準備撞！','hint');sound.cue('window');buzz('tap');if(!still)$('slice-skill').animate([{scale:1},{scale:1.22}],{duration:T/TEMPO*1000,easing:'ease-in'});}
       else if(e.type==='skill-miss'){feedback('撲空了','hint');sound.cue('deny');}
       else if(e.type==='skill'){dazed(e.id);feedback(e.kind==='kick'?'踢中！':e.pushed?'擠開了！':'撞倒了！','gold',true);buzz('strong');sound.cue('crunch');renderer.dustBurst(18);shake();flash('#ffd846',.5,300);pop($('slice-skill'));}
