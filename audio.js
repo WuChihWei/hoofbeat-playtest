@@ -1,5 +1,5 @@
-import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r480';
-import {racePhase} from './race-session.js?v=r480';
+import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r502';
+import {racePhase} from './race-session.js?v=r502';
 
 // A tune everyone knows for each city (2026-10-06, the user; all long out of copyright), played over the rhythm section
 // in place of the made-up lead: [semitones from C5, length in half-beats] (null: a rest), looped from the first note of
@@ -50,25 +50,6 @@ export function outputDelay(context,now=performance.now()){
   return Number.isFinite(latency)?Math.max(0,Math.min(.25,latency)):0;
 }
 
-// Tap latency (Settings → 節奏校正): how late this player's taps land after the beat they hear (Bluetooth earbuds, slow
-// touch screens), in ms. Race rhythm taps are judged that much earlier (slice-app); 0 until calibrated.
-const LATENCY_KEY='hoofbeat.latency.v1';
-export function readLatency(){try{const v=parseFloat(localStorage.getItem(LATENCY_KEY));return Number.isFinite(v)?v:0}catch{return 0}}
-export function saveLatency(ms){try{localStorage.setItem(LATENCY_KEY,String(Math.round(ms)))}catch{}}
-// Calibration: `beats` beeps `interval` s apart, scheduled like the race (heard at their clock time after the reported
-// output delay); the first `skip` are a count-in. Call from a user gesture (audio unlock).
-// → {tap(eventTimeStamp) → steady taps so far, total, done: Promise<median ms late | null when under 6 taps>}
-export async function calibrateLatency(clock,{beats=12,interval=.6,lead=1,skip=2}={}){
-  const ctx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});await ctx.resume();
-  const t0=clock.elapsed()+lead,start=ctx.currentTime+lead-outputDelay(ctx),late=[];
-  for(let k=0;k<beats;k++){const at=start+k*interval,o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=k<skip?660:880;
-    g.gain.setValueAtTime(.3,at);g.gain.exponentialRampToValueAtTime(.001,at+.08);o.connect(g).connect(ctx.destination);o.start(at);o.stop(at+.1);}
-  const tap=stamp=>{const t=clock.inputElapsed(stamp),k=Math.round((t-t0)/interval);
-    if(k>=skip&&k<beats&&late[k]===undefined&&Math.abs(t-t0-k*interval)<interval/2)late[k]=t-t0-k*interval;return late.filter(x=>x!==undefined).length;};
-  const done=new Promise(res=>setTimeout(()=>{ctx.close();const v=late.filter(x=>x!==undefined).sort((a,b)=>a-b);
-    res(v.length>=6?Math.round(v[v.length>>1]*1000):null);},(lead+beats*interval+.4)*1000));
-  return {tap,done,total:beats-skip};
-}
 
 // Short tunes by name (accent): each event has its own, so the ear can tell them apart.
 const ACCENTS={relay:[523.25,659.25],finish:[523.25,659.25,783.99],overtake:[659.25,987.77,1318.51],sprint:[392,587.33,880],final:[440,660,880,1174.66],warning:[330,247],streak:[659.25,783.99],

@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r480';
+import {MVP} from './slice-config.mjs?v=r502';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -23,8 +23,7 @@ import {MVP} from './slice-config.mjs?v=r480';
 // locks: what the stage does not have yet (lane: no lane changes, everything to pick up is in the middle lane; hurdle: no
 // fences; sprint: no charge button). plain: the opening four-note phrases all the way (slice-config EASY_CHART).
 // tempo: simulation seconds per real second on that stage (a note every .6 / tempo s: .43, .375, .34, .32, .31); the
-// times here are wall-clock seconds at that tempo (the old ones × 1.95 / tempo). lesson: the practice lessons shown
-// before the stage's first run ([from, to) of slice-app LESSONS): what it adds.
+// times here are wall-clock seconds at that tempo (the old ones × 1.95 / tempo).
 // Star times (r309, measured with tools/stage-times.mjs: the starter buddy at the stage's level, by the stage's own
 // rules): silver about 70% of the notes hit and gold about 87% (stage 1: 50% and 70%; stage 2: a little under 70% and
 // about 80%; the last two golds ask for more). Stage 2 is one lap (cities/tokyo.mjs soloLaps: without the sprint two
@@ -32,9 +31,9 @@ import {MVP} from './slice-config.mjs?v=r480';
 // 2026-10-07, the ball game (tools/stage-times-ball.mjs: never holding / letting go at .85 every time, seconds): 27.6 / 20.2,
 // 28.8 / 20.7, 50.9 / 36, 48.9 / 34, 49 / 34. Silver is a little under the middle of the two, gold about 6% over the second.
 export const LEVELS=Object.freeze([
-  {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},lesson:[0,1],silver:26.5,gold:23},
-  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},lesson:[1,3],silver:27.5,gold:24.5},
-  {city:'paris',rivals:2,tempo:1.75,locks:{},lesson:[3,5],silver:47,gold:41,ram:[.8,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two], real seconds
+  {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},silver:26.5,gold:23},
+  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},silver:27.5,gold:24.5},
+  {city:'paris',rivals:2,tempo:1.75,locks:{},silver:47,gold:41,ram:[.8,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two], real seconds
   {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:45,gold:38.5,ram:[.8,.4,11]},
   {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:45,gold:38.5,ram:[.8,.4,9],back:true},
 ]);
@@ -85,22 +84,18 @@ export const currentLevel=p=>LEVELS.find(l=>unlocked(p,l.city)&&(p.stars[l.city]
 
 // Missions: three per run, taken in turn from the pool (run n takes n, n+1, n+2: two carry over, one is new). test(r)
 // reads the run's result (slice-app). MISSION_COINS each, MISSION_ALL more for all three.
-export const MISSION_COINS=20,MISSION_ALL=40,PHRASE_COINS=5;   // PHRASE_COINS: for each phrase of the chart ridden without a miss (r.phrases)
+export const MISSION_COINS=20,MISSION_ALL=40;
 // The counts go with the run's length: a relay is about 75 s; a solo run is one lap of 30–40 s (2026-10-05: about 35
 // notes, 20 coins and 3 or 4 apples on it), so its counts are about half.
-export const BALL_GAME=typeof location==='undefined'||!/[?&]classic=1/.test(location.search);   // slice-app CLASSIC
 const POOL=[
-  {id:'combo',text:'連擊到 20',relay:true,test:r=>r.bestCombo>=20},{id:'combo',text:'連擊到 12',solo:true,rhythm:true,test:r=>r.bestCombo>=12},
   {id:'release',text:'漂亮放開 6 次',solo:true,ball:true,test:r=>r.releases>=6},{id:'limit',text:'極限放開 2 次',solo:true,ball:true,test:r=>r.limits>=2},{id:'nopop',text:'一次都不爆',solo:true,ball:true,test:r=>r.pops===0},   // the ball game (2026-10-07)
   {id:'coins',text:'撿 10 枚金幣',relay:true,test:r=>r.pickups>=10},{id:'coins',text:'撿 6 枚金幣',solo:true,test:r=>r.pickups>=6},
   {id:'clean',text:'一座欄都不撞',needs:'hurdle',test:r=>r.stumbles===0},
   {id:'sprint',text:'衝刺 3 次',relay:true,test:r=>r.boosts>=3},{id:'sprint',text:'衝刺 2 次',solo:true,needs:'sprint',test:r=>r.boosts>=2},
-  {id:'perfect',text:'Perfect 30 個',relay:true,test:r=>r.perfect>=30},{id:'perfect',text:'Perfect 15 個',solo:true,rhythm:true,test:r=>r.perfect>=15},
   {id:'apples',text:'吃 2 顆蘋果',solo:true,test:r=>r.apples>=2},
-  {id:'sharp',text:'命中 85% 以上',rhythm:true,test:r=>r.notes>0&&r.hits/r.notes>=.85},
   {id:'podium',text:'跑進前 3 名',relay:true,test:r=>r.rank<=3},
 ];
-export function missionsFor(run,solo,locks={}){const pool=POOL.filter(m=>(solo?!m.relay:!m.solo)&&!locks[m.needs]&&!(solo&&BALL_GAME?m.rhythm:m.ball));   // a solo run is the ball game: no rhythm missions there, no ball missions in the relay   // locks: not what the stage does not have yet
+export function missionsFor(run,solo,locks={}){const pool=POOL.filter(m=>(solo?!m.relay:!m.solo)&&!locks[m.needs]);   // locks: not what the stage does not have yet
  return [0,1,2].map(k=>pool[(run+k)%pool.length]);}
 
 // The day's first finished run pays DAILY coins, more each day in a row (to day 7, which also pays diamonds; then the
@@ -122,7 +117,6 @@ export function finish(p0,{city,solo,result:r,today,all=false}){
   const p=restore(p0),before=totalStars(p),had3=relayOpen(p),perks0=Object.keys(PERKS).filter(k=>cleared(p,PERKS[k].stage)),out={coins:0,gems:0,newStars:0,gifts:[],perks:[],opened:[],relayOpened:false};
   const list=MVP.missions||all?missionsFor(p.runs,solo,solo?LEVELS[levelOf(city)]?.locks:{}):[];out.missions=list.map(m=>({text:m.text,done:!!m.test(r)}));
   const done=out.missions.filter(m=>m.done).length;out.missionCoins=done*MISSION_COINS+(done===3?MISSION_ALL:0);out.coins+=out.missionCoins;
-  out.phraseCoins=(r.phrases||0)*PHRASE_COINS;out.coins+=out.phraseCoins;
   if(solo){const had=p.stars[city]||0,got=starsFor(city,r.seconds);out.stars=Math.max(had,got);out.runStars=got;
     if(!had){const n=LEVELS[levelOf(city)+1];if(n)out.opened=[n.city];}
     if(got>had){out.newStars=got-had;p.stars[city]=got;out.coins+=out.newStars*STAR_REWARD.coins;out.gems+=out.newStars*STAR_REWARD.gems;}}

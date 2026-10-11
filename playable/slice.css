@@ -614,6 +614,18 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #slice-skill i:nth-child(1){left:8%}#slice-skill i:nth-child(2){left:39%}#slice-skill i:nth-child(3){left:70%}
 #slice-skill[data-n="1"] i:nth-child(1),#slice-skill[data-n="2"] i:nth-child(-n+2),#slice-skill[data-n="3"] i{background:var(--ui-yellow);border-color:#fff;box-shadow:0 0 calc(8 * var(--u)) var(--ui-yellow)}
 .is-ball #slice-skill[data-n="0"]{opacity:.5}.is-ball #slice-skill:not([data-n="0"]):not(.on){border-color:#fff}.is-ball #slice-skill:not([data-n="0"]):not(.on) b{background:#fff}
+/* The controls in the UI framework's five colours (2026-10-11, docs/UI_GUIDELINE_V2.md 2.8; they had their own greens,
+   an orange and two reds). Green: go, the band where letting go is good and a sprint ready to use. Yellow: you and
+   what needs your eye: the ball, the limit band, a bump there to use. White: what is happening now (a sprint running,
+   the ball at the limit). No red: past the limit the rim is dark. Yellow in three places at most: the streak count and
+   the stored bumps are white. */
+#ball-ring i{background:radial-gradient(closest-side,transparent 59%,var(--ui-green) 62% 86%,var(--ui-yellow) 88% 94.5%,rgb(0 0 0 / .55) 96%)}
+#ball-ring.max.held b{background:#fff;box-shadow:0 0 0 calc(3 * var(--u)) var(--ui-yellow)}
+#ball-ring strong{background:var(--ui-green);color:#000}#ball-ring.max.held strong{background:#fff;color:#000}
+#ball-ring s{background:#fff;color:#000}
+.is-ball #slice-charge.ready{background:var(--ui-green);box-shadow:0 0 calc(20 * var(--u)) var(--ui-green)}
+#slice-skill[data-n="1"] i:nth-child(1),#slice-skill[data-n="2"] i:nth-child(-n+2),#slice-skill[data-n="3"] i{background:#fff;box-shadow:none}
+.is-rush #slice-flash{--c:var(--ui-green)}
 /* A sprint is seen as long as it lasts: the edge of the picture glows lime and pulses (.is-rush on the shell; the
    flash's own element, which a hit still flashes over). Streaks round the edge were tried first (a conic gradient
    under a radial mask): they did not draw in the app's WebView. */

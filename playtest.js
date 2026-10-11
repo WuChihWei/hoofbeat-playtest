@@ -14,17 +14,15 @@ export function watchErrors(){
   addEventListener('unhandledrejection',e=>log(e.reason?.stack||e.reason,'promise'));
 }
 // One race: the game (slice-game), how it ended ('finish' | 'quit' | 'restart'), and what the app knows about it.
-export function raceEntry(game,result,{city,team,practice=false,mode='relay',rivals=3,eased=false,fps=null,perf=null,latency=0}={}){
-  const count=type=>game.actions.filter(e=>e.type===type).length,by=s=>game.notes.filter(n=>n.state===s).length;
-  const perfect=by('perfect'),good=by('good'),miss=by('miss'),judged=perfect+good+miss;
-  return {kind:'race',mode,result,practice,city:city??'template',difficulty:game.course.difficulty??null,rivals,eased,field:game.rivals.length+1,team,
+export function raceEntry(game,result,{city,team,mode='relay',eased=false,fps=null,perf=null}={}){
+  const count=type=>game.actions.filter(e=>e.type===type).length,rel=game.actions.filter(e=>e.type==='release');
+  return {kind:'race',mode,result,city:city??'template',difficulty:game.course.difficulty??null,eased,field:game.rivals.length+1,team,
     rank:game.metrics().rank,wall:+(game.time/game.config.tempo).toFixed(1),progress:Math.round(game.distance/game.config.length*100),leg:game.leg+1,
-    notes:judged,perfect,good,miss,hitRate:judged?Math.round((perfect+good)/judged*100):null,bestCombo:game.bestCombo,
+    releases:rel.length,limits:rel.filter(e=>e.max).length,pops:count('blown'),bestStreak:Math.max(0,...rel.map(e=>e.streak)),bumps:count('skill'),bumpMisses:count('skill-miss'),rammed:count('rammed'),dodged:count('ram-miss')+count('ram-off'),
     sprints:game.boosts.length,leaps:count('leap'),hurdles:{cleared:count('clear'),hit:count('obstacle-miss')},laneChanges:game.laneChanges.length,
-    blocked:count('blocked'),coins:game.coinCount,fps,perf,latencyMs:latency,device:device()};   // perf: ms per frame (slice-app)
+    blocked:count('blocked'),coins:game.coinCount,fps,perf,device:device()};   // perf: ms per frame (slice-app)
 }
 export function summary(log=readLog()){
   const races=log.filter(e=>e.kind==='race'&&!e.practice),done=races.filter(e=>e.result==='finish');
-  return {races:races.length,finished:done.length,wins:done.filter(e=>e.rank===1).length,errors:log.filter(e=>e.kind==='error').length,
-    practice:log.filter(e=>e.kind==='race'&&e.practice).length,hitRate:done.length?Math.round(done.reduce((s,e)=>s+(e.hitRate??0),0)/done.length):null};
+  return {races:races.length,finished:done.length,wins:done.filter(e=>e.rank===1).length,errors:log.filter(e=>e.kind==='error').length};
 }

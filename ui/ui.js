@@ -1,6 +1,7 @@
 // HOOFBEAT UI Guideline v1, markup side (styles: ui.css, rules: docs/UI_FRAMEWORK.md). One monochrome icon set and
 // the few builders every page repeats: brand, wallet, header, bottom nav, bars, toast. Builders return HTML strings; wire
 // clicks with data-go / data-back (the router in playable/home.js does it for the whole page).
+import {lang} from '../i18n.js?v=r502';
 export const esc=s=>String(s).replace(/[&<>"']/g,c=>`&#${c.charCodeAt(0)};`);
 const P={
   arrow:'<path d="M5 12h13M13 6l6 6-6 6" stroke-width="2.6" stroke-linecap="round"/>',back:'<path d="M15 5l-7 7 7 7" stroke-width="3" stroke-linecap="round"/>',
@@ -39,11 +40,11 @@ const P={
 };
 export const icon=(n,cls='fill')=>`<svg viewBox="0 0 24 24" aria-hidden="true" class="${cls}">${P[n]}</svg>`;
 
-// Brand: the mockups' type wordmark (HOOFBEAT / RIDE THE WORLD); {logo:true} = the results sheet's logo art instead.
+// Brand: the mockups' type wordmark (ZOOMBUD / RIDE THE WORLD; the game was HOOFBEAT until 2026-10-11, when its rhythm game went: files, storage keys and the test site keep that name); {logo:true} = the results sheet's logo art instead.
 // With attrs it is a button (data-back / data-go="home").
-export const brand=(attrs='',{logo=false}={})=>{const tag=attrs?'button':'div',a=attrs?`${attrs} aria-label="HOOFBEAT"`:'';
-  return logo?`<${tag} class="ui-brand" ${a}><img class="mark" src="assets/ui/logo_mark.webp" alt=""><img class="word" src="assets/ui/wordmark.webp" alt="HOOFBEAT · RIDE THE WORLD"></${tag}>`
-    :`<${tag} class="ui-wordmark" ${a}><b>HOOFBEAT</b><small>RIDE THE WORLD</small></${tag}>`;};
+export const brand=(attrs='',{logo=false}={})=>{const tag=attrs?'button':'div',a=attrs?`${attrs} aria-label="ZOOMBUD"`:'';
+  return logo?`<${tag} class="ui-brand" ${a}><img class="mark" src="assets/ui/logo_mark.webp" alt=""><img class="word" src="assets/ui/wordmark.webp" alt="ZOOMBUD · RIDE THE WORLD"></${tag}>`
+    :lang()==='zh'?`<${tag} class="ui-wordmark" ${a}><b>衝吧蹄蹄</b><small>ZOOMBUD</small></${tag}>`:`<${tag} class="ui-wordmark" ${a}><b>ZOOMBUD</b><small>RIDE THE WORLD</small></${tag}>`;};   // 中文名「衝吧蹄蹄」, 簡稱「衝吧」(2026-10-11, the user): the Chinese UI leads with the full name, the English name under it
 export const coin='<i class="ui-coin" aria-hidden="true">U</i>';
 // The prize chest (ui-v2.css .ui-chest): prizes [{img, name, tag?, sub?}] → markup. In the page it plays once: it hops
 // in, turns a full turn, the lid opens and each prize rises out as a card, back first, then turns over (its tag, its

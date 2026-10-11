@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r480';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r480';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r480';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r480';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r480';
-import {installApprovedEnvironment} from './approved-environment.js?v=r480';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r480';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r480';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r480';
-import {turnAt} from './track-projection.js?v=r480';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r480';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r480';
+import {roadHalfWidth} from './track-presentation.mjs?v=r502';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r502';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r502';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r502';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r502';
+import {installApprovedEnvironment} from './approved-environment.js?v=r502';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r502';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r502';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r502';
+import {turnAt} from './track-projection.js?v=r502';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r502';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r502';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -82,8 +82,22 @@ const SPARKS={max:200,count:22,life:.55,speed:[2.5,5.5],size:[.5,.1],flash:{size
 // Pickups stand at `height` (m, their centre), `scale` m across, and turn about their upright axis (`spin` rad per
 // simulation s, each one `step` rad ahead of the one before: a row shimmers in a wave), bobbing `bob` m; a halo behind
 // (glow: its size in m, tint, alpha) and sparks of their own colours when picked up.
-const COIN={scale:1.2,height:1.3,spin:3.4,step:.7,bob:0,glow:1.6,tint:COIN_GLOW,alpha:.3,sparks:SPARK};
-const APPLE={scale:1.3,height:1.4,spin:1.6,step:0,bob:.12,glow:2.3,tint:new THREE.Color('#ff6a4a'),alpha:.4,sparks:[new THREE.Color('#ff5a48'),new THREE.Color('#fff2e0'),new THREE.Color('#8fd45a')]};
+const COIN={scale:1.25,height:1.3,spin:3.4,step:.7,bob:0,glow:1.6,tint:COIN_GLOW,alpha:.3,sparks:SPARK};
+// Hazards on the road (slice-game puddles, poops; 2026-10-11). PUDDLE: a puddle in one lane, bent with the road. It is
+// the user's own picture (references/props/puddle_reference.webp: five puddles, bright blue with glossy ovals and a lip
+// of brown mud; cut out of its grey ground into assets/props/puddles.webp, five square cells) laid on the road, as the
+// user's mock-up of the race has them: four tries at drawing one here were turned down. `sprites`: how many cells;
+// width: m across (a lane is 3), each a little bigger or smaller (`vary`); the picture is drawn as seen from the
+// saddle, so on the ground it is laid `stretch` times as long as it is drawn, and the camera's slant squeezes it back.
+// A runner in it throws water up (`splash`). POOP: the supplied model (models/props/poop_tripo.glb, thinned to 900
+// triangles): its width on the road (m)
+// and how squat.
+// Sizes (2026-10-11, the user: 「金幣蘋果大便的比例要設計一下」), against a rider's helmet (.75 m across): a coin 1.0, there are
+// many; an apple 1.15, the one worth going for; the dropping 1.15 wide and a little squat, so it is seen from as far.
+// Then (the user, the same day): the coin a quarter bigger (1.25) and a tenth thinner, the apple 15% bigger (1.32).
+const PUDDLE={file:'./assets/props/puddles.webp',sprites:5,width:2.5,vary:.18,y:.035,cuts:6,
+  splash:{drops:5,every:.07,speed:[2,4.5],life:.5,size:[.42,.1],colors:[new THREE.Color('#e9f7ff'),new THREE.Color('#7cc4ff'),new THREE.Color('#ffffff')]}},POOP={scale:1.15,squat:.86};
+const APPLE={scale:1.32,height:1.4,spin:1.6,step:0,bob:.12,glow:2.3,tint:new THREE.Color('#ff6a4a'),alpha:.4,sparks:[new THREE.Color('#ff5a48'),new THREE.Color('#fff2e0'),new THREE.Color('#8fd45a')]};
 const DUST={max:300,rate:20,life:.8,size:[.6,2],alpha:.6,dirt:new THREE.Color('#c9a27c'),mud:new THREE.Color('#7f5f45')};
 // Behind the player's horse the lanes close in on the middle of the screen (SPEC 6.0k): from NARROW.from m behind it,
 // everything is drawn up to NARROW.by nearer the camera's centre line (reached NARROW.over m further back). The view is
@@ -310,7 +324,7 @@ export class ChaseRenderer {
   win(){this.winAt=performance.now();}
   // The same track and field again: the scene, the models and the coins stay; only what the last run left is cleared.
   rerun(race){
-    if(this.coinMeshes&&(this.coinMeshes.length!==race.coins.length||this.appleMeshes.length!==(race.apples||[]).length))return false;
+    if(this.coinMeshes&&(this.coinMeshes.length!==race.coins.length||this.appleMeshes.length!==(race.apples||[]).length||(this.puddleMeshes?.length||0)!==(race.puddles||[]).length||(this.poopMeshes?.length||0)!==(race.poops||[]).length))return false;
     for(const m of [...this.coinMeshes||[],...this.appleMeshes||[]])m.userData.burst=false;
     this.dustParts=[];this.sparkParts=[];this.dustTime=undefined;this.pulses=[-100,-100];this.buckAt=this.winAt=this.ramAt=null;this.sliceTurn=0;this.surge=0;this.kick=0;
     this.models.forEach(e=>{for(const k of ['sprint','gait','crouch','tuck','dustTime','dustDue','lastTime','animationTime','lastDistance','bones'])delete e[k];if(e.model.blaze)e.model.blaze.value=0;});this.finishShot=0;
@@ -466,13 +480,6 @@ export class ChaseRenderer {
   }
   updateRoad(turn, distance) {
     if(this.roadMaterial.map)this.roadMaterial.map.offset.y=distance*this.roadMaterial.map.repeat.y/390;
-    for(const line of this.laneLines||[]){
-      for(let i=0;i<=line.count;i++)for(let side=0;side<2;side++){
-        const p=roadPose(14-i/line.count*line.far,turn,line.offset+(side?1:-1)*line.width/2),k=i*6+side*3;
-        line.data[k]=p.x;line.data[k+1]=line.y;line.data[k+2]=p.z;
-      }
-      line.geometry.attributes.position.needsUpdate=true;
-    }
     // Slice mud: the road is tinted where the course is mud (vertex colours over the dirt texture), eased over 8 m.
     if(this.race?.slice){
       const g=this.road.geometry;let c=g.attributes.color;
@@ -882,13 +889,21 @@ export class ChaseRenderer {
       const parts=race.apples?.length?[part(new THREE.SphereGeometry(.5,14,10).scale(1,.9,1),'#e0352b',0,0),part(new THREE.CylinderGeometry(.03,.05,.3,6),'#6b4423',0,.52),part(new THREE.SphereGeometry(.2,8,6).scale(1,.22,.5),'#58a83a',.17,.58,.5)]:[];
       this.appleMeshes=(race.apples||[]).map(()=>{const a=new THREE.Group();for(const [geometry,material,x,y,turn] of parts){const m=this.mesh(geometry,material,a);m.position.set(x,y,0);m.rotation.z=turn;}
         a.scale.setScalar(APPLE.scale);this.scene.add(a);return a;});
+      // Puddles: one small strip each, a cell of the picture on it (shown once the picture is in).
+      if(race.puddles?.length||race.poops?.length){
+        const water=this.own(new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,visible:false}));
+        new THREE.TextureLoader().load(new URL(PUDDLE.file+new URL(import.meta.url).search,import.meta.url).href,tex=>{tex.colorSpace=THREE.SRGBColorSpace;this.own(tex);water.map=tex;water.visible=true;water.needsUpdate=true;});
+        this.puddleMeshes=(race.puddles||[]).map((w,i)=>{const n=PUDDLE.cuts,cell=i%PUDDLE.sprites,data=new Float32Array((n+1)*6),uv=new Float32Array((n+1)*4),index=[];
+          for(let k=0;k<=n;k++)uv.set([cell/PUDDLE.sprites,k/n,(cell+1)/PUDDLE.sprites,k/n],k*4);for(let k=0;k<n;k++){const a=k*2;index.push(a,a+1,a+2,a+1,a+3,a+2);}
+          const geo=this.own(new THREE.BufferGeometry());geo.setAttribute('position',new THREE.BufferAttribute(data,3).setUsage(THREE.DynamicDrawUsage));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(index);
+          const mesh=new THREE.Mesh(geo,water);mesh.frustumCulled=false;mesh.renderOrder=1;this.scene.add(mesh);
+          return {mesh,data,geo,width:PUDDLE.width*(1+PUDDLE.vary*(((i*7919)%13)/6-1))};});
+        const poop=approvedAssets.get('poop').scene;this.poopMeshes=(race.poops||[]).map(()=>{const m=poop.clone();m.scale.set(POOP.scale,POOP.scale*POOP.squat,POOP.scale);this.scene.add(m);return m;});
+      }
       this.coinGlow=puffLayer(race.coins.length+this.appleMeshes.length,true);this.own(this.coinGlow.g);this.own(this.coinGlow.m);this.scene.add(this.coinGlow.points);
       this.lampGlow=puffLayer(48,true);this.own(this.lampGlow.g);this.own(this.lampGlow.m);this.scene.add(this.lampGlow.points);
       this.dust=puffLayer(DUST.max);this.own(this.dust.g);this.own(this.dust.m);this.scene.add(this.dust.points);this.dustParts=[];
       this.sparks=puffLayer(SPARKS.max,true,true);this.own(this.sparks.g);this.own(this.sparks.m);this.scene.add(this.sparks.points);this.sparkParts=[];
-      // Lane lines: thin road-following strips (updateRoad bends them with the road).
-      const lineMaterial=this.own(new THREE.MeshBasicMaterial({color:'#fff8e0',transparent:true,opacity:.25,depthWrite:false}));
-      this.laneLines=[-1,1].map(side=>({...this.strip(.035,.02,lineMaterial),offset:side*race.config.laneSpacing/2,far:150}));
       this.runnerLabels.forEach(label=>label.visible=false);
     }
     let glow=0;
@@ -901,6 +916,17 @@ export class ChaseRenderer {
       if(mesh.visible)this.coinGlow.set(glow++,p.x,S.height,p.z+.15,S.glow,S.alpha+.08*Math.sin(time*5+i),S.tint);
     });
     show(race.coins,this.coinMeshes,COIN);show(race.apples||[],this.appleMeshes,APPLE);
+    (race.puddles||[]).forEach((w,i)=>{const P=this.puddleMeshes?.[i];if(!P)return;const gap=w.distance-race.distance,n=PUDDLE.cuts;P.mesh.visible=gap>-PAST-w.length&&gap<150;if(!P.mesh.visible)return;
+      const off=w.lane*race.config.laneSpacing;
+      for(let k=0;k<=n;k++)for(let side=0;side<2;side++){const p=roadPose(HORSE_Z-gap-w.length*k/n,turn,off+(side?1:-1)*P.width/2),j=k*6+side*3;P.data[j]=p.x;P.data[j+1]=PUDDLE.y;P.data[j+2]=p.z;}
+      P.geo.attributes.position.needsUpdate=true;
+      // The player in it: water thrown up from under its hooves, for as long as it is in.
+      if(gap<=1&&gap>=-w.length-1&&Math.abs((race.laneValue??0)-w.lane)<.45&&!this.reduced&&race.speed>3&&!(this.playerJump>.25)){
+        if(time-(this.splashAt??-9)>=PUDDLE.splash.every){this.splashAt=time;const S=PUDDLE.splash,r=Math.random,p=roadPose(HORSE_Z,turn,(race.laneValue??0)*race.config.laneSpacing);
+          for(let d=0;d<S.drops&&this.sparkParts.length<SPARKS.max;d++){const a=r()*6.2832,v=S.speed[0]+r()*(S.speed[1]-S.speed[0]);
+            this.sparkParts.push({x:p.x+(r()-.5)*.8,y:.15,z:p.z+(r()-.3)*1.6,vx:Math.cos(a)*v*.7,vy:1.6+r()*v,vz:Math.abs(Math.sin(a))*v*.6+1,age:0,life:S.life*(.7+r()*.6),size:S.size,a:.95,c:S.colors[d%3]});}}}
+    });
+    (race.poops||[]).forEach((o,i)=>{const m=this.poopMeshes?.[i];if(!m)return;const gap=o.distance-race.distance;m.visible=gap>-PAST&&gap<150;if(!m.visible)return;const p=roadPose(HORSE_Z-gap,turn,o.lane*race.config.laneSpacing);m.position.set(p.x,.02,p.z);m.rotation.set(0,p.heading+i,0);});
     this.coinGlow.sync(this.camera,this.r.domElement.height,glow);
     // The street lamps light up down the road with the streak (one more pair a hit, to 16), and go dark on a miss.
     const lit=Math.min(race.combo||0,16)*REACT.lamp.reach;let lamps=0;

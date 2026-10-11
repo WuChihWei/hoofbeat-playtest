@@ -1,6 +1,6 @@
-import {compositionRivals} from './race-composition.mjs?v=r480';
-import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r480';
-import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r480';
+import {compositionRivals} from './race-composition.mjs?v=r502';
+import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r502';
+import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r502';
 const anchor=a=>`left:${a.center[0]*100}%;top:${a.center[1]*100}%;width:${a.size[0]*100}%;height:${a.size[1]*100}%;transform:translate(-50%,-50%);right:auto;min-width:0;`;
 // Five rows: two lines each (name, gap), growing down from the same top edge.
 const top=a=>`left:${a.center[0]*100}%;top:${(a.center[1]-a.size[1]/2)*100}%;width:${a.size[0]*100}%;transform:translateX(-50%);right:auto;min-width:0;`;
@@ -28,11 +28,7 @@ const BOLT='<svg class="charge-bolt" viewBox="0 0 24 24" aria-hidden="true"><pat
 // on its track; the charge button (outer ring: stored segments, inner ring: the next one filling; tap = sprint, or a
 // leap right behind a horse); lane dots (where the horse is).
 export function raceControlsMarkup(){return `<footer class="slice-controls">
-${['left','right'].map((side,i)=>`<div style="${anchor(CONTROL_LAYOUT.tracks[side])}" class="slide-track ${side}" data-side="${i}" aria-hidden="true"><i></i></div>`).join('')}
-${['left','right'].map((side,i)=>`<button style="${anchor(P.controls[side])}" id="slice-${side}" class="slice-pad ${side} rhythm-foot" aria-label="${i?'右腳印：點一下踩拍（鍵盤 N），往右滑換道（→）':'左腳印：點一下踩拍（鍵盤 X），往左滑換道（←）'}；兩個腳印同按跳躍">${hoof}</button>`).join('')}
-<div style="${anchor(CONTROL_LAYOUT.lanes)}" class="lane-dots" aria-hidden="true"><i></i><i class="on"></i><i></i></div>
 <button style="${anchor(CONTROL_LAYOUT.charge)}" id="slice-charge" class="charge-btn" aria-label="蓄力衝刺（空白鍵）"><svg class="charge-rings" viewBox="0 0 100 100" aria-hidden="true"><g class="segs"></g><circle class="inner-track" cx="50" cy="50" r="36"/><circle class="inner-fill" cx="50" cy="50" r="36" pathLength="100"/></svg>${BOLT}<b class="charge-count">0</b><i class="stamina" aria-hidden="true"><i></i></i></button>
-<div style="${anchor(CONTROL_LAYOUT.guides.jump)}" class="control-guide jump-guide" aria-label="兩個腳印同按，跳躍">${hoof}<span class="guide-plus">+</span>${hoof}<span class="guide-equals">=</span><b>JUMP</b></div>
 <div id="slice-speed" class="sr-only" role="status" aria-label="目前速度">速度 12.0</div>
 <span id="slice-energy" class="sr-only" role="status">蓄力 0 段</span>
 </footer>`;}

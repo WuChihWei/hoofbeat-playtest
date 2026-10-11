@@ -5,26 +5,24 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL,RIVAL_LEVEL,rivalLevel} from './slice-app.js?v=r480';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r480';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r480';
+import {startSlice} from './slice-app.js?v=r502';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r502';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r502';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
 const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
 setTimeout(()=>{barn.src='assets/stable/barn-plate.webp';preloadRanch(owned().slice(0,14).map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
-import {lang,setLang,translate} from '../i18n.js?v=r480';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,soloForm as careForm,afterRace,afterSolo} from '../stable-care.js?v=r480';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP} from './slice-config.mjs?v=r480';
-import {mountStableView,preloadStable} from './stable-view.js?v=r480';
-import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r480';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r480';
-import {cityPictures} from '../approved-environment.js?v=r480';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r480';
-import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r480';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r480';
-import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME,eased} from './progress.mjs?v=r480';
+import {lang,setLang,translate} from '../i18n.js?v=r502';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,soloForm as careForm,afterRace,afterSolo} from '../stable-care.js?v=r502';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP} from './slice-config.mjs?v=r502';
+import {mountStableView,preloadStable} from './stable-view.js?v=r502';
+import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r502';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r502';
+import {cityPictures} from '../approved-environment.js?v=r502';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r502';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r502';
+import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased} from './progress.mjs?v=r502';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -177,7 +175,7 @@ function rewards(f,city,seconds){if(f.gifts.length)newBuddy=f.gifts.at(-1);retur
 function rewards0(f,city,seconds){
   const t=seconds!=null&&nextStarTime(city,f.stars);
   return {extra:f.coins,stars:f.stars,runStars:f.runStars??null,newStars:f.newStars,starHint:t?`再快 ${(seconds-t).toFixed(1)} 秒拿第 ${f.stars+1} 顆星`:'',starGap:t?Math.min(1,t/seconds):null,   // how close the run came to the next star, 0–1 (the bar)
-    missions:f.missions,missionCoins:f.missionCoins,phraseCoins:f.phraseCoins,daily:f.daily,next:f.opened[0]?{city:f.opened[0],label:`下一關：${cityName(f.opened[0])}`}:null,goal:goalLine(),
+    missions:f.missions,missionCoins:f.missionCoins,daily:f.daily,next:f.opened[0]?{city:f.opened[0],label:`下一關：${cityName(f.opened[0])}`}:null,goal:goalLine(),
     news:[`小麥種子 +${FARM.raceSeeds}`,...f.opened.map(id=>`第 ${levelOf(id)+1} 關 ${cityName(id)} 開放了！`),...(f.relayOpened?['三棒接力開放了！']:[]),...f.gifts.map(id=>`新夥伴 ${horseById(id).name} 加入牧場！`),
       ...(f.perks||[]).map(k=>k==='mane'?`新造型：${HAIR.find(x=>x.id===PERKS.mane.id).name}`:'騎士服裝的顏色開放了！'),...(f.perkCoins?[`過關獎勵 +${f.perkCoins}`]:[])],
     // What was given (a buddy, a mane style, the rider's colours): each comes out of the prize chest first (slice-app openChest).
@@ -232,7 +230,7 @@ const courseFacts=c=>`${Math.round(c.lapLength)} m / 圈 · ${c.track.pieces.fil
 
 // ---- router ----
 const app=()=>document.querySelector('#app');
-let leave=null,stableFocus=null,playFromSetup=false,practiceNext=false;   // practiceNext: the next #solo is the practice (Settings → 新手練習)  // stableFocus: horse id Collection asked the Stable to open on
+let leave=null,stableFocus=null,playFromSetup=false;   // stableFocus: horse id Collection asked the Stable to open on
 // replace: swap the current history entry (leaving a race must not leave #play behind for the back button)
 const go=(r,{replace=false}={})=>{if(r==='play'||r==='solo')playFromSetup=location.hash==='#race';
   if(location.hash==='#'+r)render();else if(replace)location.replace('#'+r);else location.hash=r;};
@@ -424,13 +422,7 @@ const PAGES={
     // rules' first stage (slice-config SOLO), on its own numbers at its level. Practice: no stable form and no wear,
     // and it earns xp (stable-care afterSolo, by the run's stars; 2026-10-04, the user); the coins picked up are banked
     // and the best time per track and buddy is kept (SOLO_BEST, simulation seconds).
-    // 2026-10-05 (the user): a regular player's first solo start is the practice (five things to try, slice-app LESSONS:
-    // no rewards, no time kept); done once (TUTORIAL), its green button comes back here for the real run. 最高管理者 skips
-    // it; Settings → 新手練習 plays it again.
-    const h=soloHorse(),c=COURSES.find(x=>x.id===profile.city)||COURSES[0],key=`${c.id}:${h.id}`,L=LEVELS[levelOf(c.id)],tut=store.get(TUTORIAL)==='done'?3:+store.get(TUTORIAL)||0,again=practiceNext,practice=again||(!admin()&&!BALL_GAME&&tut<Math.min(levelOf(c.id)+1,3));   // the ball game: no rhythm lessons before a stage (the ring shows a thumb)practiceNext=false;applyLook(h);
-    // The practice goes stage by stage (2026-10-06): before stage 1 the rhythm, before stage 2 lanes, before stage 3 the fence
-    // and the sprint (LEVELS lesson); TUTORIAL counts how many of the three are done ('done': all). Settings → 新手練習: all five.
-    const stage={...L,...(practice?again?{lesson:[0,5],tut:'done'}:{lesson:LEVELS[tut].lesson,tut:tut>=2?'done':String(tut+1)}:null)};
+    const h=soloHorse(),c=COURSES.find(x=>x.id===profile.city)||COURSES[0],key=`${c.id}:${h.id}`,L=LEVELS[levelOf(c.id)];applyLook(h);
     let session=null,gone=false;leave=()=>{gone=true;session?.exit();applyLook();};
     const bank=r=>{const all=readSolo(),best=all[key]||0,newBest=!best||r.finishTime<best,seconds=r.finishTime/tempoOf(c.id);
       if(newBest){all[key]=+r.finishTime.toFixed(3);store.set(SOLO_BEST,JSON.stringify(all));if(r.trace)store.set(GHOST+key,JSON.stringify(r.trace));}
@@ -445,12 +437,11 @@ const PAGES={
     // What the ranch gives a solo run (2026-10-06: a tester could not feel the items; they only reached the relay): the start
     // energy, from how rested the buddy is (精神) plus an energy bar. Only ever a help: nothing here slows a solo run.
     const soloForm=()=>careForm(care[h.id],{...SLICE_CONFIG,...racing(buddyStats(h.stats,lvOf(h)))});   // this buddy's own numbers at its level, then its care: felt on every stage (2026-10-10; the first two had none)
-    session=await startSlice({city:c.id,solo:true,practice,stage,ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],...(practice?null:{getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3}),
-      tag:practice?'PRACTICE':`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
+    session=await startSlice({city:c.id,solo:true,stage:L,thumb:levelOf(c.id)===0,ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
+      tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
       onExit:(result,dest)=>{if(location.hash!=='#solo')return;  // already navigated away (back gesture)
         if(newBuddy!=null){stableFocus=newBuddy;go('stable',{replace:true});return;}   // a buddy came with this run: it walks in first
         if(dest?.city){profile.city=dest.city;saveProfile();go('race',{replace:true});}   // the level this run opened
-        else if(dest==='solo')go('solo',{replace:true});   // the practice is done: the real run
         else if(dest==='race'&&playFromSetup)history.back();else go(dest,{replace:true});}});
     if(gone)session.exit();
   },
@@ -670,52 +661,32 @@ const PAGES={
         <li>${icon('bolt')}<span>蓄力鈕在左手邊</span><input class="ui-switch" id="hand" type="checkbox" role="switch" aria-label="蓄力鈕在左手邊" ${store.get('hoofbeat.hand.v1')==='left'?'checked':''}></li>
         <li><button class="row" data-go="horses">${icon('horse')}<span>我的夥伴</span><small>${prog.owned.length} / ${ROSTER.length}</small>${icon('arrow','chev')}</button></li>
         <li><button class="row" data-help>${icon('info')}<span>Race controls</span>${icon('arrow','chev')}</button></li>
-        <li><button class="row" data-rivals>${icon('flag')}<span>對手強度</span><small>${rivalLevel()} / 5</small>${icon('arrow','chev')}</button></li>
-        <li><button class="row" data-cal>${icon('music')}<span>節奏校正</span><small id="cal-value">${latencyLabel()}</small>${icon('arrow','chev')}</button></li>
-        ${BALL_GAME?'':`<li><button class="row" data-practice>${icon('horse')}<span>新手練習</span><small>${store.get(TUTORIAL)==='done'?'已完成':'約 1 分鐘'}</small>${icon('arrow','chev')}</button></li>`}
         <li><button class="row" data-log>${icon('info')}<span>測試紀錄</span><small>${summary().races} 場</small>${icon('arrow','chev')}</button></li>
-        <li>${icon('horse')}<span style="white-space:nowrap">About HOOFBEAT</span><small style="text-align:right">${new URL(import.meta.url).searchParams.get('v')||''} · 模型 ${MODEL_VERSION} · ${innerWidth}×${Math.round(window.visualViewport?.height??innerHeight)}/${innerHeight} · 載入 ${store.get('hoofbeat.loadtime.ranch')||'–'}/${store.get('hoofbeat.loadtime.race')||'–'} s</small></li>
+        <li>${icon('horse')}<span style="white-space:nowrap">About ZOOMBUD</span><small style="text-align:right">${new URL(import.meta.url).searchParams.get('v')||''} · 模型 ${MODEL_VERSION} · ${innerWidth}×${Math.round(window.visualViewport?.height??innerHeight)}/${innerHeight} · 載入 ${store.get('hoofbeat.loadtime.ranch')||'–'}/${store.get('hoofbeat.loadtime.race')||'–'} s</small></li>
         <li><button class="row danger" id="reset">${icon('reset')}<span>Reset progress</span>${icon('arrow','chev')}</button></li></ul></main>
       <div class="ui-scrim" hidden></div><section class="ui-modal ui-panel deep" role="dialog" aria-modal="true" hidden><header><h2>Race controls</h2>
         <button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header><ul class="ui-list controls">
-        <li><span><b>點黃 / 藍腳印</b><small class="note">節奏點到按鈕時按下（鍵盤 X / N）</small></span></li>
-        <li><span><b>腳印往外滑</b><small class="note">換道，放手彈回（鍵盤 ← / →）</small></span></li>
-        <li><span><b>兩個腳印同按</b><small class="note">跳過障礙（X＋N）</small></span></li>
-        <li><span><b>蓄力鈕 ⚡</b><small class="note">中心點打 5 下存一段，按一下衝刺；跟在對手後面按是飛越（空白鍵）</small></span></li>
+        <li><span><b>按住圓球</b><small class="note">蓄力，放開就衝；越接近白圈放開越快，壓過頭會爆掉</small></span></li>
+        <li><span><b>左右滑</b><small class="note">換道</small></span></li>
+        <li><span><b>往上滑</b><small class="note">跳過障礙</small></span></li>
+        <li><span><b>衝刺鈕 ⚡</b><small class="note">吃到蘋果存一段，按一下衝刺（空白鍵）</small></span></li>
+        <li><span><b>撞擊鈕</b><small class="note">放得漂亮存一格；對手並排時撞牠，在正後方時踢牠</small></span></li>
         <li><span><b>Ⅱ / Esc</b><small class="note">暫停：繼續、重新開始、音效、離開</small></span></li></ul></section>
-      <section class="ui-modal ui-panel deep cal" role="dialog" aria-modal="true" aria-label="節奏校正" hidden><header><h2>節奏校正</h2>
-        <button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>
-        <p class="ui-muted">戴上比賽時用的耳機或喇叭，專心聽嗶聲（不用看畫面），每一聲都點一下大按鈕，或按空白鍵。前兩聲是預備，共 10 下。</p>
-        <button class="ui-btn primary block cal-tap">開始</button><p class="cal-out" aria-live="polite">目前：${latencyLabel()}</p>
-        <button class="ui-btn sm block" data-cal-zero>歸零（不校正）</button></section>
       <section class="ui-modal ui-panel deep plog" role="dialog" aria-modal="true" aria-label="測試紀錄" hidden><header><h2>測試紀錄</h2>
         <button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>
         <p class="ui-muted">每一場比賽（跑完、中途離開、重來）和錯誤都記在這支手機上。測試結束請按「複製」貼給我們，或下載檔案傳過來。</p>
         <p class="plog-sum"></p><button class="ui-btn primary block" data-log-copy>複製紀錄</button><button class="ui-btn block" data-log-save>下載檔案</button>
         ${FEEDBACK_URL?`<a class="ui-btn block" href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener">填寫回饋問卷</a>`:''}<button class="ui-btn sm block danger" data-log-clear>清除紀錄</button></section>${nav('settings')}`);
-    const help=el.querySelector('.ui-modal:not(.cal)'),cal=el.querySelector('.cal'),scrim=el.querySelector('.ui-scrim');
-    let open=null,run=null;const show=m=>{if(open)open.hidden=true;open=m;scrim.hidden=!m;if(m)m.hidden=false;if(!m)run=null;};
-    el.querySelector('[data-rivals]').onclick=e=>{const n=rivalLevel()%5+1;store.set(RIVAL_LEVEL,String(n));e.currentTarget.querySelector('small').textContent=`${n} / 5`;};   // a tap: the next of 1–5 (3: as tuned)
-    el.querySelector('[data-help]').onclick=()=>show(help);el.querySelector('[data-cal]').onclick=()=>show(cal);
+    const help=el.querySelector('.ui-modal'),scrim=el.querySelector('.ui-scrim');
+    let open=null;const show=m=>{if(open)open.hidden=true;open=m;scrim.hidden=!m;if(m)m.hidden=false;};
+    el.querySelector('[data-help]').onclick=()=>show(help);
     scrim.onclick=()=>show(null);el.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>show(null));
-    // Tap latency (audio.js calibrateLatency): taps are timed on pointerdown / Space, like the race pads.
-    const tapBtn=cal.querySelector('.cal-tap'),out=cal.querySelector('.cal-out'),set=ms=>{saveLatency(ms);el.querySelector('#cal-value').textContent=latencyLabel();};
-    const hit=stamp=>{if(!run?.tap)return;const n=run.tap(stamp);tapBtn.textContent=`點！ ${Math.min(n,run.total)} / ${run.total}`;};
-    const press=async stamp=>{if(run){hit(stamp);return;}
-      run={};tapBtn.textContent='聽…';out.textContent='';const r=await calibrateLatency(new RaceClock());if(!run)return;run=r;
-      const ms=await r.done;if(!run)return;run=null;tapBtn.textContent='再測一次';
-      if(ms===null){out.textContent='點得不夠穩（至少要 6 下對上拍子），請再試一次';return;}
-      set(ms);out.textContent=`你的延遲 ${ms>0?'+':''}${ms} ms，已套用到比賽的踩拍判定`;};
-    tapBtn.onpointerdown=e=>{e.preventDefault();press(e.timeStamp);};
-    cal.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat){e.preventDefault();press(e.timeStamp);}});
-    cal.querySelector('[data-cal-zero]').onclick=()=>{set(0);out.textContent='已歸零';};
     // Playtest log (playtest.js): summary, copy / download as JSON, clear.
     const plog=el.querySelector('.plog'),paintLog=()=>{const x=summary();plog.querySelector('.plog-sum').textContent=
-      `正式比賽 ${x.races} 場（跑完 ${x.finished}、第 1 名 ${x.wins}${x.hitRate===null?'':`、平均命中 ${x.hitRate}%`}）· 練習 ${x.practice} 場 · 錯誤 ${x.errors} 筆`;
+      `正式比賽 ${x.races} 場（跑完 ${x.finished}、第 1 名 ${x.wins}）· 錯誤 ${x.errors} 筆`;
       el.querySelector('[data-log] small').textContent=`${x.races} 場`;};
-    const logText=()=>JSON.stringify({app:'HOOFBEAT',build:MODEL_VERSION,exported:new Date().toISOString(),log:readLog()},null,1);
+    const logText=()=>JSON.stringify({app:'ZOOMBUD',build:MODEL_VERSION,exported:new Date().toISOString(),log:readLog()},null,1);
     el.querySelector('[data-log]').onclick=()=>{paintLog();show(plog);};
-    if(!BALL_GAME)el.querySelector('[data-practice]').onclick=()=>{practiceNext=true;go('solo');};   // the practice teaches the rhythm game: not offered in the ball game
     plog.querySelector('[data-log-copy]').onclick=async e=>{try{await navigator.clipboard.writeText(logText());e.target.textContent='已複製';}catch{e.target.textContent='無法複製，請改用下載';}};
     plog.querySelector('[data-log-save]').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([logText()],{type:'application/json'}));
       a.download=`hoofbeat-playtest-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
@@ -725,18 +696,17 @@ const PAGES={
     el.querySelector('#lang').onchange=e=>setLang(e.target.checked?'en':'zh');
     el.querySelector('#hand').onchange=e=>store.set('hoofbeat.hand.v1',e.target.checked?'left':'right');
     el.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{store.set(ROLE,b.dataset.role);fixCity();saveProfile();go('settings');});
-    el.querySelector('#reset').onclick=()=>{if(!confirm(translate('確定要重設所有進度（關卡、星星、解鎖的夥伴、金幣、照顧、外觀）？')))return;[WALLET,PROFILE,BEST,SOLO_BEST,RELAY_BEST,PROGRESS,OWNED_DECOR,TUTORIAL,'hoofbeat.care.v2','hoofbeat.items.v1','hoofbeat.gems.v1','hoofbeat.hand.v1','hoofbeat.jumps.v1'].forEach(store.del);
+    el.querySelector('#reset').onclick=()=>{if(!confirm(translate('確定要重設所有進度（關卡、星星、解鎖的夥伴、金幣、照顧、外觀）？')))return;[WALLET,PROFILE,BEST,SOLO_BEST,RELAY_BEST,PROGRESS,OWNED_DECOR,'hoofbeat.tutorial.v1','hoofbeat.latency.v1','hoofbeat.care.v2','hoofbeat.items.v1','hoofbeat.gems.v1','hoofbeat.hand.v1','hoofbeat.jumps.v1'].forEach(store.del);
       try{Object.keys(localStorage).filter(k=>k.startsWith(GHOST)).forEach(store.del)}catch{}prog=fresh();
       profile={...defaults,gear:{}};care=readCare({getItem:store.get},ROSTER.map(h=>h.id));bag=readItems({getItem:store.get});applyLook();go('home');};
   },
 };
 PAGES.collection=PAGES.horses;   // old links
 
-const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r480',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r480');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r502',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r502');   // a frame counter in the corner (fps.js)
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});
