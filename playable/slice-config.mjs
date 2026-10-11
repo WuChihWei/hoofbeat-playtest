@@ -18,6 +18,7 @@ export const SLICE_CONFIG = Object.freeze({
   chordWindow:.075/1.3*T, perfectWindow:.085*T, goodWindow:.15*T,   // real time: both pads within 58 ms, Perfect ±85 ms, Good ±150 ms (170 until 2026-10-05: the notes are 308 ms apart now)
   laneDuration:.3, laneSpacing:3, bendLane:.05, followGap:6.24, laneOverlap:.8, stallOverlap:.45, stall:.75, breakOut:15,
   shoveWind:.2,   // the ball's gain for a shove from behind (slice-game)
+  hitReach:2.5,   // m ahead or behind within which a runner in the next lane can be bumped or rammed (a buddy is 5.3 long: the two overlap by half or more). Once it has started it holds to 1.6 × this. It was a whole followGap, 6–8 m (2026-10-11, the user: a rival well behind, out of the picture, could still ram)
   // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
   leapReach:3,   // a jump in a sprint leaps the horse just ahead (up to followGap + leapReach) when there is room to land
   // Comeback (stuck behind a horse, the taps should build toward a pass, not feel wasted):
