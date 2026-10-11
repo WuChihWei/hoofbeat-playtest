@@ -174,3 +174,4 @@
 @keyframes ui-enter{from{opacity:0;transform:translateY(calc(12 * var(--u)))}}
 
 @media (prefers-reduced-motion:reduce){.ui-root *,.ui-root *::after{animation:none!important;transition:none!important}}
+.ui-brand.art{filter:drop-shadow(0 calc(2 * var(--u)) calc(4 * var(--u)) rgb(0 0 0 / .3))}.ui-brand.art .word{height:calc(46 * var(--u));margin-left:calc(-6 * var(--u))}

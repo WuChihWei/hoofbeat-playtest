@@ -442,3 +442,12 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .ranch-pop img{width:calc(26 * var(--u));height:calc(26 * var(--u))}.ranch-pop b{font-weight:800}
 @keyframes ranch-pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}18%{opacity:1;transform:translate(-50%,-90%) scale(1.12)}30%{transform:translate(-50%,-100%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-230%) scale(1)}}
 .ranch-shots button{position:relative}.ranch-shots .has-dot::after{content:"";position:absolute;top:calc(7 * var(--u));right:calc(12 * var(--u));width:calc(9 * var(--u));height:calc(9 * var(--u));border-radius:50%;background:var(--ui-yellow);box-shadow:0 0 0 2px #0005}
+/* The ranch: where the next hut goes (2026-10-11): asked once, over the nav, when a buddy has no hut and there is a
+   plot free on each side of the row. */
+.ranch-build{position:absolute;z-index:4;left:var(--ui-margin);right:var(--ui-margin);bottom:calc(88 * var(--u));padding:var(--ui-s4);border-radius:var(--ui-r3,calc(22 * var(--u)));display:grid;gap:var(--ui-s3)}
+.ranch-build p{margin:0;display:grid;gap:calc(2 * var(--u))}.ranch-build b{font-size:calc(16 * var(--u))}.ranch-build small{opacity:.7;font-size:calc(12 * var(--u))}
+.ranch-build div{display:grid;grid-template-columns:1fr 1fr;gap:var(--ui-s3)}
+/* The shop: selling a harvest (2026-10-11): a row for each, all of it at once. */
+.shop-sell{display:grid;gap:var(--ui-s3);padding:0 0 var(--ui-s5)}.shop-sell button{width:100%;text-align:left;border:0;color:inherit;font:inherit}.shop-sell button[disabled]{opacity:.5}
+.shop-sell img{width:calc(34 * var(--u));height:calc(34 * var(--u));object-fit:contain}
+.shop-sell i{font-style:normal}

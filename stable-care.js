@@ -7,11 +7,15 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r506';
+import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r514';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
-  {id:'wheat',name:'小麥',kind:'food',food:30},{id:'seed',name:'小麥種子',kind:'seed',price:10},
+  {id:'wheat',name:'小麥',kind:'food',food:30,sell:4},{id:'seed',name:'小麥種子',kind:'seed',price:10,note:'種在麥田，長成小麥'},
+  // the pond's catch (farm.mjs, 2026-10-11: the field's rules again): fish, and the bait that is cast for it. sell: what one
+  // of a harvest brings in the shop (4 while a crop takes 45 s in the playtest build: 3 a plot less the 10 of its seed is
+  // about what a race pays for the same time; meant: 5, with a crop that takes hours)
+  {id:'fish',name:'魚',kind:'food',food:30,sell:4},{id:'bait',name:'魚餌',kind:'seed',price:10,note:'放進魚池，釣到魚'},
   // treats: a little filling, a little xp
   ...[{id:'carrot',name:'紅蘿蔔',kind:'food',food:10,xp:2,price:15},{id:'apple',name:'蘋果',kind:'food',food:10,xp:3,price:20},
   {id:'cookie',name:'夥伴餅乾',kind:'food',food:15,xp:5,price:35}].map(i=>MVP.treats?i:{...i,kind:'hidden',hidden:true}),   // MVP: wheat is the food
@@ -20,8 +24,13 @@ export const ITEMS=[
   // hidden for the MVP (kept so a save's counts survive)
   ...['hay','feed','oats','alfalfa','sugar','mint','pear','watermelon','beet','mash','shampoo','vitamin','electrolyte','hoofoil','flyspray','balm','ribbonkit','energybar','luckyshoe','bucket','towel'].map(id=>({id,name:id,kind:'hidden',hidden:true})),
 ];
+// What a buddy likes best: the bear and the wolf fish, the others wheat. The harvest it likes fills it in full, the
+// other one half (a treat is a treat to everyone).
+export const likes=species=>species==='bear'||species==='wolf'?'fish':'wheat',HARVEST=['wheat','fish'];
+// Selling a harvest in the shop: all of it at once. → {items, coins}
+export function sellAll(items,id){const it=ITEMS.find(i=>i.id===id&&i.sell),n=it?items[id]||0:0;return {items:n?{...items,[id]:0}:items,coins:n*(it?.sell||0)};}
 export const itemEffect=it=>[it.food&&`飽足 +${it.food}`,it.xp&&`經驗 +${it.xp}`].filter(Boolean).join(' · ');
-const STARTER={wheat:8,seed:3,carrot:2,brush:1};   // wheat to feed with and seeds to sow at the start; everything else starts at 0
+const STARTER={wheat:8,seed:3,bait:3,carrot:2,brush:1};   // wheat to feed with and seeds to sow at the start; everything else starts at 0
 const COOLDOWN=1200;
 export const freshCare=()=>({hunger:60,clean:70,xp:0,last:0});
 const STATS=['hunger','clean'];
@@ -74,15 +83,15 @@ export const afterRace=(r,{rank,perfect=0})=>worn(r,WEAR.relay,RACE_XP[rank-1]+M
 export const afterSolo=(r,{stars,perfect=0})=>worn(r,WEAR.solo,SOLO_XP[stars-1]+Math.floor(perfect/5));
 
 // -> {care, items, msg, levelUp?} or {fail} (nothing changes on a fail). food: the item picked in the Items panel.
-export function careAction(record,items,action,food='wheat',now=Date.now()){
+export function careAction(record,items,action,food='wheat',now=Date.now(),species='horse'){
   if(now-record.last<COOLDOWN)return {fail:'慢一點，讓牠休息一下'};
   const r={...record,last:now},bag={...items};
   if(action==='feed'){
     const it=ITEMS.find(i=>i.id===food&&i.food&&bag[i.id]>0);   // the food asked for and no other: a treat is never eaten for want of wheat
-    if(!it)return {fail:'沒有小麥了：去麥田收成'};
+    if(!it)return {fail:food==='fish'?'沒有魚了：去魚池收':'沒有小麥了：去麥田收成'};
     if(r.hunger>=100)return {fail:'已經吃飽了'};
-    bag[it.id]--;r.hunger=clamp(r.hunger+it.food);r.xp+=it.xp||0;
-    return {care:r,items:bag,msg:`吃了${it.name}`,item:it.id,levelUp:level(r)>level(record)};
+    const liked=!HARVEST.includes(it.id)||likes(species)===it.id;bag[it.id]--;r.hunger=clamp(r.hunger+(liked?it.food:it.food/2));r.xp+=it.xp||0;
+    return {care:r,items:bag,msg:HARVEST.includes(it.id)&&liked?`最愛吃${it.name}`:`吃了${it.name}`,liked,item:it.id,levelUp:level(r)>level(record)};
   }
   if(action==='brush'){
     if(!bag.brush)return {fail:'需要一把刷子'};

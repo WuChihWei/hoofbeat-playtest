@@ -9,7 +9,7 @@ export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HO
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   horseLow:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Low.glb',riderLow:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Low.glb',riderRace:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Race.glb',   // 2026-10-11, a phone's race: Low for the rivals (seen from behind, metres off: tools/lod.py at .2 and .22), Race for the player's rider (.6: its back and helmet are all the race shows)
   coin:'environment/Coin.glb',poop:'environment/Poop.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-93';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-94';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
