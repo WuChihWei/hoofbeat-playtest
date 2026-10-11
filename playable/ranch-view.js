@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r530';
-import {applyLook,LOOK} from '../visual-style.js?v=r530';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r533';
+import {applyLook,LOOK} from '../visual-style.js?v=r533';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -60,7 +60,13 @@ export const RANCH={
   // rad); stand: where a buddy in stands (y). pitch 3 (2026-10-11, the user: 「宿舍彼此之間不要有間隔」; it was 5, every hut
   // with both its end walls): huts side by side are one building, an end wall only where a row stops (`end`: how far
   // it and its eaves reach past the stall).
-  huts:{per:5,pitch:3.6,step:8,order:[2,3,1,4,0],half:1.8,end:.45,box:[.8,4.7],y:1.2,door:0,stand:1.95,open:-1.2},
+  huts:{per:5,pitch:4.68,step:9,order:[2,3,1,4,0],half:2.34,end:.1,box:[.75,5.75],y:1.2,door:0,open:-1.2,
+    // A buddy in its hut stands with its nose `out` m past the front wall, whatever animal it is: nose: how far ahead of
+    // where it stands each kind's nose is (measured on the ranch models, 2026-10-12: the user: 「要考慮放不同動物會不會卡在門口」).
+    out:.5,nose:{horse:1.52,llama:1.39,rhino:1.78,bear:1.69,zebra:1.83,cow:1.63,wolf:1.37},
+    // A low animal stands on a raised floor inside (2026-10-12, the user: 「太矮的動物可以墊高宿舍」): it is lifted so its head
+    // is `look` m up, over the half-door (1.3 m) like a horse's; head: how high each kind carries its head (measured).
+    look:2.05,head:{horse:2.47,llama:2.24,rhino:1.16,bear:1.46,zebra:1.96,cow:1.93,wolf:1.51}},
   stalks:{rows:8,cols:11,size:[3.1,2.8],fat:1.55},   // a bed is sown with rows × cols stalks (Ranch_Wheat.glb: one stalk per stage), drawn fatter than modelled (the ears are what is seen from above)
   // The field's look (the user's reference: a farm game's fields: crops standing thick, brown rail fences, dark soil,
   // worn earth round the plots, warm greens). fill: a block under the stalks so a bed reads as one thick crop, [colour,
@@ -75,8 +81,8 @@ export const RANCH={
   plants:{stook:{patch:[.9,.9]},trees:['Tree_A','Pine_A','Tree_B','Pine_B'],hedge:{mesh:'Hedge',tall:1.15,patch:[1.6,.6]},cone:{mesh:'Cone',tall:1.5,patch:[.5,.5]},urn:{mesh:'Urn',tall:1.3,patch:[.4,.4]}},
   props:[['bales',12.6,-3.2,.2],['barrel',-11.6,1.6,0],['barrel',-12.4,.6,0],['logs',-11,-6.5,.5],['rocks',-9.5,-9,0],['rocks',22,-14,.6],['logs',21.5,-9.5,-.4],
     ['urn',-2.7,-.55,0],['urn',2.7,-.55,0],['hedge',-6.2,-.55,0],['hedge',6.2,-.55,0],['cone',-9.4,-.55,0],['cone',9.6,-.55,0]],   // the user's topiary set, along the barn's front
-  apart:2,stuck:1.5,stand:2.6,                // two buddies out are never nearer than `apart` m (centre to centre); one that has waited `stuck` s for the way to clear turns back; where one stands or is going, no other stops within `stand` m (a buddy is 2.5 m long: not on the next spot, the one across the corner is fine)
-  grid:2.1,room:.9,                           // waypoints every `grid` m, `room` m clear of everything
+  apart:2.5,stuck:1.5,stand:2.8,                // two buddies out are never nearer than `apart` m (centre to centre); one that has waited `stuck` s for the way to clear turns back; where one stands or is going, no other stops within `stand` m (a buddy is 2.5 m long: not on the next spot, the one across the corner is fine)
+  grid:2.6,room:1.4,                          // waypoints every `grid` m, `room` m clear of everything. 2026-10-12 (the user: 「動物不要亂穿過其他物體」): room 1.4 and apart 2.5 (.9 and 2): a buddy is 2.5 m long, so turning on a spot .9 m from a fence put its head or its tail through it, and two passing 2 m apart ran through each other; the yard's fence is a block now
   light:{sun:['#ffd59a',2.3],rim:['#fff1dc',.45],env:.7},   // [colour, intensity]; 2026-10-11: warmer and lower (long soft shadows, a farm game's afternoon)
   edge:[.9,.42,2,.16],                        // the worn ground fades into the grass: a rim this much wider (m), this opaque; a second, wider and fainter
   lawn:{color:'#84bd4a',light:'#a6d95e',dark:'#619a35',tile:28,patches:90,alpha:[.2,.2]},   // patches: how many soft lighter and darker ones a tile has, alpha [from, span]   // the ground: a warm, full green, soft patches a few metres across
@@ -133,7 +139,7 @@ export function layout({pens=[[2,2],[2,1]],huts=autoHuts(1)}={}){
       const n=3+(rnd()<.5?1:0);for(let k=0;k<n;k++){const a=rnd()*6.28,d=1.6+rnd()*1.6;trees.push([px+Math.cos(a)*d,py+Math.sin(a)*d,4.2+rnd()*2.4]);}}}
   const kept=trees.filter(([x,y,h])=>!hits(x,y,h*.41+.3,blocks)&&!hits(x,y,h*.2,earth));
   const open={at:P.look,dist:A.dist,az:A.az,el:A.el};
-  return {pens:fences,beds,field,yard,lawn:yard,ground,fence,slabs,house:P.house,site:{x:[yard[0]-.9,yard[2]+.9],y:[yard[1]-.9,yard[3]+1.3]},blocks,homes,rows,earth,trees:kept,props,open,back,up:U,pond:P.pond,
+  return {pens:fences,beds,field,yard,lawn:yard,ground,fence,slabs,house:P.house,site:{x:[yard[0],yard[2]],y:[yard[1],yard[3]]},blocks:[...blocks,...fence.map(([a,b,c,d])=>[Math.min(a,c)-.2,Math.min(b,d)-.2,Math.max(a,c)+.2,Math.max(b,d)+.2])],homes,rows,earth,trees:kept,props,open,back,up:U,pond:P.pond,
     walks:homes.map(h=>[h.x-H.half-.3,h.d+H.y-.9,h.x+H.half+.3,h.d+H.y]),pan:[P.pan[0],P.pan[1],P.pan[2],Math.max(P.look[1]+10,back-4)],
     shots:{all:P.look,field:[(field[0]+field[2])/2+4,(field[1]+field[3])/2-2],huts:[0,Math.max(2,back-12)],pond:[px-3,py-4]}};
 }
@@ -212,7 +218,8 @@ export function inShot(shot,x,y,aspect,fov=RANCH.fov){
 // if the ranch ever gets gates or narrow lanes.
 export function waypoints(trees=[],R=layout()){
   const S=RANCH.seen,shown=(x,y)=>{const [u,v]=inShot(R.open,x,y,S.aspect);return u>S.x[0]&&u<S.x[1]&&v>S.y[0]&&v<S.y[1];};
-  const clear=(x,y,m=RANCH.room)=>shown(x,y)&&x>R.site.x[0]+m&&x<R.site.x[1]-m&&y>R.site.y[0]+m&&y<R.site.y[1]-m&&
+  // (a spot had to be in the opening view too, when the ranch was one strip that only slid: the view goes anywhere now, 2026-10-12)
+  const clear=(x,y,m=RANCH.room)=>x>R.site.x[0]+m&&x<R.site.x[1]-m&&y>R.site.y[0]+m&&y<R.site.y[1]-m&&
     R.blocks.every(([a,b,c,d])=>x<a-m||x>c+m||y<b-m||y>d+m)&&trees.every(t=>Math.hypot(x-t.x,y-t.y)>t.r+m*.5);
   const spots=[];
   for(let x=R.site.x[0]+.5;x<R.site.x[1];x+=RANCH.grid)for(let y=R.site.y[0]+.5;y<R.site.y[1];y+=RANCH.grid)if(clear(x,y))spots.push({x,y,next:[]});
@@ -286,7 +293,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     const float=new THREE.Group(),ball=(r,col,h)=>{const m=new THREE.Mesh(keep(new THREE.SphereGeometry(r,14,10)),keep(new THREE.MeshStandardMaterial({color:col,roughness:.5})));m.position.y=h;float.add(m);};ball(.3,'#ffffff',0);ball(.24,'#e5484d',.2);
     float.position.copy(at(x,y));float.visible=false;scene.add(float);return {x,y,ring,float,g:null};});
   function pond(grown){casts.forEach((c,i)=>{c.g=grown[i]??null;c.float.visible=c.g!=null;c.ring.material.opacity=c.g==null?.75:c.g>=1?1:.3;});}
-  const slabs=offers.map(p=>{const [x,d]=plotAt(p),m=new THREE.Mesh(keep(new THREE.BoxGeometry(3.3,.3,3.4)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.6})));m.position.copy(at(x,d+RANCH.huts.y+1.4)).setY(.2);scene.add(m);return {plot:p,m};});
+  const slabs=offers.map(p=>{const [x,d]=plotAt(p),m=new THREE.Mesh(keep(new THREE.BoxGeometry(4.3,.3,4)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.6})));m.position.copy(at(x,d+RANCH.huts.y+2)).setY(.2);scene.add(m);return {plot:p,m};});
   const isOpen=k=>set[k]??!herd.some(b=>b.stall===k),swing=k=>{if(hung[k])hung[k].rotation.y=isOpen(k)?D.open:0;};
   // Made here, one mesh of plain boxes coloured on their vertices: the beds (a frame and its soil; a bed not opened is
   // only pale soil) and the rail fence round each pen, a post every 2.4 m or so.
@@ -333,7 +340,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
   // Contact shadows (2026-10-11, the reference: everything sits on the ground): a soft dark disc under every tree, prop
   // and building, drawn once, over the lawn and under the sun's own shadows.
   {const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),p=g.createRadialGradient(32,32,2,32,32,32);p.addColorStop(0,'rgba(0,0,0,.55)');p.addColorStop(.55,'rgba(0,0,0,.28)');p.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=p;g.fillRect(0,0,64,64);
-    const tex=keep(new THREE.CanvasTexture(c)),spots=[...trees.map(t=>[t.x,t.y,t.r*1.25,t.r*1.25]),...L.props.map(([k,x,y])=>{const [w,d]=RANCH.plants[k]?.patch??[1.4,1.2];return [x,y,w*1.15,d*1.3];}),...L.homes.map(h=>[h.x,h.d+RANCH.huts.y+1.5,RANCH.huts.half+.9,2.6]),[L.house[0],L.house[1]+3.2,L.house[2]+1.6,4.6],[RANCH.plan.shed+2.3,6.5,3.6,7]];
+    const tex=keep(new THREE.CanvasTexture(c)),spots=[...trees.map(t=>[t.x,t.y,t.r*1.25,t.r*1.25]),...L.props.map(([k,x,y])=>{const [w,d]=RANCH.plants[k]?.patch??[1.4,1.2];return [x,y,w*1.15,d*1.3];}),...L.homes.map(h=>[h.x,h.d+RANCH.huts.y+2,RANCH.huts.half+.9,3.1]),[L.house[0],L.house[1]+3.2,L.house[2]+1.6,4.6],[RANCH.plan.shed+2.3,6.5,3.6,7]];
     const mesh=new THREE.InstancedMesh(keep(new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2)),keep(new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,opacity:.5})),spots.length),m=new THREE.Matrix4(),q=new THREE.Quaternion();
     spots.forEach(([x,y,w,d],i)=>mesh.setMatrixAt(i,m.compose(at(x,y).setY(.047),q,new THREE.Vector3(w,1,d))));mesh.renderOrder=1;mesh.frustumCulled=false;scene.add(mesh);}
   // The lawns: tufts of three blades and small flowers, each kind drawn once (unlit: a blade seen from behind went
@@ -369,7 +376,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
   const free=(want=()=>true,me)=>{const taken=herd.filter(b=>b.stall==null&&b!==me).flatMap(b=>[b.on,b.path.at(-1)]).filter(i=>i!=null).map(i=>spots[i]);const ok=spots.map((_,i)=>i).filter(i=>taken.every(t=>Math.hypot(t.x-spots[i].x,t.y-spots[i].y)>=RANCH.stand)&&spots[i].next.length&&want(spots[i]));return ok[Math.floor(Math.random()*ok.length)];};
   const nearest=(x,y)=>spots.reduce((best,s,i)=>Math.hypot(s.x-x,s.y-y)<Math.hypot(spots[best].x-x,spots[best].y-y)?i:best,0);
   // Everyone: in its stall (looking out over its door, standing) or out (on a spot, a round shadow under it).
-  const herd=[],inStall=b=>{const [cx,d]=stallAt(b.stall);b.pos.copy(at(cx+D.door,D.stand+d));b.yaw=Math.PI;b.path=[];b.go=0;b.under.visible=false;};
+  const herd=[],inStall=b=>{const [cx,d]=stallAt(b.stall);b.pos.copy(at(cx+D.door,d+D.y+(D.nose[b.model.species||'horse']??1.5)-D.out)).setY(Math.max(0,D.look-(D.head[b.model.species||'horse']??D.look)));b.yaw=Math.PI;b.path=[];b.go=0;b.under.visible=false;};
   for(const b of buddies){
     const model=dress(b),trot=approvedAssets.get(ranchFile(b.coat)).animations.find(a=>a.name==='Trot'),idle=model.mixer.clipAction(model.clips.idle).play(),step=model.mixer.clipAction(trot).play();
     step.setEffectiveWeight(0);step.timeScale=RANCH.trot;model.mixer.update(Math.random()*3);
@@ -440,7 +447,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
   const v=new THREE.Vector3(),ray=new THREE.Raycaster(),ground=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
   const off=(e,p)=>{const box=el$.getBoundingClientRect();v.copy(p).project(cam);return Math.hypot((v.x+1)/2*box.width-(e.clientX-box.left),(1-v.y)/2*box.height-(e.clientY-box.top));};
   const under=e=>{const box=el$.getBoundingClientRect();ray.setFromCamera({x:(e.clientX-box.left)/box.width*2-1,y:1-(e.clientY-box.top)/box.height*2},cam);return ray.ray.intersectPlane(ground,hit);};
-  const blocked=(x,y)=>L.blocks.some(([a,b,c,d])=>x>a-.4&&x<c+.4&&y>b-.4&&y<d+.4)||trees.some(t=>Math.hypot(x-t.x,y-t.y)<t.r*.6);
+  const blocked=(x,y)=>L.blocks.some(([a,b,c,d])=>x>a-RANCH.room&&x<c+RANCH.room&&y>b-RANCH.room&&y<d+RANCH.room)||trees.some(t=>Math.hypot(x-t.x,y-t.y)<t.r+RANCH.room*.6);   // set down no nearer a thing than it may walk to it
   const stallUnder=(x,y)=>hung.findIndex((h,k)=>{if(!h)return false;const [cx,d]=stallAt(k);return Math.abs(x-cx)<D.half&&y>d+D.y-1.6&&y<D.box[1]+d;});
   el$.addEventListener('pointerdown',e=>{try{el$.setPointerCapture(e.pointerId);}catch{}from=last2=[e.clientX,e.clientY];moved=0;
     let near=48;held=null;for(const b of herd){const d=off(e,hit.copy(b.pos).setY(b.pos.y+1));if(d<near){near=d;held=b;}}
@@ -459,6 +466,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
       if(blocked(x,y)||herd.some(o=>o!==b&&o.stall==null&&Math.hypot(o.pos.x-x,o.pos.z+y)<RANCH.apart))return back();   // not on a pen, a building, a tree, or another buddy
       held=null;b.pos.y=0;b.on=nearest(x,y);b.wait=RANCH.rest[0]+Math.random()*RANCH.rest[1];if(was.stall!=null)delete set[was.stall];hung.forEach((_,i)=>swing(i));onMove?.(b.id,{at:[+x.toFixed(2),+y.toFixed(2)]});return;}
     if(moved>=10)return;
+    let near;   // r524–r530: this was declared by the door's tap, which went with the doors; without it every tap below threw (no sowing, no casting)
     {let pick=null,near=70;for(const o of slabs){const d=off(e,o.m.position);if(d<near){near=d;pick=o;}}if(pick){onOffer?.(pick.plot);return;}}
     if(onPond){let k=-1;near=56;casts.forEach((c,i)=>{const d=off(e,hit.copy(at(c.x,c.y)).setY(.2));if(d<near){near=d;k=i;}});if(k>=0){onPond(k,e.clientX,e.clientY);return;}}
     if(onBed){let bed=-1;near=64;L.beds.slice(0,open).forEach(([x,y],i)=>{const d=off(e,hit.copy(at(x,y)).setY(S.top));if(d<near){near=d;bed=i;}});if(bed>=0)onBed(bed,e.clientX,e.clientY);}});
