@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r471';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r471';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r471';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r471';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r471';
-import {installApprovedEnvironment} from './approved-environment.js?v=r471';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r471';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r471';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r471';
-import {turnAt} from './track-projection.js?v=r471';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r471';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r471';
+import {roadHalfWidth} from './track-presentation.mjs?v=r474';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r474';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r474';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r474';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r474';
+import {installApprovedEnvironment} from './approved-environment.js?v=r474';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r474';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r474';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r474';
+import {turnAt} from './track-projection.js?v=r474';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r474';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r474';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -302,9 +302,9 @@ export class ChaseRenderer {
   pulse(lane, time, strength=1) {this.pulses[lane] = time;this.pulseStrength[lane]=strength;}
   // The rider looks to that side (−1 left, 1 right) / punches the air, from now (race time).
   // The ball game (2026-10-08): buck(): the kick behind. win(): first past the post, it rears and the rider's fist goes up.
-  buck(){this.buckAt=this.raceTime??0;}
+  buck(lead=0){this.buckAt=(this.raceTime??0)+lead;}   // lead: simulation s from now (slice-app: a bump or a kick lands a moment after the press)
   // The bump (2026-10-10, the user: 「撞了好像不明顯」): the player's buddy throws its shoulder at the runner beside it (side 0 left, 1 right) and comes back.
-  ram(side){this.ramAt=this.raceTime??0;this.ramSide=side?1:-1;}
+  ram(side,lead=0){this.ramAt=(this.raceTime??0)+lead;this.ramSide=side?1:-1;}
   // Where a runner is on the screen (CSS px of the canvas): lane (lane units), how far ahead of the player (m), y: m up.
   screenOfRunner(lane,ahead,y=2.6,laneSpacing=2.2){const p=new THREE.Vector3(lane*laneSpacing,y,HORSE_Z-ahead).project(this.camera);return {x:(p.x+1)*this.width/2,y:(1-p.y)*this.height/2,behind:p.z>1};}
   win(){this.winAt=performance.now();}

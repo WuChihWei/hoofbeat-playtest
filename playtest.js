@@ -14,10 +14,10 @@ export function watchErrors(){
   addEventListener('unhandledrejection',e=>log(e.reason?.stack||e.reason,'promise'));
 }
 // One race: the game (slice-game), how it ended ('finish' | 'quit' | 'restart'), and what the app knows about it.
-export function raceEntry(game,result,{city,team,practice=false,mode='relay',rivals=3,fps=null,perf=null,latency=0}={}){
+export function raceEntry(game,result,{city,team,practice=false,mode='relay',rivals=3,eased=false,fps=null,perf=null,latency=0}={}){
   const count=type=>game.actions.filter(e=>e.type===type).length,by=s=>game.notes.filter(n=>n.state===s).length;
   const perfect=by('perfect'),good=by('good'),miss=by('miss'),judged=perfect+good+miss;
-  return {kind:'race',mode,result,practice,city:city??'template',difficulty:game.course.difficulty??null,rivals,field:game.rivals.length+1,team,
+  return {kind:'race',mode,result,practice,city:city??'template',difficulty:game.course.difficulty??null,rivals,eased,field:game.rivals.length+1,team,
     rank:game.metrics().rank,wall:+(game.time/game.config.tempo).toFixed(1),progress:Math.round(game.distance/game.config.length*100),leg:game.leg+1,
     notes:judged,perfect,good,miss,hitRate:judged?Math.round((perfect+good)/judged*100):null,bestCombo:game.bestCombo,
     sprints:game.boosts.length,leaps:count('leap'),hurdles:{cleared:count('clear'),hit:count('obstacle-miss')},laneChanges:game.laneChanges.length,
