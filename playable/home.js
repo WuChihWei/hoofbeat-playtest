@@ -5,26 +5,26 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice,TUTORIAL} from './slice-app.js?v=r470';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r470';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r470';
+import {startSlice,TUTORIAL,RIVAL_LEVEL,rivalLevel} from './slice-app.js?v=r471';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r471';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r471';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
 const barn=new Image();   // kept: the ranch opens with its painting already there (it came two frames after the buddy)
 setTimeout(()=>{barn.src='assets/stable/barn-plate.webp';preloadRanch(owned().slice(0,14).map(h=>h.coat)).catch(()=>{}).then(()=>preloadStable()).catch(()=>{}).then(()=>preloadPresentation(false)).then(()=>{warmCity(profile.city);return preloadPresentation();}).catch(()=>{});},300);
-import {lang,setLang,translate} from '../i18n.js?v=r470';
-import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,soloForm as careForm,afterRace,afterSolo} from '../stable-care.js?v=r470';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP} from './slice-config.mjs?v=r470';
-import {mountStableView,preloadStable} from './stable-view.js?v=r470';
-import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r470';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r470';
-import {cityPictures} from '../approved-environment.js?v=r470';
-import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r470';
+import {lang,setLang,translate} from '../i18n.js?v=r471';
+import {ITEMS,itemEffect,readCare,readItems,saveCare,careAction,level,XP_LEVEL,soloForm as careForm,afterRace,afterSolo} from '../stable-care.js?v=r471';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP} from './slice-config.mjs?v=r471';
+import {mountStableView,preloadStable} from './stable-view.js?v=r471';
+import {mountRanchView,preloadRanch,RANCH} from './ranch-view.js?v=r471';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,dormsFor,pensFor} from '../farm.mjs?v=r471';
+import {cityPictures} from '../approved-environment.js?v=r471';
+import {calibrateLatency,readLatency,saveLatency} from '../audio.js?v=r471';
 import {RaceClock} from '../race-session.js';
-import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r470';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r470';
-import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r470';
+import {readLog,clearLog,summary,FEEDBACK_URL} from '../playtest.js?v=r471';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster} from '../ui/ui.js?v=r471';
+import {LEVELS,PERKS,PERK_COINS,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,BALL_GAME} from './progress.mjs?v=r471';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -659,6 +659,7 @@ const PAGES={
         <li>${icon('bolt')}<span>蓄力鈕在左手邊</span><input class="ui-switch" id="hand" type="checkbox" role="switch" aria-label="蓄力鈕在左手邊" ${store.get('hoofbeat.hand.v1')==='left'?'checked':''}></li>
         <li><button class="row" data-go="horses">${icon('horse')}<span>我的夥伴</span><small>${prog.owned.length} / ${ROSTER.length}</small>${icon('arrow','chev')}</button></li>
         <li><button class="row" data-help>${icon('info')}<span>Race controls</span>${icon('arrow','chev')}</button></li>
+        <li><button class="row" data-rivals>${icon('flag')}<span>對手強度</span><small>${rivalLevel()} / 5</small>${icon('arrow','chev')}</button></li>
         <li><button class="row" data-cal>${icon('music')}<span>節奏校正</span><small id="cal-value">${latencyLabel()}</small>${icon('arrow','chev')}</button></li>
         ${BALL_GAME?'':`<li><button class="row" data-practice>${icon('horse')}<span>新手練習</span><small>${store.get(TUTORIAL)==='done'?'已完成':'約 1 分鐘'}</small>${icon('arrow','chev')}</button></li>`}
         <li><button class="row" data-log>${icon('info')}<span>測試紀錄</span><small>${summary().races} 場</small>${icon('arrow','chev')}</button></li>
@@ -683,6 +684,7 @@ const PAGES={
         ${FEEDBACK_URL?`<a class="ui-btn block" href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener">填寫回饋問卷</a>`:''}<button class="ui-btn sm block danger" data-log-clear>清除紀錄</button></section>${nav('settings')}`);
     const help=el.querySelector('.ui-modal:not(.cal)'),cal=el.querySelector('.cal'),scrim=el.querySelector('.ui-scrim');
     let open=null,run=null;const show=m=>{if(open)open.hidden=true;open=m;scrim.hidden=!m;if(m)m.hidden=false;if(!m)run=null;};
+    el.querySelector('[data-rivals]').onclick=e=>{const n=rivalLevel()%5+1;store.set(RIVAL_LEVEL,String(n));e.currentTarget.querySelector('small').textContent=`${n} / 5`;};   // a tap: the next of 1–5 (3: as tuned)
     el.querySelector('[data-help]').onclick=()=>show(help);el.querySelector('[data-cal]').onclick=()=>show(cal);
     scrim.onclick=()=>show(null);el.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>show(null));
     // Tap latency (audio.js calibrateLatency): taps are timed on pointerdown / Space, like the race pads.
@@ -722,8 +724,8 @@ PAGES.collection=PAGES.horses;   // old links
 const latencyLabel=()=>{const ms=readLatency();return ms?`${ms>0?'+':''}${ms} ms`:'未校正';};
 
 export function startHome(){
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r470',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r470');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r471',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r471');   // a frame counter in the corner (fps.js)
   applyLook();window.addEventListener('hashchange',render);
   // Esc = back on app pages (the race handles its own Esc = pause)
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!['#play','#solo'].includes(location.hash)&&!['','#home'].includes(location.hash))app().querySelector('[data-back]')?.click();});

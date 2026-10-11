@@ -141,6 +141,7 @@ export const STRINGS=[
   {zh:"音效",en:"Sound"},
   {zh:"蓄力鈕在左手邊",en:"Charge button on the left"},
   {zh:"比賽操作",en:"Race controls"},
+  {zh:"對手強度",en:"Rival strength"},
   {zh:"節奏校正",en:"Rhythm calibration"},
   {zh:"新手練習",en:"Beginner practice"},
   {zh:"已完成",en:"Done"},
