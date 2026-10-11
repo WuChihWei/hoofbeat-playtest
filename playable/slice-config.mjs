@@ -9,7 +9,7 @@ const T=1.95;
 // full strength) · missions: the three a run · daily: the day's first-run bonus and the hot streak · perks: the mane style
 // and the rider's colours as stage gifts (those stages pay coins instead) · decor: the barn's stickers and postcards ·
 // types: the straight / curve / mud label · relay: the three-buddy race.
-export const MVP=Object.freeze({gems:false,treats:false,levels:false,missions:false,daily:false,perks:false,decor:false,types:false,relay:false});
+export const MVP=Object.freeze({gems:false,treats:false,levels:false,missions:false,daily:false,perks:false,decor:false,types:false,relay:true});
 export const SLICE_CONFIG = Object.freeze({
   // Three-leg relay, about 75 wall seconds: one horse per leg (SLICE_LEGS), handoffs and the finish by distance.
   legLength:540, baseSpeed:12, countdown:3, tempo:T, fixedStep:1/120,
@@ -17,8 +17,8 @@ export const SLICE_CONFIG = Object.freeze({
   // real-time tap tolerance when the whole race runs at 1.3x tempo.
   chordWindow:.075/1.3*T, perfectWindow:.085*T, goodWindow:.15*T,   // real time: both pads within 58 ms, Perfect ±85 ms, Good ±150 ms (170 until 2026-10-05: the notes are 308 ms apart now)
   laneDuration:.3, laneSpacing:3, bendLane:.05, followGap:6.24, laneOverlap:.8, stallOverlap:.45, stall:.75, breakOut:15,
-  gaitWind:[.15,.08,.02,-.1], draftWind:.06, shoveWind:.2, appleWind:.3,   // the gait test (slice-game: config.gait)
-  paceAt:.65, paceLo:.5, paceHi:.8, paceHold:.58, kickWait:1.5*T, kickWind:.15, windDrain:.2, windBack:.1, blownTime:3*T,   // the pace test (slice-game: config.pace)   // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
+  shoveWind:.2,   // the ball's gain for a shove from behind (slice-game)
+  // traffic: nose-to-nose following distance (m; a horse is 5.3 long: 4.4 × the 1.2 they are drawn at since 2026-10-04, and this and coinRadius grew × 1.2 with it; leapReach and draftReach stayed: growing them too let a ~70% rider win every ★3 city), side overlap (lanes); laneSpacing: m between lane centres on screen (the race concept art's wide lanes)
   leapReach:3,   // a jump in a sprint leaps the horse just ahead (up to followGap + leapReach) when there is room to land
   // Comeback (stuck behind a horse, the taps should build toward a pass, not feel wasted):
   draftReach:7, draftGain:1.6, draftTrickle:4,   // drafting: a horse ahead in the lane within draftReach m (right behind) → hits give ×draftGain energy, plus draftTrickle / s

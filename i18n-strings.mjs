@@ -146,8 +146,6 @@ export const STRINGS=[
   {zh:"已完成",en:"Done"},
   {zh:"約 1 分鐘",en:"About 1 minute"},
   {zh:"測試紀錄",en:"Playtest log"},
-  {zh:"效能測試",en:"Performance test"},
-  {zh:"約 30 秒",en:"About 30 seconds"},
   {zh:"關於 HOOFBEAT",en:"About HOOFBEAT"},
   {zh:"重設進度",en:"Reset progress"},
   {zh:"點黃 / 藍腳印",en:"Tap the yellow / blue pad"},

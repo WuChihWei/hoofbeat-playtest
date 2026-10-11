@@ -7,8 +7,9 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 // 11.6k → 5.2k triangles, rider 8.9k → 3.6k): the rivals' models on phones (createApprovedHorse far).
 export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HOOFBEAT_Horse_Mobile.glb',rider:'rider_part/rider_main/HOOFBEAT_Rider_Mobile.glb',
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
+  horseLow:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Low.glb',riderLow:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Low.glb',riderRace:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Race.glb',   // 2026-10-11, a phone's race: Low for the rivals (seen from behind, metres off: tools/lod.py at .2 and .22), Race for the player's rider (.6: its back and helmet are all the race shows)
   coin:'environment/Coin.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-86';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-88';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
@@ -27,8 +28,10 @@ const keyLoads={};
 // One presentation model by its key, once (the ranch asks for the two it needs; a race for all of them).
 const loadKey=key=>keyLoads[key]??=fetchModel(PRESENTATION_ASSETS[key]).then(gltf=>{approvedAssets.set(key,gltf);approvedAssets.set(PRESENTATION_ASSETS[key],gltf);},e=>{delete keyLoads[key];throw e;});   // by key, and by file for city dressing (preloadModels)
 export const preloadKeys=keys=>Promise.all(keys.map(loadKey));
-// far: the light models rivals wear (and ?lod=far): a race with nobody else in it does not wait for them.
-export function preloadPresentation(far=true){return preloadKeys(Object.keys(PRESENTATION_ASSETS).filter(k=>far||!k.endsWith('Far')));}
+// far: the light models rivals wear: a race with nobody else in it does not wait for them.
+// far=false (a race with nobody else in it): without the rivals' models. The player's Race rider is always wanted
+// (2026-10-11: left out with them, stage 1 on a phone could not start: "Reload models").
+export function preloadPresentation(far=true){return preloadKeys(Object.keys(PRESENTATION_ASSETS).filter(k=>far||!/(Far|Low)$/.test(k)));}
 // Extra models by file (a city's dressing), kept under their file name next to the presentation set.
 export const preloadModels=files=>Promise.all(files.filter(f=>!approvedAssets.has(f)).map(async f=>
   approvedAssets.set(f,await fetchModel(f))));
@@ -335,7 +338,7 @@ function fur(m){   // MeshStandardMaterial → MeshPhysicalMaterial with the sam
 const RACE_SEAT=.4;
 export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false,ranch=false){   // ranch: its ranch model (ranchFile)   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
   const player=variant===0,coatIx=coatOverride??(player?PLAYER_LOOK.coat:variant===PLAYER_LOOK.coat?0:variant),look=COATS[coatIx]??COATS[0];
-  const horse=approvedAssets.get(ranch?ranchFile(coatIx):look.model??(far?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far?'riderFar':'rider');
+  const horse=approvedAssets.get(ranch?ranchFile(coatIx):look.model??(far==='low'?'horseLow':far===true?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far==='low'?'riderLow':far==='race'?'riderRace':far?'riderFar':'rider');   // far: true (the Far pair) | 'low' (the Low pair) | 'race' (the full buddy, the Race rider)
   if(!horse||!rider)throw new Error('Approved horse/rider assets not loaded');
   const root=new THREE.Group(),scene=new THREE.Group(),fit=new THREE.Group(),orientation=new THREE.Group();
   root.add(scene);scene.add(fit);fit.add(orientation);orientation.rotation.y=Math.PI;

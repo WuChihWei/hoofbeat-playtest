@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r462';
+import {MVP} from './slice-config.mjs?v=r470';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -84,7 +84,7 @@ export const currentLevel=p=>LEVELS.find(l=>unlocked(p,l.city)&&(p.stars[l.city]
 export const MISSION_COINS=20,MISSION_ALL=40,PHRASE_COINS=5;   // PHRASE_COINS: for each phrase of the chart ridden without a miss (r.phrases)
 // The counts go with the run's length: a relay is about 75 s; a solo run is one lap of 30–40 s (2026-10-05: about 35
 // notes, 20 coins and 3 or 4 apples on it), so its counts are about half.
-export const BALL_GAME=typeof location==='undefined'||!/[?&](classic|pace|reins|gait)=1/.test(location.search);   // slice-app CLASSIC
+export const BALL_GAME=typeof location==='undefined'||!/[?&]classic=1/.test(location.search);   // slice-app CLASSIC
 const POOL=[
   {id:'combo',text:'連擊到 20',relay:true,test:r=>r.bestCombo>=20},{id:'combo',text:'連擊到 12',solo:true,rhythm:true,test:r=>r.bestCombo>=12},
   {id:'release',text:'漂亮放開 6 次',solo:true,ball:true,test:r=>r.releases>=6},{id:'limit',text:'極限放開 2 次',solo:true,ball:true,test:r=>r.limits>=2},{id:'nopop',text:'一次都不爆',solo:true,ball:true,test:r=>r.pops===0},   // the ball game (2026-10-07)

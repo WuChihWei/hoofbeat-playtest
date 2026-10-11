@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r462';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r462';
-import {PRESENTATION as P,PHONE,PLAYER_FAR} from './presentation-config.mjs?v=r462';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r462';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r462';
-import {installApprovedEnvironment} from './approved-environment.js?v=r462';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r462';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r462';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r462';
-import {turnAt} from './track-projection.js?v=r462';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r462';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r462';
+import {roadHalfWidth} from './track-presentation.mjs?v=r470';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r470';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r470';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r470';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r470';
+import {installApprovedEnvironment} from './approved-environment.js?v=r470';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r470';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r470';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r470';
+import {turnAt} from './track-projection.js?v=r470';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r470';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r470';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -55,7 +55,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // for a clean jump, a leap, taking the lead ([rad on the right upper arm, s]); tail: it flicks to the side of a hit
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
 const FINISH_SHOT={out:7,ahead:5.5,high:2,aim:2,fov:60,ease:260};   // the finish close-up: m to the side of the buddy, m up the road from it, the camera's height, the height it looks at, the lens (wide: an upright phone has to hold a buddy's length), ms it eases over
-const WIDE=(new URLSearchParams(globalThis.location?.search||'').get('wide')||'6,9,3').split(',').map(Number);   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
+const WIDE=[6,9,3];   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
 const REACT={pump:[-1.7,.7],kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
 // by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
@@ -406,6 +406,7 @@ export class ChaseRenderer {
     // Upload coats and compile all relay runners before the countdown starts.
     const teams=race.slice?[['player',race.horses,0],...race.rivals.map((r,i)=>[r.id,r.horses,i+1])]:[['player', race.team], ...compositionRivals(race,race.metrics?.()||{rivals:race.rivals,player:{distance:0,speed:12}}).map(r=>[r.id,r.team])];
     for (const [role, team, variant] of teams) team.forEach((id, leg) => {
+      if(race.slice&&!race.course.relays?.length&&leg)return;   // a solo race: every runner rides one buddy. Its second and third (a relay's later legs) were built and compiled here all the same: eight models nobody saw (2026-10-11)
       const {model} = race.slice?this.model(`${role}-${leg}`,variant,id.coat,id.hair):this.model(`${role}-${leg}-${id}`, id);
       model.root.visible = true;
       model.root.traverse(mesh => {if (mesh.isMesh) for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) if (material.map) this.r.initTexture(material.map);});
@@ -519,8 +520,8 @@ export class ChaseRenderer {
   }
   model(key, id, coat=null, hair=null) {   // hair: a relay leg's own mane style (the player's buddies; approved-assets HAIR)
     if (!this.models.has(key)) {
-      // phones: rivals on the light models (createApprovedHorse far)
-      const model = createApprovedHorse(id,coat,PLAYER_FAR||PHONE&&!key.startsWith('player'),hair); model.root.scale.setScalar(RUNNER.scale); this.scene.add(model.root);
+      // a phone: the rivals on the Low models, the player's rider on the Race one (approved-assets PRESENTATION_ASSETS)
+      const model = createApprovedHorse(id,coat,PHONE?(key.startsWith('player')?'race':'low'):false,hair); model.root.scale.setScalar(RUNNER.scale); this.scene.add(model.root);
       if(this.slice){mergeForRace(model).forEach(resource=>this.own(resource));   // 31 parts → 5 meshes, 2 skeletons (mobile)
         const bone=n=>model.riderContent.getObjectByName(n),w=1+(RIDER_WAIST-1)/2;   // race look: a smaller head, a fuller waist
         bone('Head')?.scale.setScalar(RIDER_HEAD);bone('Spine')?.scale.set(RIDER_WAIST,1,w);bone('Chest')?.scale.set(1/RIDER_WAIST,1,1/w);}
@@ -576,8 +577,9 @@ export class ChaseRenderer {
           entry.lastDistance=runner.distance;
         }else entry.animationTime = entry.lastTime === undefined ? Math.max(0, time) : entry.animationTime + Math.max(0, time - entry.lastTime) * speed;
         entry.lastTime = time;
+        const now=performance.now();if(!(race.slice&&role!=='player'&&now-(entry.posed||0)<28)){entry.posed=now;   // a rival's pose is worked out 30 times a second, whatever the pictures a second (the player's every picture): five skeletons at 60 was heat for nothing the eye sees. Its place on the road above is still every picture
         entry.pose.restore();animateHorse(model, entry.animationTime, {running: time >= 0&&actor.running, impulse, hoofAccent, reduced: this.reduced});entry.pose.apply(jump);model.riderPose?.(time>=0&&actor.running,jump.airborne?clamp(jump.phase/.1,0,1):jump.landing||0,race.slice?POSTURE.seat[0]+(POSTURE.seat[1]-POSTURE.seat[0])*(entry.tuck??0):undefined);model.updateAttachment?.();
-        if(race.slice)this.racePosture(entry,race,role,runner,time,actor,jump);
+        if(race.slice)this.racePosture(entry,race,role,runner,time,actor,jump);}
         // Full gallop (the player: a sprint, an apple or the top gait; a rival: its sprint): the gold rim (approved-assets RACE_FUR blaze).
         if(model.blaze){const want=role==='player'?+(race.gait?.()===2):+!!runner.boosting;model.blaze.value+=(want-model.blaze.value)*.14;}
         if(race.slice&&actor.active&&actor.running&&time>=0&&!jump.airborne&&!this.reduced)this.kickDust(entry,p,runner,race,time);

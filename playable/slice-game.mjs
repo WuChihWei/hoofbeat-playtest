@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r462';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r470';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -35,27 +35,15 @@ export class SliceGame {
     // Solo run (config.solo): the combo speed model (slice-config SOLO) on the buddy's own numbers; drive: where the
     // combo has taken it, driveSpeed: where its running speed is (both fractions of its own speed).
     this.solo=c.solo?{...SOLO,speed:this.form.baseSpeed,accel:this.form.accel,top:this.form.top}:null;this.drive=0;this.driveSpeed=0;
-    // Pace test (config.pace, 2026-10-07, the user: 「類似油門…加速表」「純配速」): no notes to hit. The two pads are the
-    // whip; how often they are tapped is the pace (the needle: this.pace, 0–1.1; one tap a beat holds it at paceAt, in the
-    // green between paceLo and paceHi). Under the green the buddy runs slower, in it at its top, over it faster still but
-    // its wind runs down; out of wind it is blown for blownTime. An apple stores a sprint (a segment of charge) instead
-    // of speeding it up there and then. beats: the chart, kept for the music alone.
-    if(c.pace){this.beats=chart;chart=[];}
-    // Gait test (config.gait, 2026-10-07, the user asked to play the combination I recommended): no notes either. The
-    // buddy runs in one of four gaits (this.gear 0–3: walk, trot, canter, gallop), shifted up and down; each has its own
-    // speed (GAIT_DRIVE of the solo model) and what it does to the wind a second (gaitWind: the gallop spends it, twice
-    // as fast round a bend; the others give it back; tucked in behind a runner gives draftWind more). Out of wind: blown,
-    // back to a walk for blownTime. A lane change into a runner alongside shoves it (shove()). beats: [] (no music beat).
     // Ball test (config.ball, 2026-10-07, the user's ring control: 「按住就衝、放開回復」「一直壓著球…會爆掉…快到臨界點要放開」): no
     // notes. this.ball 0–1 grows while the thumb holds (ballFill s from empty to the limit) and shrinks when it lets go
     // (ballFall); the drive follows it from a cruise (ballLo) to flat out (ballHi, × the buddy's top). At the limit it
     // pops: back to nothing and the buddy is blown for ballPop. It runs through the countdown too (slice-app), so what
-    // is in the ball at GO is the start. Apples store a sprint as in the pace test; a lane change shoves (shove()).
-    if(c.gait){this.beats=[];chart=[];}
+    // is in the ball at GO is the start. An apple stores a sprint. (The pace, reins and gait tests of the same week are
+    // in archive/removed/2026-10-11-unused.)
     if(c.ball){this.beats=chart;chart=[];}   // the chart stays for the music alone
     this.ball=0;this.holding=false;this.wasHeld=false;this.streak=0;this.skill=c.ball?1:0;   // skill: charges of the skill button (one to start with)
-    this.gear=1;
-    this.pace=0;this.rate=0;this.lastTap=-9;this.wind=1;this.blown=-99;
+        this.blown=-99;
     this.notes=chart.map(n=>({...n,state:null,leg:n.leg??0,track:'straight',weather:'cloud'}));   // leg: estimated (music colour)
     this.coins=coins.map(c=>({...c,collected:false}));this.coinCount=0;
     this.apples=(c.solo?sliceApples(course):[]).map(a=>({...a,collected:false}));this.appleCount=0;this.rushes=[];   // rushes: the apples' speed-ups {t, end}
@@ -100,7 +88,6 @@ export class SliceGame {
   }
   single(side,pressedAt){
     if(this.paused||this.finished)return;
-    if(this.config.pace){const gap=Math.max(.12,pressedAt-this.lastTap);this.rate+=(1/gap-this.rate)*.5;this.lastTap=pressedAt;this.impulses.push({t:this.time,amount:this.config.goodImpulse});return this.emit('whip',{side});}
     const c=this.config,f=this.form,{note,perfect}=this.noteFor(side,pressedAt)??{};
     if(note){
       note.state=perfect?'perfect':'good';note.hitAt=pressedAt;
@@ -131,7 +118,7 @@ export class SliceGame {
     if(this.paused||this.finished||this.config.locks?.lane)return;   // locks: what the stage does not have yet (progress.mjs LEVELS)
     const next=clamp(this.targetLane+(side===0?-1:1),-1,1);
     if(next===this.targetLane)return this.emit('boundary',{side});
-    if(this.occupied(this,next)&&!(this.config.gait&&this.shove(side,next)))return this.emit('lane-blocked',{side,to:next});   // a horse beside: no cutting into it (the gait test: unless it is shoved over)
+    if(this.occupied(this,next))return this.emit('lane-blocked',{side,to:next});   // a horse beside: no cutting into it
     const change={from:this.laneAt(this.time),to:next,t:this.time};
     this.targetLane=next;this.laneChanges.push(change);
     return this.emit('lane',{side,to:next});
@@ -251,7 +238,6 @@ export class SliceGame {
     if(r){r.stumbles.push({t:this.time,k:c.knock});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
     return this.emit('kickback',{hit:r?.id??null});}
   // The gait test: one gear up or down (dir +1 / -1); not while blown.
-  shift(dir){if(this.paused||this.finished||this.blown>this.time)return;const to=clamp(this.gear+dir,0,3);if(to===this.gear)return;this.gear=to;return this.emit('gear',{gear:to});}
   // The gait test: changing lane into a runner alongside at a canter or faster shoves it. With room on its far side it
   // is pushed a lane over and the lane is the player's (→ true); with none it stumbles where it is (→ false). Costs wind.
   // The skill button (2026-10-08, the user: 「把後踢側撞獨立出來一個累積的按鈕」「未來就可以把其他效果加在這」): charges (this.skill,
@@ -266,44 +252,8 @@ export class SliceGame {
     const r=t.r;this.skill--;r.stumbles.push({t:this.time,k:this.config.knock});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;
     let pushed=false;if(t.kind==='bump'){const to=r.targetLane+(t.side?1:-1);if(Math.abs(to)<=1&&!this.occupied(r,to)){r.laneChanges.push({from:r.laneValue,to,t:this.time});r.targetLane=r.lane=to;pushed=true;}}
     return this.emit('skill',{kind:t.kind,side:t.side??null,id:r.id,pushed});}
-  // The ball game's bump as it was before the skill button (unused since; kept for ?-switch tests) (2026-10-08, the user: 「撞人是一種策略但不是隨時能用的，應該是有條件用且有條件損失」): it takes a
-  // step of the streak, so it is earned by letting go well and costs that step's speed. Both balls swell a notch
-  // (shoveWind); nobody wins on size: whoever's ball is over the limit pops and stumbles. His pops: the lane is the
-  // player's if there is room to push him over. Neither pops: both stay where they are (the block holds) and the step
-  // is spent for nothing. The player's own pop is ballStep's (the whole streak goes).
+  // The runner alongside in that lane (the skill button's bump: skillTarget).
   besideAt(next){const c=this.config;return this.rivals.find(r=>!r.stall&&r.finishTime===null&&Math.abs(r.laneValue-next)<c.laneOverlap&&Math.abs(r.distance-this.distance)<c.followGap);}
-  canBump(side){const next=clamp(this.targetLane+(side?1:-1),-1,1);return next!==this.targetLane&&this.streak>=1&&this.blown<=this.time&&this.time>=(this.shoveAt??-9)&&!!this.besideAt(next);}
-  // A rival's ball: what it holds (by its skill), breathing a tenth either way as it presses and lets go (a slow wave,
-  // each rival at its own point of it), and what a bump has just added (that eases back: rivalStep). 2026-10-08, the
-  // user: a strong rival should go down to one bump half the time and need two the other half: at skill .6 it holds .8,
-  // so a notch (.2) pops it only on the upper half of the wave; the second bump, while the first notch is still on it, always does.
-  rivalBall(r){return .35+.75*r.skill+.1*Math.sin(2*Math.PI*(this.time/(this.config.ballFill*.8)+(r.phase||0)*.37))+(r.bump||0);}
-  bump(side,next){const c=this.config,r=this.besideAt(next);
-    if(!r||this.streak<1||this.blown>this.time||this.time<(this.shoveAt??-9))return false;
-    this.streak--;this.shoveAt=this.time+c.ballRush*4;this.ball+=c.shoveWind;r.bump=(r.bump||0)+c.shoveWind;
-    const popped=this.rivalBall(r)>=1,to=r.targetLane+(side?1:-1),room=popped&&Math.abs(to)<=1&&!this.occupied(r,to);
-    if(popped){r.bump=0;r.blown=this.time+c.ballPop;r.stumbles.push({t:this.time});for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
-    if(room){r.laneChanges.push({from:r.laneValue,to,t:this.time});r.targetLane=r.lane=to;}
-    this.emit('shove',{id:r.id,popped,pushed:room,self:this.ball>=1});return room&&this.ball<1;}
-  shove(side,next){
-    if(this.config.ball)return this.bump(side,next);
-    const c=this.config,r=this.rivals.find(r=>Math.abs(r.laneValue-next)<c.laneOverlap&&Math.abs(r.distance-this.distance)<c.followGap);
-    if(!r||this.gear<2||this.wind<c.shoveWind||r.stall)return false;
-    this.wind-=c.shoveWind;
-   const to=r.targetLane+(side?1:-1),room=Math.abs(to)<=1&&!this.occupied(r,to);
-    if(room){r.laneChanges.push({from:r.laneValue,to,t:this.time});r.targetLane=r.lane=to;}
-    if(!room){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);}
-    this.emit('shove',{id:r.id,pushed:room});return room;
-  }
-  // The reins test: a kick at the runner alongside on that side (side 0 left, 1 right): in the next lane, within a
-  // following gap. It stumbles (as off a knocked fence); the kick costs wind and has to come back (kickWait).
-  kick(side){
-    const c=this.config;if(this.paused||this.finished||this.time<(this.kickAt??0))return;
-    const lane=this.laneValue+(side?1:-1),hit=this.rivals.find(r=>Math.abs(r.laneValue-lane)<.6&&Math.abs(r.distance-this.distance)<c.followGap);
-    this.kickAt=this.time+c.kickWait;this.wind=Math.max(0,this.wind-c.kickWind);
-    if(hit){hit.stumbles.push({t:this.time});hit.rhythmDrive=0;hit.drive=Math.min(0,hit.drive);for(const x of [...hit.boosts,...hit.rushes])if(x.end>this.time)x.end=this.time;}
-    return this.emit('kick',{side,hit:hit?.id??null});
-  }
   // The charge button: a sprint on one stored segment; right behind a horse with room to land, the sprint leaps it.
   charge(pressedAt=this.time){
     if(this.paused||this.finished||this.config.locks?.sprint)return;
@@ -333,7 +283,7 @@ export class SliceGame {
     const reached=c=>{const ax=fromDistance-c.distance,ay=(fromLane-c.lane)*this.config.laneSpacing,u=clamp(-(ax*dx+ay*dy)/(dx*dx+dy*dy||1),0,1);
       return Math.hypot(ax+u*dx,ay+u*dy)<=this.config.coinRadius;};
     for(const c of this.coins)if(!c.collected&&reached(c)){c.collected=true;this.coinCount++;this.emit('coin',{id:c.id});}
-    for(const a of this.apples)if(!a.collected&&reached(a)){a.collected=true;this.appleCount++;if(this.config.gait)this.wind=Math.min(1,this.wind+this.config.appleWind);else if(this.config.pace||this.config.ball&&!this.config.locks?.sprint){const had=this.segments();this.energy=Math.min(this.cap(),this.energy+this.config.boostCost);if(this.segments()>had)this.emit('charged',{segments:this.segments()});}else this.rushes.push({t:this.time,end:this.time+this.config.appleTime});this.emit('apple',{id:a.id});}
+    for(const a of this.apples)if(!a.collected&&reached(a)){a.collected=true;this.appleCount++;if(this.config.ball&&!this.config.locks?.sprint){const had=this.segments();this.energy=Math.min(this.cap(),this.energy+this.config.boostCost);if(this.segments()>had)this.emit('charged',{segments:this.segments()});}else this.rushes.push({t:this.time,end:this.time+this.config.appleTime});this.emit('apple',{id:a.id});}
   }
   // Rest the notes around a coming jump press: both thumbs are on the arrows then, so a miss there is unavoidable.
   restNotes(){
@@ -350,7 +300,7 @@ export class SliceGame {
     r.rhythmSpeed+=(r.rhythmDrive-r.rhythmSpeed)*(1-Math.exp(-c.rhythmResponse*dt));
     // A solo race: the player's solo sums (its own speed × (1 + combo drive), an apple's speed-up, no aptitude). Not the
     // practice coach (r.pace): it keeps the pace it is given.
-    const solo=this.solo&&!r.pace;if(solo&&c.ball)r.bump=Math.max(0,(r.bump||0)-dt/(c.ballFill*2));   // a bump's notch eases off: for a moment it is nearer its limit
+    const solo=this.solo&&!r.pace;   // a bump's notch eases off: for a moment it is nearer its limit
     if(solo&&c.ball)r.drive=(r.blown??-9)>mid?this.solo.floor:(r.form.top??this.solo.top)*(c.ballLo+(c.ballHi-c.ballLo)*(.12+.7*r.skill))*(1+c.ballGain*c.ballStack*r.skill*.7*Math.min(1,mid/(c.ballFill*6)));   // the ball test: a rival holds its ball at a steady share of the limit and builds a share of the streak, both by its skill
     if(solo)r.driveSpeed+=(r.drive-r.driveSpeed)*(1-Math.exp(-(r.drive<r.driveSpeed?this.solo.fall:this.solo.response)*dt));
     const own=solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed;
@@ -391,15 +341,6 @@ export class SliceGame {
       if(mid-this.lastRhythm>c.rhythmGrace)this.rhythmDrive=Math.max(0,this.rhythmDrive-c.rhythmDecay*dt);
       this.rhythmSpeed+=(this.rhythmDrive-this.rhythmSpeed)*(1-Math.exp(-c.rhythmResponse*dt));
       this.terrain=sectionAt(this.distance,this.course);this.affinity=this.solo?1:AFFINITY[this.horses[this.leg].type][this.terrain.kind];
-      if(c.gait&&this.solo){const S=this.solo,g=this.blown>mid?0:this.gear,bend=sectionAt(this.distance,this.course).bend;
-        this.wind=clamp(this.wind+(c.gaitWind[g]*(g===3&&bend?2:1)+(this.drafting?c.draftWind:0))*dt,0,1);
-        if(!this.wind&&this.blown<=mid){this.blown=mid+c.blownTime;this.gear=0;this.emit('blown');}
-        this.drive=[S.floor,S.top*.3,S.top*.75,S.top*1.5][g];}
-      if(c.pace&&this.solo){const S=this.solo,eff=Math.min(this.rate,1/Math.max(mid-this.lastTap,1e-3)),to=this.blown>mid?.15:Math.min(1.1,Math.max(this.holding?c.paceHold:0,eff*.6*c.paceAt));   // .6: a beat   // holding (the reins test): both reins in hand is a steady pace at the foot of the green
-        this.pace+=(to-this.pace)*(1-Math.exp(-5*dt));const p=this.pace,hot=p>c.paceHi;
-        this.wind=Math.max(0,Math.min(1,this.wind+(hot?-c.windDrain:c.windBack)*dt));
-        if(!this.wind&&this.blown<=mid){this.blown=mid+c.blownTime;this.rate=0;this.emit('blown');}
-        this.drive=this.blown>mid?S.floor:p<c.paceLo?S.floor+(S.top*.6-S.floor)*p/c.paceLo:hot?S.top*1.25:S.top;}
       if(c.ball&&this.solo)this.ballStep(dt,mid);
       if(this.solo)this.driveSpeed+=(this.drive-this.driveSpeed)*(1-Math.exp(-(this.drive<this.driveSpeed?this.solo.fall:this.solo.response)*dt));
       const own=this.solo?this.solo.speed*(1+this.driveSpeed):f.baseSpeed+this.rhythmSpeed+impulse;
@@ -433,7 +374,7 @@ export class SliceGame {
       for(const h of this.hurdles)h.t=h.hitAt??this.time+(h.distance-this.distance)/this.speed;
       // Handoff: the next horse takes over where this one is, with no charge and full stamina (each horse spends its own). Combo, lane
       // and gaps carry on.
-      if(this.leg<2&&this.distance>=this.course.relays[this.leg]){this.leg++;this.energy=0;this.form=this.legForm(this.leg);this.pool=this.stamina=this.form.stamina;this.restAt=0;this.emit('relay',{leg:this.leg,horse:this.horses[this.leg]});}
+      if(this.leg<2&&this.distance>=this.course.relays[this.leg]){this.leg++;this.energy=0;this.form=this.legForm(this.leg);this.pool=this.stamina=this.form.stamina;this.restAt=0;if(this.solo)Object.assign(this.solo,{speed:this.form.baseSpeed,accel:this.form.accel,top:this.form.top});this.emit('relay',{leg:this.leg,horse:this.horses[this.leg]});}
       if(this.distance>=c.length){this.finishTime=this.time-dt+dt*(c.length-before)/(this.distance-before);this.distance=c.length;this.finished=true;this.emit('finish');}
     }
     this.restNotes();

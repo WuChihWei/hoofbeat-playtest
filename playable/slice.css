@@ -494,41 +494,6 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .no-sprint .charge-btn{display:none}
 .no-lanes.no-sprint .jump-guide{display:none}
 
-/* The pace test (?pace=1): no ribbons, a gauge over the pads. */
-.is-pace .rhythm-overlay,.is-pace .rhythm-note-overlay{display:none}
-#pace-gauge{position:absolute;z-index:6;left:50%;bottom:26%;width:46%;transform:translateX(-50%);pointer-events:none}
-#pace-gauge svg{display:block;width:100%;overflow:visible}
-#pace-gauge path{fill:none;stroke-width:14;stroke-linecap:butt}
-#pace-gauge .slow{stroke:rgb(150 160 170 / .9)}#pace-gauge .good{stroke:#27eb62}#pace-gauge .hot{stroke:#f0462f}
-#pace-needle{stroke:#fff;stroke-width:5;stroke-linecap:round;transform-origin:100px 100px;transform:rotate(var(--turn,-90deg));filter:drop-shadow(0 1px 2px rgb(0 0 0 / .6))}
-#pace-wind{display:block;height:calc(6 * var(--u));margin:calc(4 * var(--u)) 18% 0;border-radius:99px;background:rgb(0 0 0 / .45);overflow:hidden}
-#pace-wind b{display:block;height:100%;width:calc(var(--wind,1) * 100%);background:#fff;border-radius:99px}
-#pace-gauge[data-zone=hot] #pace-wind b{background:#f0462f}#pace-gauge[data-zone=blown]{opacity:.45}
-
-/* The reins test (?reins=1): the pads give way to two hands on a rein. */
-.is-reins .rhythm-foot,.is-reins .slide-track,.is-reins .jump-guide{display:none}
-.is-reins .charge-btn{z-index:8}
-#reins{position:absolute;z-index:5;left:0;right:0;bottom:0;height:46%;touch-action:none}
-#reins svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-#rein-line{fill:none;stroke:rgb(39 235 98 / .75);stroke-width:calc(9 * var(--u));stroke-linecap:round}
-#reins.both #rein-line{stroke:#27eb62}
-#reins i{position:absolute;left:0;top:0;width:calc(64 * var(--u));height:calc(64 * var(--u));margin:calc(-32 * var(--u)) 0 0 calc(-32 * var(--u));border-radius:50%;border:calc(4 * var(--u)) solid #fff;background:rgb(0 0 0 / .45);pointer-events:none}
-#reins i.held{background:rgb(39 235 98 / .55)}#reins i.out{border-color:#ffcc00;background:rgb(255 204 0 / .6)}
-.is-reins #pace-gauge{bottom:50%;width:36%}
-
-/* The gait test (?gait=1): one thumb swipes anywhere; the pads, the ribbons and the charge button are not there. */
-.is-gait .rhythm-foot,.is-gait .slide-track,.is-gait .jump-guide,.is-gait .charge-btn,.is-gait .rhythm-overlay,.is-gait .rhythm-note-overlay,.is-gait .hud-combo,.is-gait #slice-combo{display:none!important}
-#gait-pad{position:absolute;z-index:5;left:0;right:0;top:14%;bottom:0;touch-action:none}
-#gait-hud{position:absolute;z-index:6;left:50%;bottom:calc(18 * var(--u));transform:translateX(-50%);display:grid;justify-items:center;gap:calc(6 * var(--u));padding:calc(10 * var(--u)) calc(16 * var(--u));border-radius:calc(22 * var(--u));background:rgb(0 0 0 / .62);color:#fff;pointer-events:none;min-width:52%}
-#gait-hud .gears{display:flex;gap:calc(6 * var(--u))}
-#gait-hud .gears i{display:grid;place-items:center;width:calc(40 * var(--u));height:calc(26 * var(--u));border-radius:calc(8 * var(--u));background:rgb(255 255 255 / .14);font-style:normal;font-size:calc(13 * var(--u));color:rgb(255 255 255 / .55)}
-#gait-hud .gears i.on{background:#27eb62;color:#0b1a10}#gait-hud[data-g="3"] .gears i.on{background:#ffcc00}
-#gait-hud strong{font-size:calc(17 * var(--u));line-height:1}
-#gait-hud .wind{display:block;width:100%;height:calc(8 * var(--u));border-radius:99px;background:rgb(255 255 255 / .18);overflow:hidden}
-#gait-hud .wind b{display:block;height:100%;width:calc(var(--wind,1) * 100%);border-radius:99px;background:#fff}
-#gait-hud.low .wind b,#gait-hud.bend .wind b{background:#f0462f}#gait-hud.blown{opacity:.55}
-#gait-hud small{font-size:calc(11 * var(--u));opacity:.8;white-space:nowrap}#gait-hud.lean small{display:none}
-
 /* The ball test (?ball=1): one ring at the foot of the screen; the ball grows to the white limit ring. */
 .is-ball .rhythm-foot,.is-ball .slide-track,.is-ball .jump-guide,.is-ball .rhythm-overlay,.is-ball .rhythm-note-overlay,.is-ball .hud-combo,.is-ball #slice-combo{display:none!important}
 .is-ball .charge-btn{z-index:8}.is-ball .charge-btn.ready{background:#fff;color:#000}.is-ball .charge-btn.sprinting{background:#fff;box-shadow:0 0 calc(18 * var(--u)) #fff}

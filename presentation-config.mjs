@@ -355,6 +355,3 @@ export const PRESENTATION={
 // ?quality=phone | full in the page URL forces either (to compare on a desktop).
 const QUALITY=typeof location==='object'?new URLSearchParams(location.search).get('quality'):null;
 export const PHONE=QUALITY?QUALITY==='phone':typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
-// ?lod=far in the page URL: the player's own buddy on the light models too (a knob to compare the look and the cost
-// on a real phone; without it only the rivals are light).
-export const PLAYER_FAR=typeof location==='object'&&new URLSearchParams(location.search).get('lod')==='far';

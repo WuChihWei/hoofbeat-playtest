@@ -1,5 +1,5 @@
-import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r462';
-import {racePhase} from './race-session.js?v=r462';
+import {COUNTDOWN,DURATION,LEG_SECONDS,JUMP_LEAD} from './game.js?v=r470';
+import {racePhase} from './race-session.js?v=r470';
 
 // A tune everyone knows for each city (2026-10-06, the user; all long out of copyright), played over the rhythm section
 // in place of the made-up lead: [semitones from C5, length in half-beats] (null: a rest), looped from the first note of
