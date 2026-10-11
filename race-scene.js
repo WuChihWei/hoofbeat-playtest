@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r474';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r474';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r474';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r474';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r474';
-import {installApprovedEnvironment} from './approved-environment.js?v=r474';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r474';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r474';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r474';
-import {turnAt} from './track-projection.js?v=r474';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r474';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r474';
+import {roadHalfWidth} from './track-presentation.mjs?v=r477';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r477';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r477';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r477';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r477';
+import {installApprovedEnvironment} from './approved-environment.js?v=r477';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r477';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r477';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r477';
+import {turnAt} from './track-projection.js?v=r477';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r477';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r477';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -22,7 +22,7 @@ const BEAT_COLORS = ['#fff071', '#46dee2'];
 // sprint) and + `sprint` in a sprint. seat: how much of the authored half-seat (RacePose) from upright to tucked.
 // max: the most bend there is room for over the horse's neck (a stumble on top of a full tuck). On horse_new3 (a higher,
 // fuller crest than the first horse's) with rider_new2: past ~.75 the helmet goes into the neck (crouch was .45, sprint .1).
-export const POSTURE={ride:.45,crouch:.25,sprint:.3,max:1.05,split:[.6,.2,.2,-.3],seat:[.6,1],tripLean:.35,reach:.02,rush:[.07,.07],tripPitch:.2,tripRoll:.06,rival:[2.4,.3],wind:[.22,.14,.1],ram:[.32,.95,.28,.2],come:[.12,.3,.22,.55,1.25,.3]};   // sprint: the rider folds flat over the neck (2026-10-10, the user: the sprint did not read; it was .05) · rush: in a sprint the buddy's nose goes down this much more (rad) and it runs this much lower (m) · rival: a rival that is hit rolls this many times more than a stumble and swerves this far (m) · come: a rival coming over at the player (slice-game ramStep), by the share u of its time: first it leans away [until u, m, rad], then it rolls toward the player and drifts over: across its lane line (.55 m… of the 1.1 to it) at the share `react` of the time, at the player's flank [m] with this roll [rad] at the hit · ram: the bump: how long (s), how far the buddy throws itself sideways (m; the next lane is 2.2 m off), how far it rolls into it and turns toward it (rad); it is out fast and back slow · wind: the kick's wind-up, the first share of its time: rump down (rad), body down (m)
+export const POSTURE={ride:.45,crouch:.25,sprint:.3,max:1.05,split:[.6,.2,.2,-.3],seat:[.6,1],tripLean:.35,reach:.02,rush:[.07,.07],tripPitch:.2,tripRoll:.06,rival:[2.4,.3],wind:[.22,.14,.1],ram:[.32,.95,.28,.2],come:[.12,.3,.22,.55,1.25,.3]};   // sprint: the rider folds flat over the neck (2026-10-10, the user: the sprint did not read; it was .05) · rush: in a sprint the buddy's nose goes down this much more (rad) and it runs this much lower (m) · rival: a rival that is hit rolls this many times more than a stumble and swerves this far (m) · come: not used since 2026-10-11 (a rival coming over at the player is its rider's arm and a level slide: REACT.push, reach) · ram: not used since 2026-10-11 (the bump is the rider's arm: REACT.push) · wind: the kick's wind-up, the first share of its time: rump down (rad), body down (m)
 // The racing stride, three gaits by how hard the horse is running: 小跑步 (trot) → 大跑步 (canter) → 奔跑 (gallop). The
 // player's horse: slice-game gait(); rivals canter and gallop in a sprint.
 // All from the one Gallop clip: each leg bone's turn away from its standing pose is
@@ -56,7 +56,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
 const FINISH_SHOT={out:7,ahead:5.5,high:2,aim:2,fov:60,ease:260};   // the finish close-up: m to the side of the buddy, m up the road from it, the camera's height, the height it looks at, the lens (wide: an upright phone has to hold a buddy's length), ms it eases over
 const WIDE=[6,9,3];   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
-const REACT={pump:[-1.7,.7],kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
+const REACT={pump:[-1.7,.7],push:1.5,lean:.26,glance:.6,reach:2,kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
 // by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
 // road per hit of the streak (to 16), none nearer than `from` m ahead of the horse (a glow that near fills the screen).
@@ -304,7 +304,7 @@ export class ChaseRenderer {
   // The ball game (2026-10-08): buck(): the kick behind. win(): first past the post, it rears and the rider's fist goes up.
   buck(lead=0){this.buckAt=(this.raceTime??0)+lead;}   // lead: simulation s from now (slice-app: a bump or a kick lands a moment after the press)
   // The bump (2026-10-10, the user: 「撞了好像不明顯」): the player's buddy throws its shoulder at the runner beside it (side 0 left, 1 right) and comes back.
-  ram(side,lead=0){this.ramAt=(this.raceTime??0)+lead;this.ramSide=side?1:-1;}
+  ram(side,lead=0){this.ramFrom=this.raceTime??0;this.ramAt=this.ramFrom+lead;this.ramSide=side?1:-1;}   // the press now, the hit `lead` simulation s on
   // Where a runner is on the screen (CSS px of the canvas): lane (lane units), how far ahead of the player (m), y: m up.
   screenOfRunner(lane,ahead,y=2.6,laneSpacing=2.2){const p=new THREE.Vector3(lane*laneSpacing,y,HORSE_Z-ahead).project(this.camera);return {x:(p.x+1)*this.width/2,y:(1-p.y)*this.height/2,behind:p.z>1};}
   win(){this.winAt=performance.now();}
@@ -625,34 +625,45 @@ export class ChaseRenderer {
     entry.back??=['Hips','Spine','Chest','Neck'].map(n=>model.riderContent?.getObjectByName(n)).filter(Boolean);
     const bend=model.forward*Math.min(POSTURE.max,(run*(POSTURE.ride+POSTURE.crouch*tuck+POSTURE.sprint*s))*(1-fold)+POSTURE.tripLean*trip);   // forward: less on a llama (approved-assets COATS)
     const look=0,pump=player&&this.winAt?1:0;   // 2026-10-08: the rider's glance at a rival and the fist for a clean jump or a pass are gone; the fist is the win's
+    // A bump (2026-10-11, the user: the whole buddy leaning and shaking read badly, the buddy has to keep running; the
+    // hand has to reach the other rider). The buddy only does what it does when it changes lane: it slides over level,
+    // at its own pace, all through the warning (REACT.reach m of the 3 m between lane centres, eased like a lane change),
+    // and is alongside at the hit. The move itself is the rider's: the arm on that side half out for the warning and
+    // straight at the hit (REACT.push rad), the body leaning that way (REACT.lean rad: two thirds, then all), the head
+    // turned to look (REACT.glance rad). Afterwards the arm comes back first, then the body, the buddy last. The same
+    // for a rival coming over at the player (runner.ram, slice-game ramStep) and the player's own bump (ram()).
+    const step=x=>{x=clamp(x,0,1);return x*x*(3-2*x);};let pu=null;
+    if(!player&&runner.ram&&race.config.ram){pu=clamp((time-runner.ram.t)/race.config.ram.time,0,1);entry.pushDir=runner.ram.dir;}
+    if(player&&this.ramAt!=null&&time<this.ramAt+.05){pu=clamp((time-this.ramFrom)/Math.max(.05,this.ramAt-this.ramFrom),0,1);entry.pushDir=this.ramSide;}
+    {const late=pu==null?0:step((pu-.7)/.3),want=pu==null?[0,0,0]:[.5*step(pu/.15)+.5*late,2/3*step(pu/.3)+late/3,step(pu)],back=[.25,.4,.55],T=race.config?.tempo||1;
+      entry.pushT??=time;const dtp=Math.max(0,time-entry.pushT);entry.pushT=time;entry.pose3??=[0,0,0];
+      entry.pose3=entry.pose3.map((v,k)=>want[k]>=v?want[k]:Math.max(want[k],v-dtp/(back[k]*T)));}   // [arm, body, slide]: out as the warning runs, back over .25 / .4 / .55 s
+    entry.push=entry.pose3[0];entry.pushArm=entry.pushDir>0?1:0;const leanK=entry.pose3[1];
+    if(entry.pose3[2]>.001&&entry.pushDir&&!this.reduced){const off=REACT.reach*entry.pose3[2],R0=model.root,h=R0.rotation.y;R0.position.x+=Math.cos(h)*off*entry.pushDir;R0.position.z-=Math.sin(h)*off*entry.pushDir;}
+    FORWARD.set(0,0,-1).applyQuaternion(model.root.quaternion);
     entry.back.forEach((bone,i)=>{
       entry.backBase??=[];entry.backSet??=[];
       if(!entry.backSet[i]||!bone.quaternion.equals(entry.backSet[i]))(entry.backBase[i]??=new THREE.Quaternion()).copy(bone.quaternion);
       bone.quaternion.copy(entry.backBase[i]).multiply(BEND_Q.setFromAxisAngle(X_AXIS,bend*POSTURE.split[i]));
-      if(i===3&&look)bone.quaternion.multiply(BEND_Q.setFromAxisAngle(Y_AXIS,look));   // the neck: a glance to the side
+      if((i===1||i===2)&&leanK>.001&&entry.pushDir){bone.parent.updateWorldMatrix(true,false);bone.parent.getWorldQuaternion(ARM_W).multiply(entry.backBase[i]);   // the lean of a bump: about the rider's forward axis, toward the arm's side
+        bone.quaternion.multiply(ARM_Q.setFromAxisAngle(FORWARD.clone().applyQuaternion(ARM_W.invert()).normalize(),REACT.lean/2*leanK*(entry.pushArm?1:-1)));}
+      if(i===3&&(look||leanK>.001))bone.quaternion.multiply(BEND_Q.setFromAxisAngle(Y_AXIS,look-REACT.glance*leanK*(entry.pushDir||0)));   // the neck: a glance to the side (at the runner it is bumping)
       (entry.backSet[i]??=new THREE.Quaternion()).copy(bone.quaternion);
     });
     // RIDER_TURNS: each limb turns about the rider's forward axis, on a kept base like the bend above.
     entry.limbs??=RIDER_TURNS.map(([n,a])=>[model.riderContent?.getObjectByName(n),a]).filter(([b])=>b);
-    FORWARD.set(0,0,-1).applyQuaternion(model.root.quaternion);
     entry.limbs.forEach(([bone,angle],i)=>{
       entry.limbBase??=[];entry.limbSet??=[];
       if(!entry.limbSet[i]||!bone.quaternion.equals(entry.limbSet[i]))(entry.limbBase[i]??=new THREE.Quaternion()).copy(bone.quaternion);
       bone.parent.updateWorldMatrix(true,false);bone.parent.getWorldQuaternion(ARM_W).multiply(entry.limbBase[i]);
       const axis=FORWARD.clone().applyQuaternion(ARM_W.invert()).normalize();
-      bone.quaternion.copy(entry.limbBase[i]).multiply(ARM_Q.setFromAxisAngle(axis,angle+(i===1?REACT.pump[0]*pump:0)));   // i 1: the right upper arm (the fist pump)
+      bone.quaternion.copy(entry.limbBase[i]).multiply(ARM_Q.setFromAxisAngle(axis,angle+(i===1?REACT.pump[0]*pump:0)+(i===entry.pushArm&&i<2?REACT.push*entry.push*(i?-1:1):0)));   // i 1: the right upper arm (the fist pump); i 0 / 1: the arm of a bump (push)
       if(bone.parent===entry.back[0])bone.quaternion.premultiply(BEND_Q.setFromAxisAngle(X_AXIS,-bend*POSTURE.split[0]));   // the thighs stay where they were under the turned hips
       (entry.limbSet[i]??=new THREE.Quaternion()).copy(bone.quaternion);
     });
     // The ball game's two moves of its own (buck, win above), last: after the stride's own leg work above, which would
     // take these legs as the gallop's and push them further. The whole body turns and lifts, so every buddy has them;
-    // the legs (the horse's rig: Fore* / Hind* bones) fold where the model has them.
-    if(!player&&runner.ram&&race.config.ram&&!this.reduced){const R=race.config.ram,[w,back,lean,line,hit,roll]=POSTURE.come,u=clamp((time-runner.ram.t)/R.time,0,1),ur=R.react/R.time,d=runner.ram.dir;
-      // away first (the wind-up), then over: to its lane line by `react`, into the player by the end, faster and faster
-      const off=u<w?-back*Math.sin(Math.PI*u/w):u<ur?line*((u-w)/(ur-w))**1.5:line+(hit-line)*((u-ur)/(1-ur))**2,tilt=u<w?-lean*Math.sin(Math.PI*u/w):roll*Math.min(1,(u-w)/(1-w)*1.6);
-      const R0=model.root,h=R0.rotation.y;R0.position.x+=Math.cos(h)*off*d;R0.position.z-=Math.sin(h)*off*d;R0.rotation.z-=tilt*d;R0.rotation.y-=.12*Math.max(0,tilt)*d;}
-    if(player&&!this.reduced&&this.ramAt!=null){const [T,far,roll,turn]=POSTURE.ram,u=(time-this.ramAt)/T,k=u>0&&u<1?Math.sin(Math.PI*Math.pow(u,.55)):0;   // out in the first third, back over the rest
-      if(k>.01){const R=model.root,h=R.rotation.y,d=this.ramSide;R.position.x+=Math.cos(h)*far*k*d;R.position.z-=Math.sin(h)*far*k*d;R.rotation.z-=roll*k*d;R.rotation.y-=turn*k*d;}}
+    // the legs (the horse's rig: Fore* / Hind* bones) fold where the model has them. The bump is the rider's arm (push, above).
     if(player&&!this.reduced){const R=model.root,now=performance.now()/1000;
       const keep=bone=>{const x={b:bone,was:bone.quaternion.clone(),set:null};entry.kept.push(x);return x;};
       const legs=(names,angle)=>{for(const n of names){const bone=(entry.bones??={})[n]??=model.content?.getObjectByName(n)??null;if(bone){const x=keep(bone);bone.rotateX(angle);x.set=bone.quaternion.clone();}}};
