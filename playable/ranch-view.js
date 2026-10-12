@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r577';
-import {applyLook,LOOK} from '../visual-style.js?v=r577';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r580';
+import {applyLook,LOOK} from '../visual-style.js?v=r580';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -159,7 +159,7 @@ function lawn({color,light,dark}=RANCH.lawn){
 const loadScene=()=>pending??=Promise.all([new GLTFLoader().loadAsync(url('models/ranch/Ranch.glb')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Wheat.glb')),new GLTFLoader().loadAsync(url('models/ranch/Ranch_Plants.glb')),new GLTFLoader().loadAsync(url('models/ranch/Buildings.glb'))])
   .then(([g,wheat,plants,built])=>({scene:g.scene,grass:lawn(),wheat:wheat.scene,plants:plants.scene,built:built.scene}),e=>{pending=null;throw e;});
 // What the overview needs, asked for ahead of time (home.js: as soon as the game is open). coats: the buddies out.
-export const preloadRanch=coats=>Promise.all([loadScene(),preloadRanchBuddies(coats)]);
+export const preloadRanch=(coats,stages)=>Promise.all([loadScene(),preloadRanchBuddies(coats,stages)]);
 
 // One group of the scene as one mesh: every part's colour (× its own vertex colours: the trees) rides on its vertices.
 // A tree or a hedge made plush (2026-10-11, the user: the trees are the models there are, it is their colour and
@@ -257,7 +257,7 @@ export const crowded=(x,z,nx,nz,others,apart=RANCH.apart)=>others.some(o=>{const
 // → {shot(name), field(grown), dispose}; resolves with the first frame drawn, and only then is the canvas put on the
 // page (nothing is seen being put together).
 export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=[],open,onMove,onDoor,onBed,onPond,onOffer,onHouse,shot='all'}={}){
-  const [assets]=await Promise.all([loadScene(),preloadRanchBuddies(buddies.map(b=>b.coat))]),L=layout({pens,huts}),S=RANCH.strip,F=RANCH.field;open??=L.beds.length;
+  const [assets]=await Promise.all([loadScene(),preloadRanchBuddies(buddies.map(b=>b.coat),buddies.map(b=>b.stage))]),L=layout({pens,huts}),S=RANCH.strip,F=RANCH.field;open??=L.beds.length;
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;r.domElement.setAttribute('aria-hidden','true');
   const scene=new THREE.Scene(),midY=(L.ground[1]+L.ground[3])/2,span=(L.ground[3]-L.ground[1])/2+8,rad0=Math.PI/180;

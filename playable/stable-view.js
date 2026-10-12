@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r577';
-import {applyLook,LOOK} from '../visual-style.js?v=r577';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r580';
+import {applyLook,LOOK} from '../visual-style.js?v=r580';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -219,9 +219,9 @@ function findMuzzle(root){
 }
 
 // What the ranch needs, asked for ahead of time (home.js: as soon as the game is open).
-export const preloadStable=()=>Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat])]);
+export const preloadStable=()=>Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat],[PLAYER_LOOK.stage])]);
 export async function mountStableView(host){
-  const [assets]=await Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
+  const [assets]=await Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat],[PLAYER_LOOK.stage])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));   // 2026-10-06: was 2 (the phone ran hot)r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;
   r.domElement.setAttribute('aria-hidden','true');host.append(r.domElement);
@@ -428,7 +428,7 @@ export async function mountStableView(host){
   let gone=false;
   if(window.__stable)window.__stable.come=(t=0,m=null,g=null)=>{mood=m;coming=true;show();fit();if(g!=null){arrive.t=ARRIVE.time;window.__stable.greetAt=g;}else arrive.t=t;};   // dev: the arrival at t s, or (g) its greeting at g s
   if(window.__stable){window.__stable.act=(kind,t=.7,img)=>{setFood(img);job={kind,t,ate:false,peaked:true};};Object.defineProperty(window.__stable,'spin',{get:()=>spin,configurable:true});}   // dev (?debug): jump into an act at t s (a hidden tab draws one frame at a time)
-  const api={show:(m,come=true)=>{mood=m||null;coming=come;const c=PLAYER_LOOK.coat;/* come: a buddy just opened or picked walks in; a new mane or saddle on the same one does not */Promise.all([preloadKeys(needs()),preloadBuddies([c])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
+  const api={show:(m,come=true)=>{mood=m||null;coming=come;const c=PLAYER_LOOK.coat;/* come: a buddy just opened or picked walks in; a new mane or saddle on the same one does not */Promise.all([preloadKeys(needs()),preloadBuddies([c],[PLAYER_LOOK.stage])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
     react(kind,onPeak,foodImg){if(job||queued||arrive||!ACTS[kind])return;greet=null;api.wake();if(kind==='feed')setFood(foodImg);const go=()=>{job={kind,t:0,ate:false,peaked:false,onPeak};};
       if(fore||hind)queued=go;else go();},
     wake(){still=0;restAfter=soon();resting=false;},   // any touch: stand up (if lying) and start the rest timer over

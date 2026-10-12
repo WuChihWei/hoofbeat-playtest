@@ -65,12 +65,15 @@ export const COATS=Object.freeze([
   {name:'Wolf',species:'wolf',model:'animal_part/wolf/HOOFBEAT_Wolf_Mobile.glb'},
 ]);
 // Their models load only for a player who rides or looks at one (0.9 MB each; rivals are horses, so the _Far files stay unused).
-export const preloadBuddies=coats=>preloadModels([...coats.map(c=>COATS[c]?.model),...coats.map(c=>youngOf(c))].filter(Boolean));
+const DEV_GROW=typeof location==='undefined'?0:+(/[?&]grow=([123])/.exec(location.search)?.[1]??0);
+// stages: each coat's stage (GROW); a young model of its own is fetched only for a buddy at stage 1 (all of them when not given: dev pages).
+const youngs=(coats,stages)=>coats.map((c,i)=>!stages||(stages[i]??1)===1||DEV_GROW===1?youngOf(c):null);
+export const preloadBuddies=(coats,stages)=>preloadModels([...coats.map(c=>COATS[c]?.model),...youngs(coats,stages)].filter(Boolean));
 // Ranch models (models/ranch/build_buddies.py): the same buddy at about 1.5k triangles, no tack, lashes or brows, same
 // rig and clips: what walks about in the ranch overview, where a buddy is 40–60 px tall (ranch-view.js). One file per
 // kind of animal, beside its full model.
 export const ranchFile=coat=>(COATS[coat]?.model??PRESENTATION_ASSETS.horse).replace('_Mobile.glb','_Ranch.glb');
-export const preloadRanchBuddies=coats=>preloadModels([...new Set([...coats.map(ranchFile),...coats.map(c=>youngOf(c)).filter(Boolean)])]);   // and a young model of its own (GROW: the foal, the rhino calf): r576 left them out and the ranch of anyone with a young rhino did not load
+export const preloadRanchBuddies=(coats,stages)=>preloadModels([...new Set([...coats.map(ranchFile),...youngs(coats,stages).filter(Boolean)])]);   // and a young model of its own (GROW: the foal, the rhino calf): r576 left them out and the ranch of anyone with a young rhino did not load
 // Eyes, set up the same way on every buddy. The model's side (artifacts/tripo-retarget/build_animal.py): a mesh `Eyes`,
 // its two eyeballs where the model has them, material Buddy_Eye (the horse keeps its own three names: export_final.py
 // add_eyes); the socket, lids, lash lines and brows are the model's own parts and are drawn as modelled. On the
@@ -354,10 +357,10 @@ const RACE_SEAT=.4;
 // mane and tail (hair: those meshes, given a material of their own) by the coat's mane colour over theirs. The map's
 // shading and darker legs stay; a coat's white markings are not on a foal.
 export const GROW=Object.freeze({1:{scale:.8,fur:'#e2dbd2',lift:.14,rough:1,sheen:1,coat:0,
-    by:{bear:{head:1.46,thin:.84},wolf:{head:1.46,thin:.84},llama:{head:1.46,thin:.84},cow:{buds:['CowHorns']},zebra:{},
-      horse:{model:'animal_part/foal/HOOFBEAT_Foal_Mobile.glb',as:'foal',scale:1,rider:.85,plain:1,tone:{coat:'#af5e40',mane:'#573530',hair:['FoalMane','FoalTail']}},rhino:{model:'animal_part/rhino_calf/HOOFBEAT_Rhino_Calf_Mobile.glb',as:'rhino_calf',scale:1,rider:.85,plain:1}}},
+    by:{bear:{head:1.46,thin:.84},wolf:{head:1.46,thin:.84},llama:{head:1.46,thin:.84},cow:{buds:['CowHorns']},zebra:{lift:0,fur:'#f0ece6'},
+      horse:{model:'animal_part/foal/HOOFBEAT_Foal_Mobile.glb',as:'foal',scale:1,plain:1,tone:{coat:'#af5e40',mane:'#573530',hair:['FoalMane','FoalTail']}},rhino:{model:'animal_part/rhino_calf/HOOFBEAT_Rhino_Calf_Mobile.glb',as:'rhino_calf',scale:1,plain:1}}},
   2:{scale:1,hair:'classic'},3:{scale:1.1,chest:1.08,tint:'#6b4a36',by:.12,fur:'#e4d9cc',rough:.4,sheen:.15,coat:.6,hair:'long'}});
-// The young models a set of coats needs (preloadBuddies).  ponytail: loaded with every buddy shown, whatever its stage;
+// The young model a coat has (preloadBuddies youngs).  was: loaded with every buddy shown, whatever its stage;
 // load by stage once levels drive the look (1.2 MB each).
 const youngOf=coat=>GROW[1].by[COATS[coat]?.species??'horse']?.model;
 // The separate pieces of a horn mesh (a rhino's two horns, a cow's): for each, its vertices, the way it points (from the
@@ -385,7 +388,6 @@ function nub(o,content){const bodyMesh=bodyOf(content,o),skin=bodyMesh?.material
   const head=content.getObjectByName('Head')||o.parent;content.updateMatrixWorld(true);o.visible=false;
   for(const {d,base,wide} of pieces(o,bodyMesh)){const R=wide*1.25,mat=new THREE.MeshPhysicalMaterial({color:sample(base),roughness:skin.roughness,sheen:skin.sheen??0,sheenRoughness:skin.sheenRoughness??.8,sheenColor:skin.sheenColor?.clone()??new THREE.Color(0),emissive:skin.emissive?.clone()??new THREE.Color(0)}),m=new THREE.Mesh(new THREE.SphereGeometry(R,18,12),mat);m.castShadow=m.receiveShadow=true;
     const at=o.localToWorld(base.clone().addScaledVector(d,-R*.62));head.add(m);m.position.copy(head.worldToLocal(at));}}
-const DEV_GROW=typeof location==='undefined'?0:+(/[?&]grow=([123])/.exec(location.search)?.[1]??0);
 export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false,ranch=false,stage=null){   // ranch: its ranch model (ranchFile)   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
   const player=variant===0,coatIx=coatOverride??(player?PLAYER_LOOK.coat:variant===PLAYER_LOOK.coat?0:variant),base0=COATS[coatIx]??COATS[0],G0=GROW[stage??(player?DEV_GROW||PLAYER_LOOK.stage:0)]??GROW[2],G=G0.by?{...G0,...G0.by[base0.species??'horse']}:G0,base=G.model?{name:base0.name,species:G.as,model:G.model,forward:base0.forward}:base0;   // a young model of its own stands in for the buddy's
   const pull=(c,to,by)=>'#'+new THREE.Color(c).lerp(new THREE.Color(to),by).getHexString(),look=G.tint&&!base.species?{...base,body:pull(base.body,G.tint,G.by),mane:pull(base.mane,G.tint,G.by*.6),...(base.tail?{tail:pull(base.tail,G.tint,G.by*.6)}:null),}:base;   // a horse's coat at this stage
@@ -395,7 +397,8 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
   root.add(scene);scene.add(fit);fit.add(orientation);orientation.rotation.y=Math.PI;
   const content=clone(horse.scene),riderContent=clone(rider.scene),seat=new THREE.Group();
   const wears=(HAIR.find(h=>h.id===(G!==GROW[2]&&G.hair?G.hair:player?hair??PLAYER_LOOK.hair:'classic'))??HAIR[0]).mesh;{const spare=[];content.traverse(o=>{if(/^ManeTail/.test(o.name)&&o.name!==wears)spare.push(o);});spare.forEach(o=>o.removeFromParent());}   // one hair style a horse: every other mane mesh in the file goes, listed in HAIR or not (two on one horse share a material and its shader is patched twice: it fails to compile)
-  orientation.add(content,seat);seat.add(riderContent);if(G.rider)seat.scale.setScalar(G.rider);   // a young model of its own is small as built: the rider a size down on it, as on the shrunk ones
+  orientation.add(content,seat);seat.add(riderContent);if(ranch&&G.model)content.traverse(o=>{if(o.isMesh&&/^Tack_/.test([].concat(o.material)[0]?.name))o.visible=false;});   // out on the ranch nobody is saddled (the _Ranch models have no tack; a young model of its own is the race one)
+  seat.scale.setScalar(1/G.scale);   // the rider is one size on every buddy at every stage (2026-10-12, the user: 不要縮小): the buddy's own scale is taken back out of her
   const materials=new Map();
   for(const asset of [content,riderContent])asset.traverse(o=>{
     if(!o.isMesh)return;
@@ -464,7 +467,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
   }
   updateAttachment();
   const bounds=new THREE.Box3().setFromObject(content,true),size=bounds.getSize(new THREE.Vector3());
-  fit.scale.setScalar(3.3/(look.species||G!==GROW[2]?2.885:size.y));fit.position.y=-bounds.min.y*fit.scale.y;scene.scale.setScalar(G.scale);   // G.scale: its size at this stage (GROW), the whole buddy, rider and all; set after the fit, which would measure it away on a horse   // 2.885: the horse's height, so the other animals keep their own size beside it (the rhino is 61% as tall)
+  fit.scale.setScalar(3.3/(look.species||G!==GROW[2]?2.885:size.y));fit.position.y=-bounds.min.y*fit.scale.y;scene.scale.setScalar(G.scale);   // G.scale: its size at this stage (GROW), the whole buddy (the rider is scaled back, seat above); set after the fit, which would measure it away on a horse   // 2.885: the horse's height, so the other animals keep their own size beside it (the rhino is 61% as tall)
   // Authored Gallop has no root displacement. Existing runner controls own all movement.
   // The clips key every bone's scale (always 1): on the bones GROW sizes, those tracks go, once per model file, or the clip
   // would put a young one's head back to the grown size on its first frame.
