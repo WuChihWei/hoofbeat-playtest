@@ -129,7 +129,7 @@ document.querySelectorAll('.hero .cta,.end .cta').forEach(a=>a.offsetParent&&cta
 // The e-mail goes to a Google Form the user owns (its response sheet is the list). FORM.url: the form's …/formResponse
 // address; FORM.field: the e-mail question's entry id. The reply cannot be read from here (no-cors), so a request that
 // went out counts as received.
-const FORM={url:'',field:''};
+const FORM={url:'https://docs.google.com/forms/d/e/1FAIpQLSc0e4ou4tSYmHtzHVNRq4IUWB3lIOoysxRDD9dDC3IToSRImw/formResponse',field:'entry.617260616'};   // the user's form 「PlayList ZoomBud」 (2026-10-12), its one question 「Email」
 document.querySelectorAll('.notify').forEach(f=>f.addEventListener('submit',async e=>{e.preventDefault();const i=f.querySelector('input'),m=f.querySelector('.msg'),v=i.value.trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){m.textContent='請輸入正確的 email';i.focus();return;}
   if(!FORM.url){m.textContent='登記還沒開放，請晚點再試';return;}
