@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r558';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r559';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -46,7 +46,8 @@ export class SliceGame {
         this.blown=-99;
     this.notes=[];   // the rhythm game's notes: none (race-scene and audio.js still read the list)
     this.coins=coins.map(c=>({...c,collected:false}));this.coinCount=0;
-    this.apples=(c.solo?sliceApples(course):[]).map(a=>({...a,collected:false}));this.appleCount=0;this.rushes=[];   // rushes: the apples' speed-ups {t, end}
+    this.apples=(c.apples??(c.solo?sliceApples(course):[])).map(a=>({...a,collected:false}));   // c.apples: a stage whose road is new every run lays its own (slice-app levelHazards)
+   this.appleCount=0;this.rushes=[];   // rushes: the apples' speed-ups {t, end}
     // Hazards (2026-10-11, the user: water instead of mud, a dropping instead of a bad apple): config.hazards {puddles:
     // [{distance, lane, length m}], poops: [{distance, lane}]}. A puddle slows whoever steps in it (puddleSlow) while
     // it is in and for wetTime after; a dropping is a short stumble (slip) for whoever treads on it, nothing else lost. A jump clears

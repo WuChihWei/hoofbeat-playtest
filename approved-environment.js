@@ -1,16 +1,16 @@
-import {fencePose} from './track-presentation.mjs?v=r558';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r558';
+import {fencePose} from './track-presentation.mjs?v=r559';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r559';
 import * as THREE from './vendor/three.module.min.js';
-import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r558';
+import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r559';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {approvedAssets,scenePictures} from './approved-assets.js?v=r558';
-import {HORSE_Z,roadPose} from './race-world.js?v=r558';
-import {cityById,CITIES} from './course/cities/index.mjs?v=r558';
-import {modelFor} from './course/assets.mjs?v=r558';
+import {approvedAssets,scenePictures} from './approved-assets.js?v=r559';
+import {HORSE_Z,roadPose} from './race-world.js?v=r559';
+import {cityById,CITIES} from './course/cities/index.mjs?v=r559';
+import {modelFor} from './course/assets.mjs?v=r559';
 // The release tag the page loaded this module with (?v=…): the paintings and cards carry it too, so a picture replaced
 // under the same name is fetched again instead of coming from the browser's cache.
 const TAG=new URL(import.meta.url).search;
-import {installFarBackground,sunDirection} from './far-background.js?v=r558';
+import {installFarBackground,sunDirection} from './far-background.js?v=r559';
 
 // The race dressing comes from the city pack (course/cities/<id>.mjs): barrier, prop rows, treeline, weather, backdrop.
 const packFor=id=>cityById(id)||cityById('stockholm')||CITIES[0];

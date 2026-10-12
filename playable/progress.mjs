@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r558';
+import {MVP} from './slice-config.mjs?v=r559';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -30,24 +30,26 @@ import {MVP} from './slice-config.mjs?v=r558';
 // laps took over a minute), so stages 1 and 2 take about half a minute and the others 45 s or so.
 // 2026-10-07, the ball game (tools/stage-times-ball.mjs: never holding / letting go at .85 every time, seconds): 27.6 / 20.2,
 // 28.8 / 20.7, 50.9 / 36, 48.9 / 34, 49 / 34. Silver is a little under the middle of the two, gold about 6% over the second.
+// 2026-10-12: buddies level (stable-care LV_SPEED, 1% a level), so each stage's star times are the old ones (set on a LV 1
+// buddy's speed) divided by the speed of the level a player has by then: LV 1 + floor(stage / 2), LV 6 at stage 10.
 export const LEVELS=Object.freeze([
   {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},silver:26.5,gold:23},
-  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},silver:27.5,gold:24.5},
-  {city:'paris',rivals:2,tempo:1.75,locks:{},silver:47,gold:41,ram:[.8,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two], real seconds
-  {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:45,gold:38.5,ram:[.8,.4,11]},
-  {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:45,gold:38.5,ram:[.8,.4,9],back:true},
+  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},silver:27.2,gold:24.3},
+  {city:'paris',rivals:2,tempo:1.75,locks:{},silver:46.5,gold:40.6,ram:[.8,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two], real seconds
+  {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:44.1,gold:37.7,ram:[.8,.4,11]},
+  {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:44.1,gold:37.7,ram:[.8,.4,9],back:true},
   // 2026-10-11, stages 6 and 7: what lies on the road. hazards: a puddle every [first, step] m and a dropping every
   // [first, step] m, lane after lane (slice-app levelHazards; slice-game wet, hazardStep). Stage 6 is the puddles,
   // stage 7 both. The cities are Taipei and Paris again (course/cities/taipei2.mjs, paris2.mjs) until they have their own art.
-  {city:'taipei2',rivals:4,tempo:1.95,locks:{},silver:38.5,gold:33,ram:[.8,.4,9],back:true,weather:['rain'],hazards:{poop:0}},
+  {city:'taipei2',rivals:4,tempo:1.95,locks:{},silver:37.4,gold:32,ram:[.8,.4,9],back:true,weather:['rain'],hazards:{poop:0}},
   // 2026-10-12, stages 7–10 (the user: ten stages; the first six are set, the last four draw their weather): the five
   // cities again. weather: what a run's sky is drawn from; hazards.poop: droppings every this many m (0: none); the
   // puddles or the snow come with the weather (WEATHER below); random: hurdles and everything on the road are
   // somewhere else every run (slice-app).
-  {city:'tokyo2',rivals:4,tempo:2,locks:{},silver:41.6,gold:35.7,ram:[.8,.4,8],back:true,weather:['sun','rain','snow'],hazards:{poop:75},random:true},
-  {city:'stockholm2',rivals:4,tempo:2,locks:{},silver:43.6,gold:37.6,ram:[.8,.4,8],back:true,weather:['sun','rain','snow'],hazards:{poop:65},random:true},
-  {city:'paris2',rivals:4,tempo:2.05,locks:{},silver:39.3,gold:34.1,ram:[.8,.4,7],back:true,weather:['sun','rain','snow'],hazards:{poop:55},random:true},
-  {city:'seoul2',rivals:4,tempo:2.05,locks:{},silver:39.9,gold:34.6,ram:[.8,.4,7],back:true,weather:['sun','rain','snow'],hazards:{poop:50},random:true},
+  {city:'tokyo2',rivals:4,tempo:2,locks:{},silver:40.4,gold:34.7,ram:[.8,.4,8],back:true,weather:['sun','rain','snow'],hazards:{poop:75},random:true},
+  {city:'stockholm2',rivals:4,tempo:2,locks:{},silver:41.9,gold:36.2,ram:[.8,.4,8],back:true,weather:['sun','rain','snow'],hazards:{poop:65},random:true},
+  {city:'paris2',rivals:4,tempo:2.05,locks:{},silver:37.8,gold:32.8,ram:[.8,.4,7],back:true,weather:['sun','rain','snow'],hazards:{poop:55},random:true},
+  {city:'seoul2',rivals:4,tempo:2.05,locks:{},silver:38,gold:33,ram:[.8,.4,7],back:true,weather:['sun','rain','snow'],hazards:{poop:50},random:true},
 ]);
 // What a weather puts on the road: a patch every `every` m (0: none), of water or of snow. The same rule for both
 // (slice-game slowed): slower in it and a moment after, cleared by a jump or the next lane. It changes what is on the

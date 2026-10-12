@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r558';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r558';
-import {WEATHER} from './progress.mjs?v=r558';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r558';
-import {compositionRank} from '../race-composition.mjs?v=r558';
-import {ChaseRenderer} from '../race-scene.js?v=r558';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r558';
-import {cityModels} from '../approved-environment.js?v=r558';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r559';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r559';
+import {WEATHER} from './progress.mjs?v=r559';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r559';
+import {compositionRank} from '../race-composition.mjs?v=r559';
+import {ChaseRenderer} from '../race-scene.js?v=r559';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r559';
+import {cityModels} from '../approved-environment.js?v=r559';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r558';
-import {RaceAudio} from '../audio.js?v=r558';
-import {addLog,raceEntry} from '../playtest.js?v=r558';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r558';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r559';
+import {RaceAudio} from '../audio.js?v=r559';
+import {addLog,raceEntry} from '../playtest.js?v=r559';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r559';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r558',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r559',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -202,9 +202,16 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // one another, none in the first 70 m or the last 60: one thing at a place, so two lanes are always clear.
   const levelHazards=(H,course)=>{const W=WEATHER[SKY],taken=[...(course.hurdles||[])],lay=(every,make)=>{const out=[];if(every)for(let d=70+Math.random()*every*.5;d<course.length-60;d+=every*(.75+Math.random()*.5)){
         if(taken.some(x=>Math.abs(x-d)<14))continue;taken.push(d);out.push(make(Math.round(d),Math.floor(Math.random()*3)-1));}return out;};
-    return {puddles:lay(W.every,(distance,lane)=>({distance,lane,snow:W.snow})),poops:lay(H.poop,(distance,lane)=>({distance,lane}))};};
+    const road={puddles:lay(W.every,(distance,lane)=>({distance,lane,snow:W.snow})),poops:lay(H.poop,(distance,lane)=>({distance,lane}))};
+    // On such a stage the apples move too (2026-10-12, the user: 「蘋果也是隨機的」): as many as the track has, each in a lane
+    // drawn at random, 60 m from the start, 40 from the line, 22 m clear of a hurdle (a jump goes over it), 14 of what else
+    // lies there and 60 of one another.
+    if(level?.random){const n=sliceApples(course).length,at=[];for(let tries=0;at.length<n&&tries<600;tries++){const d=Math.round(60+Math.random()*(course.length-100));
+        if((course.hurdles||[]).every(h=>Math.abs(h-d)>22)&&taken.every(x=>Math.abs(x-d)>=14)&&at.every(x=>Math.abs(x-d)>=60))at.push(d);}
+      road.apples=at.sort((a,b)=>a-b).map((distance,i)=>({id:`apple-${i}`,distance,lane:Math.floor(Math.random()*3)-1}));}
+    return road;};
   let road=null;   // laid once for this visit, like the hurdles
-  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:ease?.95:1,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?(road??=levelHazards(level.hazards,course)):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null},team,rivals,chart:level?.plain?EASY_CHART:null,
+  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:ease?.95:1,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?(road??=levelHazards(level.hazards,course)):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null,...(road?.apples?{apples:road.apples}:null)},team,rivals,chart:level?.plain?EASY_CHART:null,
     course});
     return g;};
   // The scene is shown complete or not at all (2026-10-06, the user: the race was seen being put together: its sky, ground
