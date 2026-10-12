@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ZOOMBUD 衝吧蹄蹄｜按住、放開、衝！</title>
+<meta name="description" content="按住集氣、放開衝刺，帶你的夥伴跑遍世界。免下載，手機瀏覽器就能玩。">
+<meta property="og:title" content="ZOOMBUD 衝吧蹄蹄">
+<meta property="og:description" content="按住、放開、衝！免下載，手機瀏覽器就能玩。">
+<meta property="og:image" content="../assets/ui/cover-wide.webp">
+<meta name="theme-color" content="#3cb043">
+<link rel="icon" href="../icon-192.png">
+<!-- The game's one-page introduction (2026-10-12, the user's plan: one job, 「馬上玩」 opens the web game at ../).
+     Clips and screens: recorded from the game in Chinese (archive/landing-src). Phone frames are CSS, no stock art. -->
+<style>
+:root{--green:#3cb043;--green-d:#23772a;--ink:#2b2419;--paper:#fff8ea;--mute:#7a6d5c;--line:#e9dfcc;--leaf:#e9f6df}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink);background:var(--paper);line-height:1.6;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+img,video{max-width:100%;display:block}
+h2{font-size:26px;line-height:1.3;margin:0 0 6px;text-wrap:balance}p{margin:0;color:var(--mute);font-size:16px}
+.wrap{max-width:1040px;margin:0 auto;padding:44px 20px}
+.cta{display:block;background:var(--green);color:#fff;font-size:22px;font-weight:800;padding:16px 28px;border-radius:18px;box-shadow:0 6px 0 var(--green-d);text-decoration:none;text-align:center;transition:transform .08s,box-shadow .08s}
+.cta:active{transform:translateY(4px);box-shadow:0 2px 0 var(--green-d)}.cta:focus-visible{outline:3px solid #fff;outline-offset:3px}
+/* hero: the cover; the wide one on wide screens */
+.hero{min-height:min(100svh,860px);background:#1c3a1c url(../assets/ui/cover.webp) center top/cover;position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:0 20px 34px;text-align:center}
+.hero:before{content:"";position:absolute;inset:auto 0 0 0;height:60%;background:linear-gradient(transparent,#0b1a0bd9 60%)}
+.hero>*{position:relative}.hero .logo{width:min(72vw,340px)}
+.hero h1{color:#fff;font-size:clamp(24px,6.4vw,38px);line-height:1.35;margin:14px 0 20px;text-shadow:0 2px 8px #0008;text-wrap:balance}
+.hero .cta{width:min(100%,360px)}.hero small{color:#fffc;font-size:14px;margin-top:16px}
+/* wide: the wide cover; the wordmark, headline and button stand on its empty left, clear of the rider; no following bar */
+@media(min-width:760px){.hero{background-image:url(../assets/ui/cover-wide.webp);background-position:center;align-items:flex-start;justify-content:center;text-align:left;padding:0 0 0 max(5vw,calc((100vw - 1180px)/2))}
+  .hero:before{inset:0 auto 0 0;width:58%;height:auto;background:linear-gradient(90deg,#0b1a0bcc 35%,transparent)}.hero .logo{width:min(34vw,380px);margin-left:-8px}.hero h1{font-size:clamp(26px,3.2vw,40px)}.hero .cta{width:300px}
+  .stick{display:none}body{padding-bottom:0}}
+/* a row that swipes on a phone and sits in a line on a wide screen */
+.swipe{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 20px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.swipe::-webkit-scrollbar{display:none}.swipe>*{scroll-snap-align:center;flex:none}
+@media(min-width:760px){.swipe{justify-content:center;flex-wrap:wrap;overflow:visible;max-width:780px;margin:0 auto}}   /* three clips in a row; the four cards two by two, none left alone */
+/* the three clips, each in a phone */
+.clip{margin:0;width:232px;text-align:center}.clip b{display:block;font-size:19px;margin-top:12px}
+.phone{position:relative;border:8px solid #1b1b1d;border-radius:36px;background:#000;overflow:hidden;aspect-ratio:9/16;box-shadow:0 10px 24px #0003}
+.phone video,.phone img{width:100%;height:100%;object-fit:cover}
+.phone:before{content:"";position:absolute;z-index:1;left:50%;top:7px;width:30%;height:16px;margin-left:-15%;border-radius:10px;background:#1b1b1d}
+/* the three controls */
+.keys{display:grid;gap:18px;margin-top:20px}@media(min-width:760px){.keys{grid-template-columns:repeat(3,1fr)}}
+.keys div{display:grid;grid-template-columns:84px 1fr;gap:14px;align-items:center}
+.keys img{width:84px;height:84px;border-radius:50%;object-fit:cover;box-shadow:0 4px 10px #0002}.keys b{display:block;font-size:19px}
+/* buddies */
+.buds{background:var(--leaf)}.heads{display:flex;gap:12px;overflow-x:auto;padding:16px 20px 4px;margin:0 -20px;scrollbar-width:none}.heads::-webkit-scrollbar{display:none}
+.heads img{width:88px;height:88px;border-radius:50%;background:#fff;object-fit:cover;flex:none}
+@media(min-width:760px){.heads{flex-wrap:wrap;overflow:visible}}
+/* the ranch cards: two screens side by side on each */
+.card{width:min(84vw,340px);background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px 14px 16px;text-align:center;box-shadow:0 6px 16px #0001}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pair .phone{border-width:5px;border-radius:22px;box-shadow:none;aspect-ratio:780/1636}.pair .phone:before{height:9px;top:5px}
+.card b{display:block;font-size:19px;margin-top:12px}
+.dots{display:flex;gap:6px;justify-content:center;padding:4px 0 0}.dots i{width:8px;height:8px;border-radius:50%;background:#d9cdb8;transition:width .2s,background .2s}.dots .on{background:var(--green);width:20px;border-radius:4px}
+@media(min-width:760px){.dots{display:none}}
+.end{background:var(--ink);text-align:center}.end h2{color:#fff;margin-bottom:18px}.end .cta{max-width:360px;margin:0 auto}
+footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padding:0 20px 28px}
+/* the bar that follows on a phone, once the first button has gone by */
+.stick{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:#fff8eaf2;border-top:1px solid var(--line);transform:translateY(110%);transition:transform .25s;z-index:5}
+.stick.on{transform:none}.stick .cta{font-size:19px;padding:12px;box-shadow:0 4px 0 var(--green-d);max-width:420px;margin:0 auto}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.stick,.cta,.dots i{transition:none}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <img class="logo" src="../assets/ui/logo_zh.webp" alt="衝吧蹄蹄 ZOOMBUD" width="814" height="200">
+  <h1>按住、放開、衝！<br>帶你的夥伴跑遍世界</h1>
+  <a class="cta" id="top-cta" href="../">馬上玩</a>
+  <small>免下載 · 手機瀏覽器就能玩</small>
+</header>
+
+<section>
+  <div class="wrap" style="padding-bottom:14px"><h2>三招就會玩</h2><p>看得懂就上手，三十秒一場</p></div>
+  <div class="swipe">
+    <figure class="clip"><div class="phone"><video src="clip-charge.mp4" poster="clip-charge.jpg" muted loop playsinline preload="none" aria-label="按住圓球集氣再放開衝刺的遊戲畫面"></video></div><b>集氣衝刺</b><p>按住圓球，抓準時機放開</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-dodge.mp4" poster="clip-dodge.jpg" muted loop playsinline preload="none" aria-label="換道和跳過欄架的遊戲畫面"></video></div><b>閃開、撞開</b><p>換道、跳欄架，把對手撞到一邊</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-snow.mp4" poster="clip-snow.jpg" muted loop playsinline preload="none" aria-label="雪天比賽的遊戲畫面"></video></div><b>晴、雨、雪</b><p>每次進場天氣都不一樣</p></figure>
+  </div>
+</section>
+
+<section><div class="wrap">
+  <h2>只有三顆按鈕</h2><p>一隻手就能玩</p>
+  <div class="keys">
+    <div><img src="key-ball.webp" alt="" width="200" height="200" loading="lazy"><span><b>圓球</b><p>按住集氣，放開衝刺。左右滑換道，往上滑跳</p></span></div>
+    <div><img src="key-sprint.webp" alt="" width="160" height="160" loading="lazy"><span><b>衝刺鈕</b><p>吃到蘋果存一段，按一下爆衝</p></span></div>
+    <div><img src="key-bump.webp" alt="" width="160" height="160" loading="lazy"><span><b>撞擊鈕</b><p>對手並排時亮起，按下去把牠撞開</p></span></div>
+  </div>
+</div></section>
+
+<section class="buds"><div class="wrap">
+  <h2>每隻夥伴都有特長</h2><p>馬、駱馬、犀牛、狼、熊、牛、斑馬。養牠、升級牠、幫牠換造型</p>
+  <div class="heads">
+    <img src="../assets/stable/buddy_0.webp" alt="馬" loading="lazy"><img src="../assets/stable/buddy_10.webp" alt="駱馬" loading="lazy"><img src="../assets/stable/buddy_11.webp" alt="犀牛" loading="lazy"><img src="../assets/stable/buddy_15.webp" alt="狼" loading="lazy"><img src="../assets/stable/buddy_12.webp" alt="熊" loading="lazy"><img src="../assets/stable/buddy_14.webp" alt="牛" loading="lazy"><img src="../assets/stable/buddy_13.webp" alt="斑馬" loading="lazy">
+  </div>
+</div></section>
+
+<section>
+  <div class="wrap" style="padding-bottom:14px"><h2>比賽之外，還有一個家</h2><p>跑累了就回牧場</p></div>
+  <div class="swipe" id="cards">
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="ranch1.webp" alt="牧場全景" loading="lazy"></div><div class="phone"><img src="pond.webp" alt="魚池" loading="lazy"></div></div><b>牧場</b><p>夥伴在院子散步，池邊釣魚</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="field.webp" alt="麥田" loading="lazy"></div><div class="phone"><img src="shop.webp" alt="商店" loading="lazy"></div></div><b>種田和買賣</b><p>種麥收成，吃不完的拿去賣</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="dorm1.webp" alt="宿舍裡的馬" loading="lazy"></div><div class="phone"><img src="dorm2.webp" alt="宿舍裡的狼" loading="lazy"></div></div><b>宿舍</b><p>餵食、梳毛，看牠一級一級變強</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="house1.webp" alt="騎士的家" loading="lazy"></div><div class="phone"><img src="house2.webp" alt="換騎士服裝" loading="lazy"></div></div><b>騎士的家</b><p>換服裝、看成績、擺獎盃</p></figure>
+  </div>
+  <div class="dots" id="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+  <div style="height:36px"></div>
+</section>
+
+<section class="end"><div class="wrap"><h2>現在就開跑</h2><a class="cta" href="../">馬上玩</a></div></section>
+<footer>© 2026 ZOOMBUD 衝吧蹄蹄</footer>
+<div class="stick" id="stick"><a class="cta" href="../">馬上玩</a></div>
+<script>
+// clips play only while on screen; the following bar shows while neither of the page's own buttons is on screen; the dots follow the cards
+const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting)v.play().catch(()=>{});else v.pause();}),{threshold:.4});
+document.querySelectorAll('video').forEach(v=>io.observe(v));
+const seen=new Set(),ctas=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?seen.add(e.target):seen.delete(e.target));document.getElementById('stick').classList.toggle('on',!seen.size);});
+document.querySelectorAll('.hero .cta,.end .cta').forEach(a=>ctas.observe(a));
+const cards=document.getElementById('cards'),dots=[...document.getElementById('dots').children];
+cards.addEventListener('scroll',()=>{const c=[...cards.children],mid=cards.scrollLeft+cards.clientWidth/2;let k=0,best=1e9;c.forEach((el,i)=>{const d=Math.abs(el.offsetLeft+el.offsetWidth/2-mid);if(d<best){best=d;k=i;}});dots.forEach((d,i)=>d.classList.toggle('on',i===k));},{passive:true});
+</script>
+</body>
+</html>
