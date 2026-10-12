@@ -460,3 +460,5 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .st-acts{gap:calc(14 * var(--u))}.st-acts .feed>span img{width:calc(38 * var(--u));height:calc(38 * var(--u));object-fit:contain}
 .st-acts .feed .st-food{padding:1px calc(7 * var(--u))}.st-acts .feed.none>span{filter:grayscale(.7);opacity:.6}
 .st-acts .feed em{position:absolute;left:50%;bottom:calc(-7 * var(--u));translate:-50% 0;font-style:normal;white-space:nowrap;font-size:calc(10 * var(--u));font-weight:700;line-height:1;padding:calc(3 * var(--u)) calc(7 * var(--u));border-radius:99px;background:var(--ui-yellow);color:#000;text-shadow:none}.st-acts .feed em[hidden]{display:none}
+/* The dorm: the food this buddy does not eat (2026-10-12): its button is off, grey and faint. */
+.st-acts .feed:disabled{pointer-events:none}.st-acts .feed:disabled>span{background:rgb(255 255 255 / .22);filter:grayscale(1);opacity:.45}.st-acts .feed:disabled{opacity:.6}

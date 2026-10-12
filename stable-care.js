@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r535';
+import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r536';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -24,8 +24,8 @@ export const ITEMS=[
   // hidden for the MVP (kept so a save's counts survive)
   ...['hay','feed','oats','alfalfa','sugar','mint','pear','watermelon','beet','mash','shampoo','vitamin','electrolyte','hoofoil','flyspray','balm','ribbonkit','energybar','luckyshoe','bucket','towel'].map(id=>({id,name:id,kind:'hidden',hidden:true})),
 ];
-// What a buddy likes best: the bear and the wolf fish, the others wheat. The harvest it likes fills it in full, the
-// other one half (a treat is a treat to everyone).
+// What a buddy eats: the bear and the wolf fish, the others wheat, and not the other one (2026-10-12, the user: the dorm's
+// button for what it does not eat is off; it was: the other one fills half). A treat is a treat to everyone.
 export const likes=species=>species==='bear'||species==='wolf'?'fish':'wheat',HARVEST=['wheat','fish'];
 // Selling a harvest in the shop: all of it at once. → {items, coins}
 export function sellAll(items,id){const it=ITEMS.find(i=>i.id===id&&i.sell),n=it?items[id]||0:0;return {items:n?{...items,[id]:0}:items,coins:n*(it?.sell||0)};}
@@ -89,9 +89,10 @@ export function careAction(record,items,action,food='wheat',now=Date.now(),speci
   if(action==='feed'){
     const it=ITEMS.find(i=>i.id===food&&i.food&&bag[i.id]>0);   // the food asked for and no other: a treat is never eaten for want of wheat
     if(!it)return {fail:food==='fish'?'沒有魚了：去魚池收':'沒有小麥了：去麥田收成'};
+    if(HARVEST.includes(it.id)&&likes(species)!==it.id)return {fail:it.id==='fish'?'牠不吃魚':'牠不吃小麥'};
     if(r.hunger>=100)return {fail:'已經吃飽了'};
-    const liked=!HARVEST.includes(it.id)||likes(species)===it.id;bag[it.id]--;r.hunger=clamp(r.hunger+(liked?it.food:it.food/2));r.xp+=it.xp||0;
-    return {care:r,items:bag,msg:HARVEST.includes(it.id)&&liked?`最愛吃${it.name}`:`吃了${it.name}`,liked,item:it.id,levelUp:level(r)>level(record)};
+    bag[it.id]--;r.hunger=clamp(r.hunger+it.food);r.xp+=it.xp||0;
+    return {care:r,items:bag,msg:`吃了${it.name}`,item:it.id,levelUp:level(r)>level(record)};
   }
   if(action==='brush'){
     if(!bag.brush)return {fail:'需要一把刷子'};
