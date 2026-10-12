@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r567';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r567';
-import {WEATHER} from './progress.mjs?v=r567';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r567';
-import {compositionRank} from '../race-composition.mjs?v=r567';
-import {ChaseRenderer} from '../race-scene.js?v=r567';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r567';
-import {cityModels} from '../approved-environment.js?v=r567';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r576';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r576';
+import {WEATHER} from './progress.mjs?v=r576';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r576';
+import {compositionRank} from '../race-composition.mjs?v=r576';
+import {ChaseRenderer} from '../race-scene.js?v=r576';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r576';
+import {cityModels} from '../approved-environment.js?v=r576';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r567';
-import {RaceAudio} from '../audio.js?v=r567';
-import {addLog,raceEntry} from '../playtest.js?v=r567';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r567';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r576';
+import {RaceAudio} from '../audio.js?v=r576';
+import {addLog,raceEntry} from '../playtest.js?v=r576';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r576';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r567',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r576',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -326,7 +326,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       else if(e.type==='clear'){const off=Math.abs(e.error??0)/game.config.jumpWindow;landClear=true;
         if(off<=.35){feedback('完美起跳！','gold',true);buzz('good');}else feedback(off>=.75?'好險！':'CLEAR!','green');}
       else if(e.type==='puddle'){if(e.dry)feedback(e.snow?'不怕雪！':'不怕水！','gold');else{feedback(e.snow?'踩到雪了':'踩到水了','hint');sound.cue('deny');}buzz('tap');}
-      else if(e.type==='poop'){feedback('踩到了！','warn',true);shake(5,220);sound.collision();buzz('bad');}
+      else if(e.type==='poop'){if(e.dry){feedback('踩了也沒事！','gold');buzz('tap');}else{feedback('踩到了！','warn',true);shake(5,220);sound.collision();buzz('bad');}}
       else if(e.type==='obstacle-miss'){mark('hit');feedback('絆到了！','warn',true);sound.collision();sound.dropLayer();buzz('bad');landAt=0;streak=0;}
       // Passed, then back in front within 5 s: "won it back", its own moment.
       else if(e.type==='overtake'){const back=clock.elapsed()-lostAt<5;lostAt=-9;feedback(back?`搶回來了！第 ${e.rank} 名`:`超越！第 ${e.rank} 名`,back?'lime':'gold',true);sound.accent(back?'milestone':'overtake');popPlace();buzz('good');}

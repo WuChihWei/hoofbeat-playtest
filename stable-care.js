@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r567';
+import {MVP} from './playable/slice-config.mjs?v=r576';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -52,7 +52,10 @@ export function saveCare(storage,care,items){
 }
 // 2026-10-12 (the user: 強度靠等級): a buddy's level is its growth. Every buddy has its full numbers (home.js passes MAX_LEVEL to
 // buddyStats); each level over 1 makes it LV_SPEED faster (raceForm). xp: races, and a little from every feed.
-export const LV_SPEED=.01,XP_LEVEL=40,level=r=>MVP.levels?Math.min(MAX_LEVEL,1+Math.floor(r.xp/XP_LEVEL)):MAX_LEVEL;   // MVP: every buddy at full strength (xp still counts, unseen)   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
+// 2026-10-12 (the user: 三個等級就可以，等級區間可以寬一點): three levels, the buddy's three ages (approved-assets GROW). LV_XP: the xp each
+// starts at, about 8 solo runs to the second and 16 more to the third. lvPart: how far through its level (0-1), lvLeft: xp to go.
+export const LV_SPEED=.04,LV_XP=Object.freeze([0,100,300]),LV_TOP=LV_XP.length,level=r=>MVP.levels?LV_XP.findLastIndex(x=>(r.xp||0)>=x)+1:LV_TOP;
+export const lvLeft=r=>level(r)>=LV_TOP?0:LV_XP[level(r)]-r.xp,lvPart=r=>{const l=level(r);return l>=LV_TOP?1:(r.xp-LV_XP[l-1])/(LV_XP[l]-LV_XP[l-1]);};   // MVP: every buddy at full strength (xp still counts, unseen)   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
 export const recover=r=>r;   // nothing comes back by itself any more (it was the stamina's rest); kept for its callers
 // Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: the rhythm still decides).
 // base: the race config with this buddy's numbers at its level (slice-config racing()).
@@ -64,7 +67,7 @@ export function raceForm(r,base){
   const speed=dip(r.hunger,FORM.speed),combo=dip(r.clean,FORM.combo),lv=level(r),grow=1+(lv-1)*LV_SPEED;
   const config={baseSpeed:+(base.baseSpeed*speed*grow).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)
     stamina:base.stamina,startEnergy:Math.min(base.energyMax,Math.round(r.hunger*FORM.energy)),boostDuration:base.boostDuration,placeBonus:base.placeBonus};
-  const notes=[`起跑能量 ${config.startEnergy}`];if(lv>1)notes.push(`等級 ${lv}：速度 +${lv-1}%`);
+  const notes=[`起跑能量 ${config.startEnergy}`];if(lv>1)notes.push(`等級 ${lv}：速度 +${Math.round((grow-1)*100)}%`);
   if(speed<1)notes.push(`肚子餓：速度 −${Math.round((1-speed)*100)}%`);if(combo<1)notes.push(`毛髒了：集氣慢 ${Math.round((1-combo)*100)}%`);
   return {config,notes};
 }

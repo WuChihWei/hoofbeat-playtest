@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r567';
-import {applyLook,LOOK} from '../visual-style.js?v=r567';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r576';
+import {applyLook,LOOK} from '../visual-style.js?v=r576';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -383,7 +383,7 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
 
   // The buddies out on the lawn: each on a spot, a round shadow under it.
   const spots=waypoints(trees,L),spot=new THREE.Mesh(keep(new THREE.CircleGeometry(.62,20)),keep(new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.2,depthWrite:false})));
-  const dress=b=>{const model=createApprovedHorse(0,b.coat,false,b.hair,true,true);model.seat.visible=false;
+  const dress=b=>{const model=createApprovedHorse(0,b.coat,false,b.hair,true,true,b.stage);model.seat.visible=false;
     model.root.scale.setScalar(RANCH.size);model.root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});return model;};
   const free=(want=()=>true,me)=>{const taken=herd.filter(b=>b.stall==null&&b!==me).flatMap(b=>[b.on,b.path.at(-1)]).filter(i=>i!=null).map(i=>spots[i]);const ok=spots.map((_,i)=>i).filter(i=>taken.every(t=>Math.hypot(t.x-spots[i].x,t.y-spots[i].y)>=RANCH.stand)&&spots[i].next.length&&want(spots[i]));return ok[Math.floor(Math.random()*ok.length)];};
   const nearest=(x,y)=>spots.reduce((best,s,i)=>Math.hypot(s.x-x,s.y-y)<Math.hypot(spots[best].x-x,spots[best].y-y)?i:best,0);

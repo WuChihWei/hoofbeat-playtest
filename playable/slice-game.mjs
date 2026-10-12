@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r567';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r576';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -104,6 +104,7 @@ export class SliceGame {
   hazardStep(o,from,lane,t){const c=this.config,me=o===this;
     this.poops.forEach((p,k)=>{if(p.distance<=from||p.distance>o.distance||Math.abs(lane-p.lane)>=c.hazardReach)return;
       if(me?this.airborne(t):!this.caught(o,k+50))return;
+      if(me&&this.has('clean')){p.hit=true;this.emit('poop',{id:p.id,dry:true});return;}
       p.hit=true;o.stumbles.push({t,k:c.slip});if(me)this.emit('poop',{id:p.id});});
     if(me){const p=this.wet(this,t),w=p?.id??null;if(w&&w!==this.wetIn)this.emit('puddle',{id:w,snow:!!p.snow,dry:this.has(p.snow?'snow':'water')});this.wetIn=w;}}
   // Stamina, the same for every runner: a pool of the buddy's own size (o.pool); a sprint takes sprintStamina off as it
@@ -231,7 +232,7 @@ export class SliceGame {
     if(!stun&&this.wasHeld&&!this.holding&&at>=0&&this.ball>=this.goodAt()&&this.blown<=at){const max=this.ball>=c.ballMax;
       this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.skill=Math.min(3,this.skill+(max?2:1));this.ball=c.ballBack;this.rushes.push({t:at,end:at+c.ballRush*(max?2:1)});this.emit('release',{max,streak:this.streak});}
     this.wasHeld=!stun&&this.holding;
-    if(!stun)this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill*(this.form.charge??1):-dt/c.ballFall));
+    if(!stun)this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill*(this.form.charge??1)*(this.has('charge')?1.15:1):-dt/c.ballFall));
     if(this.ball>=1){this.ball=0;this.streak=Math.floor(this.streak/2);this.blown=at+c.ballPop;if(at>=0)this.stumbles.push({t:at});this.emit('blown');}   // spent: it stumbles
     this.drive=this.blown>at?S.floor:S.top*(c.ballLo+(c.ballHi-c.ballLo)*this.ball)*(1+c.ballGain*this.streak);
     if(at<0)this.driveSpeed=this.drive;}

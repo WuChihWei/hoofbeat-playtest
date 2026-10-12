@@ -488,3 +488,17 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .wl-shot{flex:1;min-height:0;aspect-ratio:9/16;max-width:100%;border-radius:calc(22 * var(--u));overflow:hidden;background:#000;margin-bottom:calc(14 * var(--u));border:calc(4 * var(--u)) solid rgb(255 255 255 / .16)}
 .wl-shot video,.wl-shot img{width:100%;height:100%;object-fit:cover;display:block}
 .wl-dots{display:flex;gap:calc(6 * var(--u));justify-content:center}.wl-dots i{width:calc(8 * var(--u));height:calc(8 * var(--u));border-radius:50%;background:rgb(255 255 255 / .3)}.wl-dots .on{background:var(--ui-lime);width:calc(20 * var(--u));border-radius:calc(4 * var(--u))}
+
+/* The day's gift on the home page: the prize chest over everything there (the nav too). */
+.ui-prize.daily{z-index:25;background:rgb(12 22 12 / .88)}
+
+/* 2026-10-12 three ages: the pips beside a buddy's age, what the next age brings, a perk not open yet, and the dorm's
+   card when a buddy grows (home.js grow). */
+.lv-pips{display:inline-flex;gap:calc(4 * var(--u));margin-left:calc(8 * var(--u));vertical-align:middle}.lv-pips i{width:calc(9 * var(--u));height:calc(9 * var(--u));border-radius:50%;background:var(--ui-text-2);opacity:.35}.lv-pips i.on{background:var(--ui-yellow);opacity:1}
+.st-next{margin:0 0 calc(10 * var(--u));display:flex;flex-direction:column;gap:calc(4 * var(--u))}.st-next small{font-size:calc(12 * var(--u));color:var(--ui-text-2);white-space:normal}
+.pick-perk.shut{opacity:.55}.pick-perk.shut i{background:var(--ui-text-2);color:#fff}
+.ui-prize.grow{z-index:25}.ui-prize.grow :is(p,.ui-btn){animation:none}
+.grow-card{width:min(78%,calc(300 * var(--u)));box-sizing:border-box;padding:calc(20 * var(--u));border-radius:var(--ui-r-lg);display:flex;flex-direction:column;align-items:center;gap:calc(10 * var(--u));text-align:center}
+.grow-card img{width:calc(96 * var(--u));height:calc(96 * var(--u));border-radius:50%;object-fit:cover;background:radial-gradient(circle at 50% 40%,#f1cf92,#a8743f)}
+.grow-card b{font-size:calc(20 * var(--u));font-weight:700}.grow-card .lv-pips{margin:0}.grow-card .lv-pips i{width:calc(12 * var(--u));height:calc(12 * var(--u))}
+.grow-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:calc(6 * var(--u));font-size:calc(14 * var(--u));line-height:1.4}

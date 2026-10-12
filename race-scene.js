@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r567';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r567';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r567';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r567';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r567';
-import {installApprovedEnvironment} from './approved-environment.js?v=r567';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r567';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r567';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r567';
-import {turnAt} from './track-projection.js?v=r567';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r567';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r567';
+import {roadHalfWidth} from './track-presentation.mjs?v=r576';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r576';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r576';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r576';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r576';
+import {installApprovedEnvironment} from './approved-environment.js?v=r576';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r576';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r576';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r576';
+import {turnAt} from './track-projection.js?v=r576';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r576';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r576';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -422,7 +422,7 @@ export class ChaseRenderer {
     const teams=race.slice?[['player',race.horses,0],...race.rivals.map((r,i)=>[r.id,r.horses,i+1])]:[['player', race.team], ...compositionRivals(race,race.metrics?.()||{rivals:race.rivals,player:{distance:0,speed:12}}).map(r=>[r.id,r.team])];
     for (const [role, team, variant] of teams) team.forEach((id, leg) => {
       if(race.slice&&!race.course.relays?.length&&leg)return;   // a solo race: every runner rides one buddy. Its second and third (a relay's later legs) were built and compiled here all the same: eight models nobody saw (2026-10-11)
-      const {model} = race.slice?this.model(`${role}-${leg}`,variant,id.coat,id.hair):this.model(`${role}-${leg}-${id}`, id);
+      const {model} = race.slice?this.model(`${role}-${leg}`,variant,id.coat,id.hair,id.stage):this.model(`${role}-${leg}-${id}`, id);
       model.root.visible = true;
       model.root.traverse(mesh => {if (mesh.isMesh) for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) if (material.map) this.r.initTexture(material.map);});
     });
@@ -526,10 +526,10 @@ export class ChaseRenderer {
     });
     this.trunks.instanceMatrix.needsUpdate = true; this.crowns.instanceMatrix.needsUpdate = true;
   }
-  model(key, id, coat=null, hair=null) {   // hair: a relay leg's own mane style (the player's buddies; approved-assets HAIR)
+  model(key, id, coat=null, hair=null, stage=null) {   // hair: a relay leg's own mane style (the player's buddies; approved-assets HAIR)
     if (!this.models.has(key)) {
       // a phone: the rivals on the Low models, the player's rider on the Race one (approved-assets PRESENTATION_ASSETS)
-      const model = createApprovedHorse(id,coat,PHONE?(key.startsWith('player')?'race':'low'):false,hair); model.root.scale.setScalar(RUNNER.scale); this.scene.add(model.root);
+      const model = createApprovedHorse(id,coat,PHONE?(key.startsWith('player')?'race':'low'):false,hair,false,false,stage); model.root.scale.setScalar(RUNNER.scale); this.scene.add(model.root);
       if(this.slice){mergeForRace(model).forEach(resource=>this.own(resource));   // 31 parts → 5 meshes, 2 skeletons (mobile)
         const bone=n=>model.riderContent.getObjectByName(n),w=1+(RIDER_WAIST-1)/2;   // race look: a smaller head, a fuller waist
         bone('Head')?.scale.setScalar(RIDER_HEAD);bone('Spine')?.scale.set(RIDER_WAIST,1,w);bone('Chest')?.scale.set(1/RIDER_WAIST,1,1/w);}
@@ -547,7 +547,7 @@ export class ChaseRenderer {
       const role=runner.id,team=runner.team,lane=role==='player'?(race.slice?race.laneValue*race.config.laneSpacing:raceLane(race,time)*2.2):(runner.visualLane??RUNNER_LANES[role]),offset=race.slice?-(runner.visualGap||0):rivalOffset(runner.lead);
       const runnerTime=time;
       for (const actor of (race.slice?this.sliceActors(race,role,runner,lane,offset):relayActors(team, runnerTime, lane))) {
-        const entry = race.slice?this.model(`${role}-${actor.leg}`,index,runner.horses[actor.leg].coat,runner.horses[actor.leg].hair):this.model(`${role}-${actor.leg}-${actor.id}`, actor.id), {model, shadow} = entry;
+        const entry = race.slice?this.model(`${role}-${actor.leg}`,index,runner.horses[actor.leg].coat,runner.horses[actor.leg].hair,runner.horses[actor.leg].stage):this.model(`${role}-${actor.leg}-${actor.id}`, actor.id), {model, shadow} = entry;
         model.setLOD?.(actor.waiting&&HORSE_Z-actor.z>16?'far':'near');
         const hoofAccent=role==='player'&&actor.active?this.pulses.map((at,lane)=>this.pulseStrength[lane]*clamp(1-(time-at)/.32,0,1)):[0,0];
         const p = roadPose(actor.z+(race.slice?0:offset), turn, actor.lane), impulse = Math.max(...hoofAccent);

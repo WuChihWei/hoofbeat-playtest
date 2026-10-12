@@ -65,7 +65,7 @@ export const COATS=Object.freeze([
   {name:'Wolf',species:'wolf',model:'animal_part/wolf/HOOFBEAT_Wolf_Mobile.glb'},
 ]);
 // Their models load only for a player who rides or looks at one (0.9 MB each; rivals are horses, so the _Far files stay unused).
-export const preloadBuddies=coats=>preloadModels(coats.map(c=>COATS[c]?.model).filter(Boolean));
+export const preloadBuddies=coats=>preloadModels([...coats.map(c=>COATS[c]?.model),...coats.map(c=>youngOf(c))].filter(Boolean));
 // Ranch models (models/ranch/build_buddies.py): the same buddy at about 1.5k triangles, no tack, lashes or brows, same
 // rig and clips: what walks about in the ranch overview, where a buddy is 40–60 px tall (ranch-view.js). One file per
 // kind of animal, beside its full model.
@@ -95,6 +95,8 @@ const EYES={
   bear:{lidColor:'#8f5433',open:.95,shut:-.62,curve:.3,lash:.6,iris:{color:['#2a1810','#0d0705'],size:[.9,.55],aim:[.9,-.1],turn:.1,white:.98}},   // the sheet: a dark bead, no white
   cow:{lidColor:'#8a4a2a',open:.95,shut:-.62,curve:.35,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.9,.52],aim:[.75,-.12],turn:.1,white:1.05}},
   wolf:{lidColor:'#4f4846',open:.95,shut:-.62,curve:.3,lash:.8,iris:{color:['#3a2418','#0b0807'],size:[.92,.5],aim:[.9,-.1],turn:.1,white:.9}},   // the sheet: big dark oval eyes, almost no white (aim 1.2 looked cross-eyed: white on the outer side)
+  foal:{lidColor:'#a8603c',open:.95,shut:-.62,curve:.4,lash:.9,iris:{color:['#3a2214','#140c08'],size:[.92,.52],aim:[.6,-.15],turn:.1,white:1}},   // the user's foal (GROW): a big dark eye
+  rhino_calf:{lidColor:'#a8958f',open:.95,shut:-.62,curve:.25,lash:.9,iris:{color:['#4a2c1c','#2a170e'],size:[.9,.55],aim:[.72,-.18],turn:.1,white:1}},
   zebra:{lidColor:'#d9d2c8',open:.95,shut:-.62,curve:.4,lash:.9,iris:{color:['#2a1a12','#140c08'],size:[.9,.55],aim:[.6,-.15],turn:.1,white:1}}};   // white: its lids are folds with gaps between them
 // Coat markings from rest-pose position/normal, so they stay painted on while the skin deforms (concept sheet):
 // dark hooves, soft muzzle and the coat's markings above. Soft-toy shading like the sheet: coat lighter along the back,
@@ -336,15 +338,64 @@ function fur(m){   // MeshStandardMaterial → MeshPhysicalMaterial with the sam
 // Galloping seat: RacePose (the authored half-seat crouch) blended with RidePose (sitting up, reins by the saddle,
 // elbows out): this much of the crouch unless the caller says (the race: more the harder the horse runs).
 const RACE_SEAT=.4;
-export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false,ranch=false){   // ranch: its ranch model (ranchFile)   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
-  const player=variant===0,coatIx=coatOverride??(player?PLAYER_LOOK.coat:variant===PLAYER_LOOK.coat?0:variant),look=COATS[coatIx]??COATS[0];
-  const horse=approvedAssets.get(ranch?ranchFile(coatIx):look.model??(far==='low'?'horseLow':far===true?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far==='low'?'riderLow':far==='race'?'riderRace':far?'riderFar':'rider');   // far: true (the Far pair) | 'low' (the Low pair) | 'race' (the full buddy, the Race rider)
+// GROW (2026-10-12, the user: a buddy has three stages, 「小時候到長大會換毛」, the model as it is): what each stage does to
+// the look of a buddy. Stage 2 is the buddy as it was made. ?grow=1|2|3 (dev) shows the player's buddy at that stage.
+//   scale  its size (the whole buddy, rider and all) · head / chest  those bones' scale: a young one's head is big for its
+//   body, a grown one is deep through the chest · thin  a young one's body is narrow (the whole buddy across)
+//   fur  an animal's own fur multiplied by this tint · lift  an emissive share that lifts the darks: flat and downy
+//   tint, by  a horse's body and mane pulled toward this colour · rough, sheen, coat  matt young, glossy grown
+//   hair  a horse's mane and tail style
+// A young one differs by animal (`by`, the user going through them one by one, 2026-10-12): the bear, the wolf and the
+// llama have the big head and narrow body; the cow and the zebra are only small and pale, the cow without horns (buds: a
+// round bump of its skin's colour where each stood); the horse and the rhino have a young model of their own (the user's
+// foal and rhino calf, built to the same rig by build_animal.py): `model` the file, `as` its species (its EYES row), at
+// the size it was built (scale 1) and in its own colours (plain). tone: the foal takes the grown horse's colours (the user:
+// 「小馬的顏色要處理」): its map is multiplied by the coat's body colour over the map's own average there (coat), and its
+// mane and tail (hair: those meshes, given a material of their own) by the coat's mane colour over theirs. The map's
+// shading and darker legs stay; a coat's white markings are not on a foal.
+export const GROW=Object.freeze({1:{scale:.8,fur:'#e2dbd2',lift:.14,rough:1,sheen:1,coat:0,
+    by:{bear:{head:1.46,thin:.84},wolf:{head:1.46,thin:.84},llama:{head:1.46,thin:.84},cow:{buds:['CowHorns']},zebra:{},
+      horse:{model:'animal_part/foal/HOOFBEAT_Foal_Mobile.glb',as:'foal',scale:1,rider:.85,plain:1,tone:{coat:'#af5e40',mane:'#573530',hair:['FoalMane','FoalTail']}},rhino:{model:'animal_part/rhino_calf/HOOFBEAT_Rhino_Calf_Mobile.glb',as:'rhino_calf',scale:1,rider:.85,plain:1}}},
+  2:{scale:1,hair:'classic'},3:{scale:1.1,chest:1.08,tint:'#6b4a36',by:.12,fur:'#e4d9cc',rough:.4,sheen:.15,coat:.6,hair:'long'}});
+// The young models a set of coats needs (preloadBuddies).  ponytail: loaded with every buddy shown, whatever its stage;
+// load by stage once levels drive the look (1.2 MB each).
+const youngOf=coat=>GROW[1].by[COATS[coat]?.species??'horse']?.model;
+// The separate pieces of a horn mesh (a rhino's two horns, a cow's): for each, its vertices, the way it points (from the
+// body's middle), its foot (the fifth of it nearest the body: centre and width).
+function pieces(o,bodyMesh){const p=o.geometry.attributes.position,ix=o.geometry.index,n=p.count,V=new THREE.Vector3();
+  const par=Array.from({length:n},(_,i)=>i),find=x=>{while(par[x]!==x)x=par[x]=par[par[x]];return x;},seen=new Map();
+  for(let i=0;i<n;i++){const k=`${p.getX(i).toFixed(4)},${p.getY(i).toFixed(4)},${p.getZ(i).toFixed(4)}`;if(seen.has(k))par[find(i)]=find(seen.get(k));else seen.set(k,i);}
+  for(let t=0;t<(ix?ix.count:n);t+=3){const a=ix?ix.getX(t):t,b=ix?ix.getX(t+1):t+1,c=ix?ix.getX(t+2):t+2;par[find(a)]=find(b);par[find(b)]=find(c);}
+  const parts=new Map();for(let i=0;i<n;i++){const k=find(i);(parts.get(k)||parts.set(k,[]).get(k)).push(i);}
+  const centre=new THREE.Box3().setFromBufferAttribute(bodyMesh?.geometry.attributes.position||p).getCenter(new THREE.Vector3());
+  return [...parts.values()].filter(l=>l.length>=12).map(list=>{const mid=new THREE.Vector3();for(const i of list)mid.add(V.fromBufferAttribute(p,i));mid.divideScalar(list.length);const d=mid.clone().sub(centre).normalize();
+    let lo=Infinity,hi=-Infinity;for(const i of list){const a=V.fromBufferAttribute(p,i).dot(d);if(a<lo)lo=a;if(a>hi)hi=a;}
+    const base=new THREE.Vector3();let c=0,wide=0;for(const i of list)if(V.fromBufferAttribute(p,i).dot(d)<lo+(hi-lo)*.2){base.add(V);c++;}base.divideScalar(c||1);
+    for(const i of list)if(V.fromBufferAttribute(p,i).dot(d)<lo+(hi-lo)*.2){V.sub(base);V.addScaledVector(d,-V.dot(d));wide=Math.max(wide,V.length());}
+    return {list,d,base,wide};});}
+const bodyOf=(content,o)=>{let b=null;content.traverse(x=>{if(!b&&x.isMesh&&x!==o&&/Body/.test(x.name))b=x;});return b;};
+// A horn made a bud (GROW buds): the horn goes, and a dome of the skin's colour sits where it stood, hung on the Head bone.
+// The colour is the skin's map read where the body is nearest the horn's foot (a sphere's own UVs land anywhere on the
+// map), times the material's tint; a plain material, since the body's shader paints its markings by rest position.
+function nub(o,content){const bodyMesh=bodyOf(content,o),skin=bodyMesh?.material||o.material,V=new THREE.Vector3();
+  const sample=at=>{const map=skin.map;if(!map?.image||!bodyMesh)return skin.color.clone();const bp=bodyMesh.geometry.attributes.position,uv=bodyMesh.geometry.attributes.uv;let best=Infinity,k=0;
+    for(let i=0;i<bp.count;i++){const e=V.fromBufferAttribute(bp,i).distanceToSquared(at);if(e<best){best=e;k=i;}}
+    try{const im=map.image,c=document.createElement('canvas');c.width=c.height=1;const g=c.getContext('2d'),u=uv.getX(k),v=uv.getY(k);
+      g.drawImage(im,Math.floor(u*im.width),Math.floor((map.flipY?1-v:v)*im.height),1,1,0,0,1,1);const [r,gg,b]=g.getImageData(0,0,1,1).data;return new THREE.Color(r/255,gg/255,b/255).convertSRGBToLinear().multiply(skin.color);}catch{return skin.color.clone();}};
+  const head=content.getObjectByName('Head')||o.parent;content.updateMatrixWorld(true);o.visible=false;
+  for(const {d,base,wide} of pieces(o,bodyMesh)){const R=wide*1.25,mat=new THREE.MeshPhysicalMaterial({color:sample(base),roughness:skin.roughness,sheen:skin.sheen??0,sheenRoughness:skin.sheenRoughness??.8,sheenColor:skin.sheenColor?.clone()??new THREE.Color(0),emissive:skin.emissive?.clone()??new THREE.Color(0)}),m=new THREE.Mesh(new THREE.SphereGeometry(R,18,12),mat);m.castShadow=m.receiveShadow=true;
+    const at=o.localToWorld(base.clone().addScaledVector(d,-R*.62));head.add(m);m.position.copy(head.worldToLocal(at));}}
+const DEV_GROW=typeof location==='undefined'?0:+(/[?&]grow=([123])/.exec(location.search)?.[1]??0);
+export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false,ranch=false,stage=null){   // ranch: its ranch model (ranchFile)   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
+  const player=variant===0,coatIx=coatOverride??(player?PLAYER_LOOK.coat:variant===PLAYER_LOOK.coat?0:variant),base0=COATS[coatIx]??COATS[0],G0=GROW[stage??(player?DEV_GROW||PLAYER_LOOK.stage:0)]??GROW[2],G=G0.by?{...G0,...G0.by[base0.species??'horse']}:G0,base=G.model?{name:base0.name,species:G.as,model:G.model,forward:base0.forward}:base0;   // a young model of its own stands in for the buddy's
+  const pull=(c,to,by)=>'#'+new THREE.Color(c).lerp(new THREE.Color(to),by).getHexString(),look=G.tint&&!base.species?{...base,body:pull(base.body,G.tint,G.by),mane:pull(base.mane,G.tint,G.by*.6),...(base.tail?{tail:pull(base.tail,G.tint,G.by*.6)}:null),}:base;   // a horse's coat at this stage
+  const horse=approvedAssets.get(G.model??(ranch?ranchFile(coatIx):null)??look.model??(far==='low'?'horseLow':far===true?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far==='low'?'riderLow':far==='race'?'riderRace':far?'riderFar':'rider');   // far: true (the Far pair) | 'low' (the Low pair) | 'race' (the full buddy, the Race rider)
   if(!horse||!rider)throw new Error('Approved horse/rider assets not loaded');
   const root=new THREE.Group(),scene=new THREE.Group(),fit=new THREE.Group(),orientation=new THREE.Group();
   root.add(scene);scene.add(fit);fit.add(orientation);orientation.rotation.y=Math.PI;
   const content=clone(horse.scene),riderContent=clone(rider.scene),seat=new THREE.Group();
-  const wears=(HAIR.find(h=>h.id===(player?hair??PLAYER_LOOK.hair:'classic'))??HAIR[0]).mesh;{const spare=[];content.traverse(o=>{if(/^ManeTail/.test(o.name)&&o.name!==wears)spare.push(o);});spare.forEach(o=>o.removeFromParent());}   // one hair style a horse: every other mane mesh in the file goes, listed in HAIR or not (two on one horse share a material and its shader is patched twice: it fails to compile)
-  orientation.add(content,seat);seat.add(riderContent);
+  const wears=(HAIR.find(h=>h.id===(G!==GROW[2]&&G.hair?G.hair:player?hair??PLAYER_LOOK.hair:'classic'))??HAIR[0]).mesh;{const spare=[];content.traverse(o=>{if(/^ManeTail/.test(o.name)&&o.name!==wears)spare.push(o);});spare.forEach(o=>o.removeFromParent());}   // one hair style a horse: every other mane mesh in the file goes, listed in HAIR or not (two on one horse share a material and its shader is patched twice: it fails to compile)
+  orientation.add(content,seat);seat.add(riderContent);if(G.rider)seat.scale.setScalar(G.rider);   // a young model of its own is small as built: the rider a size down on it, as on the shrunk ones
   const materials=new Map();
   for(const asset of [content,riderContent])asset.traverse(o=>{
     if(!o.isMesh)return;
@@ -364,12 +415,24 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
       // Matte vinyl (palette roughness): broad soft highlight from the sky light, no small hot spot.
       if(m.name==='Horse_Coat')m.roughness=.9;if(m.name==='Horse_ManeTail')m.roughness=.9;   // clay: was .62
       if(FUR[m.name])m.sheenColor.copy(m.color).lerp(WHITE,FUR[m.name].lift);
+      // the stage (GROW): a horse's coat and mane take its finish; an animal's own fur (a textured material that is not tack, eye or rider) its tint too
+      if(G!==GROW[2]&&!G.plain){const fur=FUR[m.name]||look.species&&!/^(Tack_|Rider_|Buddy_Eye|Horse_)/.test(m.name);
+        if(fur){if(look.species&&G.fur){if(m.map)m.color.set(G.fur);else m.color.lerp(new THREE.Color(G.tint),G.by);}m.roughness=G.rough;if(G.lift)m.emissive.copy(m.color).multiplyScalar(G.lift);if('sheen' in m){m.sheen=G.sheen;m.clearcoat=G.coat;m.clearcoatRoughness=.45;}}}
       // Lash lines and brows (the model's own parts): the upper lash keeps its near-black on every coat, the lower one
       // and the brow are the coat darkened.
       if(m.name==='Horse_LashLow')m.color.set(look.head??look.body).multiplyScalar(.5);
       if(m.name==='Horse_Brow')m.color.set(look.head??look.body).multiplyScalar(.3);
     }
   });
+  for(const [bone,k] of [['Head',G.head],['Chest',G.chest]])if(k)content.getObjectByName(bone)?.scale.setScalar(k);   // its proportions at this stage (the skin follows the bone)
+  if(G.thin)content.scale.x*=G.thin;
+  if(G.tone){   // the map gives only how light each place is (over its own average: `coat`, `mane`), the grown coat gives the colour
+    const lum=c=>{const k=new THREE.Color(c);return .2126*k.r+.7152*k.g+.0722*k.b;},shade=(m,avg)=>{m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',`#ifdef USE_MAP
+      {vec4 tx=texture2D(map,vMapUv);diffuseColor.rgb*=min(pow(dot(tx.rgb,vec3(.2126,.7152,.0722))/${avg.toFixed(4)},.75),1.5);}
+      #endif`);};m.customProgramCacheKey=()=>'hoofbeat-tone-'+avg.toFixed(4);m.needsUpdate=true;return m;},own=new Map();
+    content.traverse(o=>{if(!o.isMesh||!o.material?.map||/^(Tack_|Buddy_Eye)/.test(o.material.name))return;const hair=G.tone.hair.includes(o.name),key=o.material.uuid+hair;
+      if(!own.has(key)){const m=o.material.clone();m.color.set(hair?base0.tail??base0.mane:base0.body);own.set(key,shade(m,lum(hair?G.tone.mane:G.tone.coat)));}o.material=own.get(key);});}
+  for(const n of G.buds||[]){const o=content.getObjectByName(n);if(o)nub(o,content);}
   // Eyes (EYES): iris, pupil and catch-light drawn on the eyeballs, a lid of the coat's (or the animal's own) colour that blinks.
   const eyes=livingEyes(content,{measure:EYE_MATS,paint:EYE_MATS,lidColor:look.head??look.body,...EYES[look.species??'horse']});
   // The rider GLB is authored seated on this horse (build_rider_seat.py): its origin is the RiderSocket rest point,
@@ -401,8 +464,11 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
   }
   updateAttachment();
   const bounds=new THREE.Box3().setFromObject(content,true),size=bounds.getSize(new THREE.Vector3());
-  fit.scale.setScalar(3.3/(look.species?2.885:size.y));fit.position.y=-bounds.min.y*fit.scale.y;   // 2.885: the horse's height, so the other animals keep their own size beside it (the rhino is 61% as tall)
+  fit.scale.setScalar(3.3/(look.species||G!==GROW[2]?2.885:size.y));fit.position.y=-bounds.min.y*fit.scale.y;scene.scale.setScalar(G.scale);   // G.scale: its size at this stage (GROW), the whole buddy, rider and all; set after the fit, which would measure it away on a horse   // 2.885: the horse's height, so the other animals keep their own size beside it (the rhino is 61% as tall)
   // Authored Gallop has no root displacement. Existing runner controls own all movement.
+  // The clips key every bone's scale (always 1): on the bones GROW sizes, those tracks go, once per model file, or the clip
+  // would put a young one's head back to the grown size on its first frame.
+  if(!horse.sized){horse.sized=true;for(const a of horse.animations)a.tracks=a.tracks.filter(t=>!/^(Head|Chest)\.scale$/.test(t.name));}
   const mixer=new THREE.AnimationMixer(content),clips={run:horse.animations.find(a=>a.name==='Gallop'),idle:horse.animations.find(a=>a.name==='Idle'),walk:horse.animations.find(a=>a.name==='Walk')};   // walk: the stable's arrival (stable-view ARRIVE)
   if(!clips.run)throw new Error('Approved horse lacks Gallop');
   const bindings={Front_Upper:['ForeUpper.L','ForeUpper.R'],Front_Lower:['ForeLower.L','ForeLower.R'],Front_Hoof:['ForeHoof.L','ForeHoof.R'],Hind_Upper:['HindUpper.L','HindUpper.R'],Hind_Lower:['HindLower.L','HindLower.R'],Hind_Hoof:['HindHoof.L','HindHoof.R'],Neck:['NeckLower']};
