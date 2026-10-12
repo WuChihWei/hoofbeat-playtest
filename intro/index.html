@@ -44,8 +44,9 @@ body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
 @media(min-width:760px){.swipe:not(#cards){max-width:540px}}@media(min-width:1060px){.swipe:not(#cards){max-width:1040px}}   /* the four clips: two by two, in one row when there is room */
 /* the three clips, each in a phone */
 .clip{margin:0;width:232px;text-align:center}.clip b{display:block;font-size:19px;margin-top:12px}
-.phone{position:relative;border:8px solid #1b1b1d;border-radius:36px;background:#000;overflow:hidden;aspect-ratio:9/16;box-shadow:0 10px 24px #0003}
-.phone video,.phone img{width:100%;height:100%;object-fit:cover}
+/* the screen sits under the phone's top bar, so the island covers none of the game (2026-10-12, the user) */
+.phone{position:relative;border:8px solid #1b1b1d;border-radius:36px;background:#000;overflow:hidden;padding:30px 0 12px;box-shadow:0 10px 24px #0003}
+.phone video,.phone img{width:100%;height:auto;aspect-ratio:9/16;object-fit:cover}
 .phone:before{content:"";position:absolute;z-index:1;left:50%;top:7px;width:30%;height:16px;margin-left:-15%;border-radius:10px;background:#1b1b1d}
 /* the three controls */
 .keys{display:grid;gap:18px;margin-top:20px}@media(min-width:760px){.keys{grid-template-columns:repeat(3,1fr)}}
@@ -57,7 +58,7 @@ body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
 @media(min-width:760px){.heads{flex-wrap:wrap;overflow:visible}}
 /* the ranch cards: two screens side by side on each */
 .card{width:min(84vw,340px);background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px 14px 16px;text-align:center;box-shadow:0 6px 16px #0001}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pair .phone{border-width:5px;border-radius:22px;box-shadow:none;aspect-ratio:780/1636}.pair .phone:before{height:9px;top:5px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pair .phone{border-width:5px;border-radius:22px;box-shadow:none;padding:17px 0 7px}.pair .phone img{aspect-ratio:780/1636}.pair .phone:before{height:9px;top:4px}
 .card b{display:block;font-size:19px;margin-top:12px}
 .dots{display:flex;gap:6px;justify-content:center;padding:4px 0 0}.dots i{width:8px;height:8px;border-radius:50%;background:#d9cdb8;transition:width .2s,background .2s}.dots .on{background:var(--green);width:20px;border-radius:4px}
 @media(min-width:760px){.dots{display:none}}

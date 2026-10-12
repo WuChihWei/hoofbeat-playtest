@@ -1,6 +1,6 @@
 // Taipei · After the Rain: stage 6 (2026-10-11). Taipei's pack again, two laps, under a wet grey sky: the stage where
 // the puddles are (progress.mjs LEVELS hazards). Its own art is still to come: the pictures are Taipei's.
-import base from './taipei.mjs?v=r553';
+import base from './taipei.mjs?v=r558';
 export default {...base,
   id:'taipei2', city:'Taipei', title:'After the Rain', brief:'雨後的河岸，到處是水窪', difficulty:3, mvp:false,
   tagline:'Wet riverside. Mind the puddles.',
