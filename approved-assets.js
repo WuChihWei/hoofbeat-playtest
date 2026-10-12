@@ -23,7 +23,8 @@ export const loadsSettled=()=>loading?new Promise(r=>settled.push(r)):Promise.re
 let pending;
 // How many model files have been asked for and how many have arrived (the start card shows it while it waits).
 export const loadState={done:0,total:0};
-const fetchModel=file=>{loadState.total++;return new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
+const REDONE=/\/(foal|rhino_calf)\//;   // ponytail: the two young models redone on 2026-10-12 (unprint_saddle.py) get a version of their own, so no phone fetches every other model again; drop this at the next MODEL_VERSION bump
+const fetchModel=file=>{loadState.total++;return new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${REDONE.test(file)?'lib-103':MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
 const keyLoads={};
 // One presentation model by its key, once (the ranch asks for the two it needs; a race for all of them).
 const loadKey=key=>keyLoads[key]??=fetchModel(PRESENTATION_ASSETS[key]).then(gltf=>{approvedAssets.set(key,gltf);approvedAssets.set(PRESENTATION_ASSETS[key],gltf);},e=>{delete keyLoads[key];throw e;});   // by key, and by file for city dressing (preloadModels)

@@ -12,11 +12,13 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r580';
-import {applyLook,LOOK} from '../visual-style.js?v=r580';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r584';
+import {applyLook,LOOK} from '../visual-style.js?v=r584';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
+// The pond is dug in: the hole in the lawn is `rim` × its half sizes, the water lies `water` m from the ground (under it).
+const POND={rim:1.14,water:-.6};
 export const RANCH={
   size:.85,                                   // a buddy is 3.3 units tall in the race's scale: 2.05 m to the ears here
   walk:1.5,turn:3.2,trot:.75,                 // m/s, rad/s, the Trot clip's rate at a walk
@@ -113,21 +115,22 @@ export function layout({pens=[[2,2],[2,1]],huts=autoHuts(1)}={}){
   const field=[Math.min(...fences.map(f=>f[0])),Math.min(...fences.map(f=>f[1])),Math.max(...fences.map(f=>f[2])),Math.max(...fences.map(f=>f[3]))];
   const homes=huts.map(p=>{const [x,d]=plotAt(p);return {x,d,plot:p};}),rows=Math.max(1,...huts.map(p=>Math.floor(p/H.per)+1)),back=(rows-1)*H.step+H.box[1];
   const houseBox=[P.house[0]-P.house[2]-.3,P.house[1]-.5,P.house[0]+P.house[2]+.3,P.house[1]+P.house[3]],yard=P.yard,[px,py,pw,pd]=P.pond,pondBox=[px-pw,py-pd,px+pw,py+pd],ground=[-P.edge,P.gate-2,P.edge,Math.max(back+8,P.shedBox[3]+5)],lane=yard[0]-3.4;
-  // The worn ground: the yard; the road up from the gate; under each pen; a path from the yard to the field and one to
+  // The worn ground: the yard; the road up from the gate, and on out of sight beyond it (roadOut); under each pen; a path from the yard to the field and one to
   // the pond; a lane in front of every row of huts behind the first, and one up the left side that joins them.
-  const earth=[yard,[-P.road,P.gate,P.road,yard[1]+1],...fences.map(([a,b,c,d])=>[a-.9,b-.9,c+.9,d+.6]),[field[2],-8.5,yard[0]+1,-5.5],[yard[2]-1,-8.5,pondBox[0]+.6,-5.5],
+  const roadOut=[-P.road,P.gate-60,P.road,yard[1]+1],earth=[yard,roadOut,...fences.map(([a,b,c,d])=>[a-.9,b-.9,c+.9,d+.6]),[field[2],-8.5,yard[0]+1,-5.5],[yard[2]-1,-8.5,pondBox[0]-.7,-5.5],
     ...Array.from({length:rows-1},(_,k)=>[lane,(k+1)*H.step-2.6,yard[2],(k+1)*H.step+H.y-.2]),...(rows>1?[[lane,-2.6,lane+2.8,(rows-1)*H.step+H.y-.2],[lane,-2.6,yard[0]+1,-.2]]:[])];
   // Dressing (2026-10-11, the user's reference, a farm game: no empty ground): a rail fence round the yard, open where the
   // paths leave it; stone slabs on the side paths; hedges up the road from the gate; everything else in `props`.
+  const hits=(x,y,r,boxes)=>boxes.some(([a,b,c,d])=>Math.hypot(Math.max(a-x,0,x-c),Math.max(b-y,0,y-d))<r);
   const fence=[[yard[0]-.6,yard[1]-.6,-2.6,yard[1]-.6],[2.6,yard[1]-.6,yard[2]+.6,yard[1]-.6],[yard[0]-.6,yard[1]-.6,yard[0]-.6,-8.9],[yard[0]-.6,-5.1,yard[0]-.6,yard[3]-.4],[yard[2]+.6,yard[1]-.6,yard[2]+.6,-8.9],[yard[2]+.6,-5.1,yard[2]+.6,yard[3]-.4]];
   const slabs=[];for(let x=field[2]+.8;x<yard[0]-.4;x+=1.05)slabs.push([x,-7+(x*7%1-.5)*.5]);for(let x=yard[2]+.8;x<pondBox[0]-.2;x+=1.05)slabs.push([x,-7+(x*7%1-.5)*.5]);
-  const props=[['bales',16.2,-1.6,.2],['bales',-16.4,-1.2,-.3],['barrel',17.4,-13.8,0],['logs',14.6,-15.5,.5],['logs',-15.8,-16.2,-.6],['rocks',24.5,-13,0],['rocks',-15,-33,.6],['rocks',21,-20,.3],
+  const props=[['bales',16.2,-1.6,.2],['bales',-16.4,-1.2,-.3],['barrel',17.4,-13.8,0],['logs',14.6,-15.5,.5],['logs',-8.6,-17,-.6],['rocks',24.5,-13,0],['rocks',-15,-33,.6],['rocks',21,-20,.3],
     ['cone',yard[0]-.6,yard[1]-.6,0],['cone',yard[2]+.6,yard[1]-.6,0],['urn',yard[0]-.6,yard[3]-.6,0],['urn',yard[2]+.6,yard[3]-.6,0]];   // a topiary on the yard's corners
   for(let y=P.gate+5,k=0;y<yard[1]-3;y+=4.2,k++)props.push(['stook',-3.5,y,k*1.7],['stook',3.5,y,k*2.3+1]);   // sheaves of wheat stood up along the road (2026-10-12, the user: 「路邊的綠籬你用小麥堆」; they were hedges)
+  for(let k=props.length-1;k>=0;k--)if(props[k][0]!=='stook'&&hits(props[k][1],props[k][2],1.8,fences))props.splice(k,1);   // the field grows with the ranch: nothing is left lying on a plot (2026-10-12, the user: logs on the wheat)
   const beside=(h,k)=>huts.includes(h.plot+k)&&Math.floor((h.plot+k)/H.per)===Math.floor(h.plot/H.per);homes.forEach(h=>{h.left=!beside(h,-1);h.right=!beside(h,1);});   // left / right: the row stops there (an end wall)
   const blocks=[...homes.map(h=>[h.x-H.half-(h.left?H.end:0),h.d+H.box[0],h.x+H.half+(h.right?H.end:0),h.d+H.box[1]]),P.shedBox,pondBox,houseBox,...fences,...props.map(([k,x,y])=>{const [w,d]=RANCH.plants[k]?.patch??[1.4,1.2];return [x-w,y-d,x+w,y+d];})];   // a prop takes about a 3 × 2.5 m patch, a plant its own
   // Trees: a belt round the ranch, two deep, and a few inside its corners; none in a building, a pen or on the worn ground.
-  const hits=(x,y,r,boxes)=>boxes.some(([a,b,c,d])=>Math.hypot(Math.max(a-x,0,x-c),Math.max(b-y,0,y-d))<r);
   let n=0;const rnd=()=>(n=(n*9301+49297)%233280)/233280,trees=[],[gx0,gy0,gx1,gy1]=ground;
   for(let ring=0;ring<2;ring++){const o=ring*6.5;
     for(let x=gx0-o;x<=gx1+o;x+=5.6+rnd()*2){trees.push([x+rnd()*2,gy0-o-rnd()*2.5,5.4+rnd()*1.6]);trees.push([x+rnd()*2,gy1+o+rnd()*2.5,5.8+rnd()*1.6]);}
@@ -138,7 +141,7 @@ export function layout({pens=[[2,2],[2,1]],huts=autoHuts(1)}={}){
   {const near=(x,y,r)=>hits(x,y,r,blocks)||hits(x,y,r,earth)||hits(x,y,r,[yard,[-P.road-2,P.gate,P.road+2,yard[1]]]);
     for(let y=gy0+6;y<gy1-6;y+=7)for(let x=gx0+6;x<gx1-6;x+=7){const px=x+(rnd()-.5)*3,py=y+(rnd()-.5)*3;if(rnd()<.35||near(px,py,5.2))continue;
       const n=3+(rnd()<.5?1:0);for(let k=0;k<n;k++){const a=rnd()*6.28,d=1.6+rnd()*1.6;trees.push([px+Math.cos(a)*d,py+Math.sin(a)*d,4.2+rnd()*2.4]);}}}
-  const kept=trees.filter(([x,y,h])=>!hits(x,y,h*.41+.3,blocks)&&!hits(x,y,h*.2,earth));
+  const kept=trees.filter(([x,y,h])=>!hits(x,y,h*.41+.3,blocks)&&!hits(x,y,h*.2,earth)&&!hits(x,y,h*.41+.6,[roadOut]));   // the road runs on out through the belt of trees (2026-10-12, the user: a road to the outside), no crown over it
   const open={at:P.look,dist:A.dist,az:A.az,el:A.el};
   return {pens:fences,beds,field,yard,lawn:yard,ground,fence,slabs,house:P.house,site:{x:[yard[0],yard[2]],y:[yard[1],yard[3]]},blocks:[...blocks,...fence.map(([a,b,c,d])=>[Math.min(a,c)-.2,Math.min(b,d)-.2,Math.max(a,c)+.2,Math.max(b,d)+.2])],homes,rows,earth,trees:kept,props,open,back,up:U,pond:P.pond,
     walks:homes.map(h=>[h.x-H.half-.3,h.d+H.y-.9,h.x+H.half+.3,h.d+H.y]),pan:[P.pan[0],P.pan[1],P.pan[2],Math.max(P.look[1]+10,back-4)],
@@ -288,22 +291,26 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
         const mesh=new THREE.InstancedMesh(one.geometry,SOLID,mine.length);mine.forEach((h,k)=>mesh.setMatrixAt(k,m4.makeTranslation(h.x,0,-(h.d+D.y))));mesh.castShadow=mesh.receiveShadow=true;mesh.frustumCulled=false;scene.add(mesh);});
       const top=L.homes[0]&&built('TOP');if(top){top.position.set(L.homes[0].x,0,-(L.homes[0].d+D.y));scene.add(top);}
       const house=built('HOUSE');if(house){house.position.set(L.house[0],0,-L.house[1]);scene.add(house);}}}
-  // The pond: a rim of earth and the water in it. The plots the next hut may go on (offers): pale slabs, tapped to choose.
-  {const [px,py,pw,pd]=L.pond,disc=(r,y,col,o=1)=>{const m=new THREE.Mesh(keep(new THREE.CircleGeometry(1,36).rotateX(-Math.PI/2)),keep(new THREE.MeshStandardMaterial({color:col,roughness:o<1?.25:1,transparent:o<1,opacity:o})));m.scale.set(pw*r,1,pd*r);m.position.copy(at(px,py)).setY(y);m.receiveShadow=true;scene.add(m);};
-    disc(1.14,.052,'#b58c5d');disc(1,.06,'#3f9fd8');disc(.72,.064,'#7cc4ee',.55);}
+  // The pond (2026-10-12, the user: dug in, 凹下去): a hole in the lawn, a shore round it, a bank down to the water below the grass. The plots the next hut may go on (offers): pale slabs, tapped to choose.
+  {const [px,py,pw,pd]=L.pond,W=POND.water,disc=(r,y,col,o=1)=>{const m=new THREE.Mesh(keep(new THREE.CircleGeometry(1,48).rotateX(-Math.PI/2)),keep(new THREE.MeshStandardMaterial({color:col,roughness:o<1?.25:1,transparent:o<1,opacity:o})));m.scale.set(pw*r,1,pd*r);m.position.copy(at(px,py)).setY(y);m.receiveShadow=true;scene.add(m);};
+    // a band between two ellipses (r0 at height y0 → r1 at y1): the shore on the grass, the bank down to the water
+    const band=(r0,y0,r1,y1,col)=>{const N=48,pos=[],ix=[];for(let k=0;k<=N;k++){const a=k/N*6.2832,c=Math.cos(a),n=Math.sin(a);pos.push(px+c*pw*r0,y0,-(py+n*pd*r0),px+c*pw*r1,y1,-(py+n*pd*r1));if(k<N){const i=k*2;ix.push(i,i+2,i+1,i+1,i+2,i+3);}}
+      const g=keep(new THREE.BufferGeometry());g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();const m=new THREE.Mesh(g,keep(new THREE.MeshStandardMaterial({color:col,roughness:1})));m.receiveShadow=true;scene.add(m);};
+    band(POND.rim+.1,.052,POND.rim,.052,'#b58c5d');band(POND.rim,.052,1.02,W+.12,'#a67c4f');band(1.02,W+.12,.94,W-.08,'#8a6540');   // shore, bank, the wet foot of the bank
+    disc(1,W,'#3489c6');disc(.8,W+.004,'#3f9fd8');disc(.58,W+.008,'#7cc4ee',.55);}
   // The pond's places to cast (farm.mjs FARM.pond): a pale ring on the water each; a float where bait is in, bobbing
   // gently, and jumping when the fish is on. pond(grown): one number a place, null or 0–1, like field().
   const casts=[[-.5,.36],[.42,.44],[-.36,-.42],[.5,-.3]].map(([u,v])=>{const x=L.pond[0]+u*L.pond[2],y=L.pond[1]+v*L.pond[3];
-    const ring=new THREE.Mesh(keep(new THREE.RingGeometry(.42,.56,24).rotateX(-Math.PI/2)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.75})));ring.position.copy(at(x,y)).setY(.07);scene.add(ring);
+    const ring=new THREE.Mesh(keep(new THREE.RingGeometry(.42,.56,24).rotateX(-Math.PI/2)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.75})));ring.position.copy(at(x,y)).setY(POND.water+.012);scene.add(ring);
     const float=new THREE.Group(),ball=(r,col,h)=>{const m=new THREE.Mesh(keep(new THREE.SphereGeometry(r,14,10)),keep(new THREE.MeshStandardMaterial({color:col,roughness:.5})));m.position.y=h;float.add(m);};ball(.3,'#ffffff',0);ball(.24,'#e5484d',.2);
-    float.position.copy(at(x,y));float.visible=false;scene.add(float);return {x,y,ring,float,g:null};});
+    float.position.copy(at(x,y)).setY(POND.water+.1);float.visible=false;scene.add(float);return {x,y,ring,float,g:null};});
   // A bite is said three ways (2026-10-12, the user: 「現在有魚不明顯」): the float jumps, a ring spreads on the water round
   // it again and again, and a white bubble with the fish in it stands over it (drawn over everything, so a tree never hides it).
   const bite=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),tex=keep(new THREE.CanvasTexture(c));tex.colorSpace=THREE.SRGBColorSpace;
     const draw=im=>{g.clearRect(0,0,128,128);g.fillStyle='#ffffff';g.beginPath();g.arc(64,58,50,0,6.2832);g.fill();g.beginPath();g.moveTo(48,100);g.lineTo(64,126);g.lineTo(80,100);g.fill();g.lineWidth=7;g.strokeStyle='#ffcc00';g.beginPath();g.arc(64,58,47,0,6.2832);g.stroke();if(im)g.drawImage(im,22,16,84,84);tex.needsUpdate=true;};
     draw(null);const im=new Image();im.onload=()=>draw(im);im.src=new URL('../assets/stable/item_fish.webp',import.meta.url).href;return keep(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));})();
   for(const c of casts){c.tag=new THREE.Sprite(bite);c.tag.scale.setScalar(2.4);c.tag.renderOrder=20;c.tag.visible=false;scene.add(c.tag);
-    c.wave=new THREE.Mesh(c.ring.geometry,keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false})));c.wave.position.copy(c.ring.position).setY(.075);scene.add(c.wave);}
+    c.wave=new THREE.Mesh(c.ring.geometry,keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false})));c.wave.position.copy(c.ring.position).setY(POND.water+.017);scene.add(c.wave);}
   function pond(grown){casts.forEach((c,i)=>{c.g=grown[i]??null;const on=c.g!=null&&c.g>=1;c.float.visible=c.g!=null;c.ring.material.opacity=c.g==null?.75:on?1:.3;c.tag.visible=on;c.wave.visible=on;});}
   const slabs=offers.map(p=>{const [x,d]=plotAt(p),m=new THREE.Mesh(keep(new THREE.BoxGeometry(4.3,.3,4)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.6})));m.position.copy(at(x,d+RANCH.huts.y+2)).setY(.2);scene.add(m);return {plot:p,m};});
   const isOpen=k=>set[k]??!herd.some(b=>b.stall===k),swing=k=>{if(hung[k])hung[k].rotation.y=isOpen(k)?D.open:0;};
@@ -321,7 +328,8 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     const m=new THREE.Mesh(keep(mergeGeometries(parts)),SOLID);m.castShadow=m.receiveShadow=true;parts.forEach(g=>g.dispose());scene.add(m);}
   // The ground: grass as far as the camera can see; the worn earth under the field and the track from its gate out
   // through the lawn, drawn like the lawn in earth colours, round-cornered.
-  {const plane=new THREE.Mesh(keep(new THREE.PlaneGeometry(RANCH.far,RANCH.far).rotateX(-Math.PI/2)));plane.position.copy(at(0,midY)).setY(.04);textured(plane,assets.grass.clone(),RANCH.lawn.tile);keep(plane.material);keep(plane.material.map);scene.add(plane);
+  {const half=RANCH.far/2,sheet=new THREE.Shape([[-half,midY-half],[half,midY-half],[half,midY+half],[-half,midY+half]].map(([x,y])=>new THREE.Vector2(x,y)));sheet.holes.push(new THREE.Path(Array.from({length:48},(_,k)=>new THREE.Vector2(L.pond[0]+Math.cos(k/48*6.2832)*L.pond[2]*POND.rim,L.pond[1]+Math.sin(k/48*6.2832)*L.pond[3]*POND.rim))));   // the pond is dug into it (POND)
+    const plane=new THREE.Mesh(keep(new THREE.ShapeGeometry(sheet,48).rotateX(-Math.PI/2)));plane.position.y=.04;textured(plane,assets.grass.clone(),RANCH.lawn.tile);keep(plane.material);keep(plane.material.map);scene.add(plane);
     const R=F.earth.round,E=RANCH.edge[0],soil=keep(lawn(F.earth)),worn=([x0,y0,x1,y1],y,opacity)=>{const sh=new THREE.Shape();sh.moveTo(x0+R,-y1);sh.lineTo(x1-R,-y1);sh.quadraticCurveTo(x1,-y1,x1,-y1+R);sh.lineTo(x1,-y0-R);sh.quadraticCurveTo(x1,-y0,x1-R,-y0);sh.lineTo(x0+R,-y0);sh.quadraticCurveTo(x0,-y0,x0,-y0-R);sh.lineTo(x0,-y1+R);sh.quadraticCurveTo(x0,-y1,x0+R,-y1);
       const m=textured(new THREE.Mesh(keep(new THREE.ShapeGeometry(sh,5).rotateX(Math.PI/2))),soil.clone(),14);m.position.y=y;m.material.side=THREE.DoubleSide;if(opacity<1){m.material.transparent=true;m.material.opacity=opacity;m.material.depthWrite=false;}keep(m.material);keep(m.material.map);m.receiveShadow=true;scene.add(m);};
     const E2=RANCH.edge[2];for(const e of L.earth)worn([e[0]-E2,e[1]-E2,e[2]+E2,e[3]+E2],.042,RANCH.edge[3]);for(const e of L.earth)worn([e[0]-E,e[1]-E,e[2]+E,e[3]+E],.045,RANCH.edge[1]);for(const e of L.earth)worn(e,.05,1);}   // a paler rim first, the path on it: the edge is two soft steps, not a cut line
@@ -490,12 +498,12 @@ dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces
     if(onHouse&&off(e,hit.copy(at(L.house[0],L.house[1]+2)).setY(2))<50){onHouse();return;}   // the rider's house, tapped: her page
     let near;   // r524–r530: this was declared by the door's tap, which went with the doors; without it every tap below threw (no sowing, no casting)
     {let pick=null,near=70;for(const o of slabs){const d=off(e,o.m.position);if(d<near){near=d;pick=o;}}if(pick){onOffer?.(pick.plot);return;}}
-    if(onPond){let k=-1;near=56;casts.forEach((c,i)=>{const d=off(e,hit.copy(at(c.x,c.y)).setY(.2));if(d<near){near=d;k=i;}});if(k>=0){onPond(k,e.clientX,e.clientY);return;}}
+    if(onPond){let k=-1;near=56;casts.forEach((c,i)=>{const d=off(e,hit.copy(at(c.x,c.y)).setY(POND.water));if(d<near){near=d;k=i;}});if(k>=0){onPond(k,e.clientX,e.clientY);return;}}
     if(onBed){let bed=-1;near=64;L.beds.slice(0,open).forEach(([x,y],i)=>{const d=off(e,hit.copy(at(x,y)).setY(S.top));if(d<near){near=d;bed=i;}});if(bed>=0)onBed(bed,e.clientX,e.clientY);}});
 
   let raf=0,last=performance.now();
-  let clock=0;const tick=dt=>{clock+=dt;herd.forEach(b=>stroll(b,dt));casts.forEach((c,i)=>{if(c.g==null)return;const on=c.g>=1;c.float.position.y=.16+(on?Math.abs(Math.sin(clock*7+i))*.7:Math.sin(clock*2+i)*.04);
-      if(on){const u=(clock*.9+i*.37)%1;c.wave.scale.setScalar(1+u*3.2);c.wave.material.opacity=.85*(1-u);c.tag.position.set(c.float.position.x,2.5+Math.sin(clock*4+i)*.18,c.float.position.z);}});aim(dt);r.render(scene,cam);};
+  let clock=0;const tick=dt=>{clock+=dt;herd.forEach(b=>stroll(b,dt));casts.forEach((c,i)=>{if(c.g==null)return;const on=c.g>=1;c.float.position.y=POND.water+.1+(on?Math.abs(Math.sin(clock*7+i))*.7:Math.sin(clock*2+i)*.04);
+      if(on){const u=(clock*.9+i*.37)%1;c.wave.scale.setScalar(1+u*3.2);c.wave.material.opacity=.85*(1-u);c.tag.position.set(c.float.position.x,2.1+Math.sin(clock*4+i)*.18,c.float.position.z);}});aim(dt);r.render(scene,cam);};
   function frame(t){raf=requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000);last=t;tick(dt);}
   herd.forEach(b=>stroll(b,0));r.shadowMap.needsUpdate=true;fit();
   host.append(el$);raf=requestAnimationFrame(frame);
