@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r536';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r536';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r536';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r536';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r536';
-import {installApprovedEnvironment} from './approved-environment.js?v=r536';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r536';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r536';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r536';
-import {turnAt} from './track-projection.js?v=r536';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r536';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r536';
+import {roadHalfWidth} from './track-presentation.mjs?v=r550';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r550';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r550';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r550';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r550';
+import {installApprovedEnvironment} from './approved-environment.js?v=r550';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r550';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r550';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r550';
+import {turnAt} from './track-projection.js?v=r550';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r550';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r550';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -95,7 +95,8 @@ const COIN={scale:1.25,height:1.3,spin:3.4,step:.7,bob:0,glow:1.6,tint:COIN_GLOW
 // Sizes (2026-10-11, the user: 「金幣蘋果大便的比例要設計一下」), against a rider's helmet (.75 m across): a coin 1.0, there are
 // many; an apple 1.15, the one worth going for; the dropping 1.15 wide and a little squat, so it is seen from as far.
 // Then (the user, the same day): the coin a quarter bigger (1.25) and a tenth thinner, the apple 15% bigger (1.32).
-const PUDDLE={file:'./assets/props/puddles.webp',sprites:5,width:2.5,vary:.18,y:.035,cuts:6,
+const PUDDLE={file:'./assets/props/puddles.webp',snow:'./assets/props/snow.webp',   // snow: the user's snow sheet (references/weather/snow-sheet.png), five mounds laid out like the puddles
+  sprites:5,width:2.5,vary:.18,y:.035,cuts:6,
   splash:{drops:5,every:.07,speed:[2,4.5],life:.5,size:[.42,.1],colors:[new THREE.Color('#e9f7ff'),new THREE.Color('#7cc4ff'),new THREE.Color('#ffffff')]}},POOP={scale:1.15,squat:.86};
 const APPLE={scale:1.32,height:1.4,spin:1.6,step:0,bob:.12,glow:2.3,tint:new THREE.Color('#ff6a4a'),alpha:.4,sparks:[new THREE.Color('#ff5a48'),new THREE.Color('#fff2e0'),new THREE.Color('#8fd45a')]};
 const DUST={max:300,rate:20,life:.8,size:[.6,2],alpha:.6,dirt:new THREE.Color('#c9a27c'),mud:new THREE.Color('#7f5f45')};
@@ -867,8 +868,8 @@ export class ChaseRenderer {
     if (this.rain.visible) {
       const data = this.rainGeometry.attributes.position.array, clock = this.reduced ? 0 : Math.max(0, time);
       for (let i = 0; i < 180; i++) {
-        const x = ((i * 7.31) % 32) - 16, y = 15 - ((i * 1.73 + clock * 10) % 15), z = 9 - ((i * 3.17) % 44), k = i * 6;
-        data[k] = x; data[k + 1] = y; data[k + 2] = z; data[k + 3] = x - .12; data[k + 4] = y - .65; data[k + 5] = z;
+        const snow = this.snowing, x = ((i * 7.31) % 32) - 16 + (snow ? Math.sin(clock * 1.3 + i) * .5 : 0), y = 15 - ((i * 1.73 + clock * (snow ? 2.6 : 10)) % 15), z = 9 - ((i * 3.17) % 44), k = i * 6;   // snow: the same lines, short, slow and drifting
+        data[k] = x; data[k + 1] = y; data[k + 2] = z; data[k + 3] = x - (snow ? .09 : .12); data[k + 4] = y - (snow ? .09 : .65); data[k + 5] = z;
       }
       this.rainGeometry.attributes.position.needsUpdate = true;
     }
@@ -899,11 +900,11 @@ export class ChaseRenderer {
       // Puddles: one small strip each, a cell of the picture on it (shown once the picture is in).
       if(race.puddles?.length||race.poops?.length){
         const water=this.own(new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,visible:false}));
-        new THREE.TextureLoader().load(new URL(PUDDLE.file+new URL(import.meta.url).search,import.meta.url).href,tex=>{tex.colorSpace=THREE.SRGBColorSpace;this.own(tex);water.map=tex;water.visible=true;water.needsUpdate=true;});
+        const white=water.clone();this.own(white);for(const [m,f] of [[water,PUDDLE.file],[white,PUDDLE.snow]])if(m===water||(race.puddles||[]).some(w=>w.snow))new THREE.TextureLoader().load(new URL(f+new URL(import.meta.url).search,import.meta.url).href,tex=>{tex.colorSpace=THREE.SRGBColorSpace;this.own(tex);m.map=tex;m.visible=true;m.needsUpdate=true;});
         this.puddleMeshes=(race.puddles||[]).map((w,i)=>{const n=PUDDLE.cuts,cell=i%PUDDLE.sprites,data=new Float32Array((n+1)*6),uv=new Float32Array((n+1)*4),index=[];
           for(let k=0;k<=n;k++)uv.set([cell/PUDDLE.sprites,k/n,(cell+1)/PUDDLE.sprites,k/n],k*4);for(let k=0;k<n;k++){const a=k*2;index.push(a,a+1,a+2,a+1,a+3,a+2);}
           const geo=this.own(new THREE.BufferGeometry());geo.setAttribute('position',new THREE.BufferAttribute(data,3).setUsage(THREE.DynamicDrawUsage));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(index);
-          const mesh=new THREE.Mesh(geo,water);mesh.frustumCulled=false;mesh.renderOrder=1;this.scene.add(mesh);
+          const mesh=new THREE.Mesh(geo,w.snow?white:water);mesh.frustumCulled=false;mesh.renderOrder=1;this.scene.add(mesh);
           return {mesh,data,geo,width:PUDDLE.width*(1+PUDDLE.vary*(((i*7919)%13)/6-1))};});
         const poop=approvedAssets.get('poop').scene;this.poopMeshes=(race.poops||[]).map(()=>{const m=poop.clone();m.scale.set(POOP.scale,POOP.scale*POOP.squat,POOP.scale);this.scene.add(m);return m;});
       }

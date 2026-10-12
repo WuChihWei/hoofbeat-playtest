@@ -151,10 +151,10 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}
 .page-stable .ui-toast{bottom:calc(var(--acts-b) + var(--acts-h) + var(--ui-s4))}
 .st-sheet>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--ui-s2)}.st-sheet>header b{font-size:calc(14 * var(--u))}
 .st-sheet{left:var(--ui-s4);right:var(--ui-s4);bottom:calc(var(--acts-b) + var(--acts-h) + var(--ui-s3));padding:var(--ui-s3) var(--ui-s3) var(--ui-s1);border-radius:var(--ui-r-md)}   /* Gear: just above the actions */
-.st-sheet .parts{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--ui-s1)}
-.st-sheet .parts button{display:flex;flex-direction:column;align-items:center;gap:var(--ui-s1);border:1px solid transparent;border-radius:var(--ui-r-sm);background:rgb(255 255 255 / .06);color:var(--ui-text-2);font-size:calc(12 * var(--u));padding:var(--ui-s2) 0}
-.st-sheet .parts i{width:calc(18 * var(--u));height:calc(18 * var(--u));border-radius:50%;border:2px solid rgb(255 255 255 / .5)}
-.st-sheet .parts [aria-selected=true]{border:2px solid var(--ui-lime);color:var(--ui-text)}
+:is(.st-sheet,.page-house) .parts{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--ui-s1)}
+:is(.st-sheet,.page-house) .parts button{display:flex;flex-direction:column;align-items:center;gap:var(--ui-s1);border:1px solid transparent;border-radius:var(--ui-r-sm);background:rgb(255 255 255 / .06);color:var(--ui-text-2);font-size:calc(12 * var(--u));padding:var(--ui-s2) 0}
+:is(.st-sheet,.page-house) .parts i{width:calc(18 * var(--u));height:calc(18 * var(--u));border-radius:50%;border:2px solid rgb(255 255 255 / .5)}
+:is(.st-sheet,.page-house) .parts [aria-selected=true]{border:2px solid var(--ui-lime);color:var(--ui-text)}
 .swatches{display:flex;justify-content:center;gap:var(--ui-s3);margin:var(--ui-s3) 0}.swatches button{width:calc(36 * var(--u));height:calc(36 * var(--u));border-radius:50%;border:2px solid rgb(255 255 255 / .3)}
 .swatches [aria-checked=true]{border-color:var(--ui-lime);box-shadow:0 0 0 2px var(--ui-lime)}
 
@@ -462,3 +462,17 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .st-acts .feed em{position:absolute;left:50%;bottom:calc(-7 * var(--u));translate:-50% 0;font-style:normal;white-space:nowrap;font-size:calc(10 * var(--u));font-weight:700;line-height:1;padding:calc(3 * var(--u)) calc(7 * var(--u));border-radius:99px;background:var(--ui-yellow);color:#000;text-shadow:none}.st-acts .feed em[hidden]{display:none}
 /* The dorm: the food this buddy does not eat (2026-10-12): its button is off, grey and faint. */
 .st-acts .feed:disabled{pointer-events:none}.st-acts .feed:disabled>span{background:rgb(255 255 255 / .22);filter:grayscale(1);opacity:.45}.st-acts .feed:disabled{opacity:.6}
+/* The rider's house (home.js PAGES.house): the room's picture covers the page from the top; plank, board and rider sit on it in the picture's own percents. */
+.page-house .room{position:absolute;top:0;left:50%;transform:translateX(-50%);height:max(100%,calc(100vw * 1672 / 941));aspect-ratio:941/1672;background:url(../assets/ui/rider_home.webp) center/cover}
+.page-house .plank{position:absolute;left:29%;top:.5%;width:42%;aspect-ratio:1197/652;background:url(../assets/ui/plank.webp) center/contain no-repeat;display:grid;place-items:center}
+.page-house .plank b{margin-top:22%;max-width:78%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(19 * var(--u));color:#4a2a10}
+.page-house .board{position:absolute;left:28.5%;top:16.6%;width:43%;height:13.4%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#4a2a10}
+.page-house .board b{font-size:calc(25 * var(--u))}.page-house .board small{font-size:calc(13 * var(--u))}
+.page-house .view{position:absolute;left:18%;top:31%;width:64%;height:38%}.page-house .view canvas{display:block;width:100%;height:100%}
+.page-house .ui-header{position:absolute;left:0;top:0}
+.page-house .rows,.page-house .pane{position:absolute;top:auto;margin:0;left:var(--ui-s4);right:var(--ui-s4);bottom:calc(24 * var(--u) + env(safe-area-inset-bottom));border-radius:var(--ui-r-lg)}
+.page-house .rows li{padding:0}.page-house .rows button{background:none;border:0;padding:0 var(--ui-s4);text-align:left;display:flex;justify-content:space-between;align-items:center;width:100%;min-height:calc(54 * var(--u));font-size:calc(17 * var(--u));color:inherit}.page-house .rows small{opacity:.6;font-size:calc(14 * var(--u))}
+.page-house .pane{padding:var(--ui-s4)}.page-house .pane>header{display:flex;justify-content:space-between;align-items:center;font-size:calc(18 * var(--u))}
+.page-house .wall{list-style:none;margin:var(--ui-s2) 0 0;padding:0}.page-house .wall li{display:flex;align-items:center;gap:var(--ui-s3);padding:calc(5 * var(--u)) 0;font-size:calc(15 * var(--u))}
+.page-house .wall span{width:1.6em;opacity:.6}.page-house .wall i{font-style:normal;color:#ffd24a;flex:1}.page-house .wall s{text-decoration:none;color:rgb(255 255 255 / .22)}.page-house .wall em{font-style:normal}
+.page-house .trophy{position:absolute;left:68%;width:10%;bottom:68.2%}

@@ -1,16 +1,16 @@
-import {fencePose} from './track-presentation.mjs?v=r536';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r536';
+import {fencePose} from './track-presentation.mjs?v=r550';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r550';
 import * as THREE from './vendor/three.module.min.js';
-import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r536';
+import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r550';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {approvedAssets,scenePictures} from './approved-assets.js?v=r536';
-import {HORSE_Z,roadPose} from './race-world.js?v=r536';
-import {cityById,CITIES} from './course/cities/index.mjs?v=r536';
-import {modelFor} from './course/assets.mjs?v=r536';
+import {approvedAssets,scenePictures} from './approved-assets.js?v=r550';
+import {HORSE_Z,roadPose} from './race-world.js?v=r550';
+import {cityById,CITIES} from './course/cities/index.mjs?v=r550';
+import {modelFor} from './course/assets.mjs?v=r550';
 // The release tag the page loaded this module with (?v=…): the paintings and cards carry it too, so a picture replaced
 // under the same name is fetched again instead of coming from the browser's cache.
 const TAG=new URL(import.meta.url).search;
-import {installFarBackground,sunDirection} from './far-background.js?v=r536';
+import {installFarBackground,sunDirection} from './far-background.js?v=r550';
 
 // The race dressing comes from the city pack (course/cities/<id>.mjs): barrier, prop rows, treeline, weather, backdrop.
 const packFor=id=>cityById(id)||cityById('stockholm')||CITIES[0];
@@ -266,10 +266,11 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
   jump.scale.set(s*P.hurdle.jumpScale[0]*(i===0?P.hurdle.span/P.hurdle.visualWidth:1)/g.scale.x,s*P.hurdle.jumpScale[1]/g.scale.y,s);jump.position.y=-entry.beam.position.y;entry.beam.add(jump);
  });
  // Weather: cloud greys the sky and softens the sun; rain adds the renderer's rain streaks and puddles on top.
- const wet=W.rain||0,grey=Math.max(W.cloud||0,wet),OVERCAST=new THREE.Color('#9aa8b2');
+ const wet=W.rain||0,snow=W.snow||0,grey=Math.max(W.cloud||0,wet,snow),OVERCAST=new THREE.Color('#9aa8b2');   // snow (2026-10-12): the sky a little grey, the ground whitened, slow flakes
  if(sky){sky.material.uniforms.top.value.lerp(OVERCAST,grey*.6);sky.material.uniforms.hor.value.lerp(OVERCAST,grey*.45);}
  const fogColor=far?new THREE.Color(BG.fogColor):sky.material.uniforms.hor.value.clone(),fog=[W.fog[0]*(1-.4*wet)*LOOK.race.fog[0],W.fog[1]*(1-.5*wet)*LOOK.race.fog[1]],sunColor=new THREE.Color(BG?.keyLightColor??W.sun.color);
  if(card)card.material.color.set('#ffffff').lerp(OVERCAST,grey*.5);
+ if(far&&snow){const u=far.mesh.material.uniforms;u.sat.value*=1-.7*snow;u.deep.value=0;u.haze.value=Math.min(1,u.haze.value+.3*snow);}   // snow: the city's painting greyed (2026-10-12, the user: 「調灰」)
  // One gate model serves every handoff and the finish (only one is ever in view): its sign swaps RELAY / FINISH.
  const finishMap=signMap('FINISH','#1d2622');
  // Every ground surface moves at the true race speed: texture offsets in tiles = metres travelled / metres per tile.
@@ -280,7 +281,8 @@ diffuseColor.rgb*=mix(${grad[0].toFixed(2)},${grad[1].toFixed(2)},smoothstep(.15
   r.roadMaterial.color.setRGB(...CLEAN);r.grassMaterial.color.setRGB(...GT);r.vergeMaterial.color.set('#f2fff0').multiply(TINT.setRGB(...GT));
   sky?.position.copy(r.camera.position);far?.update(r.camera);r.scene.fog.color.copy(fogColor);r.scene.fog.near=fog[0];r.scene.fog.far=fog[1];
   sun.intensity=LOOK.race.sun*W.sun.intensity*(1-.45*grey);sun.color.copy(sunColor);
-  r.rain.visible=wet>0;r.rain.material.opacity=.55*wet;r.puddles.visible=wet>0;r.puddleMaterial.opacity=.25*wet;
+  r.rain.visible=wet>0||snow>0;r.rain.material.opacity=snow>0?.95:.55*wet;r.snowing=snow>0;r.puddles.visible=wet>0;r.puddleMaterial.opacity=.25*wet;
+  if(snow>0)for(const [m,e] of [[r.roadMaterial,[.14,.18,.25]],[r.grassMaterial,[.62,.68,.76]],[r.vergeMaterial,[.62,.68,.76]]])m.emissive?.setRGB(e[0]*snow,e[1]*snow,e[2]*snow);
   aimSun();  // default key from behind-left (lit backs and rumps facing the chase camera); a panorama city: from its sun
   // Props follow the barrier line and loop every FAR_LOOP metres; each row gets its own phase so rows don't stack.
   const loopZ=(i,spacing,phase)=>12-((i*spacing+phase-distance)%FAR_LOOP+FAR_LOOP)%FAR_LOOP;

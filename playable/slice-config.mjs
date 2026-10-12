@@ -11,8 +11,8 @@ const T=1.95;
 // types: the straight / curve / mud label · relay: the three-buddy race.
 // What a kind of buddy is good at (slice-game perk; 2026-10-11, the user's list): by species (approved-assets COATS).
 // The horse has none: it is the fastest; the llama and the zebra none yet.
-export const BUDDY_PERK=Object.freeze({rhino:'water',cow:'water',bear:'tough',wolf:'quick'});
-export const MVP=Object.freeze({gems:false,treats:false,levels:false,missions:false,daily:false,perks:false,decor:false,types:false,relay:true});
+export const BUDDY_PERK=Object.freeze({rhino:['water'],cow:['water'],bear:['tough','snow'],wolf:['quick','snow']});   // 'snow' (2026-10-12): snow on the road does not slow the bear and the wolf, as water does not the rhino and the cow
+export const MVP=Object.freeze({gems:false,treats:false,levels:true,missions:false,daily:false,perks:false,decor:false,types:false,relay:true});
 export const SLICE_CONFIG = Object.freeze({
   // Three-leg relay, about 75 wall seconds: one horse per leg (SLICE_LEGS), handoffs and the finish by distance.
   legLength:540, baseSpeed:12, countdown:3, tempo:T, fixedStep:1/120,

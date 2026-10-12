@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r536';
-import {applyLook,LOOK} from '../visual-style.js?v=r536';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r550';
+import {applyLook,LOOK} from '../visual-style.js?v=r550';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -256,7 +256,7 @@ export const crowded=(x,z,nx,nz,others,apart=RANCH.apart)=>others.some(o=>{const
 // onOffer(plot): an offered plot was tapped.
 // → {shot(name), field(grown), dispose}; resolves with the first frame drawn, and only then is the canvas put on the
 // page (nothing is seen being put together).
-export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=[],open,onMove,onDoor,onBed,onPond,onOffer,shot='all'}={}){
+export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=[],open,onMove,onDoor,onBed,onPond,onOffer,onHouse,shot='all'}={}){
   const [assets]=await Promise.all([loadScene(),preloadRanchBuddies(buddies.map(b=>b.coat))]),L=layout({pens,huts}),S=RANCH.strip,F=RANCH.field;open??=L.beds.length;
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;r.domElement.setAttribute('aria-hidden','true');
@@ -487,6 +487,7 @@ dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces
         if(b){b.stall=null;delete set[door];b.under.visible=true;b.path=[];b.via=[cx+D.door,d+D.y-D.leave];swing(door);onMove?.(b.id,{at:[+(cx+D.door).toFixed(2),+(d+D.y-D.leave).toFixed(2)]});}
         else{set[door]=!isOpen(door);swing(door);onDoor?.(door,set[door]);}
         return;}}
+    if(onHouse&&off(e,hit.copy(at(L.house[0],L.house[1]+2)).setY(2))<50){onHouse();return;}   // the rider's house, tapped: her page
     let near;   // r524–r530: this was declared by the door's tap, which went with the doors; without it every tap below threw (no sowing, no casting)
     {let pick=null,near=70;for(const o of slabs){const d=off(e,o.m.position);if(d<near){near=d;pick=o;}}if(pick){onOffer?.(pick.plot);return;}}
     if(onPond){let k=-1;near=56;casts.forEach((c,i)=>{const d=off(e,hit.copy(at(c.x,c.y)).setY(.2));if(d<near){near=d;k=i;}});if(k>=0){onPond(k,e.clientX,e.clientY);return;}}

@@ -7,15 +7,15 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r536';
+import {MAX_LEVEL,MVP} from './playable/slice-config.mjs?v=r550';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
-  {id:'wheat',name:'小麥',kind:'food',food:30,sell:4},{id:'seed',name:'小麥種子',kind:'seed',price:10,note:'種在麥田，長成小麥'},
+  {id:'wheat',name:'小麥',kind:'food',food:30,xp:2,sell:4},{id:'seed',name:'小麥種子',kind:'seed',price:10,note:'種在麥田，長成小麥'},
   // the pond's catch (farm.mjs, 2026-10-11: the field's rules again): fish, and the bait that is cast for it. sell: what one
   // of a harvest brings in the shop (4 while a crop takes 45 s in the playtest build: 3 a plot less the 10 of its seed is
   // about what a race pays for the same time; meant: 5, with a crop that takes hours)
-  {id:'fish',name:'魚',kind:'food',food:30,sell:4},{id:'bait',name:'魚餌',kind:'seed',price:10,note:'放進魚池，釣到魚'},
+  {id:'fish',name:'魚',kind:'food',food:30,xp:2,sell:4},{id:'bait',name:'魚餌',kind:'seed',price:10,note:'放進魚池，釣到魚'},
   // treats: a little filling, a little xp
   ...[{id:'carrot',name:'紅蘿蔔',kind:'food',food:10,xp:2,price:15},{id:'apple',name:'蘋果',kind:'food',food:10,xp:3,price:20},
   {id:'cookie',name:'夥伴餅乾',kind:'food',food:15,xp:5,price:35}].map(i=>MVP.treats?i:{...i,kind:'hidden',hidden:true}),   // MVP: wheat is the food
@@ -30,7 +30,7 @@ export const likes=species=>species==='bear'||species==='wolf'?'fish':'wheat',HA
 // Selling a harvest in the shop: all of it at once. → {items, coins}
 export function sellAll(items,id){const it=ITEMS.find(i=>i.id===id&&i.sell),n=it?items[id]||0:0;return {items:n?{...items,[id]:0}:items,coins:n*(it?.sell||0)};}
 export const itemEffect=it=>[it.food&&`飽足 +${it.food}`,it.xp&&`經驗 +${it.xp}`].filter(Boolean).join(' · ');
-const STARTER={wheat:8,seed:3,bait:3,carrot:2,brush:1};   // wheat to feed with and seeds to sow at the start; everything else starts at 0
+const STARTER={wheat:8,seed:3,fish:8,bait:3,carrot:2,brush:1};   // fish like wheat (2026-10-12, the user: 「魚和小麥一樣邏輯」): eight to start with, so a bear or a wolf can be fed before the first catch   // wheat to feed with and seeds to sow at the start; everything else starts at 0
 const COOLDOWN=1200;
 export const freshCare=()=>({hunger:60,clean:70,xp:0,last:0});
 const STATS=['hunger','clean'];
@@ -50,7 +50,9 @@ export function readItems(storage){
 export function saveCare(storage,care,items){
   try{storage.setItem('hoofbeat.care.v2',JSON.stringify(care));storage.setItem('hoofbeat.items.v1',JSON.stringify(items));return true}catch{return false}
 }
-export const XP_LEVEL=40,level=r=>MVP.levels?Math.min(MAX_LEVEL,1+Math.floor(r.xp/XP_LEVEL)):MAX_LEVEL;   // MVP: every buddy at full strength (xp still counts, unseen)   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
+// 2026-10-12 (the user: 強度靠等級): a buddy's level is its growth. Every buddy has its full numbers (home.js passes MAX_LEVEL to
+// buddyStats); each level over 1 makes it LV_SPEED faster (raceForm). xp: races, and a little from every feed.
+export const LV_SPEED=.01,XP_LEVEL=40,level=r=>MVP.levels?Math.min(MAX_LEVEL,1+Math.floor(r.xp/XP_LEVEL)):MAX_LEVEL;   // MVP: every buddy at full strength (xp still counts, unseen)   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
 export const recover=r=>r;   // nothing comes back by itself any more (it was the stamina's rest); kept for its callers
 // Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: the rhythm still decides).
 // base: the race config with this buddy's numbers at its level (slice-config racing()).
@@ -59,10 +61,10 @@ export const recover=r=>r;   // nothing comes back by itself any more (it was th
 export const FORM={low:50,speed:.9,combo:.8,energy:.3};
 const dip=(v,to)=>v>=FORM.low?1:to+(1-to)*v/FORM.low;
 export function raceForm(r,base){
-  const speed=dip(r.hunger,FORM.speed),combo=dip(r.clean,FORM.combo);
-  const config={baseSpeed:+(base.baseSpeed*speed).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)
+  const speed=dip(r.hunger,FORM.speed),combo=dip(r.clean,FORM.combo),lv=level(r),grow=1+(lv-1)*LV_SPEED;
+  const config={baseSpeed:+(base.baseSpeed*speed*grow).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)
     stamina:base.stamina,startEnergy:Math.min(base.energyMax,Math.round(r.hunger*FORM.energy)),boostDuration:base.boostDuration,placeBonus:base.placeBonus};
-  const notes=[`起跑能量 ${config.startEnergy}`];
+  const notes=[`起跑能量 ${config.startEnergy}`];if(lv>1)notes.push(`等級 ${lv}：速度 +${lv-1}%`);
   if(speed<1)notes.push(`肚子餓：速度 −${Math.round((1-speed)*100)}%`);if(combo<1)notes.push(`毛髒了：集氣慢 ${Math.round((1-combo)*100)}%`);
   return {config,notes};
 }

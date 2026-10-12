@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r536';
+import {MVP} from './slice-config.mjs?v=r550';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -39,9 +39,20 @@ export const LEVELS=Object.freeze([
   // 2026-10-11, stages 6 and 7: what lies on the road. hazards: a puddle every [first, step] m and a dropping every
   // [first, step] m, lane after lane (slice-app levelHazards; slice-game wet, hazardStep). Stage 6 is the puddles,
   // stage 7 both. The cities are Taipei and Paris again (course/cities/taipei2.mjs, paris2.mjs) until they have their own art.
-  {city:'taipei2',rivals:4,tempo:1.95,locks:{},silver:38.5,gold:33,ram:[.8,.4,9],back:true,hazards:{puddle:[70,42]}},
-  {city:'paris2',rivals:4,tempo:2,locks:{},silver:40.5,gold:35,ram:[.8,.4,8],back:true,hazards:{puddle:[80,55],poop:[105,55]}},
+  {city:'taipei2',rivals:4,tempo:1.95,locks:{},silver:38.5,gold:33,ram:[.8,.4,9],back:true,weather:['rain'],hazards:{poop:0}},
+  // 2026-10-12, stages 7–10 (the user: ten stages; the first six are set, the last four draw their weather): the five
+  // cities again. weather: what a run's sky is drawn from; hazards.poop: droppings every this many m (0: none); the
+  // puddles or the snow come with the weather (WEATHER below); random: hurdles and everything on the road are
+  // somewhere else every run (slice-app).
+  {city:'tokyo2',rivals:4,tempo:2,locks:{},silver:41.6,gold:35.7,ram:[.8,.4,8],back:true,weather:['sun','rain','snow'],hazards:{poop:75},random:true},
+  {city:'stockholm2',rivals:4,tempo:2,locks:{},silver:43.6,gold:37.6,ram:[.8,.4,8],back:true,weather:['sun','rain','snow'],hazards:{poop:65},random:true},
+  {city:'paris2',rivals:4,tempo:2.05,locks:{},silver:39.3,gold:34.1,ram:[.8,.4,7],back:true,weather:['sun','rain','snow'],hazards:{poop:55},random:true},
+  {city:'seoul2',rivals:4,tempo:2.05,locks:{},silver:39.9,gold:34.6,ram:[.8,.4,7],back:true,weather:['sun','rain','snow'],hazards:{poop:50},random:true},
 ]);
+// What a weather puts on the road: a patch every `every` m (0: none), of water or of snow. The same rule for both
+// (slice-game slowed): slower in it and a moment after, cleared by a jump or the next lane. It changes what is on the
+// road, never how fast anyone runs (the stars' times must mean the same in any weather).
+export const WEATHER=Object.freeze({sun:{every:150,snow:false,name:'晴'},rain:{every:42,snow:false,name:'雨'},snow:{every:46,snow:true,name:'雪'}});
 export const RELAY_BUDDIES=3;   // the relay (a three-buddy team race) opens once the player has three buddies (2026-10-05: it was 3 stars, when every player started with three)
 export const STAR_REWARD={coins:50,gems:1};   // each star, the first time it is earned
 // Buddies by id (home.js ROSTER). The three starters are owned from the start. Four of the others are bought with coins
@@ -55,7 +66,11 @@ export const STAR_REWARD={coins:50,gems:1};   // each star, the first time it is
 export const STARTERS=Object.freeze([1]);
 // MVP (slice-config MVP.gems off): every buddy has a coin price, the diamond one waits (a race pays 20–40 coins).
 export const HORSE_PRICE=Object.freeze({0:{coins:300,gems:2,stage:1},2:{coins:600,gems:3,stage:3},5:{coins:400,gems:2,stars:5},6:{coins:1000,gems:3},7:{coins:800,gems:4,stars:9},4:{coins:1200,gems:5},
-  3:{coins:1400,gems:7,stars:12},8:{coins:1800,gems:9},9:{coins:2400,gems:12,stars:15},10:{coins:1600,gems:12,stage:5},11:{coins:2000,gems:10,stage:6},12:{coins:2200,gems:8},13:{coins:2600,gems:10},14:{coins:2000,gems:8},15:{coins:2400,gems:9,stage:7}});   // 2026-10-11: clearing stage 6 gives the rhino (water does not slow it), stage 7 the wolf
+  3:{coins:1400,gems:7,stars:12},8:{coins:1800,gems:9},9:{coins:2400,gems:12,stars:15},10:{coins:1600,gems:12,stage:5},11:{coins:2000,gems:10,stage:6},12:{coins:2200,gems:8,stage:9},13:{coins:2600,gems:10},14:{coins:2000,gems:8},15:{coins:2400,gems:9,stage:7}});   // 2026-10-11: clearing stage 6 gives the rhino (water does not slow it), stage 7 the wolf
+// 2026-10-12 (the user's reward table): what clearing a stage gives besides a buddy (HORSE_PRICE `stage`) or the rider's
+// colours (PERKS.rider): stage 2 seeds and bait, stage 8 coins, the last stage the trophy on the shelf of the rider's house.
+// THREE_STARS: coins for a stage's third star. The day's first finished run: the coins picked up on it count twice (`first`).
+export const STAGE_GIFT=Object.freeze({2:{items:{seed:5,bait:5}},8:{coins:300}}),THREE_STARS=100,TROPHY_STAGE=10;
 export const PERK_COINS=100;   // MVP.perks off: a stage that gave a perk pays this instead
 export const PERKS=Object.freeze({mane:{stage:2,id:'long'},rider:{stage:4}});
 
@@ -74,7 +89,8 @@ export function restore(saved){
 }
 // A stage (1–5) is cleared once its solo run has a star.
 export const cleared=(p,stage)=>(p.stars[LEVELS[stage-1]?.city]||0)>=1;
-export const maneOpen=(p,id)=>id!==PERKS.mane.id||MVP.perks&&cleared(p,PERKS.mane.stage),riderColors=p=>MVP.perks&&cleared(p,PERKS.rider.stage);
+export const maneOpen=(p,id)=>id!==PERKS.mane.id||MVP.perks&&cleared(p,PERKS.mane.stage),riderColors=p=>cleared(p,PERKS.rider.stage);   // 2026-10-12: the rider's colours are chosen in her house (home.js PAGES.house), open from that stage with or without the MVP's perks
+export const trophy=p=>cleared(p,TROPHY_STAGE);
 export const totalStars=p=>LEVELS.reduce((s,l)=>s+(p.stars[l.city]||0),0);
 export const levelOf=city=>LEVELS.findIndex(l=>l.city===city);
 export const unlocked=(p,city)=>{const i=levelOf(city);return i===0||i>0&&cleared(p,i);};
@@ -123,16 +139,19 @@ export function finish(p0,{city,solo,result:r,today,all=false}){
   const list=MVP.missions||all?missionsFor(p.runs,solo,solo?LEVELS[levelOf(city)]?.locks:{}):[];out.missions=list.map(m=>({text:m.text,done:!!m.test(r)}));
   const done=out.missions.filter(m=>m.done).length;out.missionCoins=done*MISSION_COINS+(done===3?MISSION_ALL:0);out.coins+=out.missionCoins;
   if(solo){const had=p.stars[city]||0,got=starsFor(city,r.seconds);out.stars=Math.max(had,got);out.runStars=got;
-    if(!had){const n=LEVELS[levelOf(city)+1];if(n)out.opened=[n.city];}
-    if(got>had){out.newStars=got-had;p.stars[city]=got;out.coins+=out.newStars*STAR_REWARD.coins;out.gems+=out.newStars*STAR_REWARD.gems;}}
+    if(!had){const n=LEVELS[levelOf(city)+1],g=STAGE_GIFT[levelOf(city)+1];if(n)out.opened=[n.city];
+      if(g){out.stageCoins=g.coins||0;out.coins+=out.stageCoins;out.items=g.items||null;}out.trophy=levelOf(city)+1===TROPHY_STAGE;}
+    if(got>had){out.newStars=got-had;p.stars[city]=got;out.coins+=out.newStars*STAR_REWARD.coins;out.gems+=out.newStars*STAR_REWARD.gems;
+      if(got===3){out.threeStars=THREE_STARS;out.coins+=THREE_STARS;}}}
   else out.stars=p.stars[city]||0;
+  out.first=p.day!==today;
   out.daily=MVP.daily||all?daily(p,today):null;if(out.daily){p.day=today;p.streak=out.daily.streak;out.coins+=out.daily.coins;out.gems+=out.daily.gems;}
-  p.runs++;p.jumps+=r.cleared||0;
+  p.day=today;p.runs++;p.jumps+=r.cleared||0;
   if(r.rank!=null){const k=(solo?'':'r:')+city;p.lost[k]=r.rank===1?0:(p.lost[k]||0)+1;}
   const now=totalStars(p);
   for(const [id,c] of Object.entries(HORSE_PRICE))if((c.stars&&now>=c.stars||c.stage&&cleared(p,c.stage))&&!owns(p,+id)){p.owned.push(+id);out.gifts.push(+id);}
   out.perks=Object.keys(PERKS).filter(k=>cleared(p,PERKS[k].stage)&&!perks0.includes(k));
-  if(!MVP.perks&&!all){out.perkCoins=out.perks.length*PERK_COINS;out.coins+=out.perkCoins;out.perks=[];}
+  if(!MVP.perks&&!all)out.perks=out.perks.filter(k=>k==='rider');   // the mane style waits; the rider's colours are given (her house)
   if(!MVP.gems&&!all)out.gems=0;
   out.opened??=[];out.relayOpened=(MVP.relay||all)&&!had3&&relayOpen(p);
   out.p=p;return out;
@@ -173,6 +192,9 @@ function demo(){
    ok(buy(fresh(),0,'coins',300).cost===300&&relayOpen({...fresh(),owned:[1,5,6]}),'the early buddies can be bought sooner; any three buddies open the relay');}
   {let q=fresh();const lose=()=>q=finish(q,{city:'seoul',solo:true,result:{...run,seconds:90,rank:3},today:'2026-10-05'}).p;lose();lose();ok(!eased(q,'seoul'),'two losses: as tuned');lose();ok(eased(q,'seoul')&&!eased(q,'seoul',false)&&!eased(q,'paris'),'three losses in a row: that stage is a step easier');
    q=finish(q,{city:'seoul',solo:true,result:{...run,seconds:90,rank:1},today:'2026-10-05'}).p;ok(!eased(q,'seoul'),'a win: as tuned again');}
+  {let q=finish0(fresh(),{city:'taipei',solo:true,result:{...run,seconds:20},today:'2026-10-12'});ok(q.first&&q.threeStars===THREE_STARS&&q.coins===3*STAR_REWARD.coins+THREE_STARS,'three stars pay 100 more; the first run of a day says so');
+   q=finish0(q.p,{city:'tokyo',solo:true,result:{...run,seconds:60},today:'2026-10-12'});ok(!q.first&&q.items.seed===5&&q.items.bait===5&&!q.perks.length,'stage 2 gives seeds and bait; one first run a day');
+   const end=fresh();LEVELS.forEach(l=>end.stars[l.city]=1);end.stars.seoul2=0;q=finish0(end,{city:'seoul2',solo:true,result:{...run,seconds:90},today:'2026-10-12'});ok(q.trophy&&trophy(q.p)&&!trophy(end),'the last stage gives the trophy');}
   ok(nextStarTime('taipei',2)===23&&nextStarTime('taipei',3)===null,'next star time');
   ok(buy(p,5,'coins',399).fail&&buy(p,5,'coins',400).cost===400&&buy(p,1,'coins',9999).fail,'buying');
   ok(buy(p,6,'coins',999).fail&&buy(p,6,'coins',1000).cost===1000&&owns(buy(p,6,'coins',1000).p,6)&&buy(p,6,'gems',3).cost===3,'a special coat: coins now, diamonds kept for later');
@@ -180,7 +202,7 @@ function demo(){
   p.stars.tokyo=2;f=finish(p,{city:'tokyo',solo:true,result:{...run,seconds:60},today:'2026-10-05'});ok(f.gifts.join()==='5'&&owns(f.p,5),'five stars gift Buckskin');
   ok(restore({owned:[9,77],stars:{taipei:9}}).owned.join()==='1,9,0'&&restore({owned:[1,0,2]}).owned.join()==='1,0,2'&&restore(null).stars.taipei===0&&restore({stars:{taipei:9}}).stars.taipei===3,'restore');
   ok(nextGoal(fresh(),0).kind==='level'&&nextGoal(fresh(),0).city==='tokyo','the next goal of a new player is level 2');
-  const all=fresh();LEVELS.forEach(l=>all.stars[l.city]=3);all.owned=[...STARTERS,...Object.keys(HORSE_PRICE).map(Number)];ok(nextGoal(all,0)===null&&currentLevel(all).city==='paris2','all done');
+  const all=fresh();LEVELS.forEach(l=>all.stars[l.city]=3);all.owned=[...STARTERS,...Object.keys(HORSE_PRICE).map(Number)];ok(nextGoal(all,0)===null&&currentLevel(all).city==='seoul2','all done');
   ok(missionsFor(0,true).length===3&&!missionsFor(5,true).some(m=>m.relay)&&!missionsFor(5,false).some(m=>m.solo),'missions by mode');
   console.log('PASS: progress (levels, stars, missions, daily bonus, horses)');
 }

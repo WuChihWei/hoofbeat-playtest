@@ -1,15 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r536';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r536';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r536';
-import {compositionRank} from '../race-composition.mjs?v=r536';
-import {ChaseRenderer} from '../race-scene.js?v=r536';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r536';
-import {cityModels} from '../approved-environment.js?v=r536';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r550';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r550';
+import {WEATHER} from './progress.mjs?v=r550';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r550';
+import {compositionRank} from '../race-composition.mjs?v=r550';
+import {ChaseRenderer} from '../race-scene.js?v=r550';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r550';
+import {cityModels} from '../approved-environment.js?v=r550';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r536';
-import {RaceAudio} from '../audio.js?v=r536';
-import {addLog,raceEntry} from '../playtest.js?v=r536';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r536';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r550';
+import {RaceAudio} from '../audio.js?v=r550';
+import {addLog,raceEntry} from '../playtest.js?v=r550';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r550';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -49,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r536',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r550',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -181,13 +182,28 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     renderCover('已暫停',`已跑 ${Math.round(game.distance/game.config.length*100)}% · ${wall(game.time)} · 金幣 ${game.coinCount}`,
       [['繼續',resume],['重跑',newRun,'secondary'+far],['換夥伴',toSetup,'secondary'+far],['離開',toHome,'secondary'+far],[soundLabel(),e=>{sound.setMuted(!sound.muted);e.target.textContent=soundLabel();},'secondary toggle']]);
   }
-  const COURSE=()=>city?(!relay?{...soloCourse(city),...(locks.hurdle?{hurdles:[]}:null)}:relayCourse(city)):null;
+  // A run's weather (2026-10-12): drawn once when the stage is opened from what the stage allows (progress.mjs LEVELS
+  // weather; a retry keeps it), 'sun' when it names none. It decides the sky (the renderer's city 'id~weather') and what
+  // lies on the road (WEATHER: water or snow, how often). ?weather=snow (dev) picks it.
+  const SKY=(()=>{const w=level?.weather||['sun'],asked=new URLSearchParams(location.search).get('weather');return WEATHER[asked]?asked:w[Math.floor(Math.random()*w.length)];})();
+  // The hurdles of a stage whose road is new every run (LEVELS random): as many as the track has, somewhere else on its
+  // straights each time, 80 m from the start, 70 from the line, 60 apart.
+  const scatter=course=>{const n=(course.hurdles||[]).length,out=[];for(let tries=0;out.length<n&&tries<400;tries++){const d=80+Math.random()*(course.length-150),sec=course.sections?.find(s=>d>=s.s0&&d<s.s1);
+      if((!sec||sec.kind==='straight')&&out.every(h=>Math.abs(h-d)>=60))out.push(Math.round(d));}return out.length===n?out.sort((a,b)=>a-b):course.hurdles;};
+  let laid=null;   // this stage's hurdles for this visit: a retry runs the same road
+  const COURSE=()=>{if(!city)return null;if(relay)return relayCourse(city);const c=soloCourse(city);return {...c,hurdles:locks.hurdle?[]:level?.random?(laid??=scatter(c)):c.hurdles};};
   // ?hazards=1 (dev): a puddle and a dropping by turns every 70 m, lane after lane, on any stage, to look at them.
   const sampleHazards=L=>{const puddles=[],poops=[];for(let d=90,k=0;d<L-60;d+=70,k++)(k%2?poops:puddles).push({distance:d,lane:k%3-1});return {puddles,poops};};
   // A stage's own (progress.mjs LEVELS hazards {puddle: [first, step], poop: [first, step]}): one every `step` m from
   // `first`, lane after lane, none within 14 m of a hurdle or in the last 60 m.
-  const levelHazards=(H,course)=>{const lay=(rule,turn)=>{const out=[];if(rule)for(let d=rule[0],k=0;d<course.length-60;d+=rule[1],k++)if(!(course.hurdles||[]).some(h=>Math.abs(h-d)<14))out.push({distance:d,lane:(k*2+turn)%3-1});return out;};return {puddles:lay(H.puddle,0),poops:lay(H.poop,1)};};
-  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:ease?.95:1,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?levelHazards(level.hazards,course):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null},team,rivals,chart:level?.plain?EASY_CHART:null,
+  // What lies on a stage's road: the weather's patches (water or snow, every WEATHER.every m) and the stage's droppings
+  // (every hazards.poop m), each in a lane drawn at random and a little off its mark, none within 14 m of a hurdle or of
+  // one another, none in the first 70 m or the last 60: one thing at a place, so two lanes are always clear.
+  const levelHazards=(H,course)=>{const W=WEATHER[SKY],taken=[...(course.hurdles||[])],lay=(every,make)=>{const out=[];if(every)for(let d=70+Math.random()*every*.5;d<course.length-60;d+=every*(.75+Math.random()*.5)){
+        if(taken.some(x=>Math.abs(x-d)<14))continue;taken.push(d);out.push(make(Math.round(d),Math.floor(Math.random()*3)-1));}return out;};
+    return {puddles:lay(W.every,(distance,lane)=>({distance,lane,snow:W.snow})),poops:lay(H.poop,(distance,lane)=>({distance,lane}))};};
+  let road=null;   // laid once for this visit, like the hurdles
+  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:ease?.95:1,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?(road??=levelHazards(level.hazards,course)):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null},team,rivals,chart:level?.plain?EASY_CHART:null,
     course});
     return g;};
   // The scene is shown complete or not at all (2026-10-06, the user: the race was seen being put together: its sky, ground
@@ -197,7 +213,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // the race shut.
   const frames=n=>Promise.race([new Promise(r=>{const f=()=>--n<0?r():requestAnimationFrame(f);f();}),new Promise(r=>setTimeout(r,1500))]);
   const sceneT0=performance.now(),sceneReady=async()=>{await Promise.race([loadsSettled(),new Promise(r=>setTimeout(r,10000))]);await frames(8);shell.classList.add('scene-ready');window.zbMark?.(`race scene ready (+${Math.round(performance.now()-sceneT0)} ms)`);};
-  const stage=()=>{settle=20;renderer=new ChaseRenderer($('slice-canvas'),{slice:true,city});renderer.camera.setViewOffset(1,1,0,.08,1,1);   // the ball game: the whole view 8% of the screen higher, so the buddy stands clear of the ring at the foot (2026-10-08, the user: 「按鈕下移，騎士上移一點，不要疊在一起」)
+  const stage=()=>{settle=20;renderer=new ChaseRenderer($('slice-canvas'),{slice:true,city:level?.random&&SKY!=='sun'?`${city}~${SKY}`:city});renderer.camera.setViewOffset(1,1,0,.08,1,1);   // the ball game: the whole view 8% of the screen higher, so the buddy stands clear of the ring at the foot (2026-10-08, the user: 「按鈕下移，騎士上移一點，不要疊在一起」)
     renderer.prepare(game);$('slice-canvas').addEventListener('race-render-error',pause);$('slice-canvas').addEventListener('coin-burst',e=>coinFly(e.detail));};
   async function newRun(){
     if(phase==='loading')return;if(midRace())logRun('restart');phase='loading';document.querySelector('.slice-shell')?.classList.remove('finish-shot');
@@ -287,7 +303,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       // A hurdle: how clean the take-off was (error from the ideal moment; the window is ±jumpWindow).
       else if(e.type==='clear'){const off=Math.abs(e.error??0)/game.config.jumpWindow;landClear=true;
         if(off<=.35){feedback('完美起跳！','gold',true);buzz('good');}else feedback(off>=.75?'好險！':'CLEAR!','green');}
-      else if(e.type==='puddle'){if(e.dry)feedback('不怕水！','gold');else{feedback('踩到水了','hint');sound.cue('deny');}buzz('tap');}
+      else if(e.type==='puddle'){if(e.dry)feedback(e.snow?'不怕雪！':'不怕水！','gold');else{feedback(e.snow?'踩到雪了':'踩到水了','hint');sound.cue('deny');}buzz('tap');}
       else if(e.type==='poop'){feedback('踩到了！','warn',true);shake(5,220);sound.collision();buzz('bad');}
       else if(e.type==='obstacle-miss'){mark('hit');feedback('絆到了！','warn',true);sound.collision();sound.dropLayer();buzz('bad');landAt=0;streak=0;}
       // Passed, then back in front within 5 s: "won it back", its own moment.
@@ -419,7 +435,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       const me=rows.findIndex(x=>x.you),up=rows[me-1];
       if(up&&(r.finishTime-up.time)/tempo<=1.5){near='就差一點！';again=`再來一場 · 追回 ${secs(r.finishTime-up.time)} 秒`;}
       board=`<ol class="res-rank">${rows.map((x,i)=>`<li class="ui-pillrow ${x.you?'':'glass'}"><b class="rk">${i+1}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span><b class="ui-num">${wall(x.time)}</b></li>`).join('')}</ol>`;
-    }else board=`<ol class="res-rank">${r.rank?`<li class="ui-pillrow glass">${icon('flag')}<span>名次</span><b>${r.rank} / ${r.of}${r.bonus?` · +${r.bonus}`:''}</b></li>`:''}${MVP.levels&&bank.xp?`<li class="ui-pillrow glass">${icon('horse')}<span>${esc(team[0].name)} 經驗</span><b>+${bank.xp} · LV ${bank.level}</b></li>`:''}${
+    }else board=`<ol class="res-rank">${r.rank?`<li class="ui-pillrow glass">${icon('flag')}<span>名次</span><b>${r.rank} / ${r.of}${r.bonus?` · +${r.bonus}`:''}</b></li>`:''}${MVP.levels&&bank.xp?`<li class="ui-pillrow glass">${icon('horse')}<span>${esc(team[0].name)} 經驗</span><b>+${bank.xp} · LV ${bank.level}${bank.toNext?` · 再 ${bank.toNext} 升級`:''}</b></li>`:''}${
       bank.starHint?`<li class="ui-pillrow glass res-gap" style="--p:${bank.starGap??0}">${icon('star')}<span>下一顆星</span><b>${bank.starHint}</b></li>`:''}${
       bank.hot>1?`<li class="ui-pillrow glass">${icon('bolt')}<span>連續進步 ×${bank.hot}</span><b>+${bank.hotCoins}</b></li>`:''}${
       bank.tip?`<li class="ui-pillrow glass res-tip">${icon('info')}<span>${esc(bank.tip)}</span></li>`:''}</ol>`;
@@ -499,7 +515,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     startHow();
     $('slice-back').onclick=toSetup;
     $('slice-help').onclick=e=>{const w=cover.querySelector('.how-wrap');w.hidden=!w.hidden;e.currentTarget.setAttribute('aria-expanded',String(!w.hidden));};
-    const form=getForm?.();if(form){const p=cover.querySelector('.slice-form');p.hidden=false;p.textContent=form.notes.join(' · ');}
+    const form=getForm?.();if(form||level?.weather){const p=cover.querySelector('.slice-form');p.hidden=false;p.textContent=[...(level?.weather?[`天氣：${WEATHER[SKY].name}`]:[]),...(form?.notes||[])].join(' · ');
+      if(level?.weather){const i=new Image();i.src=`./assets/ui/weather_${SKY}.webp`;i.alt='';i.style.cssText='height:1.6em;vertical-align:-.45em;margin-right:.3em';p.prepend(i);}}
     // While it waits the button counts the model files in (2026-10-05: a player on the live site sat on 準備中… with no
     // sign of anything happening); nothing new for 25 s (a stalled download never fails by itself) → the button reloads
     // the page (what did arrive is in the browser's cache).
