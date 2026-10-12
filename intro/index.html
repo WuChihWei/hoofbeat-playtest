@@ -40,7 +40,8 @@ body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
 /* a row that swipes on a phone and sits in a line on a wide screen */
 .swipe{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 20px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .swipe::-webkit-scrollbar{display:none}.swipe>*{scroll-snap-align:center;flex:none}
-@media(min-width:760px){.swipe{justify-content:center;flex-wrap:wrap;overflow:visible;max-width:780px;margin:0 auto}}   /* three clips in a row; the four cards two by two, none left alone */
+@media(min-width:760px){.swipe{justify-content:center;flex-wrap:wrap;overflow:visible;max-width:780px;margin:0 auto}}   /* the four cards two by two */
+@media(min-width:760px){.swipe:not(#cards){max-width:540px}}@media(min-width:1060px){.swipe:not(#cards){max-width:1040px}}   /* the four clips: two by two, in one row when there is room */
 /* the three clips, each in a phone */
 .clip{margin:0;width:232px;text-align:center}.clip b{display:block;font-size:19px;margin-top:12px}
 .phone{position:relative;border:8px solid #1b1b1d;border-radius:36px;background:#000;overflow:hidden;aspect-ratio:9/16;box-shadow:0 10px 24px #0003}
@@ -81,11 +82,12 @@ footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padd
 </header>
 
 <section>
-  <div class="wrap" style="padding-bottom:14px"><h2>三招就會玩</h2><p>看得懂就上手，三十秒一場</p></div>
+  <div class="wrap" style="padding-bottom:14px"><h2>好玩在這裡</h2><p>三十秒一場，每一秒都有事做</p></div>
   <div class="swipe">
-    <figure class="clip"><div class="phone"><video src="clip-charge.mp4" poster="clip-charge.jpg" muted loop playsinline preload="none" aria-label="按住圓球集氣再放開衝刺的遊戲畫面"></video></div><b>集氣衝刺</b><p>按住圓球，抓準時機放開</p></figure>
-    <figure class="clip"><div class="phone"><video src="clip-dodge.mp4" poster="clip-dodge.jpg" muted loop playsinline preload="none" aria-label="換道和跳過欄架的遊戲畫面"></video></div><b>閃開、撞開</b><p>換道、跳欄架，把對手撞到一邊</p></figure>
-    <figure class="clip"><div class="phone"><video src="clip-snow.mp4" poster="clip-snow.jpg" muted loop playsinline preload="none" aria-label="雪天比賽的遊戲畫面"></video></div><b>晴、雨、雪</b><p>每次進場天氣都不一樣</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-limit.mp4" poster="clip-limit.jpg" muted loop playsinline preload="none" aria-label="壓到極限放開加速，衝刺中跳過前面對手的遊戲畫面"></video></div><b>挑戰極限，飛越對手</b><p>壓到極限才放開最快。衝刺時往上滑，直接從別人頭上跳過去</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-bump.mp4" poster="clip-bump.jpg" muted loop playsinline preload="none" aria-label="把旁邊的對手推開的遊戲畫面"></video></div><b>推人和後踢</b><p>旁邊有人就推開，後面有人就踢回去</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-hurdle.mp4" poster="clip-hurdle.jpg" muted loop playsinline preload="none" aria-label="跳過欄架、閃開水窪和大便的遊戲畫面"></video></div><b>障礙物</b><p>欄架要跳，水窪和大便要閃</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-apple.mp4" poster="clip-apple.jpg" muted loop playsinline preload="none" aria-label="撿金幣和吃蘋果的遊戲畫面"></video></div><b>蘋果和金幣</b><p>蘋果存衝刺，金幣帶回家養夥伴</p></figure>
   </div>
 </section>
 
