@@ -1,15 +1,15 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r533';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r533';
-import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r533';
-import {compositionRank} from '../race-composition.mjs?v=r533';
-import {ChaseRenderer} from '../race-scene.js?v=r533';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r533';
-import {cityModels} from '../approved-environment.js?v=r533';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r535';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r535';
+import {esc,icon,brand,wallet,chest} from '../ui/ui.js?v=r535';
+import {compositionRank} from '../race-composition.mjs?v=r535';
+import {ChaseRenderer} from '../race-scene.js?v=r535';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r535';
+import {cityModels} from '../approved-environment.js?v=r535';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r533';
-import {RaceAudio} from '../audio.js?v=r533';
-import {addLog,raceEntry} from '../playtest.js?v=r533';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r533';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r535';
+import {RaceAudio} from '../audio.js?v=r535';
+import {addLog,raceEntry} from '../playtest.js?v=r535';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP} from './slice-config.mjs?v=r535';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -49,7 +49,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r533',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r535',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -196,7 +196,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // picture is in and three frames have been drawn with them. At most 10 s: a picture that never arrives must not keep
   // the race shut.
   const frames=n=>Promise.race([new Promise(r=>{const f=()=>--n<0?r():requestAnimationFrame(f);f();}),new Promise(r=>setTimeout(r,1500))]);
-  const sceneReady=async()=>{await Promise.race([loadsSettled(),new Promise(r=>setTimeout(r,10000))]);await frames(8);shell.classList.add('scene-ready');};
+  const sceneT0=performance.now(),sceneReady=async()=>{await Promise.race([loadsSettled(),new Promise(r=>setTimeout(r,10000))]);await frames(8);shell.classList.add('scene-ready');window.zbMark?.(`race scene ready (+${Math.round(performance.now()-sceneT0)} ms)`);};
   const stage=()=>{settle=20;renderer=new ChaseRenderer($('slice-canvas'),{slice:true,city});renderer.camera.setViewOffset(1,1,0,.08,1,1);   // the ball game: the whole view 8% of the screen higher, so the buddy stands clear of the ring at the foot (2026-10-08, the user: 「按鈕下移，騎士上移一點，不要疊在一起」)
     renderer.prepare(game);$('slice-canvas').addEventListener('race-render-error',pause);$('slice-canvas').addEventListener('coin-burst',e=>coinFly(e.detail));};
   async function newRun(){

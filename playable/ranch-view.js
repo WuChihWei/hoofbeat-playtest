@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r533';
-import {applyLook,LOOK} from '../visual-style.js?v=r533';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r535';
+import {applyLook,LOOK} from '../visual-style.js?v=r535';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -60,7 +60,8 @@ export const RANCH={
   // rad); stand: where a buddy in stands (y). pitch 3 (2026-10-11, the user: 「宿舍彼此之間不要有間隔」; it was 5, every hut
   // with both its end walls): huts side by side are one building, an end wall only where a row stops (`end`: how far
   // it and its eaves reach past the stall).
-  huts:{per:5,pitch:4.68,step:9,order:[2,3,1,4,0],half:2.34,end:.1,box:[.75,5.75],y:1.2,door:0,open:-1.2,
+  huts:{per:5,pitch:4.68,step:9,order:[2,3,1,4,0],half:2.34,end:.1,box:[.75,5.75],y:1.2,door:0,open:-1.75,hinge:-.806,leave:2.9,   // hinge: the half-door's, from the hut's middle (x); open: how far it swings (rad, outward); leave: a buddy let out walks to this far in front of its door
+   
     // A buddy in its hut stands with its nose `out` m past the front wall, whatever animal it is: nose: how far ahead of
     // where it stands each kind's nose is (measured on the ranch models, 2026-10-12: the user: 「要考慮放不同動物會不會卡在門口」).
     out:.5,nose:{horse:1.52,llama:1.39,rhino:1.78,bear:1.69,zebra:1.83,cow:1.63,wolf:1.37},
@@ -278,7 +279,11 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     const built=(name,paint)=>{const g=assets.built?.getObjectByName(name);if(!g)return null;const flat=new THREE.Group();flat.name=name;
       (g.isMesh?[g]:g.children).forEach(o=>{const c=o.clone();if(paint?.[o.material.name]){c.material=o.material.clone();c.material.color.set(paint[o.material.name]);}flat.add(c);});
       const m=merged(flat);keep(m.geometry);flat.children.forEach(c=>{if(c.material!==g.material&&paint?.[c.material.name])c.material.dispose();});return m;};
-    {const m4=new THREE.Matrix4(),yellow=p=>p!==RANCH.huts.order[0]&&(Math.sin(p*91.7+7.7)*43758.5453%1+1)%1<HUT_YELLOW;L.homes.forEach((h,k)=>{hung[k]={rotation:{}};});
+    {const m4=new THREE.Matrix4(),yellow=p=>p!==RANCH.huts.order[0]&&(Math.sin(p*91.7+7.7)*43758.5453%1+1)%1<HUT_YELLOW;
+      // The half-doors (GATE): drawn once for all huts, each turned on its hinge (hung[k].rotation.y, as the old doors were).
+      {const gate=built('GATE');if(gate){const gates=new THREE.InstancedMesh(gate.geometry,SOLID,L.homes.length),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),one=new THREE.Vector3(1,1,1);gates.castShadow=true;gates.frustumCulled=false;scene.add(gates);
+        L.homes.forEach((h,k)=>{const p=new THREE.Vector3(h.x+D.hinge,0,-(h.d+D.y)),turn=a=>{gates.setMatrixAt(k,m4.compose(p,q.setFromAxisAngle(up,a),one));gates.instanceMatrix.needsUpdate=true;};turn(0);
+          hung[k]={rotation:{set y(a){turn(a);}}};});}else L.homes.forEach((h,k)=>{hung[k]={rotation:{}};});}
       HUT_ROOFS.forEach((paint,v)=>{const mine=L.homes.filter(h=>+yellow(h.plot)===v),one=mine.length&&built('HUT',paint);if(!one)return;
         const mesh=new THREE.InstancedMesh(one.geometry,SOLID,mine.length);mine.forEach((h,k)=>mesh.setMatrixAt(k,m4.makeTranslation(h.x,0,-(h.d+D.y))));mesh.castShadow=mesh.receiveShadow=true;mesh.frustumCulled=false;scene.add(mesh);});
       const top=L.homes[0]&&built('TOP');if(top){top.position.set(L.homes[0].x,0,-(L.homes[0].d+D.y));scene.add(top);}
@@ -292,7 +297,14 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     const ring=new THREE.Mesh(keep(new THREE.RingGeometry(.42,.56,24).rotateX(-Math.PI/2)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.75})));ring.position.copy(at(x,y)).setY(.07);scene.add(ring);
     const float=new THREE.Group(),ball=(r,col,h)=>{const m=new THREE.Mesh(keep(new THREE.SphereGeometry(r,14,10)),keep(new THREE.MeshStandardMaterial({color:col,roughness:.5})));m.position.y=h;float.add(m);};ball(.3,'#ffffff',0);ball(.24,'#e5484d',.2);
     float.position.copy(at(x,y));float.visible=false;scene.add(float);return {x,y,ring,float,g:null};});
-  function pond(grown){casts.forEach((c,i)=>{c.g=grown[i]??null;c.float.visible=c.g!=null;c.ring.material.opacity=c.g==null?.75:c.g>=1?1:.3;});}
+  // A bite is said three ways (2026-10-12, the user: 「現在有魚不明顯」): the float jumps, a ring spreads on the water round
+  // it again and again, and a white bubble with the fish in it stands over it (drawn over everything, so a tree never hides it).
+  const bite=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),tex=keep(new THREE.CanvasTexture(c));tex.colorSpace=THREE.SRGBColorSpace;
+    const draw=im=>{g.clearRect(0,0,128,128);g.fillStyle='#ffffff';g.beginPath();g.arc(64,58,50,0,6.2832);g.fill();g.beginPath();g.moveTo(48,100);g.lineTo(64,126);g.lineTo(80,100);g.fill();g.lineWidth=7;g.strokeStyle='#ffcc00';g.beginPath();g.arc(64,58,47,0,6.2832);g.stroke();if(im)g.drawImage(im,22,16,84,84);tex.needsUpdate=true;};
+    draw(null);const im=new Image();im.onload=()=>draw(im);im.src=new URL('../assets/stable/item_fish.webp',import.meta.url).href;return keep(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));})();
+  for(const c of casts){c.tag=new THREE.Sprite(bite);c.tag.scale.setScalar(2.4);c.tag.renderOrder=20;c.tag.visible=false;scene.add(c.tag);
+    c.wave=new THREE.Mesh(c.ring.geometry,keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false})));c.wave.position.copy(c.ring.position).setY(.075);scene.add(c.wave);}
+  function pond(grown){casts.forEach((c,i)=>{c.g=grown[i]??null;const on=c.g!=null&&c.g>=1;c.float.visible=c.g!=null;c.ring.material.opacity=c.g==null?.75:on?1:.3;c.tag.visible=on;c.wave.visible=on;});}
   const slabs=offers.map(p=>{const [x,d]=plotAt(p),m=new THREE.Mesh(keep(new THREE.BoxGeometry(4.3,.3,4)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.6})));m.position.copy(at(x,d+RANCH.huts.y+2)).setY(.2);scene.add(m);return {plot:p,m};});
   const isOpen=k=>set[k]??!herd.some(b=>b.stall===k),swing=k=>{if(hung[k])hung[k].rotation.y=isOpen(k)?D.open:0;};
   // Made here, one mesh of plain boxes coloured on their vertices: the beds (a frame and its soil; a bed not opened is
@@ -411,14 +423,16 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     if(!b.ran&&b.stall==null&&b!==held){const o=tired();if(o&&!b.met&&Math.hypot(o.pos.x-b.pos.x,o.pos.z-b.pos.z)<RANCH.ran.near){b.met=true;b.pause=RANCH.ran.stop;}}
     if(b.pause>0)b.pause-=dt;
     if(b.stall!=null||b===held){b.step.setEffectiveWeight(0);b.idle.setEffectiveWeight(1);b.model.mixer.update(dt);b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);fidget(b,dt,b!==held);return;}   // in its stall it has its small thing too
-    if(!b.path.length){b.wait-=dt;if(b.wait<=0){const here=spots[b.on],to=free(s=>s!==here&&Math.hypot(s.x-here.x,s.y-here.y)<RANCH.hop,b);if(to!=null)b.path=route(spots,b.on,to,new Set(herd.filter(o=>o!==b&&o.stall==null).map(o=>o.on)));b.wait=RANCH.rest[0]+Math.random()*(RANCH.rest[1]-RANCH.rest[0]);}}
+    if(b.pos.y>0)b.pos.y=Math.max(0,b.pos.y-dt*1.1);   // down off the raised floor of its hut
+    if(!b.via&&!b.path.length){b.wait-=dt;if(b.wait<=0){const here=spots[b.on],to=free(s=>s!==here&&Math.hypot(s.x-here.x,s.y-here.y)<RANCH.hop,b);if(to!=null)b.path=route(spots,b.on,to,new Set(herd.filter(o=>o!==b&&o.stall==null).map(o=>o.on)));b.wait=RANCH.rest[0]+Math.random()*(RANCH.rest[1]-RANCH.rest[0]);}}
     let moving=0;
-    if(b.path.length&&!(b.pause>0)){const s=spots[b.path[0]],dx=s.x-b.pos.x,dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces -z at yaw 0
+    if((b.via||b.path.length)&&!(b.pause>0)){const s=b.via?{x:b.via[0],y:b.via[1]}:spots[b.path[0]],dx=s.x-b.pos.x,   // via: straight out through its door first (let out of its hut)
+dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces -z at yaw 0
       const off=Math.atan2(Math.sin(want-b.yaw),Math.cos(want-b.yaw));b.yaw+=Math.sign(off)*Math.min(Math.abs(off),RANCH.turn*dt);
       moving=Math.max(0,Math.cos(off));const stepLen=Math.min(d,RANCH.walk*slow*moving*dt);   // it turns on the spot first, then walks
-      if(d<=.05)b.on=b.path.shift();
+      if(d<=.05){if(b.via){b.via=null;b.on=nearest(b.pos.x,-b.pos.z);b.wait=RANCH.rest[0];}else b.on=b.path.shift();}
       else if(crowded(b.pos.x,b.pos.z,b.pos.x+dx/d*stepLen,b.pos.z+dz/d*stepLen,herd.filter(o=>o!==b&&o.stall==null&&o!==held).map(o=>o.pos))){   // someone in the way: it waits, then turns back to the spot it left
-        moving=0;b.held=(b.held||0)+dt;if(b.held>RANCH.stuck){b.held=0;b.path=b.path[0]===b.on?[]:[b.on];b.wait=RANCH.rest[0]*Math.random();}}
+        moving=0;b.held=(b.held||0)+dt;if(b.held>RANCH.stuck&&!b.via){b.held=0;b.path=b.path[0]===b.on?[]:[b.on];b.wait=RANCH.rest[0]*Math.random();}}
       else{b.held=0;b.pos.x+=dx/d*stepLen;b.pos.z+=dz/d*stepLen;}}
     b.go+=((moving>.3?1:0)-b.go)*Math.min(1,dt*6);b.step.setEffectiveWeight(b.go);b.idle.setEffectiveWeight(1-b.go);b.model.mixer.update(dt);
     b.model.root.position.copy(b.pos);b.model.root.rotation.y=b.yaw;b.under.position.set(b.pos.x,.11,b.pos.z);
@@ -466,13 +480,21 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
       if(blocked(x,y)||herd.some(o=>o!==b&&o.stall==null&&Math.hypot(o.pos.x-x,o.pos.z+y)<RANCH.apart))return back();   // not on a pen, a building, a tree, or another buddy
       held=null;b.pos.y=0;b.on=nearest(x,y);b.wait=RANCH.rest[0]+Math.random()*RANCH.rest[1];if(was.stall!=null)delete set[was.stall];hung.forEach((_,i)=>swing(i));onMove?.(b.id,{at:[+x.toFixed(2),+y.toFixed(2)]});return;}
     if(moved>=10)return;
+    // A hut's door: tapped with its buddy in, it opens and the buddy walks out on its own (2026-10-12, the user); tapped
+    // on an empty hut, it swings shut or open.
+    {let door=-1,best=46;hung.forEach((h,k)=>{if(!h)return;const [cx,d]=stallAt(k),dist=off(e,hit.copy(at(cx+D.door,D.y+d)).setY(1.1));if(dist<best){best=dist;door=k;}});
+      if(door>=0){const b=herd.find(o=>o.stall===door),[cx,d]=stallAt(door);
+        if(b){b.stall=null;delete set[door];b.under.visible=true;b.path=[];b.via=[cx+D.door,d+D.y-D.leave];swing(door);onMove?.(b.id,{at:[+(cx+D.door).toFixed(2),+(d+D.y-D.leave).toFixed(2)]});}
+        else{set[door]=!isOpen(door);swing(door);onDoor?.(door,set[door]);}
+        return;}}
     let near;   // r524–r530: this was declared by the door's tap, which went with the doors; without it every tap below threw (no sowing, no casting)
     {let pick=null,near=70;for(const o of slabs){const d=off(e,o.m.position);if(d<near){near=d;pick=o;}}if(pick){onOffer?.(pick.plot);return;}}
     if(onPond){let k=-1;near=56;casts.forEach((c,i)=>{const d=off(e,hit.copy(at(c.x,c.y)).setY(.2));if(d<near){near=d;k=i;}});if(k>=0){onPond(k,e.clientX,e.clientY);return;}}
     if(onBed){let bed=-1;near=64;L.beds.slice(0,open).forEach(([x,y],i)=>{const d=off(e,hit.copy(at(x,y)).setY(S.top));if(d<near){near=d;bed=i;}});if(bed>=0)onBed(bed,e.clientX,e.clientY);}});
 
   let raf=0,last=performance.now();
-  let clock=0;const tick=dt=>{clock+=dt;herd.forEach(b=>stroll(b,dt));casts.forEach((c,i)=>{if(c.g!=null)c.float.position.y=.16+(c.g>=1?Math.abs(Math.sin(clock*6+i))*.45:Math.sin(clock*2+i)*.04);});aim(dt);r.render(scene,cam);};
+  let clock=0;const tick=dt=>{clock+=dt;herd.forEach(b=>stroll(b,dt));casts.forEach((c,i)=>{if(c.g==null)return;const on=c.g>=1;c.float.position.y=.16+(on?Math.abs(Math.sin(clock*7+i))*.7:Math.sin(clock*2+i)*.04);
+      if(on){const u=(clock*.9+i*.37)%1;c.wave.scale.setScalar(1+u*3.2);c.wave.material.opacity=.85*(1-u);c.tag.position.set(c.float.position.x,2.5+Math.sin(clock*4+i)*.18,c.float.position.z);}});aim(dt);r.render(scene,cam);};
   function frame(t){raf=requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000);last=t;tick(dt);}
   herd.forEach(b=>stroll(b,0));r.shadowMap.needsUpdate=true;fit();
   host.append(el$);raf=requestAnimationFrame(frame);

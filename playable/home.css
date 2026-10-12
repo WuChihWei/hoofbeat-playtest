@@ -455,3 +455,8 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 /* The ranch's picture, more saturated (2026-10-11, the user): on the canvas, so the page's own controls keep their colours. */
 .page-ranch .view canvas{filter:saturate(1.28) contrast(1.03)}
 .ranch-crops{gap:calc(6 * var(--u))}.ranch-crops .ui-wallet{padding-inline:calc(8 * var(--u))}
+/* The dorm: two feed buttons, wheat and fish (2026-10-12): the food's own picture on the green disc, how many there are
+   on a white pill, 「愛吃」 on the one this buddy likes best; none left: dimmed. */
+.st-acts{gap:calc(14 * var(--u))}.st-acts .feed>span img{width:calc(38 * var(--u));height:calc(38 * var(--u));object-fit:contain}
+.st-acts .feed .st-food{padding:1px calc(7 * var(--u))}.st-acts .feed.none>span{filter:grayscale(.7);opacity:.6}
+.st-acts .feed em{position:absolute;left:50%;bottom:calc(-7 * var(--u));translate:-50% 0;font-style:normal;white-space:nowrap;font-size:calc(10 * var(--u));font-weight:700;line-height:1;padding:calc(3 * var(--u)) calc(7 * var(--u));border-radius:99px;background:var(--ui-yellow);color:#000;text-shadow:none}.st-acts .feed em[hidden]{display:none}
