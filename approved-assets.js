@@ -70,7 +70,7 @@ export const preloadBuddies=coats=>preloadModels([...coats.map(c=>COATS[c]?.mode
 // rig and clips: what walks about in the ranch overview, where a buddy is 40–60 px tall (ranch-view.js). One file per
 // kind of animal, beside its full model.
 export const ranchFile=coat=>(COATS[coat]?.model??PRESENTATION_ASSETS.horse).replace('_Mobile.glb','_Ranch.glb');
-export const preloadRanchBuddies=coats=>preloadModels([...new Set(coats.map(ranchFile))]);
+export const preloadRanchBuddies=coats=>preloadModels([...new Set([...coats.map(ranchFile),...coats.map(c=>youngOf(c)).filter(Boolean)])]);   // and a young model of its own (GROW: the foal, the rhino calf): r576 left them out and the ranch of anyone with a young rhino did not load
 // Eyes, set up the same way on every buddy. The model's side (artifacts/tripo-retarget/build_animal.py): a mesh `Eyes`,
 // its two eyeballs where the model has them, material Buddy_Eye (the horse keeps its own three names: export_final.py
 // add_eyes); the socket, lids, lash lines and brows are the model's own parts and are drawn as modelled. On the
