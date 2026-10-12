@@ -49,7 +49,17 @@ export const SLICE_CONFIG = Object.freeze({
   stamina:20, sprintStamina:5, staminaWait:2*T, staminaRegen:1/T,
   jumpDuration:1.05, jumpLead:.45, jumpWindow:.2/1.3*T,   // the window: ±154 ms of real time, as before
   // Knocked hurdle: speed dips (up to 60%) for 0.9 simulation seconds, combo, rhythm drive and a running sprint are lost.
-  stumbleTime:.9, stumbleDip:.6, knock:4,   // knock: a rival the player bumped or kicked staggers this many times as long (2026-10-10, the user: 「對手恢復太快了」). These are game seconds: .9 was under half a real second; × 4 is about 1.8 real seconds, as long as its 💫 shows
+  // hitTime (2026-10-12, the user: 「基本受傷程度應該要一致，都暈 1.2 秒」): whoever is hit, the player by a ram or a rival by a bump or
+  // a kick, staggers this many REAL seconds (slice-game hitK turns it into a share of stumbleTime at the stage's tempo). It was
+  // `knock: 4` for a rival (about 1.8 real s) and 1 for the player (about .5).
+  hitTime:1.2,
+  // hit (2026-10-12, the user: the hit must be felt, without costing more than it did): the speed a hit takes, as a share of
+  // the runner's own. It drops to 1 - dip within `rise` of the stagger and comes back along (1 - u)^pow: hard at once, soon
+  // running again. The ground lost is what the old even dip (stumbleDip .6, a half sine) lost: .9 × (.08/2 + .92/2.4) = .38
+  // of the stagger against .6 × 2/π = .38. hold: a rival that is hit keeps beside the player this many real seconds first,
+  // so it is seen going over (it used to slide out of the picture at once). The player's ball stands still while it is hit.
+  hit:{dip:.9,rise:.08,pow:1.4,hold:.35},
+  stumbleTime:.9, stumbleDip:.6,   // a trip by itself (a hurdle, a popped ball): game seconds, .9 is under half a real second
  
   coinRadius:.78,
   // Results: each coin picked up is worth coinValue in the wallet, plus a bonus by finishing place (1st … 5th), and

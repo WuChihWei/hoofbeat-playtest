@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r559';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r567';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -143,15 +143,15 @@ export class SliceGame {
     if(!r.ram){const out=this.targetLane+Math.sign(this.targetLane-r.targetLane);   // the lane the player would get away into
       const back=R.back&&r.grudge>this.time&&this.time>=r.grudge-2*c.tempo;   // the last stage: a rival the player knocked rams it back as soon as it can, whatever the wait between rams
       if(!back&&this.time<(this.ramNext??R.first)||this.rammer()||!beside||apart!==1||r.targetLane%1||Math.abs(r.laneValue-r.targetLane)>1e-6||Math.abs(this.laneValue-this.targetLane)>1e-6
-        ||Math.abs(out)>1||this.occupied(this,out)||this.stumbleFactor(this.time,r)<1||this.stumbleFactor()<1||this.boostActive()||this.blown>this.time||this.jumps.length&&this.time-this.jumps.at(-1).t<c.jumpDuration)return;
+        ||Math.abs(out)>1||this.occupied(this,out)||this.staggering(this.time,r)||this.staggering()||this.boostActive()||this.blown>this.time||this.jumps.length&&this.time-this.jumps.at(-1).t<c.jumpDuration)return;
       r.ram={t:this.time,side:r.targetLane>this.targetLane?1:0};r.grudge=0;this.emit('ram-start',{id:r.id,side:r.ram.side});return;}
     const u=this.time-r.ram.t,side=r.ram.side,end=(why,data)=>{r.ram=null;this.ramNext=this.time+R.gap*(.7+.6*hash(this.time,r.phase+3));this.emit(why,{id:r.id,side,...data});};
-    if(this.stumbleFactor(this.time,r)<1)return end('ram-broken');   // knocked first
+    if(this.staggering(this.time,r))return end('ram-broken');   // knocked first
     const there=beside&&apart===1&&!this.boostActive();
     if(!there&&u<R.react)return end('ram-off');                       // not committed yet: it lets it go
     if(u<R.time)return;
     if(!there){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;return end('ram-miss');}   // it threw itself at nothing
-    this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:this.time,hit:true,k:this.has('tough')?.5:1});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;
+    this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:this.time,hit:true,side:side?-1:1,k:this.hitK()*(this.has('tough')?.5:1)});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;
     end('rammed',{pushed:false});}   // it staggers where it is: nobody who is hit is moved to another lane (2026-10-11, the user)
   // Traffic, the same for every runner. Lane `to` is taken near `self` if another runner is in it (within laneOverlap)
   // or heading into it, closer than a horse length plus what the two could close up during a lane change.
@@ -190,7 +190,15 @@ export class SliceGame {
     const ahead=r.distance-this.distance,bend=sectionAt(r.distance+10,this.course).bend,line=r.block&&ahead>0&&ahead<25?Math.round(this.laneAt(this.time-c.blockReaction)):bend?-bend:r.lane;   // else the inside of the bend it is on or coming to, its own lane on a straight
     if(line!==r.targetLane){const to=r.targetLane+Math.sign(line-r.targetLane);if(!this.occupied(r,to))go(to);}
   }
-  stumbleFactor(t=this.time,o=this){const s=o.stumbles.at(-1),age=t-(s?.t??-9),c=this.config,T=c.stumbleTime*(s?.k??1);return age>=0&&age<T?1-c.stumbleDip*Math.sin(Math.PI*age/T):1;}   // k: a runner the player knocked (bump, kick) is out of it c.knock times as long
+  hitK(){const c=this.config;return c.hitTime*(c.tempo||1)/c.stumbleTime;}   // a hit's stagger as a multiple of stumbleTime: config.hitTime real seconds for anyone
+  // Out of it: tripped (a hurdle, a popped ball: stumbleTime) or hit (k: config.hitTime real seconds, hitK). staggering: is it;
+  // stumbleFactor: the share of its speed it has meanwhile. A trip dips evenly; a hit drops hard and comes back (config.hit).
+  staggering(t=this.time,o=this){const s=o.stumbles.at(-1),age=t-(s?.t??-9);return age>=0&&age<this.config.stumbleTime*(s?.k??1);}
+  stunned(t=this.time){return !!this.stumbles.at(-1)?.hit&&this.staggering(t);}   // the player, hit: its ball stands still (ballStep)
+  stumbleFactor(t=this.time,o=this){const s=o.stumbles.at(-1),age=t-(s?.t??-9),c=this.config,T=c.stumbleTime*(s?.k??1);if(!(age>=0&&age<T))return 1;
+    const H=c.hit;if(!s.hit||!H)return 1-c.stumbleDip*Math.sin(Math.PI*age/T);
+    const hold=o===this?0:Math.min(T*.6,H.hold*(c.tempo||1)),u=(age-hold)/(T-hold);if(u<=0)return 1;
+    return 1-H.dip*(u<H.rise?u/H.rise:Math.pow((1-u)/(1-H.rise),H.pow));}
   boostActive(t=this.time){return this.boosts.some(b=>t>=b.t&&t<b.end-1e-9);}
   boostStrength(t=this.time){return strength(this.boosts,t,this.config);}
   // An apple's speed-up, eased like a sprint; carried: a sprint or an apple has the horse; rush: how hard (the look).
@@ -215,11 +223,15 @@ export class SliceGame {
   // Letting go is the hit (r319, the user: 「讓人可以挑戰極限」): from ballGood up a good release (streak +1, a short
   // speed-up), from ballMax up a limit one (+2, twice as long); the ball drops to ballBack so the next takes a climb.
   // Each step of the streak (to ballStack) is ballGain more speed. A pop takes the whole streak.
+  // Where letting go scores (2026-10-12, the user: 「落後時白圈變寬」): behind (lastRank at or past config.ballBehind.rank)
+  // the good band reaches down by `wider` of its distance to the pop, so the one chasing lands releases more easily.
+  goodAt(){const c=this.config,b=c.ballBehind;return b&&this.lastRank>=b.rank?c.ballGood-(1-c.ballGood)*b.wider:c.ballGood;}
   ballStep(dt,at){const c=this.config,S=this.solo;
-    if(this.wasHeld&&!this.holding&&at>=0&&this.ball>=c.ballGood&&this.blown<=at){const max=this.ball>=c.ballMax;
+    const stun=this.stunned(at);   // hit: the ball stands still, held or not, and letting go counts for nothing (config.hit)
+    if(!stun&&this.wasHeld&&!this.holding&&at>=0&&this.ball>=this.goodAt()&&this.blown<=at){const max=this.ball>=c.ballMax;
       this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.skill=Math.min(3,this.skill+(max?2:1));this.ball=c.ballBack;this.rushes.push({t:at,end:at+c.ballRush*(max?2:1)});this.emit('release',{max,streak:this.streak});}
-    this.wasHeld=this.holding;
-    this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill*(this.form.charge??1):-dt/c.ballFall));
+    this.wasHeld=!stun&&this.holding;
+    if(!stun)this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill*(this.form.charge??1):-dt/c.ballFall));
     if(this.ball>=1){this.ball=0;this.streak=Math.floor(this.streak/2);this.blown=at+c.ballPop;if(at>=0)this.stumbles.push({t:at});this.emit('blown');}   // spent: it stumbles
     this.drive=this.blown>at?S.floor:S.top*(c.ballLo+(c.ballHi-c.ballLo)*this.ball)*(1+c.ballGain*this.streak);
     if(at<0)this.driveSpeed=this.drive;}
@@ -230,7 +242,7 @@ export class SliceGame {
   // stumbles and whatever sprint it was on ends.
   kickBack(){const c=this.config;if(this.paused||this.finished||!c.ball||this.blown>this.time||this.time<(this.shoveAt??-9))return;
     const r=this.behind();this.ball+=c.shoveWind;this.driveSpeed*=.55;this.shoveAt=this.time+c.ballRush*4;
-    if(r){r.stumbles.push({t:this.time,k:c.knock,hit:true});r.grudge=this.time+c.stumbleTime*c.knock+2*c.tempo;r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
+    if(r){r.stumbles.push({t:this.time,k:this.hitK(),hit:true});r.grudge=this.time+c.stumbleTime*this.hitK()+2*c.tempo;r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;}
     return this.emit('kickback',{hit:r?.id??null});}
   // The gait test: one gear up or down (dir +1 / -1); not while blown.
   // The gait test: changing lane into a runner alongside at a canter or faster shoves it. With room on its far side it
@@ -252,9 +264,9 @@ export class SliceGame {
     if(!this.config.skillTime)return this.skillLand();
     return this.emit('skill-start',{kind:t.kind,side:t.side??null,id:t.r.id});}
   skillLand(){const t=this.swing,r=t.r,c=this.config;this.swing=null;
-    const there=this.stumbleFactor()>=1&&r.finishTime===null&&(t.kind==='kick'?this.behind()===r:Math.abs(r.distance-this.distance)<c.hitReach*1.6&&Math.abs(Math.abs(r.laneValue-this.laneValue)-1)<c.laneOverlap&&(r.laneValue>this.laneValue)===!!t.side);
+    const there=!this.staggering()&&r.finishTime===null&&(t.kind==='kick'?this.behind()===r:Math.abs(r.distance-this.distance)<c.hitReach*1.6&&Math.abs(Math.abs(r.laneValue-this.laneValue)-1)<c.laneOverlap&&(r.laneValue>this.laneValue)===!!t.side);
     if(!there)return this.emit('skill-miss',{kind:t.kind,side:t.side??null,id:r.id});
-    r.stumbles.push({t:this.time,k:c.knock,hit:true});r.grudge=this.time+c.stumbleTime*c.knock+2*c.tempo;   // grudge: until 2 s after it is on its feet again (ramStep: config.ram.back)
+    r.stumbles.push({t:this.time,k:this.hitK(),hit:true,side:t.kind==='kick'?0:r.laneValue>this.laneValue?1:-1});r.grudge=this.time+c.stumbleTime*this.hitK()+2*c.tempo;   // side: the way it is knocked (race-scene tips its rider that way) · grudge: until 2 s after it is on its feet again (ramStep: config.ram.back)
     r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;
     return this.emit('skill',{kind:t.kind,side:t.side??null,id:r.id,pushed:false});}   // it staggers in its own lane (2026-10-11, the user: the one hit does not change lane)
   // The runner alongside in that lane (the skill button's bump: skillTarget).
@@ -377,7 +389,7 @@ export class SliceGame {
   metrics(){
     const L=this.config.length;
     // Rivals keep running past the line (no snap back beside the player); unfinished ones are projected.
-    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,stumbleK:r.stumbles.at(-1)?.k??1,stumbleHit:!!r.stumbles.at(-1)?.hit,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
+    const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,stumbleK:r.stumbles.at(-1)?.k??1,stumbleHit:!!r.stumbles.at(-1)?.hit,stumbleSide:r.stumbles.at(-1)?.side??0,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
       boosting:strength(r.boosts,this.time,this.config)>0,finishTime:r.finishTime??this.time+Math.max(0,L-r.distance)/Math.max(r.speed,1)}));
     const rank=1+rivals.filter(r=>this.finished?r.finishTime<this.finishTime:r.distance>this.distance+1e-9||(Math.abs(r.distance-this.distance)<=1e-9&&r.speed>this.speed)).length;
     return {player:{distance:this.distance,speed:this.speed,finishTime:this.finishTime,lane:this.laneValue},rivals,rank};

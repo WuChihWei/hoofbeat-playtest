@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r559';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r559';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r559';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r559';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r559';
-import {installApprovedEnvironment} from './approved-environment.js?v=r559';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r559';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r559';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r559';
-import {turnAt} from './track-projection.js?v=r559';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r559';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r559';
+import {roadHalfWidth} from './track-presentation.mjs?v=r567';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r567';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r567';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r567';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r567';
+import {installApprovedEnvironment} from './approved-environment.js?v=r567';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r567';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r567';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r567';
+import {turnAt} from './track-projection.js?v=r567';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r567';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r567';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -56,7 +56,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
 const FINISH_SHOT={out:7,ahead:5.5,high:2,aim:2,fov:60,ease:260};   // the finish close-up: m to the side of the buddy, m up the road from it, the camera's height, the height it looks at, the lens (wide: an upright phone has to hold a buddy's length), ms it eases over
 const WIDE=[6,9,3];   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
-const REACT={daze:[.5,2.5],pump:[-1.7,.7],push:1.5,lean:.26,glance:.6,reach:2,kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
+const REACT={tip:[.8,3.2,7,.03],daze:[.5,2.5],pump:[-1.7,.7],push:1.5,lean:.36,glance:.6,reach:2,kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
 // by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
 // road per hit of the streak (to 16), none nearer than `from` m ahead of the horse (a glow that near fills the screen).
@@ -627,6 +627,13 @@ export class ChaseRenderer {
     const hitK=st&&age>=0&&age<T&&(player?st.hit:runner.stumbleHit)&&!this.reduced?Math.sin(Math.PI*age/T):0,head=hitK?(entry.bones??={}).Head??=model.content?.getObjectByName('Head')??null:null;
     if(head){const x={b:head,was:head.quaternion.clone(),set:null};entry.kept.push(x);head.getWorldQuaternion(ARM_W);
       head.quaternion.multiply(ARM_Q.setFromAxisAngle(FORWARD.set(0,1,0).applyQuaternion(ARM_W.invert()).normalize(),REACT.daze[0]*hitK*Math.sin(age*2*Math.PI*REACT.daze[1])));x.set=head.quaternion.clone();}
+    // Hit, the rider as one piece is knocked over in the saddle the way the blow went and springs back like a tumbler toy
+    // (2026-10-12, the user: the hit must be felt, and nothing may make the picture jump): the whole rider is turned, no single
+    // limb, and the buddy keeps its place and stride. REACT.tip: [rad, how fast it dies /s, its swing rad/s, the moment it
+    // takes to go over s], in real seconds. A kick from behind (side 0) throws it forward. Set outright every frame.
+    if(model.riderContent){const side=player?st?.side:runner.stumbleSide,on=st&&age>=0&&age<T&&(player?st.hit:runner.stumbleHit)&&!this.reduced,a=age/(race.config.tempo||1),
+        k=on?REACT.tip[0]*(1-Math.exp(-a/REACT.tip[3]))*Math.exp(-a*REACT.tip[1])*Math.cos(a*REACT.tip[2]):0;
+      model.riderContent.rotation.z=side?-side*k:0;model.riderContent.rotation.x=on&&!side?k*.7:0;}
     if(!player&&trip){const h=model.root.rotation.y,sw=POSTURE.rival[1]*trip*Math.sin(age*2*Math.PI/T);model.root.position.x+=Math.cos(h)*sw;model.root.position.z-=Math.sin(h)*sw;}
     // A hit on the beat (the pads' pulse): the player's horse drives forward a little and dips its nose.
     const hit=role==='player'&&actor.active?run*Math.max(...this.pulses.map((at,l)=>this.pulseStrength[l]*clamp(1-(time-at)/.32,0,1))):0;
@@ -649,13 +656,13 @@ export class ChaseRenderer {
     // hand has to reach the other rider). The buddy only does what it does when it changes lane: it slides over level,
     // at its own pace, all through the warning (REACT.reach m of the 3 m between lane centres, eased like a lane change),
     // and is alongside at the hit. The move itself is the rider's: the arm on that side half out for the warning and
-    // straight at the hit (REACT.push rad), the body leaning that way (REACT.lean rad: two thirds, then all), the head
+    // straight at the hit (REACT.push rad), the body leaning that way (REACT.lean rad, .36 since 2026-10-12, and the arm thrown straight only in the last fifth: two thirds, then all), the head
     // turned to look (REACT.glance rad). Afterwards the arm comes back first, then the body, the buddy last. The same
     // for a rival coming over at the player (runner.ram, slice-game ramStep) and the player's own bump (ram()).
     const step=x=>{x=clamp(x,0,1);return x*x*(3-2*x);};let pu=null;
     if(!player&&runner.ram&&race.config.ram){pu=clamp((time-runner.ram.t)/race.config.ram.time,0,1);entry.pushDir=runner.ram.dir;}
     if(player&&this.ramAt!=null&&time<this.ramAt+.05){pu=clamp((time-this.ramFrom)/Math.max(.05,this.ramAt-this.ramFrom),0,1);entry.pushDir=this.ramSide;}
-    {const late=pu==null?0:step((pu-.7)/.3),want=pu==null?[0,0,0]:[.5*step(pu/.15)+.5*late,2/3*step(pu/.3)+late/3,step(pu)],back=[.25,.4,.55],T=race.config?.tempo||1;
+    {const late=pu==null?0:step((pu-.8)/.2),want=pu==null?[0,0,0]:[.5*step(pu/.15)+.5*late,2/3*step(pu/.3)+late/3,step(pu)],back=[.25,.4,.55],T=race.config?.tempo||1;
       entry.pushT??=time;const dtp=Math.max(0,time-entry.pushT);entry.pushT=time;entry.pose3??=[0,0,0];
       entry.pose3=entry.pose3.map((v,k)=>want[k]>=v?want[k]:Math.max(want[k],v-dtp/(back[k]*T)));}   // [arm, body, slide]: out as the warning runs, back over .25 / .4 / .55 s
     entry.push=entry.pose3[0];entry.pushArm=entry.pushDir>0?1:0;const leanK=entry.pose3[1];
