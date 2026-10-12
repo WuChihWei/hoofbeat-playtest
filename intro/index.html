@@ -21,15 +21,21 @@ h2{font-size:26px;line-height:1.3;margin:0 0 6px;text-wrap:balance}p{margin:0;co
 .wrap{max-width:1040px;margin:0 auto;padding:44px 20px}
 .cta{display:block;background:var(--green);color:#fff;font-size:22px;font-weight:800;padding:16px 28px;border-radius:18px;box-shadow:0 6px 0 var(--green-d);text-decoration:none;text-align:center;transition:transform .08s,box-shadow .08s}
 .cta:active{transform:translateY(4px);box-shadow:0 2px 0 var(--green-d)}.cta:focus-visible{outline:3px solid #fff;outline-offset:3px}
+body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.notify{display:grid;gap:10px;width:min(100%,360px)}.end .notify{margin:0 auto}
+.notify input{font:inherit;font-size:18px;padding:14px 16px;border-radius:14px;border:2px solid #fff;background:#fff;color:var(--ink);width:100%}
+.notify input:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+.notify .msg{min-height:1.4em;font-size:14px;color:#fff;margin:0;text-align:center}.notify.done input,.notify.done button{display:none}.notify.done .msg{font-size:18px;font-weight:700}
 /* hero: the cover; the wide one on wide screens */
 .hero{min-height:min(100svh,860px);background:#1c3a1c url(../assets/ui/cover.webp) center top/cover;position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:0 20px 34px;text-align:center}
 .hero:before{content:"";position:absolute;inset:auto 0 0 0;height:60%;background:linear-gradient(transparent,#0b1a0bd9 60%)}
-.hero>*{position:relative}.hero .logo{width:min(72vw,340px)}
+.hero>*{position:relative}.hero .logo{width:min(62vw,300px);height:auto}   /* height:auto: the tag's own height stretched it (2026-10-12) */
 .hero h1{color:#fff;font-size:clamp(24px,6.4vw,38px);line-height:1.35;margin:14px 0 20px;text-shadow:0 2px 8px #0008;text-wrap:balance}
-.hero .cta{width:min(100%,360px)}.hero small{color:#fffc;font-size:14px;margin-top:16px}
+.hero>.cta{width:min(100%,360px)}.hero small{color:#fffc;font-size:14px;margin-top:16px}
 /* wide: the wide cover; the wordmark, headline and button stand on its empty left, clear of the rider; no following bar */
 @media(min-width:760px){.hero{background-image:url(../assets/ui/cover-wide.webp);background-position:center;align-items:flex-start;justify-content:center;text-align:left;padding:0 0 0 max(5vw,calc((100vw - 1180px)/2))}
-  .hero:before{inset:0 auto 0 0;width:58%;height:auto;background:linear-gradient(90deg,#0b1a0bcc 35%,transparent)}.hero .logo{width:min(34vw,380px);margin-left:-8px}.hero h1{font-size:clamp(26px,3.2vw,40px)}.hero .cta{width:300px}
+  .hero:before{inset:0 auto 0 0;width:58%;height:auto;background:linear-gradient(90deg,#0b1a0bcc 35%,transparent)}.hero .logo{width:min(30vw,340px);margin-left:-8px}.hero h1{font-size:clamp(26px,3.2vw,40px)}.hero .cta{width:300px}.hero .notify{width:340px}.hero .notify .cta{width:100%}.hero .notify .msg{text-align:left}
   .stick{display:none}body{padding-bottom:0}}
 /* a row that swipes on a phone and sits in a line on a wide screen */
 .swipe{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 20px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -62,12 +68,16 @@ footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padd
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.stick,.cta,.dots i{transition:none}}
 </style>
 </head>
-<body>
+<!-- wait: the game is not open yet, the page takes an e-mail to tell when it is (2026-10-12, the user: 「介紹頁先改成email，遊戲確認後再換」).
+     To open the game: take `wait` off <body>; every 「馬上玩」 comes back and the forms go. -->
+<body class="wait">
 <header class="hero">
   <img class="logo" src="../assets/ui/logo_zh.webp" alt="衝吧蹄蹄 ZOOMBUD" width="814" height="200">
   <h1>按住、放開、衝！<br>帶你的夥伴跑遍世界</h1>
-  <a class="cta" id="top-cta" href="../">馬上玩</a>
-  <small>免下載 · 手機瀏覽器就能玩</small>
+  <a class="cta play-only" id="top-cta" href="../">馬上玩</a>
+  <small class="play-only">免下載 · 手機瀏覽器就能玩</small>
+  <form class="notify wait-only" id="notify" novalidate><label class="sr" for="mail1">Email</label><input id="mail1" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form>
+  <small class="wait-only">遊戲準備中 · 留下 email，開放時第一個通知你</small>
 </header>
 
 <section>
@@ -107,15 +117,24 @@ footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padd
   <div style="height:36px"></div>
 </section>
 
-<section class="end"><div class="wrap"><h2>現在就開跑</h2><a class="cta" href="../">馬上玩</a></div></section>
+<section class="end"><div class="wrap"><h2 class="play-only">現在就開跑</h2><a class="cta play-only" href="../">馬上玩</a><h2 class="wait-only">開放時第一個通知你</h2><form class="notify wait-only" novalidate><label class="sr" for="mail2">Email</label><input id="mail2" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form><p class="wait-only" style="margin-top:14px;font-size:13px;color:#b8ab97">email 只用來通知遊戲開放，不會做其他用途</p></div></section>
 <footer>© 2026 ZOOMBUD 衝吧蹄蹄</footer>
-<div class="stick" id="stick"><a class="cta" href="../">馬上玩</a></div>
+<div class="stick" id="stick"><a class="cta play-only" href="../">馬上玩</a><a class="cta wait-only" href="#notify">留 email，開放時通知我</a></div>
 <script>
 // clips play only while on screen; the following bar shows while neither of the page's own buttons is on screen; the dots follow the cards
 const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting)v.play().catch(()=>{});else v.pause();}),{threshold:.4});
 document.querySelectorAll('video').forEach(v=>io.observe(v));
 const seen=new Set(),ctas=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?seen.add(e.target):seen.delete(e.target));document.getElementById('stick').classList.toggle('on',!seen.size);});
-document.querySelectorAll('.hero .cta,.end .cta').forEach(a=>ctas.observe(a));
+document.querySelectorAll('.hero .cta,.end .cta').forEach(a=>a.offsetParent&&ctas.observe(a));   // only the ones shown (wait / play)
+// The e-mail goes to a Google Form the user owns (its response sheet is the list). FORM.url: the form's …/formResponse
+// address; FORM.field: the e-mail question's entry id. The reply cannot be read from here (no-cors), so a request that
+// went out counts as received.
+const FORM={url:'',field:''};
+document.querySelectorAll('.notify').forEach(f=>f.addEventListener('submit',async e=>{e.preventDefault();const i=f.querySelector('input'),m=f.querySelector('.msg'),v=i.value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){m.textContent='請輸入正確的 email';i.focus();return;}
+  if(!FORM.url){m.textContent='登記還沒開放，請晚點再試';return;}
+  m.textContent='送出中…';try{await fetch(FORM.url,{method:'POST',mode:'no-cors',body:new URLSearchParams({[FORM.field]:v})});document.querySelectorAll('.notify').forEach(x=>{x.classList.add('done');x.querySelector('.msg').textContent='收到了！開放時通知你';});}
+  catch{m.textContent='沒送出去，請檢查網路再試一次';}}));
 const cards=document.getElementById('cards'),dots=[...document.getElementById('dots').children];
 cards.addEventListener('scroll',()=>{const c=[...cards.children],mid=cards.scrollLeft+cards.clientWidth/2;let k=0,best=1e9;c.forEach((el,i)=>{const d=Math.abs(el.offsetLeft+el.offsetWidth/2-mid);if(d<best){best=d;k=i;}});dots.forEach((d,i)=>d.classList.toggle('on',i===k));},{passive:true});
 </script>
