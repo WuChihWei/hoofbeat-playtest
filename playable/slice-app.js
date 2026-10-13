@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r670';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r670';
-import {WEATHER} from './progress.mjs?v=r670';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r670';
-import {compositionRank} from '../race-composition.mjs?v=r670';
-import {ChaseRenderer} from '../race-scene.js?v=r670';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r670';
-import {cityModels} from '../approved-environment.js?v=r670';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r685';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r685';
+import {WEATHER} from './progress.mjs?v=r685';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r685';
+import {compositionRank} from '../race-composition.mjs?v=r685';
+import {ChaseRenderer} from '../race-scene.js?v=r685';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r685';
+import {cityModels} from '../approved-environment.js?v=r685';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r670';
-import {RaceAudio} from '../audio.js?v=r670';
-import {addLog,raceEntry} from '../playtest.js?v=r670';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r670';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r685';
+import {RaceAudio} from '../audio.js?v=r685';
+import {addLog,raceEntry} from '../playtest.js?v=r685';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r685';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -25,7 +25,7 @@ const RIVALS=fieldRivals(new URLSearchParams(location.search).get('field')==='3'
 const TYPE_NAME={straight:'直線型',curve:'彎道型',mud:'泥地型'},GAIT_NAME=['小跑步','大跑步','奔跑'];   // GAIT_NAME: slice-game gait()
 // How to play: four picture cards on the start cover, one every 2 s (tap to skip ahead).
 const HOW=[   // the ball game (2026-10-11: the cards still taught the rhythm game it replaced on 2026-10-07)
-  ['<i class="how-key">●</i>','按住圓球蓄力，放開就衝','越接近白圈放開越快 · 壓過頭會爆掉'],
+  ['<i class="how-key">●</i>','按住圓球蓄力，放開就衝','長到黃圈放開最快，早一點也可以，碰到紅圈會爆掉'],
   ['<i class="how-key">‹</i><i class="how-key">›</i>','左右滑換道，往上滑跳欄','圓球會跟著手指'],
   ['<i class="how-key">🍎</i>','吃到蘋果存一段衝刺','按 ⚡ 用掉'],
   ['<i class="how-key">撞</i>','放得漂亮就存一格撞擊','對手並排時按：撞牠 · 在正後方：踢牠'],
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r670',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r685',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -132,7 +132,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // One reason to double, the strongest there is (2026-10-13, the user: three, the most persuasive): the weather meets what this
   // buddy is good at · it won here last time · it is fed and happy. None: nothing is said.
   function why(){const el=document.querySelector('.cover-why');if(!el||!stake)return;const name=team[0].name;
-    el.textContent=SKY==='rain'&&has('water')?`雨天，${name} 不怕水，獎金 ×${stake.pot.match}`:SKY==='snow'&&has('snow')?`雪天，${name} 不怕雪，獎金 ×${stake.pot.match}`:stake.lastWon()?'上次這關你第 1 名':stake.fit()?`${name} 狀態好`:'';el.hidden=!el.textContent;}
+    el.textContent=SKY==='rain'&&has('water')?`雨天，${name} 不怕水，獎金 ×${stake.pot.match}`:SKY==='snow'&&has('snow')?`雪天，${name} 不怕雪，獎金 ×${stake.pot.match}`:stake.lastWon()?'上次這關你第 1 名':stake.fit()?`${name} 狀態好`:'';el.classList.remove('no');el.hidden=!el.textContent;}
   const startLabel=()=>!stake||stake.can(doubled)?'起跑':'免費跑（金幣不夠，沒有獎金）';   // the fee is said once, on its own line above (2026-10-13, the user)
   // An overtake is an event (2026-10-13, the user: 超車做成事件): the one passed is named big in the middle of the view, the
   // place under it; overtakes within PASS_CHAIN s of the last count up (連超 ×N). Being passed: the same in red, the count reset.
@@ -358,7 +358,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       else if(e.type==='passed'){lostAt=clock.elapsed();passPop(e,false,true);sound.accent('warning');buzz('hit');}
       else if(e.type==='boost'){feedback('SPRINT!','sprint',true);sound.accent('sprint');buzz('strong');flash('#d9ff4f',.6,360);renderer.dustBurst(14,true);pop(chargeBtn);}
       else if(e.type==='coin')sound.coin(+e.id.split('-')[2]||0);   // the picture: race-scene coinBurst → coinFly
-      else if(e.type==='release'){feedback(e.max?'極限！':'漂亮！',e.max?'gold':'',e.max);buzz(e.max?'strong':'good');sound.cue('crunch');$('ball-ring').querySelector('u').animate([{scale:1,opacity:1,borderColor:'#ffd846'},{scale:1.35,opacity:0}],{duration:300,easing:'ease-out'});}
+      else if(e.type==='release'){feedback(e.stored?'存了一段！':`${e.max?'極限！':'漂亮！'} ${e.good}/${e.of}`,e.max||e.stored?'gold':'',e.max||e.stored);buzz(e.max?'strong':'good');sound.cue('crunch');$('ball-ring').querySelector('u').animate([{scale:1,opacity:1,borderColor:'#ffd846'},{scale:1.35,opacity:0}],{duration:300,easing:'ease-out'});}
       else if(e.type==='skill-start'){const T=game.skillWait();if(e.kind==='kick')renderer.buck(T-.35);else renderer.ram(e.side,T);   // the kick lands with the hit; the arm is all the way out at it
         feedback(e.kind==='kick'?'準備踢！':'準備撞！','hint');sound.cue('window');buzz('tap');if(!still)$('slice-skill').animate([{scale:1},{scale:1.22}],{duration:T/TEMPO*1000,easing:'ease-in'});}
       else if(e.type==='skill-miss'){feedback('撲空了','hint');sound.cue('deny');}
@@ -588,7 +588,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   async function load(){
     startHow();
     $('slice-back').onclick=toSetup;
-    if(stake){$('slice-double').onclick=()=>{if(!doubled&&(stake.hungry()||!stake.can(true))){const w=document.querySelector('.cover-why');w.textContent=stake.hungry()?`${team[0].name} 餓了，不能加碼押注`:'金幣不夠加碼';w.hidden=false;buzz('bad');return;}doubled=!doubled;sound.cue('click');buzz(doubled?'strong':'tap');const st=$('slice-ticket').querySelector('.stamp');paintStake();if(doubled&&!still)st.animate([{scale:2.4,opacity:0,rotate:'-30deg'},{scale:.9,opacity:1,rotate:'-12deg',offset:.6},{scale:1,rotate:'-12deg'}],{duration:320,easing:'ease-in'});};paintStake();}
+    if(stake){$('slice-double').onclick=()=>{if(!doubled&&(stake.hungry()||!stake.can(true))){const w=document.querySelector('.cover-why');w.textContent=stake.hungry()?`${team[0].name} 餓了，不能加碼押注`:'金幣不夠加碼';w.classList.add('no');w.hidden=false;buzz('bad');return;}doubled=!doubled;sound.cue('click');buzz(doubled?'strong':'tap');const st=$('slice-ticket').querySelector('.stamp');paintStake();if(doubled&&!still)st.animate([{scale:2.4,opacity:0,rotate:'-30deg'},{scale:.9,opacity:1,rotate:'-12deg',offset:.6},{scale:1,rotate:'-12deg'}],{duration:320,easing:'ease-in'});};paintStake();}
     $('slice-help').onclick=e=>{const w=cover.querySelector('.how-wrap');w.hidden=!w.hidden;e.currentTarget.setAttribute('aria-expanded',String(!w.hidden));};
     const form=getForm?.();if(form||level?.weather){const p=cover.querySelector('.slice-form');p.hidden=false;const sky={sun:null,rain:{icon:'rain',text:'雨天：水窪多'},snow:{icon:'cloud',text:'雪天：有雪堆'}}[SKY];
       p.innerHTML=[...(level?.weather&&sky?[sky]:[]),...(form?.notes||[])].map(n=>typeof n==='string'?`<span>${esc(n)}</span>`:`<span class="fit ${n.ok?'ok':'bad'} ${n.icon}">${icon(n.icon)}${esc(n.text)}</span>`).join('');why();

@@ -503,7 +503,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #ball-pad{position:absolute;z-index:5;left:0;right:0;top:14%;bottom:0;touch-action:none}
 #ball-ring{position:absolute;z-index:6;left:50%;bottom:4%;width:36%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:rgb(29 33 23 / .5);pointer-events:none}
 #ball-ring i,#ball-ring u{position:absolute;inset:0;border-radius:50%;border:calc(4 * var(--u)) solid #fff}#ball-ring u{opacity:0}
-#ball-ring.hot i{border-color:var(--ui-danger)}#ball-ring.dead i{border-color:rgb(255 255 255 / .35)}
+#ball-ring.hot i{border-color:#fff}#ball-ring.dead i{border-color:rgb(255 255 255 / .35)}
 #ball-ring b{position:absolute;left:50%;top:50%;width:calc(24% + 70% * var(--ball,0));aspect-ratio:1;border-radius:50%;background:var(--ui-yellow);opacity:.6;
   transform:translate(calc(-50% + var(--dx,0) * 1px),calc(-58% + var(--dy,0) * 1px));box-shadow:0 calc(8 * var(--u)) calc(6 * var(--u)) rgb(0 0 0 / .35);transition:transform .09s ease-out}
 #ball-ring.held b{opacity:1;transform:translate(calc(-50% + var(--dx,0) * 1px),calc(-50% + var(--dy,0) * 1px));box-shadow:inset 0 0 0 calc(2 * var(--u)) rgb(0 0 0 / .25),0 0 calc(14 * var(--u)) var(--ui-yellow)}
@@ -774,3 +774,9 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #slice-result.has-money .res-ticket .parts{flex-direction:row;gap:0 calc(10 * var(--u))}
 #slice-result.has-money .res-ticket>div{flex:1}
 @media (max-height:740px){#slice-result.has-money .res-rank li:not(.res-age){display:none}#slice-result.has-money .res-ticket .art{width:calc(52 * var(--u))}}   /* a short screen: the list, the buddy's row and the buttons all fit */
+/* The ball's track, one meaning a colour (2026-10-13, the user: 統一改成紅圈爆，紅才是爆的顏色): green lets go, yellow is the
+   limit, the red ring round it is where it pops. (UI_GUIDELINE_V2 has no red; this one is the user's own.) */
+#ball-ring i{background:radial-gradient(closest-side,transparent 79%,var(--ui-yellow) 80.5% 93%,var(--ui-red) 94.5%);box-shadow:0 0 0 calc(3 * var(--u)) var(--ui-red)}   /* two rings (the same evening, the user: 綠圈不用，黃圈是甜蜜圈): yellow is the sweet spot, red the pop; the band where a release already counts is not drawn, 放開！ says it */
+#ball-ring.dead i{box-shadow:0 0 0 calc(3 * var(--u)) rgb(255 59 48 / .4)}
+/* red (ui-v2 --ui-red): the pop, and a refusal on the start card (cannot raise: hungry, or short of coins) */
+#slice-feedback.red{color:var(--ui-red)}#slice-cover .cover-why.no{color:var(--ui-red)!important}

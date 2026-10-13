@@ -1,8 +1,9 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r670';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r685';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
 // The stand-in team (tests, the dev pages): the three starters at the level the template course expects.
+const RIVAL_RELEASE=.9;   // how often a rival lets go well, as a share of the time the ball takes to fill: .9 is a rider in no hurry (about one stored a race). It was .3, a rider who never misses: four rival sprints a race where there had been none, and a good player on a buddy of the right age placed 4th (tools/rival-sweep.mjs, 2026-10-13)
 export const DEFAULT_TEAM=[{id:1,type:'straight',coat:0},{id:0,type:'curve',coat:2},{id:2,type:'mud',coat:1}].map(h=>({...h,stats:RIVAL_BUDDY[h.type],level:RIVAL_LEVEL[3]}));
 // A rival team rides its horses in the order that suits this course's legs best (the same choice the player makes).
 const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
@@ -42,7 +43,7 @@ export class SliceGame {
     // is in the ball at GO is the start. An apple stores a sprint. (The pace, reins and gait tests of the same week are
     // in archive/removed/2026-10-11-unused.)
     this.beats=chart;   // the chart is for the music alone (audio.js buildScore): nothing is tapped to it since the ball game (2026-10-07)
-    this.ball=0;this.holding=false;this.wasHeld=false;this.streak=0;this.skill=c.ball?1:0;   // skill: charges of the skill button (one to start with)
+    this.ball=0;this.holding=false;this.wasHeld=false;this.streak=0;this.good=0;   // good: releases towards the next charge (ballStep)
         this.blown=-99;
     this.notes=[];   // the rhythm game's notes: none (race-scene and audio.js still read the list)
     this.coins=coins.map(c=>({...c,collected:false}));this.coinCount=0;
@@ -96,6 +97,12 @@ export class SliceGame {
   // lands in .6 of the time (the wolf). The rivals have none.
   perk(){const p=this.config.perks;return Array.isArray(p)?p[this.leg]:this.config.perk;}
   has(n){return [].concat(this.perk()||[]).includes(n);}
+  // One store for the sprint and for the bump (2026-10-13, the user: 集氣改 5 次送一次衝刺或撞人，大家都一樣): the charge's
+  // segments. Every config.ballCharge (5) good releases store one (a release at the limit counts two), an apple one, drafting
+  // a trickle; a sprint spends one and so does a bump or a kick. `skill` is that count (the bump button's number). A rival has
+  // the same store: it fills as a rider of its skill letting go on time would fill it, and its sprint and its ram each spend one.
+  get skill(){return this.config.ball?this.segments():0;}
+  set skill(n){this.energy=n*this.config.boostCost;}
   skillWait(){return (this.config.skillTime||0)*(this.has('quick')?.6:1);}
   slowed(o,t=this.time){const w=this.wet(o,t);if(w&&!(o===this&&this.has(w.snow?'snow':'water')))o.wetUntil=t+this.config.wetTime*this.config.tempo;return t<(o.wetUntil??-9);}
   wet(o,t=this.time){const c=this.config,me=o===this;if(me&&this.airborne(t))return null;
@@ -144,8 +151,8 @@ export class SliceGame {
     if(!r.ram){const out=this.targetLane+Math.sign(this.targetLane-r.targetLane);   // the lane the player would get away into
       const back=R.back&&r.grudge>this.time&&this.time>=r.grudge-2*c.tempo;   // the last stage: a rival the player knocked rams it back as soon as it can, whatever the wait between rams
       if(!back&&this.time<(this.ramNext??R.first)||this.rammer()||!beside||apart!==1||r.targetLane%1||Math.abs(r.laneValue-r.targetLane)>1e-6||Math.abs(this.laneValue-this.targetLane)>1e-6
-        ||Math.abs(out)>1||this.occupied(this,out)||this.staggering(this.time,r)||this.staggering()||this.boostActive()||this.blown>this.time||this.jumps.length&&this.time-this.jumps.at(-1).t<c.jumpDuration)return;
-      r.ram={t:this.time,side:r.targetLane>this.targetLane?1:0};r.grudge=0;this.emit('ram-start',{id:r.id,side:r.ram.side});return;}
+        ||c.ball&&r.energy<c.boostCost||Math.abs(out)>1||this.occupied(this,out)||this.staggering(this.time,r)||this.staggering()||this.boostActive()||this.blown>this.time||this.jumps.length&&this.time-this.jumps.at(-1).t<c.jumpDuration)return;
+      if(c.ball)r.energy-=c.boostCost;r.ram={t:this.time,side:r.targetLane>this.targetLane?1:0};r.grudge=0;this.emit('ram-start',{id:r.id,side:r.ram.side});return;}
     const u=this.time-r.ram.t,side=r.ram.side,end=(why,data)=>{r.ram=null;this.ramNext=this.time+R.gap*(.7+.6*hash(this.time,r.phase+3));this.emit(why,{id:r.id,side,...data});};
     if(this.staggering(this.time,r))return end('ram-broken');   // knocked first
     const there=beside&&apart===1&&!this.boostActive();
@@ -230,7 +237,8 @@ export class SliceGame {
   ballStep(dt,at){const c=this.config,S=this.solo;
     const stun=this.stunned(at);   // hit: the ball stands still, held or not, and letting go counts for nothing (config.hit)
     if(!stun&&this.wasHeld&&!this.holding&&at>=0&&this.ball>=this.goodAt()&&this.blown<=at){const max=this.ball>=c.ballMax;
-      this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.skill=Math.min(3,this.skill+(max?2:1));this.ball=c.ballBack;this.rushes.push({t:at,end:at+c.ballRush*(max?2:1)});this.emit('release',{max,streak:this.streak});}
+      this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.good+=max?2:1;const every=c.ballCharge??5,stored=this.good>=every&&this.energy<this.cap()-1e-9;if(this.good>=every){this.good-=every;this.energy=Math.min(this.cap(),this.energy+c.boostCost);}
+      this.ball=c.ballBack;this.rushes.push({t:at,end:at+c.ballRush*(max?2:1)});this.emit('release',{max,streak:this.streak,good:this.good,of:every,stored});}
     this.wasHeld=!stun&&this.holding;
     if(!stun)this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill*(this.form.charge??1)*(this.has('charge')?1.15:1):-dt/c.ballFall));
     if(this.ball>=1){this.ball=0;this.streak=Math.floor(this.streak/2);this.blown=at+c.ballPop;if(at>=0)this.stumbles.push({t:at});this.emit('blown');}   // spent: it stumbles
@@ -261,7 +269,7 @@ export class SliceGame {
   // No skillTime in the config: it lands at once.
   useSkill(){if(this.paused||this.finished||!this.config.ball||this.swing)return;const t=this.skill>=1&&this.blown<=this.time?this.skillTarget():null;
     if(!t)return this.emit('skill-none',{empty:this.skill<1});
-    this.skill--;this.swing={...t,t:this.time};
+    this.energy-=this.config.boostCost;this.swing={...t,t:this.time};
     if(!this.config.skillTime)return this.skillLand();
     return this.emit('skill-start',{kind:t.kind,side:t.side??null,id:t.r.id});}
   skillLand(){const t=this.swing,r=t.r,c=this.config;this.swing=null;
@@ -329,6 +337,7 @@ export class SliceGame {
     const c=this.config,cap=this.cap(r);r.drafting=this.drafts(r);
     const sprinting=strength(r.boosts,this.time,c)>0;this.rest(r,dt);
     if(r.drafting&&!sprinting)r.energy=Math.min(cap,r.energy+c.draftTrickle*dt);
+    if(c.ball&&!r.finishTime)r.energy=Math.min(cap,r.energy+c.boostCost*dt*r.skill/((c.ballCharge??5)*c.ballFill*(c.rivalRelease??RIVAL_RELEASE)));   // as a rider of its skill letting go on time: a segment every ballCharge releases
     if(!sprinting&&!r.finishTime&&r.energy>=c.boostCost&&this.fresh(r)&&(f>=r.sprintAt||r.energy>=cap-1e-9))this.rivalSprint(r);
   }
   rivalSprint(r){const end=this.time+r.form.boostDuration;r.energy-=this.config.boostCost;r.boosts.push({t:this.time,end});this.spend(r,end);}

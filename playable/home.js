@@ -5,9 +5,9 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice} from './slice-app.js?v=r670';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r670';
-import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r670';
+import {startSlice} from './slice-app.js?v=r685';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r685';
+import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r685';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
@@ -23,17 +23,17 @@ const step=(name,k)=>()=>{window.zbMark?.('loaded: '+name);dispatchEvent(new Cus
 setTimeout(()=>{window.zbMark?.('preload starts');dispatchEvent(new CustomEvent('zb-load',{detail:.15}));
   preloadPresentation(false).catch(()=>{}).then(step('race models',.7)).then(()=>{warmCity(profile.city);step('city pictures',1)();dispatchEvent(new Event('zb-ready'));barn.src='assets/stable/barn-plate.webp';
     return preloadRanch(owned().slice(0,14).map(h=>h.coat),owned().slice(0,14).map(lvOf));}).catch(()=>{}).then(step('ranch models',1)).then(()=>preloadStable()).catch(()=>{}).then(step('stable models',1)).then(()=>preloadPresentation()).catch(()=>{}).then(step('rivals\' light models',1));},50);
-import {lang,setLang,translate} from '../i18n.js?v=r670';
-import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r670';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r670';
-import {mountStableView,preloadStable} from './stable-view.js?v=r670';
-import {mountRiderView} from './rider-view.js?v=r670';
-import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r670';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll} from '../farm.mjs?v=r670';
-import {cityPictures} from '../approved-environment.js?v=r670';
-import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r670';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r670';
-import {LEVELS,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT} from './progress.mjs?v=r670';
+import {lang,setLang,translate} from '../i18n.js?v=r685';
+import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r685';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r685';
+import {mountStableView,preloadStable} from './stable-view.js?v=r685';
+import {mountRiderView} from './rider-view.js?v=r685';
+import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r685';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll} from '../farm.mjs?v=r685';
+import {cityPictures} from '../approved-environment.js?v=r685';
+import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r685';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r685';
+import {LEVELS,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT,rivalPace} from './progress.mjs?v=r685';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -318,29 +318,28 @@ function placed(R,stalls=1){const all=owned().slice(0,RANCH_DRAWN),outs=new Set(
 const RANCH_TABS=[{shot:'all',name:'全景'},{dorm:true,name:'宿舍'},{shot:'field',name:'麥田'},{shot:'pond',name:'魚池'},{house:true,name:'我家'}];   // 我家: the rider's house (2026-10-12, the user: the house on the ranch was hard to find)
 // Seeds and wheat counted like the coins (the user: 「種子和收成要有數值和對應的icon像錢幣一樣」), in a row of their own
 // under the tabs, on the field's shot only (「不應該跟金幣在同一行？他只出現在農場的時候？」).
-const cropPills=bag=>`<div class="ui-wallet crop" aria-label="小麥"><img src="assets/stable/item_wheat.webp" alt=""><b data-wheat>${bag.wheat||0}</b></div><div class="ui-wallet crop" aria-label="魚"><img src="assets/stable/item_fish.webp" alt=""><b data-fish>${bag.fish||0}</b></div>`;   // what was harvested, counted like the coins; seeds and bait are tools: on their buttons (2026-10-13, the user)
+const cropPills=bag=>`<div class="ui-wallet crop" aria-label="小麥和魚"><img src="assets/stable/item_wheat.webp" alt=""><b data-wheat>${bag.wheat||0}</b><i>/</i><img src="assets/stable/item_fish.webp" alt=""><b data-fish>${bag.fish||0}</b></div>`;   // what was harvested, counted like the coins; seeds and bait are tools: on their buttons (2026-10-13, the user)
 const ranchTabs=on=>`<div class="ui-tabs ui-panel deep ranch-shots" role="tablist" aria-label="畫面" style="--n:${RANCH_TABS.length}">${RANCH_TABS.map((t,i)=>`<button role="tab" data-rtab="${i}" aria-selected="${i===on}">${t.name}</button>`).join('')}</div>`;
 // The first opening (2026-10-12, the user): the player names the rider (「他就是那個騎士」), then five pages to swipe or skip:
 // three of the race, with the introduction page's clips (dist/intro), and two of the ranch. Once per browser (WELCOME).
+// 2026-10-13 (the user: 教學應該是使用者三十秒就可以抓到重點，然後進行第一關): one page, the one thing the first stage asks
+// (hold, let go in the white ring), and its button starts stage 1. Lanes, jumps, sprints and bumps are shown on the stage
+// that opens each (slice-app's hints); the ranch explains itself when it is opened. It was five pages.
 const WELCOME='hoofbeat.welcome.v1',TOUR=[
-  {clip:'clip-limit',title:'挑戰極限',text:'按住圓球集氣，壓到極限才放開最快。衝刺時往上滑，從對手頭上跳過去'},
-  {clip:'clip-bump',title:'推人和後踢',text:'對手在旁邊就推開，在後面就踢回去'},
-  {clip:'clip-hurdle',title:'障礙物、蘋果和金幣',text:'欄架要跳，水窪和大便要閃。蘋果存衝刺，金幣帶回家'},
-  {still:'dorm1',title:'照顧夥伴',text:'餵食、梳毛，夥伴會升級，跑得更快'},
-  {still:'field',title:'你的牧場',text:'種麥、釣魚，收成拿來餵夥伴，吃不完的可以賣'}];
+  {clip:'clip-hold',title:'按住，長到黃圈就放手',text:'按住畫面，黃球會變大。長到黃圈再放開，夥伴衝得最快。早一點放也可以，碰到紅圈就爆掉。'}];
 function welcome(host){
   host.insertAdjacentHTML('beforeend',`<section class="welcome" role="dialog" aria-modal="true" aria-label="歡迎">
     <form class="wl-name"><img src="assets/ui/rider_0.webp?v=2" alt=""><h2>你就是這位騎士</h2><p>幫自己取個名字</p>
       <input id="wl-name" maxlength="16" autocomplete="off" enterkeyhint="done" placeholder="騎士名字" value="${esc(profile.name===defaults.name?'':profile.name)}" aria-label="騎士名字"><button class="ui-btn primary block">開始</button></form>
-    <div class="wl-tour" hidden><button class="wl-skip" type="button">跳過</button>
-      <div class="wl-slides">${TOUR.map(s=>`<article><div class="wl-shot">${s.clip?`<video src="intro/${s.clip}.mp4?2" poster="intro/${s.clip}.jpg?2" muted loop playsinline preload="none"></video>`:`<img src="intro/${s.still}.webp" alt="">`}</div><h2>${s.title}</h2><p>${s.text}</p></article>`).join('')}</div>
+    <div class="wl-tour" hidden>
+      <div class="wl-slides">${TOUR.map(s=>`<article><div class="wl-shot">${s.clip?`<video src="intro/${s.clip}.mp4?5" poster="intro/${s.clip}.jpg?5" muted loop playsinline preload="none"></video>`:`<img src="intro/${s.still}.webp" alt="">`}</div><h2>${s.title}</h2><p>${s.text}</p></article>`).join('')}</div>
       <div class="wl-dots" aria-hidden="true">${TOUR.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div><button class="ui-btn primary block wl-next" type="button">下一頁</button></div></section>`);
   const el=host.querySelector('.welcome'),form=el.querySelector('.wl-name'),tour=el.querySelector('.wl-tour'),row=el.querySelector('.wl-slides'),dots=[...el.querySelectorAll('.wl-dots i')],next=el.querySelector('.wl-next');
-  const done=()=>{store.set(WELCOME,'1');el.remove();},at=()=>Math.round(row.scrollLeft/Math.max(1,row.clientWidth));
-  const show=()=>{const k=at();dots.forEach((d,i)=>d.classList.toggle('on',i===k));next.textContent=translate(k===TOUR.length-1?'開始比賽':'下一頁');
+  const done=()=>{store.set(WELCOME,'1');el.remove();profile.city=LEVELS[0].city;profile.mode='solo';saveProfile();go('solo');},at=()=>Math.round(row.scrollLeft/Math.max(1,row.clientWidth));
+  const show=()=>{const k=at();dots.forEach((d,i)=>d.classList.toggle('on',i===k));next.textContent=translate(k===TOUR.length-1?'開始第一關':'下一頁');
     [...row.children].forEach((a,i)=>{const v=a.querySelector('video');if(v)i===k?v.play().catch(()=>{}):v.pause();});};
   form.onsubmit=e=>{e.preventDefault();profile.name=form.querySelector('input').value.trim()||defaults.name;saveProfile();form.hidden=true;tour.hidden=false;show();};
-  row.addEventListener('scroll',show,{passive:true});el.querySelector('.wl-skip').onclick=done;
+  row.addEventListener('scroll',show,{passive:true});el.querySelector('.wl-dots').hidden=TOUR.length<2;
   next.onclick=()=>at()>=TOUR.length-1?done():row.scrollTo({left:(at()+1)*row.clientWidth,behavior:'smooth'});
 }
 // A level gained, said where it happens: the results of a run and the dorm's toast after a feed.
@@ -356,7 +355,7 @@ const PAGES={
     bag=readItems({getItem:store.get});let farm=readFarm({getItem:store.get});
     const el=frame('page-ranch ui-live',`<div class="view"></div>${loadingCard('夥伴們正在集合…')}
       <header class="ui-header st-top"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>牧場</h1>${wallet(readCoins(),{gems:gemsShown()})}</header>
-      ${ranchTabs(tabOf(PAGES.ranch.shot))}<div class="ranch-crops">${cropPills(bag)}</div><div class="ranch-do"><button class="ui-btn primary" data-do="feed">${icon('fork','')}全部餵飽</button><button class="ui-btn" data-do="sow"><img src="assets/stable/item_seed.webp" alt="">播種 ×<b data-seed>${bag.seed||0}</b></button><button class="ui-btn" data-do="cast"><img src="assets/stable/item_bait.webp" alt="">下餌 ×<b data-bait>${bag.bait||0}</b></button></div><p class="ranch-hint ui-panel deep"></p>${nav('ranch')}`),toast=toaster(el);
+      ${ranchTabs(tabOf(PAGES.ranch.shot))}<div class="ranch-crops"><button class="ui-btn" data-do="feed">全部餵飽</button>${cropPills(bag)}</div><div class="ranch-do"><button class="ui-btn" data-do="sow" aria-label="播種"><img src="assets/stable/item_seed.webp" alt=""><b data-seed>${bag.seed||0}</b></button><button class="ui-btn" data-do="cast" aria-label="下餌"><img src="assets/stable/item_bait.webp" alt=""><b data-bait>${bag.bait||0}</b></button></div><p class="ranch-hint ui-panel deep"></p>${nav('ranch')}`),toast=toaster(el);
     let view=null,alive=true;const grow=setInterval(()=>show(),1000);leave=()=>{alive=false;clearInterval(grow);view?.dispose();};
     const tabs=[...el.querySelectorAll('[data-rtab]')],hint=el.querySelector('.ranch-hint');let news;
     // The wheat field (farm.mjs): a tap on an empty bed sows a seed, on a ripe one reaps it; the line over the nav says
@@ -567,7 +566,7 @@ const PAGES={
     // What the ranch gives a solo run (2026-10-06: a tester could not feel the items; they only reached the relay): the start
     // energy, from how rested the buddy is (精神) plus an energy bar. Only ever a help: nothing here slows a solo run.
     const soloForm=()=>careForm(care[h.id],{...SLICE_CONFIG,...racing(buddyStats(h.stats,MAX_LEVEL))});   // this buddy's own numbers at its level, then its care: felt on every stage (2026-10-10; the first two had none)
-    session=await startSlice({city:c.id,solo:true,stage:L,stake,rivalGrow:1+(rivalAge(c.id)-1)*LV_SPEED,rivalStep:LV_SPEED,perks:[perkOf(h)],thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
+    session=await startSlice({city:c.id,solo:true,stage:L,stake,rivalGrow:(1+(rivalAge(c.id)-1)*LV_SPEED)*rivalPace(c.id),rivalStep:LV_SPEED,perks:[perkOf(h)],thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
       tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
       onExit:(result,dest)=>{if(location.hash!=='#solo')return;  // already navigated away (back gesture)
         if(newBuddy!=null){stableFocus=newBuddy;go('stable',{replace:true});return;}   // a buddy came with this run: it walks in first
@@ -727,7 +726,7 @@ const PAGES={
       const it=ITEMS.find(x=>x.id===id),d=DECOR.find(x=>x.id===id),cost=(it||d).price,coins=readCoins(),name=(it||d).name;
       sheet.innerHTML=`<header><h2>${name}</h2><button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>
         <img class="buy-art" src="${it?`assets/stable/item_${id}.webp`:`assets/stable/deco/${id}.webp`}" alt="">
-        <p class="ui-sub">${it?itemEffect(it):'掛在牆上'}</p><p class="ui-label">${it?`擁有 ${bag[id]}`:''}${coins<cost?`${it?' · ':''}金幣不夠，去比賽賺一點`:''}</p>
+        <p class="ui-sub">${it?itemEffect(it):'掛在牆上'}</p><p class="ui-label">${it?`擁有 ${bag[id]}`:''}${coins<cost?`${it?' · ':''}<span class="ui-no">金幣不夠，去比賽賺一點</span>`:''}</p>
         <div class="buy-actions"><button class="ui-btn" data-close>取消</button><button class="ui-btn primary" data-buy ${coins<cost?'disabled':''}>購買 ${coin}${cost}</button></div>`;
       scrim.hidden=sheet.hidden=false;sheet.querySelector('[data-buy]').focus();
       sheet.querySelectorAll('[data-close]').forEach(b=>b.onclick=close);
@@ -814,7 +813,7 @@ const PAGES={
         +(PATTERNED.includes(part)?`<h3>花紋</h3>${[{id:'',name:'素色'},...SHIRTS].map(x=>{const on=(trial.patterns[part]||'')===x.id;return `<button class="looks-card" role="radio" aria-checked="${on}" data-pick="${x.id}" data-pattern><i ${x.id?`style="background-image:url(assets/rider/thumb_${x.id}.webp)"`:'class="plain"'}></i><b>${x.name}</b>${state(part,x.id,on)}</button>`;}).join('')}`:'');
       panel.querySelector('.looks-parts [aria-selected=true]')?.scrollIntoView({inline:'center',block:'nearest'});
       const label=x=>{const pg=GEAR.find(p=>p.mat===x.m);return x.v[0]==='#'?`<i style="background:${x.v}"></i>${pg.name}`:`<i style="background-image:url(assets/rider/thumb_${x.v}.webp)"></i>${pg.name}·${SHIRTS.find(s=>s.id===x.v).name}`;};
-      panel.querySelector('.looks-pay').innerHTML=list.length?`<div class="looks-basket">${list.map(x=>`<button data-drop="${x.m}" data-v="${x.v}" aria-label="拿掉">${label(x)}<b>${x.price}</b>${icon('close','')}</button>`).join('')}</div><button class="ui-btn primary" data-buy ${coins<total?'disabled':''}>${coins<total?'金幣不夠':'買下'} ${coin}${total.toLocaleString('en-US')}</button>`
+      panel.querySelector('.looks-pay').innerHTML=list.length?`<div class="looks-basket">${list.map(x=>`<button data-drop="${x.m}" data-v="${x.v}" aria-label="拿掉">${label(x)}<b>${x.price}</b>${icon('close','')}</button>`).join('')}</div><button class="ui-btn primary" data-buy ${coins<total?'disabled':''}>買下 ${coin}${total.toLocaleString('en-US')}</button>${coins<total?`<p class="ui-no looks-short">金幣不夠，還差 ${(total-coins).toLocaleString('en-US')}</p>`:''}`
         :changed()?`<span>這些你都有了</span><button class="ui-btn primary" data-wear>穿上</button>`:`<span>點一個試穿，不用錢</span>`;
       heads.querySelectorAll('[data-see]').forEach(b=>b.onclick=()=>{if(view?.busy||+b.dataset.see===see)return;see=+b.dataset.see;paint();dress(true);});
       panel.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{part=PAGES.looks.part=b.dataset.part;paint();panel.querySelector('.looks-grid').scrollTop=0;});
@@ -878,7 +877,7 @@ const PAGES={
         <li><button class="row danger" id="reset">${icon('reset')}<span>Reset progress</span>${icon('arrow','chev')}</button></li></ul></main>
       <div class="ui-scrim" hidden></div><section class="ui-modal ui-panel deep" role="dialog" aria-modal="true" hidden><header><h2>Race controls</h2>
         <button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header><ul class="ui-list controls">
-        <li><span><b>按住圓球</b><small class="note">蓄力，放開就衝；越接近白圈放開越快，壓過頭會爆掉</small></span></li>
+        <li><span><b>按住圓球</b><small class="note">長到黃圈放開最快；早一點也可以，碰到紅圈會爆掉</small></span></li>
         <li><span><b>左右滑</b><small class="note">換道</small></span></li>
         <li><span><b>往上滑</b><small class="note">跳過障礙</small></span></li>
         <li><span><b>衝刺鈕 ⚡</b><small class="note">吃到蘋果存一段，按一下衝刺（空白鍵）</small></span></li>
@@ -921,8 +920,8 @@ const LOGIN='hoofbeat.login.v1',LOGIN_GIFT={seed:3,bait:3};let loginGift=false;
 export function startHome(){
   if(store.get(LOGIN)!==today()){addLog({kind:'open',stars:totalStars(prog),stage:levelOf(currentLevel(prog).city)+1,buddies:prog.owned.length});   // one row a day: day 1 and on is someone who came back (playtest.js)
     store.set(LOGIN,today());for(const [k,n] of Object.entries(LOGIN_GIFT))bag={...bag,[k]:(bag[k]||0)+n};saveCare({setItem:store.set},care,bag);loginGift=true;}
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r670',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r670');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r685',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r685');   // a frame counter in the corner (fps.js)
   // Opening the game always lands on the race menu (the home page) once the cover has gone (2026-10-12, the user:
   // 「封面圖跑完應該進比賽選單」): it opened on whatever page the address named, the ranch if that was where it was closed.
   // ?debug keeps the address's page (a dev link straight to a page).

@@ -12,7 +12,7 @@
   --ui-black:#000;      /* data: cards, markers */
   --ui-grey:#888687;    /* the reference value beside yours, secondary text on black, off */
   --ui-white:#fff;      /* text on dark and glass; the two or three key facts of a screen (pill rows), labels on a map */
-  --ui-lime:var(--ui-green);--ui-on-lime:#000;--ui-cyan:#fff;--ui-danger:var(--ui-yellow);   /* v1 names, kept so pages follow */
+  --ui-lime:var(--ui-green);--ui-on-lime:#000;--ui-cyan:#fff;--ui-red:#FF6B57;--ui-danger:var(--ui-red);   /* v1 names, kept so pages follow */
   /* surfaces: black is solid; dark glass darkens and blurs the scene; light glass veils it */
   /* glass, measured on the reference (its Weather card, round buttons, nav): the scene behind blurred until only its
      colours are left, more saturated, and darkened by a tenth to a third. The glass takes its colour from the scene. */
@@ -255,3 +255,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge lo
 .ui-chest{cursor:pointer}
 .prize-count{position:absolute;top:calc(env(safe-area-inset-top) + 20 * var(--u));left:0;right:0;text-align:center;font:600 var(--ui-t-body) var(--ui-font);color:rgb(255 255 255 / .7);font-variant-numeric:tabular-nums}
 .prize-skip{all:unset;cursor:pointer;padding:calc(10 * var(--u)) calc(16 * var(--u));font:600 var(--ui-t-body) var(--ui-font);color:rgb(255 255 255 / .7);text-decoration:underline;animation:chest-show .3s 1.2s both}
+/* The sixth colour (2026-10-13, UI_GUIDELINE_V2 §2.2): red is stop, not allowed, about to break, and nothing else. As a line, a small
+   picture or words, never a filled area; once a screen; always with the reason in words. A toast that refuses is one. */
+.ui-toast.no{color:var(--ui-red);font-weight:700}.ui-no{color:var(--ui-red)!important}
