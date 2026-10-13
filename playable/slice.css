@@ -221,6 +221,9 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .judge.perfect{color:var(--ui-yellow)}.judge.good{color:#fff;font-size:calc(16 * var(--u))}.judge.miss,.judge.empty{color:#ffa090;font-size:calc(14 * var(--u))}
 #slice-count{position:absolute;z-index:6;left:0;right:0;top:30%;text-align:center;opacity:0;pointer-events:none;font:800 calc(72 * var(--u))/1 var(--ui-font);color:#fff;text-shadow:0 4px 18px #000a}
 #slice-count.go{font-size:calc(64 * var(--u));font-style:italic;color:var(--ui-lime)}#slice-count.finish{font-size:calc(48 * var(--u));letter-spacing:.06em}
+#slice-pass{position:absolute;z-index:6;left:0;right:0;top:27%;text-align:center;opacity:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:1.2cqw;color:#fff;text-shadow:0 3px 14px #000b;font-family:var(--ui-font)}   /* an overtake, named (slice-app passPop) */
+#slice-pass b{max-width:94%;white-space:nowrap;font-size:calc(34 * var(--u));font-weight:900;font-style:italic;letter-spacing:.02em;color:var(--ui-yellow)}#slice-pass small{font-size:calc(16 * var(--u));font-weight:700;padding:.5cqw 2.8cqw;border-radius:99px;background:var(--ui-glass-dark)}
+#slice-pass.back b{color:var(--ui-lime)}#slice-pass.lost b{color:#ff7a66;font-style:normal}
 #slice-flash{position:absolute;inset:0;z-index:3;opacity:0;pointer-events:none;box-shadow:inset 0 0 22cqw 3cqw var(--c,#fff)}
 #slice-combo[data-tier="1"] b{font-size:11cqw;color:var(--ui-lime)}
 #slice-combo[data-tier="2"] b{font-size:12cqw;color:var(--ui-yellow);text-shadow:0 0 16px #ffd84699,0 2px 8px #000a}
@@ -670,3 +673,104 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 /* Hit: the picture's edges go red and fade (slice-app hurt); the ball is grey and still while the stagger lasts. */
 #slice-hurt{position:absolute;inset:0;z-index:3;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,transparent 42%,rgb(255 48 32 / .78) 100%)}
 #ball-ring.stun{filter:grayscale(1) brightness(.72)}
+
+/* The stake (2026-10-13; slice-app paintStake): the cover's ticket (the user's art, assets/ui/money/ticket.webp) with the pot printed
+   on it, the fee and the double button under it; in the race what the place is worth now, under the place card; on the results the
+   ticket again with what was won or lost. */
+.cover-ticket{position:relative;margin:calc(10 * var(--u)) 0 calc(6 * var(--u));aspect-ratio:1000/426;background:url(../assets/ui/money/ticket.webp) center/100% 100% no-repeat}
+/* the print sits inside the ticket's dashed box (the art: 22–78% across, 36–79% down); nothing else is written on the ticket */
+.cover-ticket .print{position:absolute;left:22%;right:22%;top:36%;bottom:21%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;color:#3a2408;text-shadow:none}
+.cover-ticket small{font-size:calc(10 * var(--u))!important;font-weight:800;letter-spacing:.16em;color:#a8772a!important;opacity:1!important;line-height:1.2}
+.cover-ticket b{font-size:var(--ui-t-hero);font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums}
+.cover-ticket .stamp{position:absolute;right:5%;top:5%;width:16%;rotate:-14deg;opacity:.92;pointer-events:none}   /* over the top right corner, clear of the dashed box */
+.cover-ticket.doubled b{color:#3a2408}
+/* what each place takes, under the ticket: the place's rosette (the results' awards, small) and the coins */
+.cover-split{display:flex;justify-content:center;gap:calc(8 * var(--u));margin:0 0 calc(10 * var(--u))}
+.cover-split span{display:inline-flex;align-items:center;gap:calc(4 * var(--u));padding:calc(3 * var(--u)) calc(12 * var(--u)) calc(3 * var(--u)) calc(6 * var(--u));border-radius:99px;background:rgb(255 255 255 / .12);font-size:var(--ui-t-body);font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.cover-split img{height:calc(26 * var(--u));width:auto;margin:calc(-1 * var(--u)) 0}
+.cover-stake .ui-btn>span{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;color:inherit}.cover-stake .ui-btn small{font-size:calc(10.5 * var(--u))!important;font-weight:600;opacity:1!important;color:#3a2a00!important;white-space:nowrap}
+.cover-stake{display:flex;align-items:center;justify-content:space-between;gap:calc(10 * var(--u));margin:0 0 calc(10 * var(--u));font-size:calc(14 * var(--u))}
+.cover-stake span{display:flex;align-items:center;gap:calc(8 * var(--u));color:var(--ui-text-2)}.cover-stake b{color:#fff;font-size:calc(18 * var(--u));font-weight:700}
+.cover-stake .ui-btn{min-height:0;height:var(--ui-h);padding:0 calc(16 * var(--u)) 0 calc(8 * var(--u));gap:calc(6 * var(--u));border:0;background:var(--ui-yellow);color:#000;font-weight:700;font-size:var(--ui-t-name)}   /* solid yellow: the one thing on the cover that asks to be chosen (UI_GUIDELINE_V2 §2.2) */
+.cover-stake .ui-btn img{height:calc(28 * var(--u))}.cover-stake .ui-btn[aria-pressed=true]{background:#c79a00;color:#000;box-shadow:inset 0 0 0 3px #fff}.cover-stake .ui-btn:disabled{opacity:.4}
+#slice-purse{position:absolute;z-index:4;right:calc(14 * var(--u));top:calc(env(safe-area-inset-top) + 17.5%);display:flex;flex-direction:column;align-items:center;padding:calc(4 * var(--u)) calc(10 * var(--u)) calc(5 * var(--u));border-radius:calc(12 * var(--u));background:var(--ui-glass-dark);border:2px solid var(--ui-yellow);color:var(--ui-yellow);pointer-events:none;transition:border-color .2s,color .2s}
+#slice-purse small{font-size:var(--ui-t-tag);font-weight:600;color:#fff}#slice-purse b{font-size:var(--ui-t-stat);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+#slice-purse.none{border-color:#666;color:#888}#slice-purse.none small{color:#888}
+.res-ticket{position:relative;display:flex;align-items:center;gap:calc(12 * var(--u));margin:calc(4 * var(--u)) var(--ui-margin) 0;padding:calc(10 * var(--u)) calc(16 * var(--u));overflow:hidden}.res-ticket.won{padding-right:calc(84 * var(--u))}   /* room kept for the stamp: it never lies on the words */
+.res-ticket{border-radius:var(--ui-r-lg);background:linear-gradient(180deg,#3a2c05,#1a1403);border:2px solid var(--ui-yellow)}
+.res-ticket .art{width:calc(72 * var(--u));flex:none}.res-ticket div{display:flex;flex-direction:column;min-width:0}
+.res-ticket small{font-size:var(--ui-t-label);font-weight:700;color:var(--ui-yellow)}.res-ticket b{font-size:var(--ui-t-hero);font-weight:800;line-height:1.05;color:var(--ui-yellow);font-variant-numeric:tabular-nums}
+.res-ticket span{font-size:calc(12 * var(--u));color:#d8c9a0}.res-ticket .stamp{position:absolute;right:calc(10 * var(--u));top:50%;width:calc(62 * var(--u));translate:0 -50%;rotate:-14deg;opacity:.9}
+.res-ticket.lost{border-color:var(--ui-grey);background:#000}.res-ticket.lost b{color:var(--ui-grey)}.res-ticket.lost .ui-coin{filter:grayscale(1)}   /* a loss is grey, not red (UI_GUIDELINE_V2 §2.2: no red) */
+
+/* the coin beside every amount of the stake (ui.js coin: the game's gold coin). Sizes in --u: a .ui-coin has no font size of its own. */
+.cover-ticket b,.cover-stake b,.res-ticket b,#slice-purse span,.cover-split span{display:inline-flex;align-items:center;gap:calc(5 * var(--u))}
+.cover-stake b span{color:inherit}
+/* a coin is never taller than the figures it follows (2026-10-13, the user): about .72 of their size */
+.cover-ticket b .ui-coin{width:calc(16 * var(--u));height:calc(16 * var(--u))}   /* on the ticket: the coin in colour, half the size of the figures (2026-10-13, the user; it was black and white for a moment) */
+.cover-stake b .ui-coin{width:calc(13 * var(--u));height:calc(13 * var(--u))}.cover-split .ui-coin{width:calc(10 * var(--u));height:calc(10 * var(--u));margin-left:calc(1 * var(--u))}
+.res-ticket span .ui-coin{width:calc(9 * var(--u));height:calc(9 * var(--u))}
+#slice-purse .ui-coin{width:calc(14 * var(--u));height:calc(14 * var(--u))}#slice-purse.none .ui-coin{filter:grayscale(1)}
+.amt{display:inline-flex;align-items:center;gap:calc(4 * var(--u));margin:0 calc(4 * var(--u))}.amt .ui-coin{width:calc(12 * var(--u));height:calc(12 * var(--u))}
+
+/* 2026-10-13 (the user: as little as will do). The result's money: one big number, what it is made of small under it. The cover: the
+   weather and whether the buddy is fit, an icon each in the colour it has in the dorm; one line of why to double. */
+.res-ticket .parts{display:flex;flex-wrap:wrap;gap:0 calc(10 * var(--u));font-size:var(--ui-t-label);line-height:1.5;color:rgb(255 255 255 / .7)}.res-ticket .parts i{font-style:normal;white-space:nowrap}
+.res-award{max-height:13cqh;width:auto}
+.res-ticket b{font-size:var(--ui-t-hero)!important}.res-ticket b .ui-coin{width:calc(25 * var(--u));height:calc(25 * var(--u))}
+#slice-cover .slice-form{display:flex;flex-direction:column;gap:calc(5 * var(--u))}#slice-cover .slice-form span{display:flex;align-items:center;gap:calc(7 * var(--u))}
+#slice-cover .slice-form svg{width:calc(17 * var(--u));height:calc(17 * var(--u));flex:none}
+.fit.fork svg{color:#ff9f43}.fit.smile svg{color:#ff6fa5}.fit.ok svg{color:var(--ui-yellow)}.fit.bad{font-weight:700}
+
+.res-ticket b span{font-size:inherit!important;color:inherit;display:inline}
+
+.cover-stake .ui-btn.short{opacity:.55}   /* always there (2026-10-13, the user); short of coins it says so when tapped */
+
+/* 2026-10-13, by importance (docs/UX_PRIORITY.md). The cover with a stake: the stage, its stars and the goal are one small row (they
+   were chosen a page ago); the pot and the button that raises it are what the eye is for. The race: the apples sit in the coin pill
+   and the pace chip is gone. */
+#slice-cover section.has-stake{display:flex;flex-wrap:wrap;align-items:center;column-gap:calc(8 * var(--u))}#slice-cover section.has-stake>*{flex:0 0 100%}
+#slice-cover section.has-stake>small{flex:0 0 auto;order:-3}#slice-cover section.has-stake>.cover-stars{flex:0 0 auto;order:-2}#slice-cover section.has-stake>.cover-stars i{font-size:calc(13 * var(--u))}
+#slice-cover section.has-stake>h1{flex:1 1 auto;order:-1;margin:0;text-align:right;font-size:var(--ui-t-label);font-weight:400;color:var(--ui-grey)}
+#slice-apples{display:none!important}#slice-apple-n{font:600 var(--ui-t-body) var(--ui-font);margin-right:calc(8 * var(--u));padding-right:calc(8 * var(--u));border-right:1px solid rgb(255 255 255 / .3);white-space:nowrap}#slice-apple-n[hidden]{display:none}
+.hud-coins .ui-coin{width:calc(13 * var(--u));height:calc(13 * var(--u))}
+.is-solo .hud-position{display:none!important}
+#slice-cover section.has-stake>.slice-form{box-sizing:border-box;max-width:100%}#slice-cover section.has-stake>*{min-width:0;max-width:100%;box-sizing:border-box}#slice-cover section.has-stake>small,#slice-cover section.has-stake>.cover-stars,#slice-cover section.has-stake>h1{max-width:none}
+
+#slice-apple-n{display:inline-flex;align-items:center;gap:calc(3 * var(--u))}#slice-apple-n svg,#slice-apple-n img{width:calc(14 * var(--u));height:calc(14 * var(--u))}#slice-apple-n b{font-size:var(--ui-t-body)}
+
+/* The raise button says what it costs, always, in coins (2026-10-13, the user); the reason to raise is a line of its own above the row. */
+.cover-stake .ui-btn small b{font-weight:800;color:#000}
+.cover-why{margin:0 0 calc(4 * var(--u));text-align:right;font-size:var(--ui-t-label);font-weight:600;color:#fff}.cover-why[hidden]{display:none}
+#slice-cover section.has-stake>.cover-why{flex:0 0 100%}
+.cover-stake>span{white-space:nowrap;flex:none}.cover-stake .ui-btn{flex:0 1 auto;min-width:0}
+.cover-stake .ui-btn small b{font-size:inherit!important;display:inline}
+
+/* Who has how much, after a race with a stake (2026-10-13; home.js richList): the riders of this race by their coins, what each made
+   just now beside it; the player's row yellow. */
+.res-money{list-style:none;margin:calc(6 * var(--u)) var(--ui-margin) 0;padding:0;display:flex;flex-direction:column;gap:calc(3 * var(--u))}
+.res-money li{display:flex;align-items:center;gap:calc(8 * var(--u));padding:calc(3 * var(--u)) calc(12 * var(--u)) calc(3 * var(--u)) calc(6 * var(--u));border-radius:99px;background:var(--ui-glass-dark);color:#fff;font-size:var(--ui-t-body)}
+.res-money .rk{width:calc(18 * var(--u));text-align:center;font-weight:700}.res-money img{width:calc(24 * var(--u));height:calc(24 * var(--u));border-radius:50%;object-fit:cover;background:radial-gradient(circle at 50% 40%,#f1cf92,#a8743f)}
+.res-money span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.res-money i{font-style:normal;font-size:var(--ui-t-label);font-weight:600}.res-money i.up{color:var(--ui-green)}.res-money i.down{color:rgb(255 255 255 / .7)}
+.res-money .amt{display:inline-flex;align-items:center;gap:calc(4 * var(--u));min-width:calc(64 * var(--u));justify-content:flex-end;font-weight:700;font-variant-numeric:tabular-nums}.res-money .ui-coin{width:calc(11 * var(--u));height:calc(11 * var(--u))}
+.res-money li.you{background:var(--ui-yellow);color:#000}.res-money li.you i{color:#000}
+.res-award{display:none}   /* the place is said by the list and the title; the rosette gave way to the list */
+/* bigger (2026-10-13, the user: 顯示大一點): a row is a control's height, the figures a size up */
+.res-money{gap:calc(5 * var(--u))}.res-money li{min-height:calc(42 * var(--u));padding:0 calc(16 * var(--u)) 0 calc(8 * var(--u));gap:calc(10 * var(--u));font-size:calc(17 * var(--u));font-weight:600}
+.res-money .rk{width:calc(22 * var(--u));font-size:calc(18 * var(--u))}.res-money img{width:calc(32 * var(--u));height:calc(32 * var(--u))}
+.res-money i{font-size:calc(15 * var(--u));font-weight:700}.res-money .amt{font-size:calc(19 * var(--u));min-width:calc(78 * var(--u))}.res-money .ui-coin{width:calc(14 * var(--u));height:calc(14 * var(--u))}
+
+/* 2026-10-13 (the user): the list stands on a panel of its own, as wide as the buddy's row and above it; what each made fades in as
+   the list starts to move (slice-app moneyMove). */
+.res-money{margin:0;padding:calc(8 * var(--u));border-radius:var(--ui-r-lg);background:#000;gap:calc(3 * var(--u))}
+.res-money li{background:transparent;min-height:calc(40 * var(--u))}.res-money li.you{background:var(--ui-yellow)}
+.res-money li>i{opacity:0;transition:opacity .3s}.res-money li.shown>i{opacity:1}
+.res-money+.res-rank{margin-top:var(--ui-gap)}
+
+/* The results in two pages when there is a list (slice-app): 1 what the run made, 2 who has how much and what next. */
+#slice-result.step-1 :is(.res-money,.res-acts,.res-rank){display:none}
+#slice-result.step-2 :is(.res-ticket,.res-mid,.res-next,.res-stars){display:none}
+#slice-result.step-2 .res-money{margin-top:auto}
+.res-next{margin-top:auto}
+.res-ticket{flex:none;overflow:visible}.res-ticket .parts{flex-direction:column;gap:0}
+#slice-purse[hidden]{display:none}

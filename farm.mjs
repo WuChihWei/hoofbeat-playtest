@@ -9,8 +9,8 @@
 // [across, deep] each, four beds a pen and the odd two in a last one).
 export const FARM=Object.freeze({beds:12,each:2,pond:4,   // pond: the pond's places to cast (2026-10-11: the field's rules, bait for seed and fish for wheat)
  
-  grow:45e3,   // playtest build: 45 seconds, to feel the whole round in one go (2026-10-09, the user: 「快速版先不要等那麼久」; it was 20 minutes; meant: a few hours)
-  yield:3,raceSeeds:1});   // raceSeeds: what a finished race brings home
+  grow:60*60e3,   // 2026-10-13, the user: one hour (正式版 1 小時). It was the playtest build's 45 seconds, to feel the whole round in one go (2026-10-09, the user: 「快速版先不要等那麼久」; it was 20 minutes; meant: a few hours)
+  yield:3,raceSeeds:1,rush:20});   // rush: coins to have one bed or one place of the pond ripe at once (2026-10-13, the user: 可以付錢馬上熟)   // raceSeeds: what a finished race brings home
 export const bedsFor=n=>Math.min(FARM.beds,Math.max(1,n)*FARM.each),stallsFor=n=>Math.max(1,n);   // a hut for every buddy (2026-10-11: it was a dormitory of six, a whole one at a time)
 export const pensFor=beds=>[...Array(Math.floor(beds/4)).fill([2,2]),...(beds%4?[[2,1]]:[])];
 const KEY='hoofbeat.farm.v1';
@@ -33,5 +33,7 @@ const work=(farm,key,items,i,now,seed,crop,none,early)=>{
   if(s===3){bag[crop]=(bag[crop]||0)+FARM.yield;next[i]=null;return {farm:{...farm,[key]:next},items:bag,did:'reap'};}
   return {fail:early,secs:secondsLeft(bed,now)};
 };
+// A bed or a place that is still growing, made ripe now (paid for by the caller): → the farm, or null when there is nothing growing there.
+export const rush=(farm,key,i,now=Date.now())=>{const b=farm[key]?.[i];if(!b||stage(b,now)===3)return null;const next=[...farm[key]];next[i]={at:now-FARM.grow};return {...farm,[key]:next};};
 export const tend=(farm,items,i,now=Date.now())=>work(farm,'beds',items,i,now,'seed','wheat','沒有種子：去商店買，或跑比賽拿','還沒熟');
 export const cast=(farm,items,i,now=Date.now())=>work(farm,'pond',items,i,now,'bait','fish','沒有魚餌：去商店買','魚還沒上鉤');

@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r584';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r641';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -380,10 +380,10 @@ export class SliceGame {
       if(this.leg<2&&this.distance>=this.course.relays[this.leg]){this.leg++;this.energy=0;this.form=this.legForm(this.leg);this.pool=this.stamina=this.form.stamina;this.restAt=0;if(this.solo)Object.assign(this.solo,{speed:this.form.baseSpeed,accel:this.form.accel,top:this.form.top});this.emit('relay',{leg:this.leg,horse:this.horses[this.leg]});}
       if(this.distance>=c.length){this.finishTime=this.time-dt+dt*(c.length-before)/(this.distance-before);this.distance=c.length;this.finished=true;this.emit('finish');}
     }
-    const rank=this.metrics().rank;
+    const m=this.metrics(),rank=m.rank;   // who: the rival just passed (now nearest behind) or the one that just went by (nearest ahead); 2026-10-13, the user: an overtake is an event, named
     if(this.lastRank!==null){
-      if(rank<this.lastRank)this.emit('overtake',{rank});
-      else if(rank>this.lastRank)this.emit('passed',{rank});
+      if(rank<this.lastRank){const who=m.rivals.filter(r=>r.distance<this.distance).sort((a,b)=>b.distance-a.distance)[0];this.emit('overtake',{rank,who:who?.id??null});}
+      else if(rank>this.lastRank){const who=m.rivals.filter(r=>r.distance>this.distance).sort((a,b)=>a.distance-b.distance)[0];this.emit('passed',{rank,who:who?.id??null});}
     }
     this.lastRank=rank;
   }

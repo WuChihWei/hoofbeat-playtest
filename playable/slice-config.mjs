@@ -66,7 +66,7 @@ export const SLICE_CONFIG = Object.freeze({
   coinRadius:.78,
   // Results: each coin picked up is worth coinValue in the wallet, plus a bonus by finishing place (1st … 5th), and
   // diamonds (gemBonus) for a podium place.
-  coinValue:10, placeBonus:[50,30,15,5,0],
+  coinValue:1, placeBonus:[50,30,15,5,0],   // 1 since 2026-10-13 (3 for a day, 10 before): what lies on the road must not pay a lost entry fee back   // coinValue 3 since 2026-10-13 (it was 10): the money is the pot now (progress.mjs entryFee); what lies on the road is small change
   gemBonus:[3,2,1,0,0],   // diamonds for the top three places (1st … 5th); practice earns none
 });
 // The lap: three legs, straight-led, bend-led, mud-led. Sections are [from, to] fractions of a leg, a terrain and a

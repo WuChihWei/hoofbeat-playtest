@@ -6,11 +6,11 @@ const KEY='hoofbeat.playlog.v1',MAX=300;
 export function readLog(){try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}}
 export function addLog(entry){try{localStorage.setItem(KEY,JSON.stringify([...readLog(),{at:new Date().toISOString(),...entry}].slice(-MAX)))}catch{}send(entry);}
 // The same entries, sent to the user's sheet (2026-10-12, the user: 「幫我接數據」: who came back the next day, which stage
-// they stop at). REMOTE: a Google Form of the user's with one short-answer question; a row is one line of JSON in it.
+// they stop at). REMOTE: the web app of a script on the user's Google Sheet (it was to be a Google Form).
 // Nothing is sent while REMOTE.url is empty, or on localhost, or with ?debug / ?demo (the builder's own runs).
 // who: a random id made once for this browser (no account); name: the rider's name the player typed; day: days since
 // this browser first opened the game (0 the first day): a row with kind 'open' and day 1 is someone who came back.
-export const REMOTE={url:'',field:''};
+export const REMOTE={url:''};   // 2026-10-13: an Apps Script web app on the user's Google Sheet (docs/SHEET_SETUP.md); a row is posted as one line of JSON, the script lays it out in columns
 const WHO='hoofbeat.install.v1',FIRST='hoofbeat.firstday.v1',get=k=>{try{return localStorage.getItem(k)}catch{return null}},put=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
 const who=()=>{let w=get(WHO);if(!w){w=Math.random().toString(36).slice(2,10);put(WHO,w);}return w;};
 export const dayNumber=()=>{const today=Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);let f=+get(FIRST);if(!f){f=today;put(FIRST,String(f));}return today-f;};
@@ -18,7 +18,7 @@ export function row(entry){let name='';try{name=JSON.parse(get('hoofbeat.profile
   const {perf,device:d,...rest}=entry;   // the frame timings and the user agent stay in the browser's own log
   return JSON.stringify({who:who(),name,day:dayNumber(),build:new URL(import.meta.url).searchParams.get('v')||'',view:[innerWidth,innerHeight],...rest}).slice(0,1800);}
 export function send(entry){try{if(!REMOTE.url||/^(localhost|127\.|\[::1\])/.test(location.hostname)||/[?&](debug|demo)\b/.test(location.search))return;
-    fetch(REMOTE.url,{method:'POST',mode:'no-cors',keepalive:true,body:new URLSearchParams({[REMOTE.field]:row(entry)})}).catch(()=>{});}catch{}}
+    fetch(REMOTE.url,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:row(entry)}).catch(()=>{});}catch{}}
 export function clearLog(){try{localStorage.removeItem(KEY)}catch{}}
 export const device=()=>({ua:navigator.userAgent,screen:[screen.width,screen.height],view:[innerWidth,innerHeight],dpr:devicePixelRatio});
 // Script errors join the log, once per message per page load.

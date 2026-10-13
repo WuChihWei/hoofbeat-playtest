@@ -499,6 +499,50 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .pick-perk.shut{opacity:.55}.pick-perk.shut i{background:var(--ui-text-2);color:#fff}
 .ui-prize.grow{z-index:25}.ui-prize.grow :is(p,.ui-btn){animation:none}
 .grow-card{width:min(78%,calc(300 * var(--u)));box-sizing:border-box;padding:calc(20 * var(--u));border-radius:var(--ui-r-lg);display:flex;flex-direction:column;align-items:center;gap:calc(10 * var(--u));text-align:center}
-.grow-card img{width:calc(96 * var(--u));height:calc(96 * var(--u));border-radius:50%;object-fit:cover;background:radial-gradient(circle at 50% 40%,#f1cf92,#a8743f)}
+.grow-card img{width:calc(190 * var(--u));height:calc(190 * var(--u));object-fit:contain;margin:calc(-14 * var(--u)) 0 calc(-18 * var(--u))}   /* the buddy whole (tools/grow-photos.sh), not a round head */
 .grow-card b{font-size:calc(20 * var(--u));font-weight:700}.grow-card .lv-pips{margin:0}.grow-card .lv-pips i{width:calc(12 * var(--u));height:calc(12 * var(--u))}
 .grow-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:calc(6 * var(--u));font-size:calc(14 * var(--u));line-height:1.4}
+/* the growth card: the three ages side by side (home.js growCard); the dorm's buddy card is the button that opens it */
+.st-grow-open{all:unset;display:block;width:100%;cursor:pointer;-webkit-tap-highlight-color:transparent}.st-grow-open>span{display:flex}.st-grow-open .st-next{flex-direction:column}
+.st-grow-open .ui-card-head .chev{width:calc(14 * var(--u));height:calc(14 * var(--u));margin-left:calc(6 * var(--u));vertical-align:middle;opacity:.7}
+.st-grow-open:focus-visible{outline:2px solid var(--ui-lime);outline-offset:4px;border-radius:var(--ui-r-md)}
+.grow-ages{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(8 * var(--u))}
+.grow-ages>div{display:flex;flex-direction:column;align-items:center;gap:calc(3 * var(--u));text-align:center;padding:calc(8 * var(--u)) calc(6 * var(--u)) calc(10 * var(--u));border-radius:var(--ui-r-md);background:rgb(255 255 255 / .06)}
+.grow-ages>div.now{background:rgb(255 255 255 / .14);outline:2px solid var(--ui-yellow)}.grow-ages>div.later img{filter:brightness(.55) saturate(.6)}
+.grow-ages img{width:100%;aspect-ratio:1;object-fit:contain}.grow-ages b{font-size:calc(15 * var(--u));font-weight:700}.grow-ages small{font-size:calc(11 * var(--u));color:var(--ui-text-2)}
+.grow-ages span{font-size:calc(12 * var(--u));line-height:1.35}.grow-ages span:empty{display:none}
+
+/* A 3D page that is not up yet (home.js loadingCard): a dark card in the middle, its bar sliding for as long as it takes. */
+.stage-loading{position:absolute!important;inset:0;z-index:2;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:calc(12 * var(--u));margin:0;pointer-events:none;font-weight:600;font-size:calc(15 * var(--u));color:#fff;text-shadow:var(--ui-on-scene)}
+.stage-loading span{padding:calc(10 * var(--u)) calc(18 * var(--u)) 0}.stage-loading::before{content:'';position:absolute;left:50%;top:50%;width:calc(230 * var(--u));height:calc(84 * var(--u));transform:translate(-50%,-50%);border-radius:var(--ui-r-lg);background:var(--ui-glass-dark);z-index:-1}
+.stage-loading i{display:block;width:calc(170 * var(--u));height:calc(6 * var(--u));border-radius:99px;background:rgb(255 255 255 / .22);overflow:hidden}
+.stage-loading i b{display:block;width:40%;height:100%;border-radius:99px;background:var(--ui-lime);animation:stage-load 1.1s ease-in-out infinite alternate}
+@keyframes stage-load{from{transform:translateX(-30%)}to{transform:translateX(180%)}}
+@media (prefers-reduced-motion:reduce){.stage-loading i b{animation:none;width:100%;opacity:.6}}
+
+/* 2026-10-13: the two things a buddy needs, each with its icon in its own colour, the same in the dorm (.st-stat), on the pick card
+   and on the race cover (.fit): fed (the fork, orange) and mood (the smile, pink; it was "clean"). */
+.st-stat.fork svg{color:#ff9f43!important}.st-stat.smile svg{color:#ff6fa5!important}.st-stat.fork .ui-bar>*{background:#ff9f43}.st-stat.smile .ui-bar>*{background:#ff6fa5}
+.st-stat b{font-size:calc(12 * var(--u));font-weight:600;flex:none}.st-stat.low b::after{content:' 低';color:var(--ui-yellow)}
+.pickcard .fit{display:flex;align-items:center;gap:calc(8 * var(--u));margin:calc(8 * var(--u)) 0 0;font-size:calc(14 * var(--u))}.pickcard .fit svg{width:calc(18 * var(--u));height:calc(18 * var(--u));flex:none}
+.fit.fork svg{color:#ff9f43}.fit.smile svg{color:#ff6fa5}.fit.ok svg{color:var(--ui-yellow)}.fit.bad{font-weight:700}
+
+/* The rich list (home.js richList): the wallet on the home page is its button, the place under it; the sheet is one row a rider, the
+   player's own in yellow. Made-up riders. */
+.rich-open{all:unset;display:flex;flex-direction:column;align-items:flex-end;gap:calc(3 * var(--u));cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rich-open small{font-size:var(--ui-t-label);font-weight:600;color:#fff;text-shadow:var(--ui-on-scene);padding-right:calc(6 * var(--u))}
+.rich-open:focus-visible{outline:2px solid var(--ui-green);outline-offset:4px;border-radius:var(--ui-r-md)}
+.rich header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--ui-s2)}.rich h2{margin:0;font-size:var(--ui-t-page)}
+.rich-next{margin:0 0 var(--ui-s3);display:flex;align-items:center;flex-wrap:wrap;gap:calc(4 * var(--u));font-size:var(--ui-t-body)}.rich-next b{color:var(--ui-yellow)}.rich-next .ui-coin{width:calc(12 * var(--u));height:calc(12 * var(--u));order:0}
+.rich ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:calc(4 * var(--u))}
+.rich li{display:flex;align-items:center;gap:calc(10 * var(--u));padding:calc(6 * var(--u)) calc(12 * var(--u)) calc(6 * var(--u)) calc(8 * var(--u));border-radius:99px;background:rgb(255 255 255 / .08);font-size:var(--ui-t-body)}
+.rich li .rk{width:calc(22 * var(--u));text-align:center;font-weight:700;color:var(--ui-grey)}.rich li img{width:calc(30 * var(--u));height:calc(30 * var(--u));border-radius:50%;object-fit:cover;background:radial-gradient(circle at 50% 40%,#f1cf92,#a8743f)}
+.rich li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rich li .amt{display:inline-flex;align-items:center;gap:calc(4 * var(--u));font-weight:700;font-variant-numeric:tabular-nums;margin:0}.rich li .ui-coin{width:calc(12 * var(--u));height:calc(12 * var(--u))}
+.rich li.you{background:var(--ui-yellow);color:#000}.rich li.you .rk{color:#000}
+.rich li:nth-child(-n+3):not(.you) .rk{color:var(--ui-yellow)}
+.rich{background:#000!important;max-height:84cqh;padding:var(--ui-s5) var(--ui-s4);display:flex;flex-direction:column;overflow:hidden}.rich ol{overflow-y:auto;min-height:0}.rich li{padding-block:calc(4 * var(--u))}.rich li img{width:calc(26 * var(--u));height:calc(26 * var(--u))}
+.page-home>.ui-scrim{z-index:40}.rich{z-index:41;opacity:1}
+.rich{animation:none!important;opacity:1!important}.page-home>.ui-scrim{z-index:60}.rich{z-index:61}
+.page-home>.ui-scrim{background:rgb(0 0 0 / .82)}   /* the card under the sheet is black too: dark enough that the two do not read as one */
+
+.team .fit{display:flex;align-items:center;gap:calc(8 * var(--u));margin:calc(8 * var(--u)) 0 0;font-size:calc(14 * var(--u))}.team .fit svg{width:calc(18 * var(--u));height:calc(18 * var(--u));flex:none}

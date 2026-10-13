@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r584';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r584';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r584';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r584';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r584';
-import {installApprovedEnvironment} from './approved-environment.js?v=r584';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r584';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r584';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r584';
-import {turnAt} from './track-projection.js?v=r584';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r584';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r584';
+import {roadHalfWidth} from './track-presentation.mjs?v=r641';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r641';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r641';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r641';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r641';
+import {installApprovedEnvironment} from './approved-environment.js?v=r641';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r641';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r641';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r641';
+import {turnAt} from './track-projection.js?v=r641';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r641';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r641';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -56,7 +56,7 @@ const ARM_Q=new THREE.Quaternion(),ARM_W=new THREE.Quaternion(),FORWARD=new THRE
 // ([rad, s]). kick: a sprint or an apple widens the view by this many degrees (the framing itself stays).
 const FINISH_SHOT={out:7,ahead:5.5,high:2,aim:2,fov:60,ease:260};   // the finish close-up: m to the side of the buddy, m up the road from it, the camera's height, the height it looks at, the lens (wide: an upright phone has to hold a buddy's length), ms it eases over
 const WIDE=[6,9,3];   // [m up, m back, m its aim is raised] the camera is taken at a start gate wider than the three lanes
-const REACT={tip:[.8,3.2,7,.03],daze:[.5,2.5],pump:[-1.7,.7],push:1.5,lean:.36,glance:.6,reach:2,kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
+const REACT={drop:[.4,.18],tip:[.8,3.2,7,.03],daze:[.5,2.5],pump:[-1.7,.7],push:1.5,lean:.36,glance:.6,reach:2,kick:8,rise:[.3,.22],launch:[0,1.4],lamp:{reach:6,from:16,size:1.9,alpha:.8,tint:new THREE.Color('#ffd98a')}};
 // rise: over a fence the camera lifts [m, look-at m] per metre of the player's jump · launch: [degrees the view is closed in
 // by on the grid, seconds it opens out over once they are off] (0 since 2026-10-05, it was 3.5: the user saw the buddy a different size in the countdown and in the race) · lamp: the street lamps' glow, lit `reach` m further up the
 // road per hit of the streak (to 16), none nearer than `from` m ahead of the horse (a glow that near fills the screen).
@@ -780,11 +780,11 @@ export class ChaseRenderer {
       const surge=clamp((race.speed/race.config.baseSpeed-1)/.45,0,1),rush=race.rush?.()??0;
       if((surge>.03||rush>0)&&!this.reduced){
         context.save();context.lineCap='round';context.lineWidth=Math.max(1.5,this.width*(.004+.002*rush));
-        context.strokeStyle=`rgba(244,251,255,${Math.min(.7,.08+.23*surge+.3*rush)})`;
-        for(const side of [-1,1])for(let i=0,n=4+Math.round(4*rush);i<n;i++){
-          const x=this.width*(.5+side*(.40+(i%4)*.016-(i>3?.07:0)));
+        context.strokeStyle=`rgba(244,251,255,${Math.min(.85,.08+.23*surge+.45*rush)})`;
+        for(const side of [-1,1])for(let i=0,n=4+Math.round(8*rush);i<n;i++){   // a rush: three rows of lines, the inner ones further in (2026-10-13)
+          const x=this.width*(.5+side*(.40+(i%4)*.016-Math.floor(i/4)*.065));
           const phase=(time*(.28+.42*surge)*(1+rush)+i*.113+(side>0?.07:0))%.46;
-          const y=this.height*(.34+phase),length=this.height*(.024+.025*surge)*(1+1.5*rush);
+          const y=this.height*(.34+phase),length=this.height*(.024+.025*surge)*(1+2.4*rush);
           context.beginPath();context.moveTo(x-side*3,y);context.lineTo(x,y+length);context.stroke();
         }
         context.restore();
@@ -850,11 +850,11 @@ export class ChaseRenderer {
       const lift=this.reduced?0:this.playerJump||0;   // the player's jump height, from the last frame's runners()
       // The start gate's whole row in view: the camera is lifted (stalls.wide m) through the countdown and comes back down over the first 1.2 s after GO.
       const back=clamp(1-Math.max(0,time)/1.2,0,1),high=this.stalls?.wide?back*back*(3-2*back):0;
-      this.camera.position.set(c.x,c.y+high*WIDE[0]+.035*this.sliceCameraEase+REACT.rise[0]*lift,c.z+high*WIDE[1]+.3*this.sliceCameraEase);
+      this.camera.position.set(c.x,c.y+high*WIDE[0]+.035*this.sliceCameraEase+REACT.rise[0]*lift-REACT.drop[0]*(this.kick||0),c.z+high*WIDE[1]+.3*this.sliceCameraEase);
       // A sprint or an apple: the view widens a little (REACT.kick), eased; the framing and the controls stay put.
       this.kick=(this.kick||0)+((this.reduced?0:race.rush(time))-(this.kick||0))*(1-Math.exp(-Math.max(0,frameTime)/140));
       const off=clamp(1-Math.max(0,time)/REACT.launch[1],0,1),fov=c.fov+REACT.kick*this.kick-(this.reduced?0:REACT.launch[0]*off*off*(3-2*off));if(Math.abs(this.camera.fov-fov)>.01){this.camera.fov=fov;this.camera.updateProjectionMatrix();}
-      this.camera.lookAt(c.x,c.targetY+high*WIDE[2]+REACT.rise[1]*lift,c.targetZ);
+      this.camera.lookAt(c.x,c.targetY+high*WIDE[2]+REACT.rise[1]*lift-REACT.drop[1]*(this.kick||0),c.targetZ);   // drop: on a rush the camera sinks toward the road and looks a little lower (2026-10-13, the user: 速度感): the ground streams by closer
       // The line crossed: the camera comes round to the buddy's front quarter for a close-up, the line behind it
       // (FINISH_SHOT; 2026-10-10, the user). A phone is upright: square on from the side a buddy is wider than the view.
       this.finishShot=(this.finishShot||0)+((race.finished&&!this.reduced?1:0)-(this.finishShot||0))*(1-Math.exp(-Math.max(0,frameTime)/FINISH_SHOT.ease));

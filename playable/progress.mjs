@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r584';
+import {MVP} from './slice-config.mjs?v=r641';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -73,6 +73,18 @@ export const HORSE_PRICE=Object.freeze({0:{coins:300,gems:2,stage:1},2:{coins:60
 // colours (PERKS.rider): stage 2 seeds and bait, stage 8 coins, the last stage the trophy on the shelf of the rider's house.
 // THREE_STARS: coins for a stage's third star. The day's first finished run: the coins picked up on it count twice (`first`).
 export const STAGE_GIFT=Object.freeze({2:{items:{seed:5,bait:5}},8:{coins:300}}),THREE_STARS=100,TROPHY_STAGE=10;
+// The stake (2026-10-13, the user: 賽馬很大一部分是贏錢; an entry fee and a pot, as at a card table): a stage with rivals costs
+// ENTRY × its number to enter (stage 1, run alone, is free), the pot is PURSE × the fee, shared by place (PURSE_SHARE: the
+// winner all of it); whoever comes last gets none of it, whatever its place. Doubled before the start: the fee and the pot × 2.
+// Without the coins the stage is run free, for its stars and xp, with no pot.
+// 2026-10-13 (the user: 不管怎麼跑錢都變多要改): the winner takes three times the fee, second gets the fee back, third half of it
+// (it was 5 × the fee, shared 1, 1/2, 1/4: a rider placing by chance made .75 of the fee a run). By chance in a field of five a
+// run now loses a tenth of the fee; raised (DOUBLE, everything × 2) it loses twice that, and pays from about one win in three.
+export const ENTRY=20,PURSE=3,PURSE_SHARE=Object.freeze([1,1/3,1/6,0,0]);
+export const entryFee=city=>{const i=levelOf(city),l=LEVELS[i];return !l||!l.rivals?0:ENTRY*(i+1);};
+// Raising the stake (2026-10-13, the user: 寫倍數就好，報名費自動變兩倍): fee and pot both × 2. (It was the fee × 3 for an hour.)
+export const DOUBLE=Object.freeze({fee:2,purse:2});
+export const purseWon=(pot,rank,of)=>!(rank&&of>1)?0:rank===1?pot:rank>=of?0:Math.round(pot*(PURSE_SHARE[rank-1]??0));
 export const PERK_COINS=100;   // MVP.perks off: a stage that gave a perk pays this instead
 export const PERKS=Object.freeze({mane:{stage:2,id:'long'},rider:{stage:4}});
 
@@ -184,6 +196,7 @@ function demo(){
   const run={bestCombo:25,releases:8,limits:3,pops:0,pickups:12,stumbles:0,boosts:3,perfect:31,apples:4,hits:50,notes:55,seconds:24};
   let f=finish(p,{city:'taipei',solo:true,result:run,today:'2026-10-04'});
   ok(f.newStars===2&&f.stars===2&&f.missionCoins===100&&f.daily.coins===50&&f.coins===100+100+50&&f.gems===2,'first run pays stars, missions and the day');
+  ok(entryFee('taipei')===0&&entryFee('tokyo')===40&&entryFee('seoul2')===200&&purseWon(240,1,5)===240&&purseWon(240,2,5)===80&&purseWon(240,3,5)===40&&purseWon(240,4,5)===0&&purseWon(120,2,2)===0&&purseWon(120,1,2)===120&&purseWon(180,3,3)===0&&purseWon(180,2,3)===60&&[1,2,3,4,5].reduce((a,k)=>a+purseWon(240,k,5),0)/5<80&&DOUBLE.fee===2&&DOUBLE.purse===2,'the stake: a fee by stage, the pot shared by place, nothing for the last');
   ok(f.opened.join()==='tokyo'&&!f.relayOpened&&f.gifts.join()==='0'&&owns(f.p,0)&&!f.perks.length,'a finished run opens level 2; clearing stage 1 gives the second buddy');p=f.p;
   f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:70},today:'2026-10-04'});ok(f.newStars===0&&f.stars===2&&!f.daily&&f.p.runs===2,'a slower run keeps the stars; one daily bonus a day');p=f.p;
   f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:18},today:'2026-10-05'});ok(f.newStars===1&&!f.relayOpened&&!f.gifts.length&&f.daily.streak===2&&f.daily.coins===60,'a third star: no relay yet (two buddies); day 2 pays more');p=f.p;

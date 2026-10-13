@@ -76,9 +76,14 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge lo
 
 /* ---- counters (coins, diamonds) ---- */
 .ui-coin{background:var(--ui-yellow);color:#000}
+/* 2026-10-13 (the user: the coin is our coin, not a U in a ring): every .ui-coin is the game's own gold coin (assets/ui/coin.webp), the letter hidden. */
+.ui-coin{background:url(../assets/ui/coin.webp?v=4) center/contain no-repeat!important;border-radius:0!important;color:transparent!important;font-size:0!important;box-shadow:none!important;order:9}   /* order: the coin comes after its number (2026-10-13, the user), wherever the two sit in a flex row */
+.ui-price.short .ui-coin{filter:grayscale(1) brightness(.8)}
 .ui-wallet{height:var(--ui-h-sm);min-width:0;padding:0 calc(14 * var(--u)) 0 calc(8 * var(--u));border:0;background:var(--ui-glass-dark);font-weight:600;font-size:var(--ui-t-body)}
+/* 2026-10-13 (the user: money is hard to see): the wallet is the one gold thing on every page: a dark capsule with a gold rim, the number a size up. */
+.ui-wallet{height:calc(var(--ui-h-sm) + 4 * var(--u));padding:0 calc(8 * var(--u)) 0 calc(16 * var(--u));border:2px solid var(--ui-yellow);background:linear-gradient(180deg,#2a2208,#0e0b03);color:var(--ui-yellow);font-weight:700;font-size:calc(19 * var(--u));box-shadow:0 0 calc(12 * var(--u)) rgb(255 204 0 / .35);font-variant-numeric:tabular-nums}
 .ui-wallet .gem{color:#fff}
-.ui-price{height:var(--ui-h-tag);padding:0 calc(8 * var(--u)) 0 calc(3 * var(--u));gap:calc(4 * var(--u));background:#fff;color:#000;font-weight:600;font-size:var(--ui-t-tag)}   /* a price is a white tag */
+.ui-price{height:var(--ui-h-tag);padding:0 calc(4 * var(--u)) 0 calc(8 * var(--u));gap:calc(4 * var(--u));background:#fff;color:#000;font-weight:600;font-size:var(--ui-t-tag)}   /* a price is a white tag */
 .ui-price .ui-coin{width:calc(14 * var(--u));height:calc(14 * var(--u));font-size:calc(8 * var(--u))}
 .ui-price.short{background:var(--ui-glass-veil);color:#fff}.ui-price.short .ui-coin{background:var(--ui-grey);color:#000}
 
@@ -227,6 +232,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge lo
 /* The layer a chest opens on: over the page, dimmed; the prize's line and the button come in once it is out. */
 .ui-prize{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(12 * var(--u));padding:var(--ui-margin);box-sizing:border-box;background:rgb(4 14 8 / .66);-webkit-backdrop-filter:blur(calc(8 * var(--u)));backdrop-filter:blur(calc(8 * var(--u)));--chest:1.15}
 .ui-prize p{margin:0;font-weight:600;font-size:var(--ui-t-page);line-height:1.35;text-align:center;color:#fff;animation:chest-show .3s 2.85s both}
+.ui-prize p small{display:block;max-width:calc(300 * var(--u));margin:calc(4 * var(--u)) auto 0;font-weight:500;font-size:calc(13 * var(--u));line-height:1.45;opacity:.82}   /* what the prize is for (home.js prizes `what`) */
 .ui-prize .ui-btn{min-width:60%;margin-top:calc(10 * var(--u));animation:chest-show .3s 3.05s both}
 .ui-prize.at-2 :is(p,.ui-btn){animation:none}
 
@@ -236,3 +242,16 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* phones enlarge lo
    is <div class="ui-row" style="--n:4">. Buttons inside need no width of their own. */
 .ui-row{--n:2;--gap:calc(8 * var(--u));--pad:calc(6 * var(--u));display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gap);padding:var(--pad);box-sizing:border-box;width:100%}
 .ui-row>*{min-width:0}
+
+/* a coin is never taller than the figures beside it (2026-10-13, the user) */
+.ui-wallet .ui-coin{width:calc(14 * var(--u));height:calc(14 * var(--u))}.ui-price .ui-coin{width:calc(10 * var(--u))!important;height:calc(10 * var(--u))!important}
+
+/* The chest gives its cards one at a time (slice-app openChest): after the first, the chest stands open and only the card plays. */
+.ui-chest.next *,.ui-chest.next *::after{animation:none!important}
+.ui-chest.next .lid{transform:rotateX(112deg)}
+.ui-chest.next .prize{animation:chest-prize 1s .05s both!important}
+.ui-chest.next .prize .front::after{animation:chest-shine .7s 1.05s ease-out both!important}
+.ui-prize.next :is(p,.ui-btn){animation:chest-show .3s .8s both}
+.ui-chest{cursor:pointer}
+.prize-count{position:absolute;top:calc(env(safe-area-inset-top) + 20 * var(--u));left:0;right:0;text-align:center;font:600 var(--ui-t-body) var(--ui-font);color:rgb(255 255 255 / .7);font-variant-numeric:tabular-nums}
+.prize-skip{all:unset;cursor:pointer;padding:calc(10 * var(--u)) calc(16 * var(--u));font:600 var(--ui-t-body) var(--ui-font);color:rgb(255 255 255 / .7);text-decoration:underline;animation:chest-show .3s 1.2s both}

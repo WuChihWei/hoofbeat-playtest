@@ -1,6 +1,6 @@
-import {compositionRivals} from './race-composition.mjs?v=r584';
-import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r584';
-import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r584';
+import {compositionRivals} from './race-composition.mjs?v=r641';
+import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r641';
+import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r641';
 const anchor=a=>`left:${a.center[0]*100}%;top:${a.center[1]*100}%;width:${a.size[0]*100}%;height:${a.size[1]*100}%;transform:translate(-50%,-50%);right:auto;min-width:0;`;
 // Five rows: two lines each (name, gap), growing down from the same top edge.
 const top=a=>`left:${a.center[0]*100}%;top:${(a.center[1]-a.size[1]/2)*100}%;width:${a.size[0]*100}%;transform:translateX(-50%);right:auto;min-width:0;`;
@@ -18,7 +18,7 @@ export function raceHudMarkup(rivals=SLICE_RIVALS){const rows=[...rivals.map(r=>
  <button style="${anchor(P.hud.pause)}" id="slice-pause" aria-label="暫停">Ⅱ</button>
  <div class="hud-lap" style="${anchor(P.hud.lap)}"><span id="slice-terrain">LEG</span><b id="slice-leg">1/3</b></div>
  <div class="slice-progress" style="${anchor(P.hud.progress)}"><svg class="trackmap" viewBox="0 0 116 40" aria-hidden="true"></svg><progress id="slice-progress" max="360" value="0" aria-label="賽段進度"></progress><i class="terrain"></i>${rivals.map(r=>`<i class="runner" data-runner="${r.id}" style="--c:${RUNNER_COLOR[r.id]||'#c9c9c9'}"></i>`).join('')}<b class="knob"></b>${FLAG}</div>
- <div class="hud-coins" style="${anchor(P.hud.coins)}"><i class="ui-coin" aria-hidden="true">U</i><b id="slice-coins">0</b></div>
+ <div class="hud-coins" style="${anchor(P.hud.coins)}"><span id="slice-apple-n" hidden></span><i class="ui-coin" aria-hidden="true">U</i><b id="slice-coins">0</b></div>
  <div class="hud-position" style="${anchor(P.hud.position)}"><span>POSITION</span><b id="slice-position">${n}/${n}</b></div>
 <div class="hud-ranking${n>3?' crowd':''}" style="${n>3?top(P.hud.ranking):anchor(P.hud.ranking)}" aria-label="即時排名">${rows.map(([id,name],i)=>`<div data-rank-row="${id}" class="ranking-row" title="${name}"><b>${i+1}</b><img class="rank-horse" alt=""><span>${name}</span><small class="race-gap"></small><progress max="360" value="0"></progress></div>`).join('')}</div>
 </header>`;}

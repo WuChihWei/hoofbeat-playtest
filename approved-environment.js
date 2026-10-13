@@ -1,16 +1,16 @@
-import {fencePose} from './track-presentation.mjs?v=r584';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r584';
+import {fencePose} from './track-presentation.mjs?v=r641';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r641';
 import * as THREE from './vendor/three.module.min.js';
-import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r584';
+import {applyLook,LOOK,raceGrade} from './visual-style.js?v=r641';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {approvedAssets,scenePictures} from './approved-assets.js?v=r584';
-import {HORSE_Z,roadPose} from './race-world.js?v=r584';
-import {cityById,CITIES} from './course/cities/index.mjs?v=r584';
-import {modelFor} from './course/assets.mjs?v=r584';
+import {approvedAssets,scenePictures} from './approved-assets.js?v=r641';
+import {HORSE_Z,roadPose} from './race-world.js?v=r641';
+import {cityById,CITIES} from './course/cities/index.mjs?v=r641';
+import {modelFor} from './course/assets.mjs?v=r641';
 // The release tag the page loaded this module with (?v=…): the paintings and cards carry it too, so a picture replaced
 // under the same name is fetched again instead of coming from the browser's cache.
 const TAG=new URL(import.meta.url).search;
-import {installFarBackground,sunDirection} from './far-background.js?v=r584';
+import {installFarBackground,sunDirection} from './far-background.js?v=r641';
 
 // The race dressing comes from the city pack (course/cities/<id>.mjs): barrier, prop rows, treeline, weather, backdrop.
 const packFor=id=>cityById(id)||cityById('stockholm')||CITIES[0];
@@ -22,7 +22,8 @@ export function cityModels(id){
 
 // 2026-10-06 (the user: the near view looked broken up; the concept picture's ground is clean): the small plants at the
 // fence's foot (Grass_Clump rows: a card every 2–4 m) are not drawn.
-const ROWS=D=>D.rows.filter(r=>r.asset!=='Grass_Clump');
+const DENSE=1.15;   // 2026-10-13 (the user: 旁邊的東西多 15% 就好): every row this much closer, the hanging banners excepted (halved on the user's word, 2026-10-04)
+const ROWS=D=>D.rows.filter(r=>r.asset!=='Grass_Clump').map(r=>/Banner/.test(r.asset)?r:{...r,every:r.every/DENSE});
 // Every picture a city's scene asks for as it is built: its far painting (or backdrop), the two ground tiles, and its
 // painted cards and fence (course/assets.mjs C / F). home.js asks for them ahead of a race, so the scene finds them in
 // the browser's cache: it is shown only once they are all in (approved-assets scenePictures).
