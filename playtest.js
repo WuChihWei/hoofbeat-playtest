@@ -10,7 +10,7 @@ export function addLog(entry){try{localStorage.setItem(KEY,JSON.stringify([...re
 // Nothing is sent while REMOTE.url is empty, or on localhost, or with ?debug / ?demo (the builder's own runs).
 // who: a random id made once for this browser (no account); name: the rider's name the player typed; day: days since
 // this browser first opened the game (0 the first day): a row with kind 'open' and day 1 is someone who came back.
-export const REMOTE={url:''};   // 2026-10-13: an Apps Script web app on the user's Google Sheet (docs/SHEET_SETUP.md); a row is posted as one line of JSON, the script lays it out in columns
+export const REMOTE={url:'https://script.google.com/macros/s/AKfycbzju_ELV0ELb314e4w0aoLyDouFrum4oPvq9iyNJ5HDoNzWquxNs6BaeZG8WRFPJadq/exec'};   // 2026-10-13: an Apps Script web app on the user's Google Sheet (docs/SHEET_SETUP.md); a row is posted as one line of JSON, the script lays it out in columns
 const WHO='hoofbeat.install.v1',FIRST='hoofbeat.firstday.v1',get=k=>{try{return localStorage.getItem(k)}catch{return null}},put=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
 const who=()=>{let w=get(WHO);if(!w){w=Math.random().toString(36).slice(2,10);put(WHO,w);}return w;};
 export const dayNumber=()=>{const today=Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);let f=+get(FIRST);if(!f){f=today;put(FIRST,String(f));}return today-f;};

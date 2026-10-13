@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r658';
-import {applyLook,LOOK} from '../visual-style.js?v=r658';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r670';
+import {applyLook,LOOK} from '../visual-style.js?v=r670';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -220,8 +220,9 @@ function findMuzzle(root){
 
 // What the ranch needs, asked for ahead of time (home.js: as soon as the game is open).
 export const preloadStable=()=>Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat],[PLAYER_LOOK.stage])]);
-export async function mountStableView(host){
-  const [assets]=await Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat],[PLAYER_LOOK.stage])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
+export async function mountStableView(host,{rider=false}={}){   // rider: she sits on the buddy (the shop's 造型 page tries her clothes and its tack on at once)
+  const keys=()=>rider?[...needs(),'rider']:needs();
+  const [assets]=await Promise.all([loadStable(),preloadKeys(keys()),preloadBuddies([PLAYER_LOOK.coat],[PLAYER_LOOK.stage])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));   // 2026-10-06: was 2 (the phone ran hot)r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;
   r.domElement.setAttribute('aria-hidden','true');host.append(r.domElement);
@@ -248,7 +249,7 @@ export async function mountStableView(host){
   const shadow=o=>{o.traverse(m=>{if(m.isMesh)m.castShadow=m.receiveShadow=true;});return o;};
   const brush=shadow(assets.brush.clone());brush.scale.setScalar(BRUSH.scale);brush.visible=false;scene.add(brush);
   // The trough, in the user's colours by part; the food: a picture standing in it, facing the camera.
-  const trough=shadow(assets.trough.clone());trough.rotation.y=TROUGH.yaw;trough.scale.setScalar(TROUGH.k);trough.position.set(TROUGH.at[0],0,TROUGH.at[1]);scene.add(trough);let feedPose=POSE.feed;
+  const trough=shadow(assets.trough.clone());trough.rotation.y=TROUGH.yaw;trough.scale.setScalar(TROUGH.k);trough.position.set(TROUGH.at[0],0,TROUGH.at[1]);scene.add(trough);trough.visible=!rider;/* the shop's page: no trough on its floor */let feedPose=POSE.feed;
   {const mats={wood:new THREE.MeshStandardMaterial({color:TROUGH.wood,roughness:.8}),metal:new THREE.MeshStandardMaterial({color:TROUGH.metal,roughness:.5,metalness:.2})};
     trough.traverse(o=>{if(o.isMesh)o.material=mats[TROUGH.parts[o.name]||'wood'];});}
   const foodMat=new THREE.MeshBasicMaterial({transparent:true,alphaTest:.05,toneMapped:false}),food=new THREE.Mesh(new THREE.PlaneGeometry(1,1),foodMat);food.visible=false;scene.add(food);
@@ -291,7 +292,7 @@ export async function mountStableView(host){
     m.customProgramCacheKey=()=>key+'-floor';m.needsUpdate=true;}
   function show(){
     if(model)scene.remove(model.root);
-    model=createApprovedHorse(0,null,false,null,true);model.seat.visible=false;
+    model=createApprovedHorse(0,null,false,null,!rider);model.seat.visible=rider;
     if(!model.species){fixHind(model.content);sharpLegs(model.content.getObjectByName('HorseBody'));}   // a llama or a rhino keeps its own leg rig: it only stands (moods)
     const idle=model.mixer.clipAction(model.clips.idle).play();walking=null;arrive=greet=null;
     if(coming&&model.clips.walk&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const c=model.clips.walk.clone();c.tracks=c.tracks.filter(t=>!/^Root\./.test(t.name));   // in place: the root is moved here
@@ -405,7 +406,7 @@ export async function mountStableView(host){
       if(k>=1){walking.fadeOut(ARRIVE.fade);arrive.idle.reset().setEffectiveWeight(1).fadeIn(ARRIVE.fade).play();arrive=null;greet=mood?{kind:mood,t:0}:null;}}
     if(greet&&window.__stable?.greetAt!=null){greet.t=window.__stable.greetAt;window.__stable.greetAt=null;}
     if(greet&&(greet.t+=dt)>ARRIVE[greet.kind][0])greet=null;
-    model.mixer.update(dt);
+    model.mixer.update(dt);if(rider){model.riderPose(false);model.riderMixer?.update(dt);model.root.updateMatrixWorld(true);model.updateAttachment();}
     const gk=greet?Math.sin(Math.PI*greet.t/ARRIVE[greet.kind][0]):0,hungry=greet?.kind==='hungry',glad=greet?.kind==='happy'?Math.sin(greet.t/ARRIVE.happy[0]*Math.PI*4)*ARRIVE.happy[1]*gk:0;
     const bob=Math.sin((1-nod/.9)*Math.PI*2)*.08*(nod>0)+glad,to=job?(job.kind==='feed'?feedPose:BUDDY[model.species]?.bow??POSE.brush):hungry?feedPose:POSE.idle,ww=job?w:hungry?gk*ARRIVE.hungry[1]:0;   // a soft chew-nod (the bite)
     if(!arrive){for(const [b,base] of bones){const n=b.name,p=POSE.idle[n]+(to[n]-POSE.idle[n])*ww+bob*(n==='Head'?1:.3),t=(to.turn||0)*ww*(TURN[n]||0);
@@ -428,7 +429,7 @@ export async function mountStableView(host){
   let gone=false;
   if(window.__stable)window.__stable.come=(t=0,m=null,g=null)=>{mood=m;coming=true;show();fit();if(g!=null){arrive.t=ARRIVE.time;window.__stable.greetAt=g;}else arrive.t=t;};   // dev: the arrival at t s, or (g) its greeting at g s
   if(window.__stable){window.__stable.act=(kind,t=.7,img)=>{setFood(img);job={kind,t,ate:false,peaked:true};};Object.defineProperty(window.__stable,'spin',{get:()=>spin,configurable:true});}   // dev (?debug): jump into an act at t s (a hidden tab draws one frame at a time)
-  const api={show:(m,come=true)=>{mood=m||null;coming=come;const c=PLAYER_LOOK.coat;/* come: a buddy just opened or picked walks in; a new mane or saddle on the same one does not */Promise.all([preloadKeys(needs()),preloadBuddies([c],[PLAYER_LOOK.stage])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
+  const api={show:(m,come=true)=>{mood=m||null;coming=come;const c=PLAYER_LOOK.coat;/* come: a buddy just opened or picked walks in; a new mane or saddle on the same one does not */Promise.all([preloadKeys(keys()),preloadBuddies([c],[PLAYER_LOOK.stage])]).then(()=>{if(gone||c!==PLAYER_LOOK.coat)return;show();fit();});},
     react(kind,onPeak,foodImg){if(job||queued||arrive||!ACTS[kind])return;greet=null;api.wake();if(kind==='feed')setFood(foodImg);const go=()=>{job={kind,t:0,ate:false,peaked:false,onPeak};};
       if(fore||hind)queued=go;else go();},
     wake(){still=0;restAfter=soon();resting=false;},   // any touch: stand up (if lying) and start the rest timer over

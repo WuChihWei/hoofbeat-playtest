@@ -5,9 +5,9 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice} from './slice-app.js?v=r658';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r658';
-import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r658';
+import {startSlice} from './slice-app.js?v=r670';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r670';
+import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r670';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
@@ -23,17 +23,17 @@ const step=(name,k)=>()=>{window.zbMark?.('loaded: '+name);dispatchEvent(new Cus
 setTimeout(()=>{window.zbMark?.('preload starts');dispatchEvent(new CustomEvent('zb-load',{detail:.15}));
   preloadPresentation(false).catch(()=>{}).then(step('race models',.7)).then(()=>{warmCity(profile.city);step('city pictures',1)();dispatchEvent(new Event('zb-ready'));barn.src='assets/stable/barn-plate.webp';
     return preloadRanch(owned().slice(0,14).map(h=>h.coat),owned().slice(0,14).map(lvOf));}).catch(()=>{}).then(step('ranch models',1)).then(()=>preloadStable()).catch(()=>{}).then(step('stable models',1)).then(()=>preloadPresentation()).catch(()=>{}).then(step('rivals\' light models',1));},50);
-import {lang,setLang,translate} from '../i18n.js?v=r658';
-import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r658';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r658';
-import {mountStableView,preloadStable} from './stable-view.js?v=r658';
-import {mountRiderView} from './rider-view.js?v=r658';
-import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r658';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll} from '../farm.mjs?v=r658';
-import {cityPictures} from '../approved-environment.js?v=r658';
-import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r658';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r658';
-import {LEVELS,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT} from './progress.mjs?v=r658';
+import {lang,setLang,translate} from '../i18n.js?v=r670';
+import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r670';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r670';
+import {mountStableView,preloadStable} from './stable-view.js?v=r670';
+import {mountRiderView} from './rider-view.js?v=r670';
+import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r670';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll} from '../farm.mjs?v=r670';
+import {cityPictures} from '../approved-environment.js?v=r670';
+import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r670';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r670';
+import {LEVELS,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT} from './progress.mjs?v=r670';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -96,6 +96,7 @@ const defaults={name:'Rider',horse:1,city:'taipei',gear:{},order:[1,0,2]};   // 
 let profile={...defaults};
 try{profile={...defaults,...JSON.parse(store.get(PROFILE)||'{}')}}catch{}
 // Older profiles kept only a shirt and a saddle colour ('' = authored leather).
+{const w=new Set(profile.wardrobe||[]);for(const src of [profile.gear,profile.patterns])for(const [m,v] of Object.entries(src||{}))if(v)w.add(`${m}:${v}`);profile.wardrobe=[...w];}   // what a save already wears is its own (the wardrobe, 2026-10-13)
 if(profile.shirt||profile.saddle){profile.gear={Rider_Shirt:profile.shirt||undefined,Tack_Saddle:profile.saddle||undefined,...profile.gear};delete profile.shirt;delete profile.saddle;}
 profile.gear=Object.fromEntries(Object.entries(profile.gear||{}).filter(([m,c])=>GEAR.some(g=>g.mat===m&&g.colors.includes(c))));
 {const ids=ROSTER.map(h=>h.id),o=profile.order;   // three different horses the player still has
@@ -124,7 +125,7 @@ const legLabel=id=>{const k=MVP.relay&&relayOpen(prog)?profile.order.indexOf(id)
 function putOnLeg(id,k){const at=profile.order.indexOf(id);if(at>=0)[profile.order[at],profile.order[k]]=[profile.order[k],profile.order[at]];else profile.order[k]=id;saveProfile();}
 const TYPE_NAME={straight:'直線型',curve:'彎道型',mud:'泥地型'};
 function saveProfile(){store.set(PROFILE,JSON.stringify(profile));applyLook();}
-function applyLook(h=horseById(profile.horse),stage=lvOf(h)){Object.assign(PLAYER_LOOK,{stage,coat:h.coat,gear:Object.fromEntries(Object.entries(profile.gear).filter(([m])=>riderColors(prog)||!m.startsWith('Rider_'))),hair:maneOf(h.id),patterns:Object.fromEntries(Object.entries(profile.patterns||{}).filter(([m])=>riderColors(prog)||!m.startsWith('Rider_')))});}   // the rider's clothes keep their first colour (and no pattern) until stage 4 is cleared
+function applyLook(h=horseById(profile.horse),stage=lvOf(h)){Object.assign(PLAYER_LOOK,{stage,coat:h.coat,gear:{...profile.gear},hair:maneOf(h.id),patterns:{...profile.patterns}});}   // the rider's clothes keep their first colour (and no pattern) until stage 4 is cleared
 // Mane and tail styles (approved-assets HAIR): every buddy wears its own, set on its card in the stable (2026-10-04, the
 // user: not sold in the shop, a setting of the animal). profile.manes = {buddy id: style id}; none: the classic one.
 const maneOf=id=>HAIR.some(x=>x.id===profile.manes?.[id])&&maneOpen(prog,profile.manes[id])?profile.manes[id]:'classic';
@@ -167,13 +168,14 @@ const WHAT_SEEDS='種子種在麥田，魚餌放進魚池。收成的小麥和�
 // A buddy whole, at a stage (tools/grow-photos.sh), and its growth card: the three ages side by side, each with what it has.
 const growImg=(h,l)=>`assets/ui/grow/${h.coat}_${l}.webp?v=1`;
 const growCard=h=>`<div class="grow-ages">${AGE.map((a,k)=>{const l=k+1,p=perksOf(h)[k-1],now=lvOf(h)===l;return `<div class="${now?'now':lvOf(h)>l?'done':'later'}"><img src="${growImg(h,l)}" alt=""><b>${a}</b><small>LV ${l}${now?' · 現在':''}</small><span>${l>1?`速度 +${Math.round(k*LV_SPEED*100)}%`:'基本速度'}</span><span>${p?PERK_TEXT[p]:l===1?'還沒有特長':''}</span></div>`;}).join('')}</div>`;
-// Changing a colour (a buddy's gear in the dorm, the rider's clothes in the house) costs COLOR_COST coins a change (2026-10-13,
-// the user: 換顏色都要扣十個金幣), the first colour too; the one worn already costs nothing. -> whether it was paid.
-// A part's pattern (approved-assets SHIRTS, PATTERNED: the shirt, the saddle pad; profile.patterns {material: id}): the row of
-// names under its colours, and wearing one (paid like a colour). The colour worn tints it.
-const patternRow=(part,shut=false)=>PATTERNED.includes(part)?`<div class="shirts" role="radiogroup" aria-label="花紋">${[{id:'',name:'素色'},...SHIRTS].map(x=>`<button role="radio" aria-checked="${(profile.patterns?.[part]||'')===x.id}" data-shirt="${x.id}" ${x.id&&shut?'disabled':''}>${x.name}</button>`).join('')}</div>`:'';
-const wearPattern=(part,id,toast)=>{if(!payColor(id,profile.patterns?.[part]||'',toast))return false;profile.patterns={...profile.patterns};if(id)profile.patterns[part]=id;else delete profile.patterns[part];saveProfile();return true;};
-const COLOR_COST=10,payColor=(c,worn,toast)=>{if(c===worn)return false;if(readCoins()<COLOR_COST){toast(`金幣不夠：換顏色要 ${COLOR_COST}`);return false;}addCoins(-COLOR_COST);toast(`−${COLOR_COST} 金幣`);return true;};
+// The wardrobe (2026-10-13, the user: 建立花錢的地方): a colour or a pattern of a part is bought once in the shop (PAGES.looks)
+// and then owned (profile.wardrobe ['<material>:<colour or pattern id>']); a part's first colour and no pattern are everyone's.
+// The dorm and the house only list what is owned; wearing it costs nothing. Colours and patterns are bought apart and worn
+// together (blue and stars: a blue pad with stars). For an afternoon each change cost 10 coins instead.
+const COLOR_PRICE=150,PATTERN_PRICE=400,lookKey=(mat,v)=>`${mat}:${v}`,lookPrice=v=>v[0]==='#'?COLOR_PRICE:PATTERN_PRICE;
+const hasLook=(mat,v)=>!v||v===GEAR.find(g=>g.mat===mat)?.colors[0]||(profile.wardrobe||[]).includes(lookKey(mat,v));
+const patternRow=(part,all=false)=>PATTERNED.includes(part)?`<div class="shirts" role="radiogroup" aria-label="花紋">${[{id:'',name:'素色'},...SHIRTS].filter(x=>all||hasLook(part,x.id)).map(x=>`<button role="radio" aria-checked="${(profile.patterns?.[part]||'')===x.id}" data-shirt="${x.id}">${x.name}</button>`).join('')}</div>`:'';
+const wearPattern=(part,id)=>{profile.patterns={...profile.patterns};if(id)profile.patterns[part]=id;else delete profile.patterns[part];saveProfile();};
 const grew=new Map();   // buddy id → the level it was at before it grew: the dorm shows the change once (PAGES.stable grow)
 const statRows=h=>{const st=buddyStats(h.stats,MAX_LEVEL);return `<div class="buddy-stats">${Object.entries(STAT_NAME).map(([k,name])=>`<div><span>${name}</span><i style="--now:${st[k].now/STAT_FULL*100}%;--full:${st[k].full/STAT_FULL*100}%"></i><b>${st[k].now}<small>/${st[k].full}</small></b></div>`).join('')}</div>`;};
 // A runner of the player's for the race: its look and its numbers (slice-game: stats and level; race-scene: coat and mane).
@@ -283,7 +285,7 @@ const go=(r,{replace=false}={})=>{if(r==='play'||r==='solo')playFromSetup=locati
 // Back goes to the page's parent (course → tracks, everything else → home). It steps back through history only when
 // the page before was that parent; otherwise (reload, opened directly, came from outside) it swaps to the parent, so
 // back never leaves the app or lands on an unrelated page.
-const PARENT={course:'tracks',stable:'ranch',house:'ranch'};
+const PARENT={course:'tracks',stable:'ranch',house:'ranch',looks:'shop'};
 let shown=null,before=null;   // routes rendered now / just before
 function render(){
   leave?.();leave=null;
@@ -635,19 +637,20 @@ const PAGES={
       if(pane==='items')pop.innerHTML=`<header><h2>Items</h2><button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>
         <div class="st-grid items">${have.map(tile).join('')}</div><p class="st-hint ui-label">${have.length?'選一個，「餵食」就餵它':'沒有食物：去麥田收成'}</p>
         <button class="ui-btn block" data-go="shop">去商店買更多${icon('arrow','')}</button>`;
-      const g=GEAR.find(x=>x.mat===part),mane=maneOf(h.id),riderShut=x=>x.mat.startsWith('Rider_')&&!riderColors(prog),gears=GEAR.filter(x=>MVP.perks||!x.mat.startsWith('Rider_'));   // MVP: the rider's clothes stay as they are
+      const g=GEAR.find(x=>x.mat===part),mane=maneOf(h.id),riderShut=x=>false,gears=GEAR.filter(x=>MVP.perks||!x.mat.startsWith('Rider_'));   // MVP: the rider's clothes stay as they are
       if(gear)sheet.innerHTML=`<header><b>造型</b><button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header><div class="parts" role="tablist" ${maned()?'':'style="grid-template-columns:repeat(6,1fr)"'}>
           ${maned()?`<button role="tab" aria-selected="${part==='mane'}" data-part="mane"><i class="mane" style="background-image:url(assets/ui/hair_${mane}.webp?v=1)"></i>鬃毛</button>`:''}${gears.map(x=>`<button role="tab" aria-selected="${x.mat===part}" data-part="${x.mat}"><i style="background:${shown(x,worn(x))}"></i>${x.name}</button>`).join('')}</div>
-        ${g?`<div class="swatches" role="radiogroup" aria-label="${g.name}顏色">${g.colors.map((c,i)=>`<button role="radio" aria-label="${i?c:'原色'}" aria-checked="${worn(g)===c}" data-color="${c}" style="background:${shown(g,c)}" ${i&&riderShut(g)?'disabled':''}></button>`).join('')}</div>${patternRow(g.mat,riderShut(g))}<p class="look-note ui-label">換一次顏色${PATTERNED.includes(g.mat)?'或花紋':''} ${COLOR_COST} 金幣</p>${riderShut(g)?`<p class="look-note ui-label">${icon('lock')}破第 ${PERKS.rider.stage} 關開放</p>`:''}`
+        ${g?`<div class="swatches" role="radiogroup" aria-label="${g.name}顏色">${g.colors.filter(c=>hasLook(g.mat,c)).map((c,i)=>`<button role="radio" aria-label="${i?c:'原色'}" aria-checked="${worn(g)===c}" data-color="${c}" style="background:${shown(g,c)}"></button>`).join('')}</div>${patternRow(g.mat)}<button class="ui-btn block looks-more" data-looks="buddy">去商店買更多${icon('arrow','')}</button>${riderShut(g)?`<p class="look-note ui-label">${icon('lock')}破第 ${PERKS.rider.stage} 關開放</p>`:''}`
           :`<div class="manes" role="radiogroup" aria-label="鬃毛造型">${HAIR.map(x=>`<button role="radio" aria-checked="${x.id===mane}" data-mane="${x.id}" ${maneOpen(prog,x.id)?'':'disabled'}><img src="assets/ui/hair_${x.id}.webp?v=1" alt=""><span>${maneOpen(prog,x.id)?x.name:`破第 ${PERKS.mane.stage} 關開放`}</span></button>`).join('')}</div>`}`;
       for(const x of [pop,sheet])x.querySelector('[data-close]')?.addEventListener('click',()=>{pane=null;paint();});
       pop.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{const it=ITEMS.find(x=>x.id===b.dataset.item);
         food=it.id;picked=true;toast(`餵食會用${it.name}`);paint();});
       pop.querySelector('[data-go]')?.addEventListener('click',()=>go('shop'));
       sheet.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{part=b.dataset.part;paint();});
-      sheet.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{const c=b.dataset.color;if(!payColor(c,worn(g),toast))return;el.querySelectorAll('[data-coins]').forEach(x=>x.textContent=readCoins().toLocaleString('en-US'));
+      sheet.querySelector('[data-looks]')?.addEventListener('click',()=>{PAGES.looks.part=part;go('looks');});
+      sheet.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{const c=b.dataset.color;
         if(c===g.colors[0])delete profile.gear[part];else profile.gear[part]=c;saveProfile();paint();});
-      sheet.querySelectorAll('[data-shirt]').forEach(b=>b.onclick=()=>{if(!wearPattern(part,b.dataset.shirt,toast))return;el.querySelectorAll('[data-coins]').forEach(x=>x.textContent=readCoins().toLocaleString('en-US'));paint();});
+      sheet.querySelectorAll('[data-shirt]').forEach(b=>b.onclick=()=>{wearPattern(part,b.dataset.shirt);paint();});
       sheet.querySelectorAll('[data-mane]').forEach(b=>b.onclick=()=>{profile.manes={...profile.manes,[h.id]:b.dataset.mane};saveProfile();paint();});   // this buddy's own
       const look=h.coat+mane+JSON.stringify(profile.gear)+JSON.stringify(profile.patterns||{})+shownLv(h);if(look!==paint.look){paint.look=look;applyLook(h,shownLv(h));const come=!came.has(h.id);came.add(h.id);view?.show(cr.hunger<40?'hungry':cr.hunger>80&&cr.clean>80?'happy':null,come);}   // how it greets you (stable-view ARRIVE)
     }
@@ -736,7 +739,7 @@ const PAGES={
     }
     function paint(){
       const coins=readCoins(),owned=readDecor();el.querySelector('[data-coins]').textContent=coins.toLocaleString('en-US');
-      const tabs=[['food','Food'],['horses','夥伴']];   // MVP (2026-10-10): the care items and the decorations are hidden
+      const tabs=[['food','Food'],['horses','夥伴'],['looks','造型']];   // 造型: its own page (PAGES.looks)   // MVP (2026-10-10): the care items and the decorations are hidden
       const card=(img,name,sub,foot,id,cls='',tag='button')=>`<${tag} class="ui-card shop-card ${cls}" ${tag==='button'?`data-id="${id}"`:''}><span class="art"><img src="${img}" alt=""></span><b>${name}</b><small>${sub}</small>
         <span class="foot">${foot}</span></${tag}>`;
       const gem=`<i class="gem">${icon('gem')}</i>`;
@@ -751,7 +754,7 @@ const PAGES={
           +(tab==='food'?`</div><h2 class="ui-section">賣出收成</h2><div class="shop-sell">${ITEMS.filter(it=>it.sell).map(it=>`<button class="ui-pillrow glass" data-sell="${it.id}" ${bag[it.id]>0?'':'disabled'}><img src="assets/stable/item_${it.id}.webp" alt=""><span><i>${it.name}</i> ×${bag[it.id]||0}</span><b>${bag[it.id]>0?`<i>全部賣掉</i> ${coin}+${bag[it.id]*it.sell}`:'沒有可以賣的'}</b></button>`).join('')}`:'');
       el.querySelector('.ui-tabs').innerHTML=tabs.map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" data-tab="${k}">${l}</button>`).join('');   // outside the scroller: the tabs stay put while the goods scroll (2026-10-05, the user)
       el.querySelector('.shop').innerHTML=`<div class="shop-grid">${list}</div>`;
-      el.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=PAGES.shop.tab=b.dataset.tab;paint();el.querySelector('.shop').scrollTop=0;});
+      el.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.tab==='looks')return go('looks');tab=PAGES.shop.tab=b.dataset.tab;paint();el.querySelector('.shop').scrollTop=0;});
       el.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>{const it=ITEMS.find(x=>x.id===b.dataset.sell),res=sellAll(bag,it.id);if(!res.coins)return;bag=res.items;saveCare({setItem:store.set},care,bag);addCoins(res.coins);toast(`賣掉${it.name}，拿到 ${res.coins} 金幣`);paint();});
       el.querySelectorAll('button.shop-card').forEach(b=>b.onclick=()=>b.dataset.id.startsWith('horse-')?horseSheet(el,horseById(+b.dataset.id.slice(6)),paint):confirm(b.dataset.id));
     }
@@ -783,12 +786,53 @@ const PAGES={
     el.querySelectorAll('[data-unlock]').forEach(b=>b.onclick=()=>horseSheet(el,horseById(+b.dataset.unlock),render));
   },
 
+  looks(){
+    // 造型, the shop's wardrobe (2026-10-13, the user: pick the part, the style, the colour; try it on; one total; bought, it is
+    // in the dorm's and the house's lists). One picture: the rider on a buddy (the row of heads changes the buddy), over the
+    // panel, never under it. The panel is made to grow (the user: 未來只會越來越多款式): a row of parts that slides, under it
+    // cards in a grid that scrolls, each card one colour or one pattern with what it is to the player (worn, owned, a
+    // price). What is tried and not owned is the basket, named item by item over the total; 買下 pays for all of it and puts
+    // it on. Leaving without buying leaves everything as it was.
+    const parts=GEAR;
+    let see=profile.horse,part=PAGES.looks.part&&parts.some(g=>g.mat===PAGES.looks.part)?PAGES.looks.part:parts[0].mat,view=null,alive=true;
+    const trial={gear:{...profile.gear},patterns:{...profile.patterns}},tried=g=>trial.gear[g.mat]??g.colors[0];
+    const el=frame('page-looks ui-live',`<div class="st-bg" aria-hidden="true"></div><div class="view"></div>${header('造型',readCoins())}
+      <div class="looks-heads" role="list"></div><section class="ui-panel deep looks-panel"><div class="looks-parts" role="tablist"></div><div class="looks-grid"></div><div class="looks-pay"></div></section>`),toast=toaster(el),panel=el.querySelector('.looks-panel'),heads=el.querySelector('.looks-heads');
+    leave=()=>{alive=false;view?.dispose();applyLook();};
+    const dress=(come=false)=>{applyLook(horseById(see));PLAYER_LOOK.gear={...trial.gear};PLAYER_LOOK.patterns={...trial.patterns};view?.show(null,come);};
+    const basket=()=>[...Object.entries(trial.gear),...Object.entries(trial.patterns)].filter(([m,v])=>v&&!hasLook(m,v)).map(([m,v])=>({m,v,price:lookPrice(v)}));
+    const changed=()=>JSON.stringify([trial.gear,trial.patterns])!==JSON.stringify([profile.gear,profile.patterns||{}]);
+    const keep=()=>{profile.gear={...trial.gear};profile.patterns={...trial.patterns};saveProfile();};
+    const put=(m,v)=>{const g=GEAR.find(x=>x.mat===m),src=v&&v[0]!=='#'||v===''?trial.patterns:trial.gear;if(!v||v===g.colors[0])delete src[m];else src[m]=v;};   // v: a colour, a pattern id, or '' (no pattern)
+    function paint(){
+      const g=GEAR.find(x=>x.mat===part),list=basket(),total=list.reduce((a,x)=>a+x.price,0),coins=readCoins();
+      const state=(m,v,on)=>on&&hasLook(m,v)?`<small class="on">${icon('check','')}穿著中</small>`:on?`<small class="on">${icon('check','')}試穿 ${lookPrice(v)}</small>`:hasLook(m,v)?'<small class="own">已擁有</small>':`<small class="buy">${coin}${lookPrice(v)}</small>`;
+      el.querySelectorAll('[data-coins]').forEach(x=>x.textContent=coins.toLocaleString('en-US'));
+      heads.innerHTML=mine().map(x=>`<button class="ui-marker ${x.id===see?'is-selected':''}" role="listitem" data-see="${x.id}" aria-label="${x.name}"><img src="${buddyImg(x)}" alt=""></button>`).join('');
+      panel.querySelector('.looks-parts').innerHTML=parts.map(x=>`<button role="tab" aria-selected="${x.mat===part}" data-part="${x.mat}" class="${list.some(b=>b.m===x.mat)?'has-dot':''}">${x.name}</button>`).join('');
+      panel.querySelector('.looks-grid').innerHTML=`<h3>顏色</h3>${g.colors.map((c,i)=>`<button class="looks-card" role="radio" aria-checked="${tried(g)===c}" data-pick="${c}" aria-label="${i?c:'原色'}"><i style="background:${c}"></i>${state(g.mat,c,tried(g)===c)}</button>`).join('')}`
+        +(PATTERNED.includes(part)?`<h3>花紋</h3>${[{id:'',name:'素色'},...SHIRTS].map(x=>{const on=(trial.patterns[part]||'')===x.id;return `<button class="looks-card" role="radio" aria-checked="${on}" data-pick="${x.id}" data-pattern><i ${x.id?`style="background-image:url(assets/rider/thumb_${x.id}.webp)"`:'class="plain"'}></i><b>${x.name}</b>${state(part,x.id,on)}</button>`;}).join('')}`:'');
+      panel.querySelector('.looks-parts [aria-selected=true]')?.scrollIntoView({inline:'center',block:'nearest'});
+      const label=x=>{const pg=GEAR.find(p=>p.mat===x.m);return x.v[0]==='#'?`<i style="background:${x.v}"></i>${pg.name}`:`<i style="background-image:url(assets/rider/thumb_${x.v}.webp)"></i>${pg.name}·${SHIRTS.find(s=>s.id===x.v).name}`;};
+      panel.querySelector('.looks-pay').innerHTML=list.length?`<div class="looks-basket">${list.map(x=>`<button data-drop="${x.m}" data-v="${x.v}" aria-label="拿掉">${label(x)}<b>${x.price}</b>${icon('close','')}</button>`).join('')}</div><button class="ui-btn primary" data-buy ${coins<total?'disabled':''}>${coins<total?'金幣不夠':'買下'} ${coin}${total.toLocaleString('en-US')}</button>`
+        :changed()?`<span>這些你都有了</span><button class="ui-btn primary" data-wear>穿上</button>`:`<span>點一個試穿，不用錢</span>`;
+      heads.querySelectorAll('[data-see]').forEach(b=>b.onclick=()=>{if(view?.busy||+b.dataset.see===see)return;see=+b.dataset.see;paint();dress(true);});
+      panel.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{part=PAGES.looks.part=b.dataset.part;paint();panel.querySelector('.looks-grid').scrollTop=0;});
+      panel.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{put(part,b.dataset.pick);paint();dress();});
+      panel.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{const m=b.dataset.drop,v=b.dataset.v,was=v[0]==='#'?profile.gear[m]:profile.patterns?.[m];put(m,was||(v[0]==='#'?GEAR.find(x=>x.mat===m).colors[0]:''));paint();dress();});   // back to what is worn
+      panel.querySelector('[data-wear]')?.addEventListener('click',()=>{keep();toast('穿上了');paint();});
+      panel.querySelector('[data-buy]')?.addEventListener('click',()=>{if(!spendCoins(total)){toast('金幣不夠，去比賽賺一點');return;}
+        profile.wardrobe=[...new Set([...(profile.wardrobe||[]),...list.map(x=>lookKey(x.m,x.v))])];keep();toast(`買下 ${list.length} 件，已經穿上`);paint();});
+    }
+    paint();applyLook(horseById(see));PLAYER_LOOK.gear={...trial.gear};PLAYER_LOOK.patterns={...trial.patterns};
+    mountStableView(el.querySelector('.view'),{rider:true}).then(v=>{if(!alive){v.dispose();return;}view=v;dress(true);}).catch(e=>console.error(e));
+  },
   house(){
     // The rider's house (2026-10-12, the user: 「騎士的家，按你的建議」; mock-up archive/mockups/rider-home.png): the
     // room's picture, her name on the plank, the stars on the cork board, her standing on the rug, and three rows:
     // her clothes' colours (GEAR's Rider_ parts, open from PERKS.rider.stage), the wall of results, Settings.
     const solo=readSolo(),bestOf=c=>{const t=Object.entries(solo).filter(([k])=>k.split(':')[0]===c).map(([,v])=>v/tempoOf(c));return t.length?Math.min(...t):0;};
-    const done=LEVELS.filter(l=>prog.stars[l.city]>0).length,parts=GEAR.filter(g=>g.mat.startsWith('Rider_')),open=riderColors(prog);
+    const done=LEVELS.filter(l=>prog.stars[l.city]>0).length,parts=GEAR.filter(g=>g.mat.startsWith('Rider_')),open=true;
     const el=frame('page-house',`<div class="room"><div class="plank"><b>${esc(profile.name)}</b></div>
       <div class="board"><b>★ ${totalStars(prog)} / ${LEVELS.length*3}</b><small>過了 ${done} 關</small></div>${trophy(prog)?'<img class="trophy" src="assets/ui/award_trophy.webp?v=5" alt="冠軍獎盃">':''}<div class="view"></div></div>
       <header class="ui-header"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button></header>
@@ -796,18 +840,19 @@ const PAGES={
         <li><button data-pane="wall"><b>成績牆</b><small>十關的星星和最快時間 ›</small></button></li><li><button data-go="settings"><b>設定</b><small>›</small></button></li></ul>
       <section class="ui-panel deep pane" hidden></section>${loadingCard('騎士準備中…')}`);
     let view=null,gone=false,part=parts[0].mat;leave=()=>{gone=true;view?.dispose();};
-    mountRiderView(el.querySelector('.view'),profile.gear,riderColors(prog)?profile.patterns?.Rider_Shirt:null).then(v=>{el.querySelector('.stage-loading')?.remove();if(gone)v.dispose();else view=v;}).catch(()=>{el.querySelector('.stage-loading')?.remove();});
+    mountRiderView(el.querySelector('.view'),profile.gear,profile.patterns?.Rider_Shirt||null).then(v=>{el.querySelector('.stage-loading')?.remove();if(gone)v.dispose();else view=v;}).catch(()=>{el.querySelector('.stage-loading')?.remove();});
     const pane=el.querySelector('.pane'),rows=el.querySelector('.rows'),show=k=>{pane.hidden=!k;rows.hidden=!!k;if(!k)return;
       const g=parts.find(x=>x.mat===part),worn=x=>profile.gear[x.mat]??x.colors[0];
       pane.innerHTML=`<header><b>${k==='gear'?'騎士服裝':'成績牆'}</b><button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>`+(k==='gear'
         ?`<div class="parts" role="tablist" style="grid-template-columns:repeat(${parts.length},1fr)">${parts.map(x=>`<button role="tab" aria-selected="${x.mat===part}" data-part="${x.mat}"><i style="background:${worn(x)}"></i>${x.name}</button>`).join('')}</div>
-          <div class="swatches" role="radiogroup" aria-label="${g.name}顏色">${g.colors.map((c,i)=>`<button role="radio" aria-label="${i?c:'原色'}" aria-checked="${worn(g)===c}" data-color="${c}" style="background:${c}" ${i&&!open?'disabled':''}></button>`).join('')}</div>${patternRow(part,!open)}<p class="look-note ui-label">換一次顏色或花紋 ${COLOR_COST} 金幣</p>${open?'':`<p class="look-note ui-label">${icon('lock')}破第 ${PERKS.rider.stage} 關開放</p>`}`
+          <div class="swatches" role="radiogroup" aria-label="${g.name}顏色">${g.colors.filter(c=>hasLook(g.mat,c)).map((c,i)=>`<button role="radio" aria-label="${i?c:'原色'}" aria-checked="${worn(g)===c}" data-color="${c}" style="background:${c}"></button>`).join('')}</div>${patternRow(part)}<button class="ui-btn block looks-more" data-looks="rider">去商店買更多${icon('arrow','')}</button>${open?'':`<p class="look-note ui-label">${icon('lock')}破第 ${PERKS.rider.stage} 關開放</p>`}`
         :`<ol class="wall">${LEVELS.map((l,i)=>{const s=prog.stars[l.city]||0,t=bestOf(l.city);return `<li><span>${i+1}</span><i>${'★'.repeat(s)}<s>${'★'.repeat(3-s)}</s></i><em>${t?t.toFixed(1)+' 秒':'還沒跑'}</em></li>`;}).join('')}</ol>`);
       pane.querySelector('[data-close]').onclick=()=>show(null);
       pane.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{part=b.dataset.part;show('gear');});
-      pane.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{const c=b.dataset.color;if(!payColor(c,worn(g),toaster(el)))return;if(c===g.colors[0])delete profile.gear[part];else profile.gear[part]=c;saveProfile();applyLook();view?.paint(profile.gear);show('gear');});
+      pane.querySelector('[data-looks]')?.addEventListener('click',()=>{PAGES.looks.part=part;go('looks');});
+      pane.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{const c=b.dataset.color;if(c===g.colors[0])delete profile.gear[part];else profile.gear[part]=c;saveProfile();applyLook();view?.paint(profile.gear);show('gear');});
       // the shirt's pattern (approved-assets SHIRTS): the colour worn tints it; a change costs what a colour does
-      pane.querySelectorAll('[data-shirt]').forEach(b=>b.onclick=()=>{if(!wearPattern(part,b.dataset.shirt,toaster(el)))return;view?.paint(profile.gear,profile.patterns.Rider_Shirt||null);show('gear');});};
+      pane.querySelectorAll('[data-shirt]').forEach(b=>b.onclick=()=>{wearPattern(part,b.dataset.shirt);view?.paint(profile.gear,profile.patterns.Rider_Shirt||null);show('gear');});};
     el.querySelectorAll('[data-pane]').forEach(b=>b.onclick=()=>show(b.dataset.pane));
   },
   settings(){
@@ -876,8 +921,8 @@ const LOGIN='hoofbeat.login.v1',LOGIN_GIFT={seed:3,bait:3};let loginGift=false;
 export function startHome(){
   if(store.get(LOGIN)!==today()){addLog({kind:'open',stars:totalStars(prog),stage:levelOf(currentLevel(prog).city)+1,buddies:prog.owned.length});   // one row a day: day 1 and on is someone who came back (playtest.js)
     store.set(LOGIN,today());for(const [k,n] of Object.entries(LOGIN_GIFT))bag={...bag,[k]:(bag[k]||0)+n};saveCare({setItem:store.set},care,bag);loginGift=true;}
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r658',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r658');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r670',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r670');   // a frame counter in the corner (fps.js)
   // Opening the game always lands on the race menu (the home page) once the cover has gone (2026-10-12, the user:
   // 「封面圖跑完應該進比賽選單」): it opened on whatever page the address named, the ranch if that was where it was closed.
   // ?debug keeps the address's page (a dev link straight to a page).
