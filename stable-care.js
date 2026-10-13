@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MVP} from './playable/slice-config.mjs?v=r641';
+import {MVP} from './playable/slice-config.mjs?v=r643';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -54,7 +54,7 @@ export function saveCare(storage,care,items){
 // buddyStats); each level over 1 makes it LV_SPEED faster (raceForm). xp: races, and a little from every feed.
 // 2026-10-12 (the user: 三個等級就可以，等級區間可以寬一點): three levels, the buddy's three ages (approved-assets GROW). LV_XP: the xp each
 // starts at, about 8 solo runs to the second and 16 more to the third. lvPart: how far through its level (0-1), lvLeft: xp to go.
-export const LV_SPEED=.04,LV_XP=Object.freeze([0,100,300]),LV_TOP=LV_XP.length,level=r=>MVP.levels?LV_XP.findLastIndex(x=>(r.xp||0)>=x)+1:LV_TOP;
+export const LV_SPEED=.08,LV_XP=Object.freeze([0,100,300]),LV_TOP=LV_XP.length,level=r=>MVP.levels?LV_XP.findLastIndex(x=>(r.xp||0)>=x)+1:LV_TOP;
 export const lvLeft=r=>level(r)>=LV_TOP?0:LV_XP[level(r)]-r.xp,lvPart=r=>{const l=level(r);return l>=LV_TOP?1:(r.xp-LV_XP[l-1])/(LV_XP[l]-LV_XP[l-1]);};   // MVP: every buddy at full strength (xp still counts, unseen)   // the level sets how much of its numbers a buddy uses (slice-config buddyStats)
 export const recover=r=>r;   // nothing comes back by itself any more (it was the stamina's rest); kept for its callers
 // Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: the rhythm still decides).
@@ -67,7 +67,7 @@ const dip=(v,to)=>v>=FORM.low?1:to+(1-to)*v/FORM.low;
 // to run): no numbers of the game's, only how many feeds or brushings put it right. `clean` is shown as 心情 (mood): brushed up,
 // worn by racing, low it charges slower. icon: the same one as its bar in the dorm (ui.js icon).
 export const fitness=r=>{const n=k=>r[k]>=FORM.low?0:Math.ceil((FORM.low-r[k])/30);return {feed:n('hunger'),brush:n('clean')};};
-export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return f.feed||f.brush?[...(f.feed?[{icon:'fork',text:`${who}餓了，會跑慢。餵 ${f.feed} 次`}]:[]),...(f.brush?[{icon:'smile',text:`${who}心情差，集氣慢。刷 ${f.brush} 次`}]:[])]:[{icon:'star',ok:true,text:`${who}狀態好`}];};
+export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return f.feed||f.brush?[...(f.feed?[{icon:'fork',text:`${who}餓了，跑得慢，不能加碼。餵 ${f.feed} 次`}]:[]),...(f.brush?[{icon:'smile',text:`${who}心情差，獎金打八折。刷 ${f.brush} 次`}]:[])]:[{icon:'star',ok:true,text:`${who}狀態好`}];};
 export function raceForm(r,base){
   const speed=dip(r.hunger,FORM.speed),combo=dip(r.clean,FORM.combo),lv=level(r),grow=1+(lv-1)*LV_SPEED;
   const config={baseSpeed:+(base.baseSpeed*speed*grow).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)

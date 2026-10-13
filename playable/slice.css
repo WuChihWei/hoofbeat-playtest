@@ -768,9 +768,9 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .res-money+.res-rank{margin-top:var(--ui-gap)}
 
 /* The results in two pages when there is a list (slice-app): 1 what the run made, 2 who has how much and what next. */
-#slice-result.step-1 :is(.res-money,.res-acts,.res-rank){display:none}
-#slice-result.step-2 :is(.res-ticket,.res-mid,.res-next,.res-stars){display:none}
-#slice-result.step-2 .res-money{margin-top:auto}
-.res-next{margin-top:auto}
+#slice-result.has-money .res-mid{flex:none}#slice-result.has-money .res-money{margin-top:auto}
 .res-ticket{flex:none;overflow:visible}.res-ticket .parts{flex-direction:column;gap:0}
 #slice-purse[hidden]{display:none}
+#slice-result.has-money .res-ticket .parts{flex-direction:row;gap:0 calc(10 * var(--u))}
+#slice-result.has-money .res-ticket>div{flex:1}
+@media (max-height:740px){#slice-result.has-money .res-rank li:not(.res-age){display:none}#slice-result.has-money .res-ticket .art{width:calc(52 * var(--u))}}   /* a short screen: the list, the buddy's row and the buttons all fit */

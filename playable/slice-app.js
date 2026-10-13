@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r641';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r641';
-import {WEATHER} from './progress.mjs?v=r641';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r641';
-import {compositionRank} from '../race-composition.mjs?v=r641';
-import {ChaseRenderer} from '../race-scene.js?v=r641';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r641';
-import {cityModels} from '../approved-environment.js?v=r641';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r643';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r643';
+import {WEATHER} from './progress.mjs?v=r643';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r643';
+import {compositionRank} from '../race-composition.mjs?v=r643';
+import {ChaseRenderer} from '../race-scene.js?v=r643';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r643';
+import {cityModels} from '../approved-environment.js?v=r643';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r641';
-import {RaceAudio} from '../audio.js?v=r641';
-import {addLog,raceEntry} from '../playtest.js?v=r641';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r641';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r643';
+import {RaceAudio} from '../audio.js?v=r643';
+import {addLog,raceEntry} from '../playtest.js?v=r643';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r643';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -44,13 +44,13 @@ const APPLE='<svg class="apple-ico" viewBox="0 0 24 24" aria-hidden="true"><path
 const BUZZ={tap:['impact',{style:'LIGHT'},12],hit:['impact',{style:'MEDIUM'},22],strong:['impact',{style:'HEAVY'},[25,30,25]],good:['notification',{type:'SUCCESS'},[10,20,10]],bad:['notification',{type:'ERROR'},30]};
 const buzz=kind=>{const [method,options,pattern]=BUZZ[kind],native=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.nativePromise;
   if(native)native('Haptics',method,options).catch(()=>{});else navigator.vibrate?.(pattern);};
-export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,arrows=null,perks=null,rivalCount=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
+export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,arrows=null,perks=null,rivalCount=0,rivalGrow=1,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
   const TEMPO=level?.tempo??SLICE_CONFIG.tempo,BALL=/[?&]ball=([\d.,]+)/.exec(location.search)?.[1].split(',').map(Number)||[1],   // 2026-10-07 (the user: 「就改成這遊戲方法」): the ball is the game; ?ball=1,fill,fall,pop (real seconds) tunes it
   locks={...level?.locks};
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r641',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r643',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -124,15 +124,15 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // button that doubles the pot for three times the fee (a red stamp on the ticket). The fee is paid as the run starts (newRun); without the coins the
   // run is free and has no pot. staked: this run's {fee, purse}, or null. In the race the place card says what the place
   // is worth now (#slice-purse).
-  let doubled=false,staked=null;const N=v=>Number(v).toLocaleString('en-US'),potNow=()=>stake?stake.purse*(doubled?stake.double.purse:1):0,feeNow=()=>stake?stake.fee*(doubled?stake.double.fee:1):0;
-  function paintStake(){if(!stake)return;const t=$('slice-ticket'),of=rivals.length+1,pot=potNow();if(!t)return;if(doubled&&!stake.can(true))doubled=false;
+  let doubled=false,staked=null;const N=v=>Number(v).toLocaleString('en-US'),has=k=>[].concat(perks?.[0]||[]).includes(k),match=()=>SKY==='rain'&&has('water')||SKY==='snow'&&has('snow'),potNow=()=>stake?Math.round(stake.purse*(doubled?stake.double.purse:1)*(match()?stake.pot.match:1)*(stake.moody()?stake.pot.moody:1)):0,feeNow=()=>stake?stake.fee*(doubled?stake.double.fee:1):0;
+  function paintStake(){if(!stake)return;const t=$('slice-ticket'),of=rivals.length+1,pot=potNow();if(!t)return;if(doubled&&(!stake.can(true)||stake.hungry()))doubled=false;
     t.querySelector('[data-purse]').textContent=N(potNow());document.querySelector('.cover-split').innerHTML=[1,2,3].filter(k=>stake.won(pot,k,of)>0).map(k=>`<span><img src="assets/ui/money/medal_${['gold','red','blue'][k-1]}.webp?v=4" alt="第 ${k} 名">${coin}${N(stake.won(pot,k,of))}</span>`).join('');
     t.classList.toggle('doubled',doubled);t.querySelector('.stamp').hidden=!doubled;document.querySelector('.cover-stake [data-fee]').textContent=N(feeNow());
-    const d=$('slice-double');d.setAttribute('aria-pressed',String(doubled));d.classList.toggle('short',!stake.can(true));const b=$('slice-start');if(!b.disabled)b.innerHTML=startLabel();}
+    const d=$('slice-double');d.setAttribute('aria-pressed',String(doubled));d.classList.toggle('short',!stake.can(true)||stake.hungry());const b=$('slice-start');if(!b.disabled)b.innerHTML=startLabel();}
   // One reason to double, the strongest there is (2026-10-13, the user: three, the most persuasive): the weather meets what this
   // buddy is good at · it won here last time · it is fed and happy. None: nothing is said.
-  function why(){const el=document.querySelector('.cover-why');if(!el||!stake)return;const has=k=>[].concat(perks?.[0]||[]).includes(k),name=team[0].name;
-    el.textContent=SKY==='rain'&&has('water')?`雨天，${name} 不怕水`:SKY==='snow'&&has('snow')?`雪天，${name} 不怕雪`:stake.lastWon()?'上次這關你第 1 名':stake.fit()?`${name} 狀態好`:'';el.hidden=!el.textContent;}
+  function why(){const el=document.querySelector('.cover-why');if(!el||!stake)return;const name=team[0].name;
+    el.textContent=SKY==='rain'&&has('water')?`雨天，${name} 不怕水，獎金 ×${stake.pot.match}`:SKY==='snow'&&has('snow')?`雪天，${name} 不怕雪，獎金 ×${stake.pot.match}`:stake.lastWon()?'上次這關你第 1 名':stake.fit()?`${name} 狀態好`:'';el.hidden=!el.textContent;}
   const startLabel=()=>!stake||stake.can(doubled)?'起跑':'免費跑（金幣不夠，沒有獎金）';   // the fee is said once, on its own line above (2026-10-13, the user)
   // An overtake is an event (2026-10-13, the user: 超車做成事件): the one passed is named big in the middle of the view, the
   // place under it; overtakes within PASS_CHAIN s of the last count up (連超 ×N). Being passed: the same in red, the count reset.
@@ -250,7 +250,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       road.apples=at.sort((a,b)=>a-b).map((distance,i)=>({id:`apple-${i}`,distance,lane:Math.floor(Math.random()*3)-1}));}
     return road;};
   let road=null;   // laid once for this visit, like the hurdles
-  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:ease?.95:1,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,ballBehind:{rank:3,wider:.3},...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?(road??=levelHazards(level.hazards,course)):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null,...(road?.apples?{apples:road.apples}:null)},team,rivals,chart:level?.plain?EASY_CHART:null,
+  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:(ease?.95:1)*rivalGrow,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,ballBehind:{rank:3,wider:.3},...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?(road??=levelHazards(level.hazards,course)):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null,...(road?.apples?{apples:road.apples}:null)},team,rivals,chart:level?.plain?EASY_CHART:null,
     course});
     return g;};
   // The scene is shown complete or not at all (2026-10-06, the user: the race was seen being put together: its sky, ground
@@ -489,7 +489,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       // shows, and the rows slide to their new places.
       (bank.money?(()=>{const rows=bank.money.map(x=>({...x,was:x.coins-(x.made||0)})).sort((a,b)=>b.was-a.was);
         return `<ol class="res-money">${rows.map((x,i)=>`<li class="${x.you?'you':''}" data-before="${x.was}" data-after="${x.coins}"><b class="rk">${i+1}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span>${x.made?`<i class="${x.made>0?'up':'down'}">${x.made>0?'+':'−'}${n(Math.abs(x.made))}</i>`:''}<b class="amt"><span>${n(x.was)}</span>${coin}</b></li>`).join('')}</ol>`;})():'')+
-      `<ol class="res-rank">${MVP.levels&&bank.age?`<li class="ui-pillrow glass">${icon('horse')}<span>${esc(team[0].name)} · ${bank.age}</span><b>${bank.nextAge?`再 ${bank.runs} 場長成${bank.nextAge}`:'長到最大了'}</b></li>`:''}${
+      `<ol class="res-rank">${MVP.levels&&bank.age?`<li class="ui-pillrow glass res-age">${icon('horse')}<span>${esc(team[0].name)} · ${bank.age}</span><b>${bank.nextAge?`再 ${bank.runs} 場長成${bank.nextAge}`:'長到最大了'}</b></li>`:''}${
       bank.starHint?`<li class="ui-pillrow glass res-gap" style="--p:${bank.starGap??0}">${icon('star')}<span>下一顆星</span><b>${bank.starHint}</b></li>`:''}${
       bank.hot>1?`<li class="ui-pillrow glass">${icon('bolt')}<span>連續進步 ×${bank.hot}</span><b>+${bank.hotCoins}</b></li>`:''}${
       bank.tip?`<li class="ui-pillrow glass res-tip">${icon('info')}<span>${esc(bank.tip)}</span></li>`:''}</ol>`;
@@ -504,16 +504,15 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
         <span class="parts">${parts.map(([k,v])=>`<i>${esc(k)} ${v<0?'−':'+'}${n(Math.abs(v))}</i>`).join('')}</span></div>${r.stake?.won?'<img class="stamp" src="assets/ui/money/stamp_gold.webp" alt="">':''}</div>
       <div class="res-mid">${award?`<img class="res-award" src="assets/ui/award_${award}.webp?v=5" alt="">`:''}
         <p class="res-newsline">${r.comeback?`<span class="ui-tag yellow">逆轉勝！+${COMEBACK}</span>`:''}${(bank.news||[]).map(x=>`<span class="ui-tag yellow">${esc(x)}</span>`).join('')}${gems?`<span class="ui-tag"><i class="gem">${icon('gem')}</i>+${gems}</span>`:''}</p></div>
-      ${board}${bank.money?`<button class="ui-btn primary block res-next">看排名${icon('arrow','')}</button>`:''}<div class="res-acts${bank.next?' three':''}"><button class="ui-btn primary main">${bank.next?`${esc(bank.next.label)}${icon('arrow','')}`:`${icon('again','')}${again}`}</button>
+      ${board}<div class="res-acts${bank.next?' three':''}"><button class="ui-btn primary main">${bank.next?`${esc(bank.next.label)}${icon('arrow','')}`:`${icon('again','')}${again}`}</button>
         ${bank.next?`<button class="ui-btn" data-to="again">${again}</button><button class="ui-icon-btn" data-to="home" aria-label="首頁">${icon('home')}</button>`:`<button class="ui-btn" data-to="home">${icon('home')}首頁</button>`}</div>`;
     const go=f=>()=>{sound.cue('click');f();},to={again:newRun,home:toHome};
-    // Two pages when there is a list of who has how much (2026-10-13, the user: the parts lay over each other; one after the other):
-    // first what the run made (the place, the stars, the money, the news), then, on 看排名, the list and what to do next.
-    el.classList.toggle('step-1',!!bank.money);el.classList.remove('step-2');
-    if(bank.money)el.querySelector('.res-next').onclick=()=>{sound.cue('click');el.classList.replace('step-1','step-2');moneyMove(el,500);};
+    // One page again (2026-10-13, the user: 照你的全改; it was two for an afternoon): the money bar, then the list of who has
+    // how much under it; with the list the rosette and the stars' row give way (has-money, slice.css).
+    el.classList.toggle('has-money',!!bank.money);
     el.querySelector('.main').onclick=go(bank.next?()=>exit({city:bank.next.city}):newRun);el.querySelectorAll('[data-to]').forEach(b=>b.onclick=go(to[b.dataset.to]));
     shell.classList.add('is-result');el.hidden=false;el.querySelector('.main').focus();
-    if(bank.prizes?.length)openChest(el,bank.prizes,()=>reveal(el,gain,total,grade,bank));else reveal(el,gain,total,grade,bank);
+    const play=()=>{reveal(el,gain,total,grade,bank);moneyMove(el);};if(bank.prizes?.length)openChest(el,bank.prizes,play);else play();
   }
   // What this run gave (bank.prizes [{img, text, what}]) comes out of a chest before the results play, one card at a time
   // (2026-10-13, the user: 讓使用者一個一個按，或是直接 skip 所有卡片): the chest hops in, turns and opens on the first card; a tap on
@@ -589,11 +588,11 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   async function load(){
     startHow();
     $('slice-back').onclick=toSetup;
-    if(stake){$('slice-double').onclick=()=>{if(!doubled&&!stake.can(true)){const w=document.querySelector('.cover-why');w.textContent='金幣不夠加碼';w.hidden=false;buzz('bad');return;}doubled=!doubled;sound.cue('click');buzz(doubled?'strong':'tap');const st=$('slice-ticket').querySelector('.stamp');paintStake();if(doubled&&!still)st.animate([{scale:2.4,opacity:0,rotate:'-30deg'},{scale:.9,opacity:1,rotate:'-12deg',offset:.6},{scale:1,rotate:'-12deg'}],{duration:320,easing:'ease-in'});};paintStake();}
+    if(stake){$('slice-double').onclick=()=>{if(!doubled&&(stake.hungry()||!stake.can(true))){const w=document.querySelector('.cover-why');w.textContent=stake.hungry()?`${team[0].name} 餓了，不能加碼押注`:'金幣不夠加碼';w.hidden=false;buzz('bad');return;}doubled=!doubled;sound.cue('click');buzz(doubled?'strong':'tap');const st=$('slice-ticket').querySelector('.stamp');paintStake();if(doubled&&!still)st.animate([{scale:2.4,opacity:0,rotate:'-30deg'},{scale:.9,opacity:1,rotate:'-12deg',offset:.6},{scale:1,rotate:'-12deg'}],{duration:320,easing:'ease-in'});};paintStake();}
     $('slice-help').onclick=e=>{const w=cover.querySelector('.how-wrap');w.hidden=!w.hidden;e.currentTarget.setAttribute('aria-expanded',String(!w.hidden));};
     const form=getForm?.();if(form||level?.weather){const p=cover.querySelector('.slice-form');p.hidden=false;const sky={sun:null,rain:{icon:'rain',text:'雨天：水窪多'},snow:{icon:'cloud',text:'雪天：有雪堆'}}[SKY];
       p.innerHTML=[...(level?.weather&&sky?[sky]:[]),...(form?.notes||[])].map(n=>typeof n==='string'?`<span>${esc(n)}</span>`:`<span class="fit ${n.ok?'ok':'bad'} ${n.icon}">${icon(n.icon)}${esc(n.text)}</span>`).join('');why();
-      if(level?.weather){const i=new Image();i.src=`./assets/ui/weather_${SKY}.webp`;i.alt='';i.style.cssText='height:1.6em;vertical-align:-.45em;margin-right:.3em';p.prepend(i);}}
+    }
     // While it waits the button counts the model files in (2026-10-05: a player on the live site sat on 準備中… with no
     // sign of anything happening); nothing new for 25 s (a stalled download never fails by itself) → the button reloads
     // the page (what did arrive is in the browser's cache).
