@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r688';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r691';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -48,7 +48,7 @@ export class SliceGame {
     this.notes=[];   // the rhythm game's notes: none (race-scene and audio.js still read the list)
     this.coins=coins.map(c=>({...c,collected:false}));this.coinCount=0;
     this.apples=(c.apples??(c.solo?sliceApples(course):[])).map(a=>({...a,collected:false}));   // c.apples: a stage whose road is new every run lays its own (slice-app levelHazards)
-   this.appleCount=0;this.rushes=[];   // rushes: the apples' speed-ups {t, end}
+   this.appleCount=0;this.rushes=[];this.shield=0;   // rushes: the apples' speed-ups {t, end}
     // Hazards (2026-10-11, the user: water instead of mud, a dropping instead of a bad apple): config.hazards {puddles:
     // [{distance, lane, length m}], poops: [{distance, lane}]}. A puddle slows whoever steps in it (puddleSlow) while
     // it is in and for wetTime after; a dropping is a short stumble (slip) for whoever treads on it, nothing else lost. A jump clears
@@ -70,7 +70,7 @@ export class SliceGame {
     this.rivals=rivals.map((r,i)=>{if(gate)r={...r,lane:STALLS[i],start:0};const horses=bestOrder(r,course),forms=horses.map(h=>({...c,...racing(buddyStats(RIVAL_BUDDY[h.type],RIVAL_LEVEL[tier])),...(r.pace?{baseSpeed:r.pace}:null)}));   // pace: the practice coach's own slow speed (slice-app PRACTICE_RIVALS)
       return {...r,ageOff:(RIVAL_AGES[rivals.length]||RIVAL_AGES_FIELD)[i]||0,horses,forms,form:forms[0],team:[0,1,2],leg:0,stall:r.lane%1!==0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
         boosts:[],jumps:[],stumbles:[],jumped:new Set(),finishTime:null,energy:this.config.ball?this.config.boostCost:0,pool:forms[0].stamina,stamina:forms[0].stamina,restAt:0,skill:r.skill??RIVAL_SKILL[tier]+(r.edge??0),
-        rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity,drive:0,driveSpeed:0,rushes:[]};});
+        rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity,drive:0,driveSpeed:0,rushes:[],shield:0};});
     // Adapter fields consumed by the existing renderer.
     this.slice=true;this.city=0;this.weather='sun';
   }
@@ -105,12 +105,12 @@ export class SliceGame {
   set skill(n){this.energy=n*this.config.boostCost;}
   skillWait(){return (this.config.skillTime||0)*(this.has('quick')?.6:1);}
   slowed(o,t=this.time){const w=this.wet(o,t);if(w&&!(o===this&&this.has(w.snow?'snow':'water')))o.wetUntil=t+this.config.wetTime*this.config.tempo;return t<(o.wetUntil??-9);}
-  wet(o,t=this.time){const c=this.config,me=o===this;if(me&&this.airborne(t))return null;
+  wet(o,t=this.time){const c=this.config,me=o===this;if(me&&this.airborne(t)||this.shielded(t,o))return null;
     return this.puddles.find((p,k)=>o.distance>=p.distance&&o.distance<=p.distance+p.length&&Math.abs(o.laneValue-p.lane)<c.hazardReach&&(me||this.caught(o,k)))??null;}
   // A dropping crossed between `from` and o.distance: a slip. The player's is said (the 'poop' event).
   hazardStep(o,from,lane,t){const c=this.config,me=o===this;
     this.poops.forEach((p,k)=>{if(p.distance<=from||p.distance>o.distance||Math.abs(lane-p.lane)>=c.hazardReach)return;
-      if(me?this.airborne(t):!this.caught(o,k+50))return;
+      if(this.shielded(t,o)||(me?this.airborne(t):!this.caught(o,k+50)))return;
       if(me&&this.has('clean')){p.hit=true;this.emit('poop',{id:p.id,dry:true});return;}
       p.hit=true;o.stumbles.push({t,k:c.slip});if(me)this.emit('poop',{id:p.id});});
     if(me){const p=this.wet(this,t),w=p?.id??null;if(w&&w!==this.wetIn)this.emit('puddle',{id:w,snow:!!p.snow,dry:this.has(p.snow?'snow':'water')});this.wetIn=w;}}
@@ -155,7 +155,7 @@ export class SliceGame {
       if(c.ball)r.energy-=c.boostCost;r.ram={t:this.time,side:r.targetLane>this.targetLane?1:0};r.grudge=0;this.emit('ram-start',{id:r.id,side:r.ram.side});return;}
     const u=this.time-r.ram.t,side=r.ram.side,end=(why,data)=>{r.ram=null;this.ramNext=this.time+R.gap*(.7+.6*hash(this.time,r.phase+3));this.emit(why,{id:r.id,side,...data});};
     if(this.staggering(this.time,r))return end('ram-broken');   // knocked first
-    const there=beside&&apart===1&&!this.boostActive();
+    const there=beside&&apart===1&&!this.boostActive()&&!this.shielded();
     if(!there&&u<R.react)return end('ram-off');                       // not committed yet: it lets it go
     if(u<R.time)return;
     if(!there){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;return end('ram-miss');}   // it threw itself at nothing
@@ -210,6 +210,11 @@ export class SliceGame {
   boostActive(t=this.time){return this.boosts.some(b=>t>=b.t&&t<b.end-1e-9);}
   boostStrength(t=this.time){return strength(this.boosts,t,this.config);}
   // An apple's speed-up, eased like a sprint; carried: a sprint or an apple has the horse; rush: how hard (the look).
+  // An apple (2026-10-13, the user: 蘋果變成無敵狀態，不用跳欄不怕水不怕被撞): for shieldTime (4 wall seconds) the player
+  // runs through hurdles, puddles and droppings and a rival's ram bounces off (as off a sprint). No speed from it; a ball
+  // held too long still pops. A rival's apple is the same (the user: 所有規則是對手和玩家一樣): it trips on nothing, and the
+  // player's bump or kick is spent on it for nothing.
+  shielded(t=this.time,o=this){return t<(o.shield||0);}
   appleStrength(t=this.time){return strength(this.rushes,t,this.config);}
   carried(t=this.time){return this.boostActive(t)||this.rushes.some(b=>t>=b.t&&t<b.end-1e-9);}
   rush(t=this.time){return Math.max(this.boostStrength(t),this.appleStrength(t));}
@@ -274,7 +279,7 @@ export class SliceGame {
     return this.emit('skill-start',{kind:t.kind,side:t.side??null,id:t.r.id});}
   skillLand(){const t=this.swing,r=t.r,c=this.config;this.swing=null;
     const there=!this.staggering()&&r.finishTime===null&&(t.kind==='kick'?this.behind()===r:Math.abs(r.distance-this.distance)<c.hitReach*1.6&&Math.abs(Math.abs(r.laneValue-this.laneValue)-1)<c.laneOverlap&&(r.laneValue>this.laneValue)===!!t.side);
-    if(!there)return this.emit('skill-miss',{kind:t.kind,side:t.side??null,id:r.id});
+    if(!there||this.shielded(this.time,r))return this.emit('skill-miss',{kind:t.kind,side:t.side??null,id:r.id,shielded:there});
     r.stumbles.push({t:this.time,k:this.hitK(),hit:true,side:t.kind==='kick'?0:r.laneValue>this.laneValue?1:-1});r.grudge=this.time+c.stumbleTime*this.hitK()+2*c.tempo;   // side: the way it is knocked (race-scene tips its rider that way) · grudge: until 2 s after it is on its feet again (ramStep: config.ram.back)
     r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;
     return this.emit('skill',{kind:t.kind,side:t.side??null,id:r.id,pushed:false});}   // it staggers in its own lane (2026-10-11, the user: the one hit does not change lane)
@@ -309,7 +314,7 @@ export class SliceGame {
     const reached=c=>{const ax=fromDistance-c.distance,ay=(fromLane-c.lane)*this.config.laneSpacing,u=clamp(-(ax*dx+ay*dy)/(dx*dx+dy*dy||1),0,1);
       return Math.hypot(ax+u*dx,ay+u*dy)<=this.config.coinRadius;};
     for(const c of this.coins)if(!c.collected&&reached(c)){c.collected=true;this.coinCount++;this.emit('coin',{id:c.id});}
-    for(const a of this.apples)if(!a.collected&&reached(a)){a.collected=true;this.appleCount++;if(this.config.ball&&!this.config.locks?.sprint){const had=this.segments();this.energy=Math.min(this.cap(),this.energy+this.config.boostCost);if(this.segments()>had)this.emit('charged',{segments:this.segments()});}else this.rushes.push({t:this.time,end:this.time+this.config.appleTime});this.emit('apple',{id:a.id});}
+    for(const a of this.apples)if(!a.collected&&reached(a)){a.collected=true;this.appleCount++;if(this.config.ball)this.shield=this.time+(this.config.shieldTime??4*this.config.tempo);else this.rushes.push({t:this.time,end:this.time+this.config.appleTime});this.emit('apple',{id:a.id});}
   }
   // A rival runs by the player's sums: its buddy's base speed + the rhythm drive its hits build (let go after
   // rhythmGrace without one) + its sprint, × its aptitude for the ground, × the dip of a knocked hurdle.
@@ -367,8 +372,9 @@ export class SliceGame {
         for(const [k,h] of this.hurdles.entries())if(!r.jumped.has(h)&&(h.distance-r.distance)/r.speed<=c.jumpLead&&h.distance>b){r.jumped.add(h);r.jumps.push({t:this.time});r.hop=this.time;
           if(hash(k+.25,r.phase+1)<(1-r.skill)/3)r.trip=h;}
         this.hazardStep(r,b,r.laneValue,this.time);
+        if(r.trip&&r.distance>=r.trip.distance&&this.shielded(this.time,r))r.trip=null;
         if(r.trip&&r.distance>=r.trip.distance){r.trip=null;r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;this.emit('rival-trip',{id:r.id});}
-        for(const a of this.apples)if(!a.collected&&a.distance>b&&a.distance<=r.distance&&Math.abs(a.lane-r.laneValue)*c.laneSpacing<=c.coinRadius){a.collected=true;r.rushes.push({t:this.time,end:this.time+c.appleTime});}   // an apple it runs over is its own (the player's rule)
+        for(const a of this.apples)if(!a.collected&&a.distance>b&&a.distance<=r.distance&&Math.abs(a.lane-r.laneValue)*c.laneSpacing<=c.coinRadius){a.collected=true;if(c.ball)r.shield=this.time+(c.shieldTime??4*c.tempo);else r.rushes.push({t:this.time,end:this.time+c.appleTime});}   // an apple it runs over is its own (the player's rule)
         if(r.leg<2&&r.distance>=this.course.relays[r.leg]){r.leg++;r.energy=0;r.form=r.forms[r.leg];r.pool=r.stamina=r.form.stamina;r.restAt=0;}
         if(!r.finishTime&&r.distance>=c.length)r.finishTime=this.time+dt*(c.length-r.distance)/(r.distance-b);}
       this.time+=dt;this.laneValue=this.laneAt(this.time);
@@ -377,11 +383,11 @@ export class SliceGame {
       for(const h of this.hurdles){
         if(h.state||before>=h.distance||this.distance<h.distance)continue;
         const crossed=this.time-dt+dt*(h.distance-before)/(this.distance-before),j=this.jumps.at(-1);
-        const cleared=j&&Math.abs(crossed-j.t-c.jumpLead)<=c.jumpWindow+1e-9;
+        const smash=this.shielded(crossed)&&!this.airborne(crossed),cleared=smash||j&&Math.abs(crossed-j.t-c.jumpLead)<=c.jumpWindow+1e-9;
         h.state=cleared?'cleared':'hit';h.hitAt=crossed;
         if(!cleared){   // stumble: a short dip in speed, the sprint (an apple's too) and the built-up rhythm are lost; controls stay live
           this.combo=0;this.rhythmDrive=0;this.drive=Math.min(0,this.drive);this.stumbles.push({t:crossed});for(const b of [...this.boosts,...this.rushes])if(b.end>this.time)b.end=this.time;}
-        this.emit(cleared?'clear':'obstacle-miss',{error:j?crossed-j.t-c.jumpLead:null});   // error: how far off the ideal take-off (simulation s)
+        this.emit(cleared?'clear':'obstacle-miss',{error:j?crossed-j.t-c.jumpLead:null,smash});   // error: how far off the ideal take-off (simulation s)
       }
       for(const h of this.hurdles)h.t=h.hitAt??this.time+(h.distance-this.distance)/this.speed;
       // Handoff: the next horse takes over where this one is, with no charge and full stamina (each horse spends its own). Combo, lane
@@ -400,7 +406,7 @@ export class SliceGame {
     const L=this.config.length;
     // Rivals keep running past the line (no snap back beside the player); unfinished ones are projected.
     const rivals=this.rivals.map(r=>({id:r.id,name:r.name,team:r.team,horses:r.horses,leg:r.leg,lane:r.laneValue,speed:r.speed,distance:r.distance,jumps:r.jumps,stumbleAt:r.stumbles.at(-1)?.t??null,stumbleK:r.stumbles.at(-1)?.k??1,stumbleHit:!!r.stumbles.at(-1)?.hit,stumbleSide:r.stumbles.at(-1)?.side??0,ram:r.ram?{t:r.ram.t,dir:r.ram.side?-1:1}:null,
-      boosting:strength(r.boosts,this.time,this.config)>0,finishTime:r.finishTime??this.time+Math.max(0,L-r.distance)/Math.max(r.speed,1)}));
+      boosting:strength(r.boosts,this.time,this.config)>0,shielded:this.shielded(this.time,r),finishTime:r.finishTime??this.time+Math.max(0,L-r.distance)/Math.max(r.speed,1)}));
     const rank=1+rivals.filter(r=>this.finished?r.finishTime<this.finishTime:r.distance>this.distance+1e-9||(Math.abs(r.distance-this.distance)<=1e-9&&r.speed>this.speed)).length;
     return {player:{distance:this.distance,speed:this.speed,finishTime:this.finishTime,lane:this.laneValue},rivals,rank};
   }

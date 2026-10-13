@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r688';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r688';
-import {WEATHER} from './progress.mjs?v=r688';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r688';
-import {compositionRank} from '../race-composition.mjs?v=r688';
-import {ChaseRenderer} from '../race-scene.js?v=r688';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r688';
-import {cityModels} from '../approved-environment.js?v=r688';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r691';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r691';
+import {WEATHER} from './progress.mjs?v=r691';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r691';
+import {compositionRank} from '../race-composition.mjs?v=r691';
+import {ChaseRenderer} from '../race-scene.js?v=r691';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r691';
+import {cityModels} from '../approved-environment.js?v=r691';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r688';
-import {RaceAudio} from '../audio.js?v=r688';
-import {addLog,raceEntry} from '../playtest.js?v=r688';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r688';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r691';
+import {RaceAudio} from '../audio.js?v=r691';
+import {addLog,raceEntry} from '../playtest.js?v=r691';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r691';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -27,8 +27,8 @@ const TYPE_NAME={straight:'直線型',curve:'彎道型',mud:'泥地型'},GAIT_NA
 const HOW=[   // the ball game (2026-10-11: the cards still taught the rhythm game it replaced on 2026-10-07)
   ['<i class="how-key">●</i>','按住圓球蓄力，放開就衝','長到黃圈放開最快，早一點也可以，碰到紅圈會爆掉'],
   ['<i class="how-key">‹</i><i class="how-key">›</i>','左右滑換道，往上滑跳欄','圓球會跟著手指'],
-  ['<i class="how-key">🍎</i>','吃到蘋果存一段衝刺','按 ⚡ 用掉'],
-  ['<i class="how-key">撞</i>','放得漂亮就存一格撞擊','對手並排時按：撞牠 · 在正後方：踢牠'],
+  ['<i class="how-key">🍎</i>','吃到蘋果無敵 4 秒','欄架、水坑、對手都不怕'],
+  ['<i class="how-key">撞</i>','漂亮放開 3 次存一段','按 ⚡ 衝刺 · 對手並排時撞牠 · 在正後方踢牠'],
 ];
 // ?auto=<share> in the page URL (testing and demos): that share of the notes is hit for you, hurdles are jumped;
 // the charge button stays yours.
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r688',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r691',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -348,6 +348,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       else if(e.type==='rival-trip'){const r=game.rivals.find(x=>x.id===e.id);if(r&&Math.abs(r.distance-game.distance)<40)feedback(`${rivalName(e.id)} 絆到了`,'hint');}   // rivals knock hurdles too (the same rules): said when it happens near the player
       else if(e.type==='jump'){sound.jump(true);sound.duck();buzz('tap');landAt=e.time+game.config.jumpDuration;landClear=false;}
       // A hurdle: how clean the take-off was (error from the ideal moment; the window is ±jumpWindow).
+      else if(e.type==='clear'&&e.smash){feedback('撞穿！','gold',true);buzz('strong');}
       else if(e.type==='clear'){const off=Math.abs(e.error??0)/game.config.jumpWindow;landClear=true;
         if(off<=.35){feedback('完美起跳！','gold',true);buzz('good');}else feedback(off>=.75?'好險！':'CLEAR!','green');}
       else if(e.type==='puddle'){if(e.dry)feedback(e.snow?'不怕雪！':'不怕水！','gold');else{feedback(e.snow?'踩到雪了':'踩到水了','hint');sound.cue('deny');}buzz('tap');}
@@ -361,12 +362,12 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       else if(e.type==='release'){feedback(e.stored?'存了一段！':`${e.max?'極限！':'漂亮！'} ${e.good}/${e.of}`,e.max||e.stored?'gold':'',e.max||e.stored);buzz(e.max?'strong':'good');sound.cue('crunch');$('ball-ring').querySelector('u').animate([{scale:1,opacity:1,borderColor:'#ffd846'},{scale:1.35,opacity:0}],{duration:300,easing:'ease-out'});}
       else if(e.type==='skill-start'){const T=game.skillWait();if(e.kind==='kick')renderer.buck(T-.35);else renderer.ram(e.side,T);   // the kick lands with the hit; the arm is all the way out at it
         feedback(e.kind==='kick'?'準備踢！':'準備撞！','hint');sound.cue('window');buzz('tap');if(!still)$('slice-skill').animate([{scale:1},{scale:1.22}],{duration:T/TEMPO*1000,easing:'ease-in'});}
-      else if(e.type==='skill-miss'){feedback('撲空了','hint');sound.cue('deny');}
+      else if(e.type==='skill-miss'){feedback(e.shielded?'牠無敵！':'撲空了','hint');sound.cue('deny');}
       else if(e.type==='skill'){dazed(e.id);hitStop();chained();feedback(e.kind==='kick'?'踢中！':e.pushed?'擠開了！':'撞倒了！','gold',true);buzz('strong');sound.cue('crunch');renderer.dustBurst(18);shake();flash('#ffd846',.5,300);pop($('slice-skill'));}
       else if(e.type==='kickback'){if(e.hit!=null)dazed(e.hit);renderer.buck();feedback(e.hit==null?'踢空':'踢中！',e.hit==null?'':'gold',e.hit!=null);buzz(e.hit==null?'tap':'strong');sound.cue('crunch');renderer.dustBurst(e.hit==null?8:18);if(e.hit!=null){shake();flash('#ffd846',.5,300);}pop($('slice-skill'));}
       else if(e.type==='shove'){if(e.pushed)dazed(e.id);shake(e.pushed?8:4,240);if(e.pushed)flash('#ffd846',.4,260);feedback(BALL?(e.popped?(e.pushed?'擠開了！':'撞倒了！'):'彈開了'):e.pushed?'擠開了！':'撞了一下',BALL&&!e.popped?'':'gold',e.pushed);buzz('strong');sound.cue('crunch');}
       else if(e.type==='blown'){if(BALL)$('ball-ring').querySelector('u').animate([{scale:1,opacity:1},{scale:1.5,opacity:0}],{duration:380,easing:'ease-out'});feedback(BALL?'爆了！':'沒力了！','red',true);buzz('bad');sound.cue('break');}
-      else if(e.type==='apple'){shell.querySelector(`[data-apple="${e.id}"]`)?.classList.add('got');const both=game.boostActive();feedback(BALL?'蓄力 +1':both?'極速！':'蘋果加速！',both?'gold':'apple',both);sound.cue('crunch');sound.accent('apple');buzz('good');flash('#ff5a48',.34);}
+      else if(e.type==='apple'){shell.querySelector(`[data-apple="${e.id}"]`)?.classList.add('got');const both=game.boostActive();feedback(BALL?'無敵！':both?'極速！':'蘋果加速！',both?'gold':'apple',both);sound.cue('crunch');sound.accent('apple');buzz('good');flash('#ff5a48',.34);}
       else if(e.type==='relay'){const h=team[e.leg];feedback(`第 ${e.leg+1} 棒 ${h.name}`);sound.accent('handoff');buzz('good');}
     }
     seen=game.actions.length;
@@ -434,7 +435,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     // The sprint running down on the charge button's ring (--left 1 → 0), blinking over its last half second.
     const run=game.boosts.at(-1),left=run&&game.time<run.end?(run.end-game.time)/(run.end-run.t):0;
     put(chargeBtn,'--left',left.toFixed(2));chargeBtn.classList.toggle('ending',left>0&&run.end-game.time<.5*TEMPO);
-    if(solo){const ap=$('slice-apples'),rush=game.rushes.at(-1),on=rush&&game.time<rush.end;put(ap,'hidden',!game.apples.length);
+    if(solo){const ap=$('slice-apples'),rush=BALL?{t:game.shield-(game.config.shieldTime??4*game.config.tempo),end:game.shield}:game.rushes.at(-1),on=rush&&game.time<rush.end;put(ap,'hidden',!game.apples.length);
       put(ap.lastChild,'text',`${game.appleCount}/${game.apples.length}`);{const a=$('slice-apple-n');if(a){put(a,'hidden',!game.apples.length);if(!a.firstChild)a.innerHTML=`${APPLE}<b></b>`;put(a.lastChild,'text',String(game.appleCount));}}put(ap,'--left',on?((rush.end-game.time)/(rush.end-rush.t)).toFixed(2):'0');ap.classList.toggle('on',!!on);}
     // The jump cue: a ring closes in as the hurdle comes (from about 1.4 s out) and turns lime while the take-off window
     // is open (slice.css: --ring, jump-soon, jump-now).

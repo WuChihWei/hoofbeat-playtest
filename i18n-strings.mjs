@@ -708,4 +708,9 @@ export const STRINGS=[
   {zh:"連線太慢，點這裡重新載入",en:"Slow connection: tap to reload"},
   {zh:"{0} 位對手",en:"Rivals: {0}",p:1},
   {zh:"載入 {0}/{1} s",en:"Load {0}/{1} s",p:1},
+  {zh:"無敵！",en:"Invincible!"},  {zh:"撞穿！",en:"Smashed through!"},  {zh:"吃到蘋果無敵 4 秒",en:"An apple: 4 s invincible"},  {zh:"欄架、水坑、對手都不怕",en:"Hurdles, puddles, rivals: nothing stops you"},
+  {zh:"漂亮放開 3 次存一段",en:"3 good releases store a charge"},  {zh:"按 ⚡ 衝刺 · 對手並排時撞牠 · 在正後方踢牠",en:"Tap ⚡ to sprint · bump a rival alongside · kick one right behind"},
+  {zh:"漂亮放開 3 次存一段，按一下衝刺（空白鍵）",en:"3 good releases store a charge; tap to sprint (Space)"},  {zh:"用同一段；對手並排時撞牠，在正後方時踢牠",en:"Uses the same charge: bump a rival alongside, kick one right behind"},
+  {zh:"還沒有衝刺 · 漂亮放開 3 次存一段",en:"No sprint yet · 3 good releases store one"},
+  {zh:"牠無敵！",en:"It's invincible!"},
 ];

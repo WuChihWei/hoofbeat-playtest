@@ -1,15 +1,15 @@
-import {roadHalfWidth} from './track-presentation.mjs?v=r688';
-import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r688';
-import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r688';
-import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r688';
-import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r688';
-import {installApprovedEnvironment} from './approved-environment.js?v=r688';
-import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r688';
-import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r688';
-import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r688';
-import {turnAt} from './track-projection.js?v=r688';
-import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r688';
-import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r688';
+import {roadHalfWidth} from './track-presentation.mjs?v=r691';
+import {updateCompositionRanking,updateProgress} from './race-hud.js?v=r691';
+import {PRESENTATION as P,PHONE} from './presentation-config.mjs?v=r691';
+import {chaseComposition,compositionRivals} from './race-composition.mjs?v=r691';
+import {playerRhythmPath,PRESENTATION_LOOKAHEAD} from './presentation-path.mjs?v=r691';
+import {installApprovedEnvironment} from './approved-environment.js?v=r691';
+import {createApprovedHorse,approvedAssets,mergeForRace} from './approved-assets.js?v=r691';
+import {THREE, animateHorse, disposeHorse} from './horse-model.js?v=r691';
+import {HORSES, CITIES, DURATION, LEG_SECONDS, JUMP_LEAD, JUMP_WINDOW, sprintActive, boostActive, raceLane, weatherAt, weatherAmount, trackAt, jumpMotion, timingWindows, clamp} from './game.js?v=r691';
+import {turnAt} from './track-projection.js?v=r691';
+import {ROAD_WIDTH, HORSE_Z, HIT_Z, NOTE_LOOKAHEAD, RUNNER_LANES, raceCameraFov, raceCameraFrame, roadPose, beatPose, hurdlePose, rivalOffset, relayActors} from './race-world.js?v=r691';
+import {RaceHorsePose,projectedHorseHeight,rhythmScreenPose} from './race-motion.js?v=r691';
 
 const PALETTES = [
   {sky: '#82c8f0', fog: '#c0dfdf', grass: '#8aad62', verge: '#abc77f', dirt: '#d4b38a', trees: '#609050', hill: '#91b39a'},
@@ -594,7 +594,7 @@ export class ChaseRenderer {
         entry.pose.restore();animateHorse(model, entry.animationTime, {running: time >= 0&&actor.running, impulse, hoofAccent, reduced: this.reduced});entry.pose.apply(jump);model.riderPose?.(time>=0&&actor.running,jump.airborne?clamp(jump.phase/.1,0,1):jump.landing||0,race.slice?POSTURE.seat[0]+(POSTURE.seat[1]-POSTURE.seat[0])*(entry.tuck??0):undefined);model.updateAttachment?.();
         if(race.slice)this.racePosture(entry,race,role,runner,time,actor,jump);}
         // Full gallop (the player: a sprint, an apple or the top gait; a rival: its sprint): the gold rim (approved-assets RACE_FUR blaze).
-        if(model.blaze){const want=role==='player'?+(race.gait?.()===2):+!!runner.boosting;model.blaze.value+=(want-model.blaze.value)*.14;}
+        if(model.blaze){const lit=2.2+.5*Math.sin(time*14),want=role==='player'?(race.shielded?.()?lit:+(race.gait?.()===2)):runner.shielded?lit:+!!runner.boosting;   /* shielded: an apple's (slice-game), a brighter rim that pulses */model.blaze.value+=(want-model.blaze.value)*.14;}
         if(race.slice&&actor.active&&actor.running&&time>=0&&!jump.airborne&&!this.reduced)this.kickDust(entry,p,runner,race,time);
         shadow.visible = model.root.visible; shadow.position.set(model.root.position.x, .018, model.root.position.z); shadow.rotation.set(-Math.PI / 2, 0, -p.heading); shadow.material.opacity = actor.opacity*(1-jump.height*.27);shadow.scale.setScalar((scale/1.18)*(1+jump.height*.12));
       }
