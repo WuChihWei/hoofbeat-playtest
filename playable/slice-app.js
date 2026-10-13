@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r643';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r643';
-import {WEATHER} from './progress.mjs?v=r643';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r643';
-import {compositionRank} from '../race-composition.mjs?v=r643';
-import {ChaseRenderer} from '../race-scene.js?v=r643';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r643';
-import {cityModels} from '../approved-environment.js?v=r643';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r644';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r644';
+import {WEATHER} from './progress.mjs?v=r644';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r644';
+import {compositionRank} from '../race-composition.mjs?v=r644';
+import {ChaseRenderer} from '../race-scene.js?v=r644';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r644';
+import {cityModels} from '../approved-environment.js?v=r644';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r643';
-import {RaceAudio} from '../audio.js?v=r643';
-import {addLog,raceEntry} from '../playtest.js?v=r643';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r643';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r644';
+import {RaceAudio} from '../audio.js?v=r644';
+import {addLog,raceEntry} from '../playtest.js?v=r644';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r644';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -44,13 +44,13 @@ const APPLE='<svg class="apple-ico" viewBox="0 0 24 24" aria-hidden="true"><path
 const BUZZ={tap:['impact',{style:'LIGHT'},12],hit:['impact',{style:'MEDIUM'},22],strong:['impact',{style:'HEAVY'},[25,30,25]],good:['notification',{type:'SUCCESS'},[10,20,10]],bad:['notification',{type:'ERROR'},30]};
 const buzz=kind=>{const [method,options,pattern]=BUZZ[kind],native=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.nativePromise;
   if(native)native('Haptics',method,options).catch(()=>{});else navigator.vibrate?.(pattern);};
-export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,arrows=null,perks=null,rivalCount=0,rivalGrow=1,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
+export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,arrows=null,perks=null,rivalCount=0,rivalGrow=1,rivalStep=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
   const TEMPO=level?.tempo??SLICE_CONFIG.tempo,BALL=/[?&]ball=([\d.,]+)/.exec(location.search)?.[1].split(',').map(Number)||[1],   // 2026-10-07 (the user: 「就改成這遊戲方法」): the ball is the game; ?ball=1,fill,fall,pop (real seconds) tunes it
   locks={...level?.locks};
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r643',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r644',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -250,7 +250,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       road.apples=at.sort((a,b)=>a-b).map((distance,i)=>({id:`apple-${i}`,distance,lane:Math.floor(Math.random()*3)-1}));}
     return road;};
   let road=null;   // laid once for this visit, like the hurdles
-  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:(ease?.95:1)*rivalGrow,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,ballBehind:{rank:3,wider:.3},...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?(road??=levelHazards(level.hazards,course)):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null,...(road?.apples?{apples:road.apples}:null)},team,rivals,chart:level?.plain?EASY_CHART:null,
+  const makeGame=()=>{const course=COURSE(),g=new SliceGame({config:{solo:true,tempo:TEMPO,locks,perks,skillTime:.8*TEMPO,rivalPace:(ease?.95:1)*rivalGrow,rivalStep,ball:true,ballFill:(BALL[1]||4.5)*TEMPO,ballFall:(BALL[2]||1.5)*TEMPO,ballPop:(BALL[3]||1.6)*TEMPO,ballLo:.7,ballHi:2.2,ballGood:.65,ballMax:.9,ballBack:.5,ballStack:5,ballGain:.06,ballRush:.6*TEMPO,ballBehind:{rank:3,wider:.3},...(level?.ram?{ram:{time:(level.ram[0]+(intro?1:0))*TEMPO,react:level.ram[1]*TEMPO,gap:level.ram[2]*TEMPO,first:(intro?15:4)*TEMPO,back:!!level.back}}:null),...getForm?.().config,hazards:level?.hazards&&course?(road??=levelHazards(level.hazards,course)):/[?&]hazards=1/.test(location.search)?sampleHazards(course?.length??0):null,...(road?.apples?{apples:road.apples}:null)},team,rivals,chart:level?.plain?EASY_CHART:null,
     course});
     return g;};
   // The scene is shown complete or not at all (2026-10-06, the user: the race was seen being put together: its sky, ground

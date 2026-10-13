@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MVP} from './playable/slice-config.mjs?v=r643';
+import {MVP} from './playable/slice-config.mjs?v=r644';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -32,7 +32,7 @@ export function sellAll(items,id){const it=ITEMS.find(i=>i.id===id&&i.sell),n=it
 export const itemEffect=it=>[it.food&&`飽足 +${it.food}`,it.xp&&`經驗 +${it.xp}`].filter(Boolean).join(' · ');
 const STARTER={wheat:8,seed:3,fish:8,bait:3,carrot:2,brush:1};   // fish like wheat (2026-10-12, the user: 「魚和小麥一樣邏輯」): eight to start with, so a bear or a wolf can be fed before the first catch   // wheat to feed with and seeds to sow at the start; everything else starts at 0
 const COOLDOWN=1200;
-export const freshCare=()=>({hunger:60,clean:70,xp:0,last:0});
+export const freshCare=()=>({hunger:80,clean:80,xp:0,last:0});
 const STATS=['hunger','clean'];
 const clamp=v=>Math.max(0,Math.min(100,Math.round(v)));
 

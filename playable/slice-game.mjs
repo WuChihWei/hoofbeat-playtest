@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r643';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r644';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -67,7 +67,7 @@ export class SliceGame {
     // of the buddy in it if they broke faster, behind it if slower (rivalLanes; move: the narrow stallOverlap).
     const gate=rivals.length>2&&!rivals.some(r=>r.pace);
     this.rivals=rivals.map((r,i)=>{if(gate)r={...r,lane:STALLS[i],start:0};const horses=bestOrder(r,course),forms=horses.map(h=>({...c,...racing(buddyStats(RIVAL_BUDDY[h.type],RIVAL_LEVEL[tier])),...(r.pace?{baseSpeed:r.pace}:null)}));   // pace: the practice coach's own slow speed (slice-app PRACTICE_RIVALS)
-      return {...r,horses,forms,form:forms[0],team:[0,1,2],leg:0,stall:r.lane%1!==0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
+      return {...r,ageOff:(RIVAL_AGES[rivals.length]||RIVAL_AGES_FIELD)[i]||0,horses,forms,form:forms[0],team:[0,1,2],leg:0,stall:r.lane%1!==0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
         boosts:[],jumps:[],stumbles:[],jumped:new Set(),finishTime:null,energy:0,pool:forms[0].stamina,stamina:forms[0].stamina,restAt:0,skill:r.skill??RIVAL_SKILL[tier]+(r.edge??0),
         rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity,drive:0,driveSpeed:0,rushes:[]};});
     // Adapter fields consumed by the existing renderer.
@@ -315,7 +315,7 @@ export class SliceGame {
     const solo=this.solo&&!r.pace;   // a bump's notch eases off: for a moment it is nearer its limit
     if(solo&&c.ball)r.drive=(r.blown??-9)>mid?this.solo.floor:(r.form.top??this.solo.top)*(c.ballLo+(c.ballHi-c.ballLo)*(.12+.7*r.skill))*(1+c.ballGain*c.ballStack*r.skill*.7*Math.min(1,mid/(c.ballFill*6)));   // the ball test: a rival holds its ball at a steady share of the limit and builds a share of the streak, both by its skill
     if(solo)r.driveSpeed+=(r.drive-r.driveSpeed)*(1-Math.exp(-(r.drive<r.driveSpeed?this.solo.fall:this.solo.response)*dt));
-    const own=(solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed)*(c.rivalPace??1);   // rivalPace: the settings page's 對手強度 (slice-app RIVAL_PACE)
+    const own=(solo?r.form.baseSpeed*(1+r.driveSpeed):r.form.baseSpeed+r.rhythmSpeed)*(c.rivalPace??1)*(1+r.ageOff*(c.rivalStep||0));   // rivalPace: the settings page's 對手強度 (slice-app RIVAL_PACE)
     r.speed=this.leapPace(r,Math.max(4,own+c.boostSpeed*strength(r.boosts,mid,c)+(c.appleSpeed||0)*strength(r.rushes,mid,c))*(this.solo?1:AFFINITY[r.horses[r.leg].type][sec.kind])*this.stumbleFactor(mid,r)*(this.slowed(r,mid)?c.puddleSlow:1));
     if(r.ram)r.speed=Math.max(4,this.speed+clamp((this.distance-r.distance)*1.5,-3,3));   // a ram: it holds on beside the player
     if(r.targetLane%1&&(!this.solo||Math.abs(r.targetLane)>1)&&r.distance>3*c.breakOut)r.speed*=.75;   // still out in an outer stall with no room beside it: it eases off and drops in behind. In a solo race only the outer ones (2026-10-10; the relay keeps its rule, its checks are tuned on it): all four easing off together stayed level, at three quarters speed for the first 9 s of stages 4 and 5, and the player was a quarter lap up

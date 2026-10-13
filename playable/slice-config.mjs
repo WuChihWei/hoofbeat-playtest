@@ -14,7 +14,7 @@ const T=1.95;
 // 2026-10-12: two each, in the order they open: the first at LV 2, the second at LV 3 (home.js perkOf). 'charge' the ball fills
 // faster · 'clean' a dropping does not trip it.
 export const BUDDY_PERK=Object.freeze({horse:['charge','quick'],zebra:['quick','charge'],cow:['water','clean'],llama:['clean','snow'],rhino:['water','tough'],wolf:['quick','snow'],bear:['tough','snow']});   // 'snow' (2026-10-12): snow on the road does not slow the bear and the wolf, as water does not the rhino and the cow
-export const MVP=Object.freeze({gems:false,treats:false,levels:true,missions:false,daily:false,perks:false,decor:false,types:false,relay:true});
+export const MVP=Object.freeze({gems:false,treats:false,levels:true,missions:false,daily:false,perks:false,decor:false,types:false,relay:false});
 export const SLICE_CONFIG = Object.freeze({
   // Three-leg relay, about 75 wall seconds: one horse per leg (SLICE_LEGS), handoffs and the finish by distance.
   legLength:540, baseSpeed:12, countdown:3, tempo:T, fixedStep:1/120,
@@ -104,6 +104,10 @@ export const SLICE_RIVALS = Object.freeze([
   {id:'sage',name:'Sage',types:['straight','mud','curve'],coats:[5,3,4],lane:-1,start:-7,sprintAt:.45},   // the sixth runner (2026-10-05: stages 4 and 5 are run against five); the relay keeps the first four
 ]);
 export const STALLS=[-1,1,-2,2,3].map(k=>k*.75);   // the rivals' start stalls, in lanes (the player's is 0): 2.25 m apart, across the 16 m of dirt (the three lanes are its middle 6 m)
+// 2026-10-13 (the user: 對手有可能會贏): the rivals of a solo race are not all as fast. By how many there are, each one's
+// age over or under the stage's (slice-game ageOff × config.rivalStep, stable-care LV_SPEED an age): the first is the one to
+// beat, the last falls behind. Riding without sprints places about third; a buddy an age too young cannot win.
+export const RIVAL_AGES=Object.freeze({1:[0],2:[.5,-.5]}),RIVAL_AGES_FIELD=Object.freeze([1,.5,0,-.5,-1]);
 export const fieldRivals=size=>SLICE_RIVALS.slice(0,size-1);   // size: runners with the player (a solo race: 2, 3 or 5; the relay: 5, or 3 with ?field=3)
 // The ladder, by the course's difficulty (city pack `difficulty`, the ★ on the track cards; none, the template course,
 // is 3): the level of the rivals' buddies, which is also the level the city expects of the player's, and their riders'

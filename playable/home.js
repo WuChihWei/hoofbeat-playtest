@@ -5,9 +5,9 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice} from './slice-app.js?v=r643';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r643';
-import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r643';
+import {startSlice} from './slice-app.js?v=r644';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r644';
+import {PLAYER_LOOK,GEAR,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r644';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
@@ -23,17 +23,17 @@ const step=(name,k)=>()=>{window.zbMark?.('loaded: '+name);dispatchEvent(new Cus
 setTimeout(()=>{window.zbMark?.('preload starts');dispatchEvent(new CustomEvent('zb-load',{detail:.15}));
   preloadPresentation(false).catch(()=>{}).then(step('race models',.7)).then(()=>{warmCity(profile.city);step('city pictures',1)();dispatchEvent(new Event('zb-ready'));barn.src='assets/stable/barn-plate.webp';
     return preloadRanch(owned().slice(0,14).map(h=>h.coat),owned().slice(0,14).map(lvOf));}).catch(()=>{}).then(step('ranch models',1)).then(()=>preloadStable()).catch(()=>{}).then(step('stable models',1)).then(()=>preloadPresentation()).catch(()=>{}).then(step('rivals\' light models',1));},50);
-import {lang,setLang,translate} from '../i18n.js?v=r643';
-import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,afterRace,afterSolo} from '../stable-care.js?v=r643';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r643';
-import {mountStableView,preloadStable} from './stable-view.js?v=r643';
-import {mountRiderView} from './rider-view.js?v=r643';
-import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r643';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush} from '../farm.mjs?v=r643';
-import {cityPictures} from '../approved-environment.js?v=r643';
-import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r643';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r643';
-import {LEVELS,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT} from './progress.mjs?v=r643';
+import {lang,setLang,translate} from '../i18n.js?v=r644';
+import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,afterRace,afterSolo} from '../stable-care.js?v=r644';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r644';
+import {mountStableView,preloadStable} from './stable-view.js?v=r644';
+import {mountRiderView} from './rider-view.js?v=r644';
+import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r644';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush} from '../farm.mjs?v=r644';
+import {cityPictures} from '../approved-environment.js?v=r644';
+import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r644';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r644';
+import {LEVELS,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT} from './progress.mjs?v=r644';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -539,7 +539,7 @@ const PAGES={
     // What the ranch gives a solo run (2026-10-06: a tester could not feel the items; they only reached the relay): the start
     // energy, from how rested the buddy is (精神) plus an energy bar. Only ever a help: nothing here slows a solo run.
     const soloForm=()=>careForm(care[h.id],{...SLICE_CONFIG,...racing(buddyStats(h.stats,MAX_LEVEL))});   // this buddy's own numbers at its level, then its care: felt on every stage (2026-10-10; the first two had none)
-    session=await startSlice({city:c.id,solo:true,stage:L,stake,rivalGrow:1+(rivalAge(c.id)-1)*LV_SPEED,perks:[perkOf(h)],thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
+    session=await startSlice({city:c.id,solo:true,stage:L,stake,rivalGrow:1+(rivalAge(c.id)-1)*LV_SPEED,rivalStep:LV_SPEED,perks:[perkOf(h)],thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
       tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
       onExit:(result,dest)=>{if(location.hash!=='#solo')return;  // already navigated away (back gesture)
         if(newBuddy!=null){stableFocus=newBuddy;go('stable',{replace:true});return;}   // a buddy came with this run: it walks in first
@@ -847,8 +847,8 @@ const LOGIN='hoofbeat.login.v1',LOGIN_GIFT={seed:3,bait:3};let loginGift=false;
 export function startHome(){
   if(store.get(LOGIN)!==today()){addLog({kind:'open',stars:totalStars(prog),stage:levelOf(currentLevel(prog).city)+1,buddies:prog.owned.length});   // one row a day: day 1 and on is someone who came back (playtest.js)
     store.set(LOGIN,today());for(const [k,n] of Object.entries(LOGIN_GIFT))bag={...bag,[k]:(bag[k]||0)+n};saveCare({setItem:store.set},care,bag);loginGift=true;}
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r643',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r643');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r644',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r644');   // a frame counter in the corner (fps.js)
   // Opening the game always lands on the race menu (the home page) once the cover has gone (2026-10-12, the user:
   // 「封面圖跑完應該進比賽選單」): it opened on whatever page the address named, the ranch if that was where it was closed.
   // ?debug keeps the address's page (a dev link straight to a page).
