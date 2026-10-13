@@ -308,13 +308,18 @@ export function shirtPattern(m,id,scale=1){const s=SHIRTS.find(x=>x.id===id);   
     vec4 shirtMask=texture2D(map,vMapUv);vec3 shirtTint=diffuseColor.rgb;float shirtLight=step(.55,dot(shirtTint,vec3(.2126,.7152,.0722)));
     diffuseColor.rgb=mix(shirtTint*shirtMask.r,mix(vec3(1.),vec3(.03,.05,.14),shirtLight),shirtMask.g);
   #endif`);};const key=m.customProgramCacheKey?.bind(m);m.customProgramCacheKey=()=>(key?.()??'')+'|shirt';}
+// 2026-10-13 (the user: 動物的配件顏色只留黑白灰咖啡色，騎士配件顏色只留 UI guideline 黃綠黑白紅): a buddy's tack in black, white, grey
+// and brown; the rider's clothes were the interface's five colours for an hour, then (the user: 騎士改成橄欖綠，棕色，米色，黑色，白色，酒紅) six of riding wear: olive, brown, beige, black, white, wine. A part's first
+// colour is the one it is built in, but for GEAR_BASE: the pants are built beige, which is none of the five, so their first
+// (white) is painted on when nothing is chosen.
+export const GEAR_BASE=Object.freeze({});   // (none now: every part's first colour is the one it is built in)
 export const GEAR=Object.freeze([
-  {mat:'Tack_Saddle',name:'鞍座',colors:['#6b3f26','#2b2522','#26407a','#9a6a3e','#7a2e2e']},
-  {mat:'Tack_Pad',name:'鞍墊',colors:['#3d3a3a','#f4f1ea','#2b3d8f','#c23b66','#3c9a5a']},
-  {mat:'Tack_Bridle',name:'皮具',colors:['#4a2c1e','#2b2522','#8a5a36','#26407a','#7a2e2e']},
-  {mat:'Rider_Helmet',name:'頭盔',colors:['#3a3a3f','#2b3d8f','#c23b66','#f4f1ea','#3c9a5a']},
-  {mat:'Rider_Shirt',name:'上衣',colors:['#f6f5f1','#2f6fd6','#d2455f','#3c9a5a','#f2b705']},
-  {mat:'Rider_Pants',name:'褲子',colors:['#dccab2','#f4f1ea','#2b2522','#8a6a4a','#26407a']},
+  {mat:'Tack_Saddle',name:'鞍座',colors:['#6b3f26','#1f1c1a','#f4f1ea','#8a8a8a']},
+  {mat:'Tack_Pad',name:'鞍墊',colors:['#3d3a3a','#f4f1ea','#111010','#6b3f26']},
+  {mat:'Tack_Bridle',name:'皮具',colors:['#4a2c1e','#1f1c1a','#f4f1ea','#8a8a8a']},
+  {mat:'Rider_Helmet',name:'頭盔',colors:['#3a3a3f','#f6f5f1','#dccab2','#6b4a2e','#6b7a3a','#7a2334']},
+  {mat:'Rider_Shirt',name:'上衣',colors:['#f6f5f1','#1c1c1e','#dccab2','#6b4a2e','#6b7a3a','#7a2334']},
+  {mat:'Rider_Pants',name:'褲子',colors:['#dccab2','#f6f5f1','#1c1c1e','#6b4a2e','#6b7a3a','#7a2334']},
 ]);
 export const PLAYER_LOOK={coat:0,gear:{},hair:'classic'};
 // Mane and tail styles: the meshes ride in the horse GLB (build_horse_from_frame.py HAIRS); a horse shows one. Each of
@@ -429,7 +434,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
       // Player: the sheet's chestnut pinto. Rivals: black and palomino with the same socks/blaze.
       if(m.name==='Horse_Coat'){m.map=null;m.color.set(look.body);coat(m,look);gloss(m);m.needsUpdate=true;}
       if(m.name==='Horse_ManeTail'){m.color.set(look.mane);maneTail(m,look);gloss(m);}
-      if(player&&PLAYER_LOOK.gear[m.name])m.color.set(PLAYER_LOOK.gear[m.name]);
+      if(player&&(PLAYER_LOOK.gear[m.name]??GEAR_BASE[m.name]))m.color.set(PLAYER_LOOK.gear[m.name]??GEAR_BASE[m.name]);
       if(player&&m.name==='Rider_Shirt')shirtPattern(m,PLAYER_LOOK.patterns?.Rider_Shirt);
       if(m.name==='Tack_Pad'){if(player&&PLAYER_LOOK.patterns?.Tack_Pad)shirtPattern(m,PLAYER_LOOK.patterns.Tack_Pad,PAD_TILE);else quilt(m);}   // a patterned pad has no stitching drawn over it
       if(MARKS[m.name])markings(m,MARKS[m.name]);

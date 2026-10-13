@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r685';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r688';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -57,7 +57,7 @@ export class SliceGame {
     this.puddles=(c.hazards?.puddles||[]).map((p,i)=>({id:'w'+i,length:4.2,...p}));this.poops=(c.hazards?.poops||[]).map((p,i)=>({id:'p'+i,...p,hit:false}));
     if(c.locks?.lane)for(const x of [...this.coins,...this.apples])x.lane=0;   // no lane changes yet: everything to pick up is straight ahead
     this.rhythmDrive=0;this.rhythmSpeed=0;this.lastRhythm=-Infinity;this.finishTime=null;this.lastRank=null;
-    this.energy=c.startEnergy;this.pool=this.stamina=this.form.stamina;this.restAt=0;this.combo=0;this.bestCombo=0;this.finished=false;this.paused=false;
+    this.energy=c.ball?Math.max(c.startEnergy,c.boostCost):c.startEnergy;this.pool=this.stamina=this.form.stamina;this.restAt=0;this.combo=0;this.bestCombo=0;this.finished=false;this.paused=false;
     this.targetLane=0;this.laneValue=0;this.laneChanges=[];this.boosts=[];this.jumps=[];this.sprints=[];this.stumbles=[];
     this.actions=[];this.impulses=[];this.hurdles=m.hurdles.map(distance=>({distance,t:distance/c.baseSpeed,state:null}));
     this.terrain=sectionAt(0,course);
@@ -69,7 +69,7 @@ export class SliceGame {
     const gate=rivals.length>2&&!rivals.some(r=>r.pace);
     this.rivals=rivals.map((r,i)=>{if(gate)r={...r,lane:STALLS[i],start:0};const horses=bestOrder(r,course),forms=horses.map(h=>({...c,...racing(buddyStats(RIVAL_BUDDY[h.type],RIVAL_LEVEL[tier])),...(r.pace?{baseSpeed:r.pace}:null)}));   // pace: the practice coach's own slow speed (slice-app PRACTICE_RIVALS)
       return {...r,ageOff:(RIVAL_AGES[rivals.length]||RIVAL_AGES_FIELD)[i]||0,horses,forms,form:forms[0],team:[0,1,2],leg:0,stall:r.lane%1!==0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
-        boosts:[],jumps:[],stumbles:[],jumped:new Set(),finishTime:null,energy:0,pool:forms[0].stamina,stamina:forms[0].stamina,restAt:0,skill:r.skill??RIVAL_SKILL[tier]+(r.edge??0),
+        boosts:[],jumps:[],stumbles:[],jumped:new Set(),finishTime:null,energy:this.config.ball?this.config.boostCost:0,pool:forms[0].stamina,stamina:forms[0].stamina,restAt:0,skill:r.skill??RIVAL_SKILL[tier]+(r.edge??0),
         rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity,drive:0,driveSpeed:0,rushes:[]};});
     // Adapter fields consumed by the existing renderer.
     this.slice=true;this.city=0;this.weather='sun';
@@ -98,7 +98,7 @@ export class SliceGame {
   perk(){const p=this.config.perks;return Array.isArray(p)?p[this.leg]:this.config.perk;}
   has(n){return [].concat(this.perk()||[]).includes(n);}
   // One store for the sprint and for the bump (2026-10-13, the user: 集氣改 5 次送一次衝刺或撞人，大家都一樣): the charge's
-  // segments. Every config.ballCharge (5) good releases store one (a release at the limit counts two), an apple one, drafting
+  // segments. Every config.ballCharge (3; 5 until 2026-10-13) good releases store one (a release at the limit counts two), an apple one, drafting
   // a trickle; a sprint spends one and so does a bump or a kick. `skill` is that count (the bump button's number). A rival has
   // the same store: it fills as a rider of its skill letting go on time would fill it, and its sprint and its ram each spend one.
   get skill(){return this.config.ball?this.segments():0;}
@@ -237,7 +237,7 @@ export class SliceGame {
   ballStep(dt,at){const c=this.config,S=this.solo;
     const stun=this.stunned(at);   // hit: the ball stands still, held or not, and letting go counts for nothing (config.hit)
     if(!stun&&this.wasHeld&&!this.holding&&at>=0&&this.ball>=this.goodAt()&&this.blown<=at){const max=this.ball>=c.ballMax;
-      this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.good+=max?2:1;const every=c.ballCharge??5,stored=this.good>=every&&this.energy<this.cap()-1e-9;if(this.good>=every){this.good-=every;this.energy=Math.min(this.cap(),this.energy+c.boostCost);}
+      this.streak=Math.min(c.ballStack,this.streak+(max?2:1));this.good+=max?2:1;const every=c.ballCharge??3,stored=this.good>=every&&this.energy<this.cap()-1e-9;if(this.good>=every){this.good-=every;this.energy=Math.min(this.cap(),this.energy+c.boostCost);}
       this.ball=c.ballBack;this.rushes.push({t:at,end:at+c.ballRush*(max?2:1)});this.emit('release',{max,streak:this.streak,good:this.good,of:every,stored});}
     this.wasHeld=!stun&&this.holding;
     if(!stun)this.ball=this.blown>at?0:Math.max(0,this.ball+(this.holding?dt/c.ballFill*(this.form.charge??1)*(this.has('charge')?1.15:1):-dt/c.ballFall));
@@ -315,7 +315,7 @@ export class SliceGame {
   // rhythmGrace without one) + its sprint, × its aptitude for the ground, × the dip of a knocked hurdle.
   rivalStep(r,dt,mid){
     const c=this.config,sec=sectionAt(r.distance,this.course),f=(r.distance-this.legStart(r.leg))/(this.legEnd(r.leg)-this.legStart(r.leg));
-    this.rivalCharge(r,dt,f);if(c.locks?.sprint)r.energy=0;   // no sprints on this stage: none for the rivals either
+    this.rivalCharge(r,dt,f);
     if(mid-r.lastRhythm>c.rhythmGrace)r.rhythmDrive=Math.max(0,r.rhythmDrive-c.rhythmDecay*dt);
     r.rhythmSpeed+=(r.rhythmDrive-r.rhythmSpeed)*(1-Math.exp(-c.rhythmResponse*dt));
     // A solo race: the player's solo sums (its own speed × (1 + combo drive), an apple's speed-up, no aptitude). Not the
@@ -337,8 +337,8 @@ export class SliceGame {
     const c=this.config,cap=this.cap(r);r.drafting=this.drafts(r);
     const sprinting=strength(r.boosts,this.time,c)>0;this.rest(r,dt);
     if(r.drafting&&!sprinting)r.energy=Math.min(cap,r.energy+c.draftTrickle*dt);
-    if(c.ball&&!r.finishTime)r.energy=Math.min(cap,r.energy+c.boostCost*dt*r.skill/((c.ballCharge??5)*c.ballFill*(c.rivalRelease??RIVAL_RELEASE)));   // as a rider of its skill letting go on time: a segment every ballCharge releases
-    if(!sprinting&&!r.finishTime&&r.energy>=c.boostCost&&this.fresh(r)&&(f>=r.sprintAt||r.energy>=cap-1e-9))this.rivalSprint(r);
+    if(c.ball&&!r.finishTime)r.energy=Math.min(cap,r.energy+c.boostCost*dt*r.skill/((c.ballCharge??3)*c.ballFill*(c.rivalRelease??RIVAL_RELEASE)));   // as a rider of its skill letting go on time: a segment every ballCharge releases
+    if(!c.locks?.sprint&&!sprinting&&!r.finishTime&&r.energy>=c.boostCost&&this.fresh(r)&&(f>=r.sprintAt||r.energy>=cap-1e-9))this.rivalSprint(r);
   }
   rivalSprint(r){const end=this.time+r.form.boostDuration;r.energy-=this.config.boostCost;r.boosts.push({t:this.time,end});this.spend(r,end);}
   advance(toTime){

@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r685';
+import {MVP} from './slice-config.mjs?v=r688';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -36,8 +36,8 @@ import {MVP} from './slice-config.mjs?v=r685';
 // times above ÷ 1.08, stages 8–10 ÷ 1.16 (stable-care LV_SPEED .08 an age).
 export const LEVELS=Object.freeze([
   {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},silver:26.5,gold:23},
-  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},silver:27.2,gold:24.3},
-  {city:'paris',rivals:2,tempo:1.75,locks:{},silver:46.5,gold:40.6,ram:[.8,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two], real seconds
+  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},silver:27.2,gold:24.3,ram:[.8,.4,14,1.5]},   // the one rival bumps here too (2026-10-13, the user: 第二關就會被撞): the fourth number is the first one's earliest time, while it is still alongside off the start,
+  {city:'paris',rivals:2,tempo:1.75,locks:{},silver:46.5,gold:40.6,ram:[.8,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two, (s before the first: 4, or 15 the first time it is met)], real seconds
   {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:40.8,gold:34.9,ram:[.8,.4,11]},
   {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:40.8,gold:34.9,ram:[.8,.4,9],back:true},
   // 2026-10-11, stages 6 and 7: what lies on the road. hazards: a puddle every [first, step] m and a dropping every
@@ -95,7 +95,7 @@ export const DOUBLE=Object.freeze({fee:2,purse:2});
 // By stage since the same evening (the user: 難易度隨著 1–10 關去調整): a stage's own number, picked off the tool's table so that the
 // casual rider places 1, 1, 1, 2, 3, 3, 3, 4, 4 on stages 2 to 10 and the good one 1, 1, 1, 1, 1, 1, 2, 1, 2. (Stage 4 is slower than 3:
 // the field grows from three to five and its rivals are a year older.)
-export const RIVAL_PACE=Object.freeze([1,.9,.92,.86,.88,.88,.9,.92,.92,.94]),rivalPace=city=>RIVAL_PACE[levelOf(city)]??1;
+export const RIVAL_PACE=Object.freeze([1,.88,.92,.86,.88,.88,.9,.92,.92,.94]),rivalPace=city=>RIVAL_PACE[levelOf(city)]??1;
 export const rivalAge=city=>{const n=levelOf(city)+1;return n<=3?1:n<=7?2:3;},POT=Object.freeze({match:1.5});   // (× .8 for a low mood was dropped the same day: mood costs nothing, stable-care MOOD_XP)
 export const purseWon=(pot,rank,of)=>!(rank&&of>1)?0:rank===1?pot:rank>=of?0:Math.round(pot*(PURSE_SHARE[rank-1]??0));
 export const PERK_COINS=100;   // MVP.perks off: a stage that gave a perk pays this instead

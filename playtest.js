@@ -28,11 +28,11 @@ export function watchErrors(){
   addEventListener('unhandledrejection',e=>log(e.reason?.stack||e.reason,'promise'));
 }
 // One race: the game (slice-game), how it ended ('finish' | 'quit' | 'restart'), and what the app knows about it.
-export function raceEntry(game,result,{city,team,mode='relay',eased=false,fps=null,perf=null}={}){
+export function raceEntry(game,result,{city,team,mode='relay',eased=false,fps=null,perf=null,stake=null}={}){
   const count=type=>game.actions.filter(e=>e.type===type).length,rel=game.actions.filter(e=>e.type==='release');
   return {kind:'race',mode,result,city:city??'template',difficulty:game.course.difficulty??null,eased,field:game.rivals.length+1,team,
     rank:game.metrics().rank,wall:+(game.time/game.config.tempo).toFixed(1),progress:Math.round(game.distance/game.config.length*100),leg:game.leg+1,
-    releases:rel.length,limits:rel.filter(e=>e.max).length,pops:count('blown'),bestStreak:Math.max(0,...rel.map(e=>e.streak)),bumps:count('skill'),bumpMisses:count('skill-miss'),rammed:count('rammed'),dodged:count('ram-miss')+count('ram-off'),
+    releases:rel.length,limits:rel.filter(e=>e.max).length,pops:count('blown'),bestStreak:Math.max(0,...rel.map(e=>e.streak)),passes:count('overtake')+count('leap'),passed:count('passed'),stake,bumps:count('skill'),bumpMisses:count('skill-miss'),rammed:count('rammed'),dodged:count('ram-miss')+count('ram-off'),
     sprints:game.boosts.length,leaps:count('leap'),hurdles:{cleared:count('clear'),hit:count('obstacle-miss')},laneChanges:game.laneChanges.length,
     blocked:count('blocked'),coins:game.coinCount,fps,perf,device:device()};   // perf: ms per frame (slice-app)
 }
