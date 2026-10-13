@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r644';
-import {applyLook,LOOK} from '../visual-style.js?v=r644';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r646';
+import {applyLook,LOOK} from '../visual-style.js?v=r646';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -425,6 +425,13 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     for(const [bone,base] of b.fid.bones){tiltE.set(0,0,0);for(const [n,axis,amp,f] of moves)if(n===bone.name)tiltE[axis]+=amp*env*(f?Math.sin(t*f):1);bone.quaternion.copy(base).multiply(tiltQ.setFromEuler(tiltE));}
     if(t>=F.time){for(const [bone,base] of b.fid.bones)bone.quaternion.copy(base);b.fid=null;b.stood=0;}
   }
+  // Everyone home (home.js 全部餵飽): each one out trots straight to the front of a free hut and is in it; the promise is kept
+  // when all are in, or after HOME.max s (whoever is still on the way is put in).
+  const HOME={speed:3,max:7};
+  function arrive(b){b.stall=b.homing;b.homing=null;b.via=null;b.path=[];delete set[b.stall];inStall(b);hung.forEach((_,i)=>swing(i));onMove?.(b.id,{stall:b.stall});}
+  function home(){const taken=k=>herd.some(o=>o.stall===k||o.homing===k);
+    for(const b of herd)if(b.stall==null){const k=hung.findIndex((h,k)=>h&&!taken(k));if(k<0)continue;const [cx,d]=stallAt(k);b.homing=k;b.path=[];b.pause=0;b.via=[cx+D.door,d+D.y-D.leave];}
+    return new Promise(done=>{const t0=performance.now(),tick=()=>{if(!herd.some(b=>b.homing!=null)||performance.now()-t0>HOME.max*1000){for(const b of herd)if(b.homing!=null)arrive(b);done();}else setTimeout(tick,150);};tick();});}
   function stroll(b,dt){
     if(b.ran){b.ran.t+=dt;if((b.ran.left-=dt)<=0){if(b.ran.neck)b.ran.neck.quaternion.copy(b.ran.base);b.step.timeScale=RANCH.trot;b.ran=null;}}
     const slow=b.ran?RANCH.ran.slow:1;if(b.ran)b.step.timeScale=RANCH.trot*slow;
@@ -437,9 +444,9 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     if((b.via||b.path.length)&&!(b.pause>0)){const s=b.via?{x:b.via[0],y:b.via[1]}:spots[b.path[0]],dx=s.x-b.pos.x,   // via: straight out through its door first (let out of its hut)
 dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces -z at yaw 0
       const off=Math.atan2(Math.sin(want-b.yaw),Math.cos(want-b.yaw));b.yaw+=Math.sign(off)*Math.min(Math.abs(off),RANCH.turn*dt);
-      moving=Math.max(0,Math.cos(off));const stepLen=Math.min(d,RANCH.walk*slow*moving*dt);   // it turns on the spot first, then walks
-      if(d<=.05){if(b.via){b.via=null;b.on=nearest(b.pos.x,-b.pos.z);b.wait=RANCH.rest[0];}else b.on=b.path.shift();}
-      else if(crowded(b.pos.x,b.pos.z,b.pos.x+dx/d*stepLen,b.pos.z+dz/d*stepLen,herd.filter(o=>o!==b&&o.stall==null&&o!==held).map(o=>o.pos))){   // someone in the way: it waits, then turns back to the spot it left
+      moving=Math.max(0,Math.cos(off));const stepLen=Math.min(d,RANCH.walk*(b.homing!=null?HOME.speed:slow)*moving*dt);   // it turns on the spot first, then walks
+      if(d<=.05){if(b.via){b.via=null;if(b.homing!=null){arrive(b);return;}b.on=nearest(b.pos.x,-b.pos.z);b.wait=RANCH.rest[0];}else b.on=b.path.shift();}
+      else if(b.homing==null&&crowded(b.pos.x,b.pos.z,b.pos.x+dx/d*stepLen,b.pos.z+dz/d*stepLen,herd.filter(o=>o!==b&&o.stall==null&&o!==held).map(o=>o.pos))){   // someone in the way: it waits, then turns back to the spot it left
         moving=0;b.held=(b.held||0)+dt;if(b.held>RANCH.stuck&&!b.via){b.held=0;b.path=b.path[0]===b.on?[]:[b.on];b.wait=RANCH.rest[0]*Math.random();}}
       else{b.held=0;b.pos.x+=dx/d*stepLen;b.pos.z+=dz/d*stepLen;}}
     b.go+=((moving>.3?1:0)-b.go)*Math.min(1,dt*6);b.step.setEffectiveWeight(b.go);b.idle.setEffectiveWeight(1-b.go);b.model.mixer.update(dt);
@@ -508,5 +515,5 @@ dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces
   herd.forEach(b=>stroll(b,0));r.shadowMap.needsUpdate=true;fit();
   host.append(el$);raf=requestAnimationFrame(frame);
   if(new URLSearchParams(location.search).has('debug'))window.__ranch={r,scene,cam,herd,hung,spots,cur,L,go,fidget:id=>{const b=herd.find(o=>o.id===id);if(b){b.path=[];b.wait=9;b.fid={t:0,bones:null};}},get pan(){return pan;},step:tick};   // dev (?debug): step, to move things on in a tab that draws one frame a second
-  return {shot:go,field,pond,dispose(){cancelAnimationFrame(raf);ro.disconnect();herd.forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
+  return {shot:go,field,pond,home,dispose(){cancelAnimationFrame(raf);ro.disconnect();herd.forEach(b=>b.model.materials.forEach(m=>m.dispose()));made.forEach(x=>x.dispose());r.dispose();el$.remove();}};
 }

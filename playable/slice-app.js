@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r644';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r644';
-import {WEATHER} from './progress.mjs?v=r644';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r644';
-import {compositionRank} from '../race-composition.mjs?v=r644';
-import {ChaseRenderer} from '../race-scene.js?v=r644';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r644';
-import {cityModels} from '../approved-environment.js?v=r644';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r646';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r646';
+import {WEATHER} from './progress.mjs?v=r646';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r646';
+import {compositionRank} from '../race-composition.mjs?v=r646';
+import {ChaseRenderer} from '../race-scene.js?v=r646';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r646';
+import {cityModels} from '../approved-environment.js?v=r646';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r644';
-import {RaceAudio} from '../audio.js?v=r644';
-import {addLog,raceEntry} from '../playtest.js?v=r644';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r644';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r646';
+import {RaceAudio} from '../audio.js?v=r646';
+import {addLog,raceEntry} from '../playtest.js?v=r646';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r646';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r644',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r646',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -124,7 +124,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // button that doubles the pot for three times the fee (a red stamp on the ticket). The fee is paid as the run starts (newRun); without the coins the
   // run is free and has no pot. staked: this run's {fee, purse}, or null. In the race the place card says what the place
   // is worth now (#slice-purse).
-  let doubled=false,staked=null;const N=v=>Number(v).toLocaleString('en-US'),has=k=>[].concat(perks?.[0]||[]).includes(k),match=()=>SKY==='rain'&&has('water')||SKY==='snow'&&has('snow'),potNow=()=>stake?Math.round(stake.purse*(doubled?stake.double.purse:1)*(match()?stake.pot.match:1)*(stake.moody()?stake.pot.moody:1)):0,feeNow=()=>stake?stake.fee*(doubled?stake.double.fee:1):0;
+  let doubled=false,staked=null;const N=v=>Number(v).toLocaleString('en-US'),has=k=>[].concat(perks?.[0]||[]).includes(k),match=()=>SKY==='rain'&&has('water')||SKY==='snow'&&has('snow'),potNow=()=>stake?Math.round(stake.purse*(doubled?stake.double.purse:1)*(match()?stake.pot.match:1)):0,feeNow=()=>stake?stake.fee*(doubled?stake.double.fee:1):0;
   function paintStake(){if(!stake)return;const t=$('slice-ticket'),of=rivals.length+1,pot=potNow();if(!t)return;if(doubled&&(!stake.can(true)||stake.hungry()))doubled=false;
     t.querySelector('[data-purse]').textContent=N(potNow());document.querySelector('.cover-split').innerHTML=[1,2,3].filter(k=>stake.won(pot,k,of)>0).map(k=>`<span><img src="assets/ui/money/medal_${['gold','red','blue'][k-1]}.webp?v=4" alt="第 ${k} 名">${coin}${N(stake.won(pot,k,of))}</span>`).join('');
     t.classList.toggle('doubled',doubled);t.querySelector('.stamp').hidden=!doubled;document.querySelector('.cover-stake [data-fee]').textContent=N(feeNow());

@@ -1,7 +1,7 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r644';
+import {MVP} from './slice-config.mjs?v=r646';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -90,7 +90,7 @@ export const DOUBLE=Object.freeze({fee:2,purse:2});
 // 4–7 adult, 8–10 prime; each age stable-care LV_SPEED faster, as the player's own). And the pot follows the buddy (POT):
 // × match when the weather is what its perk is for (rain and 不怕水, snow and 不怕雪), × moody when its mood is low; a hungry
 // buddy cannot raise the stake (slice-app).
-export const rivalAge=city=>{const n=levelOf(city)+1;return n<=3?1:n<=7?2:3;},POT=Object.freeze({match:1.5,moody:.8});
+export const rivalAge=city=>{const n=levelOf(city)+1;return n<=3?1:n<=7?2:3;},POT=Object.freeze({match:1.5});   // (× .8 for a low mood was dropped the same day: mood costs nothing, stable-care MOOD_XP)
 export const purseWon=(pot,rank,of)=>!(rank&&of>1)?0:rank===1?pot:rank>=of?0:Math.round(pot*(PURSE_SHARE[rank-1]??0));
 export const PERK_COINS=100;   // MVP.perks off: a stage that gave a perk pays this instead
 export const PERKS=Object.freeze({mane:{stage:2,id:'long'},rider:{stage:4}});

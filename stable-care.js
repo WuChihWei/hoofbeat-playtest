@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MVP} from './playable/slice-config.mjs?v=r644';
+import {MVP} from './playable/slice-config.mjs?v=r646';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -60,16 +60,17 @@ export const recover=r=>r;   // nothing comes back by itself any more (it was th
 // Race form: what the stable makes of a buddy's own numbers on the track (small on purpose: the rhythm still decides).
 // base: the race config with this buddy's numbers at its level (slice-config racing()).
 //   hunger   start energy = FORM.energy of it; under FORM.low the speed falls, to ×FORM.speed at 0
-//   clean    under FORM.low the ball fills slower (charge), to ×FORM.combo at 0
-export const FORM={low:50,speed:.9,combo:.8,energy:.3};
+//   clean    shown as 心情 (mood). 2026-10-13 (the user: 刷毛純互動): it costs nothing in a race any more; at FORM.low or over a
+//            run's xp is × MOOD_XP (afterSolo, afterRace). Brushing is play, never a chore before a run.
+export const FORM={low:50,speed:.9,energy:.3},MOOD_XP=1.1;
 const dip=(v,to)=>v>=FORM.low?1:to+(1-to)*v/FORM.low;
 // What the player is told (2026-10-13, the user: as little as will do; when to feed, with what follows, and whether the buddy is fit
 // to run): no numbers of the game's, only how many feeds or brushings put it right. `clean` is shown as 心情 (mood): brushed up,
 // worn by racing, low it charges slower. icon: the same one as its bar in the dorm (ui.js icon).
 export const fitness=r=>{const n=k=>r[k]>=FORM.low?0:Math.ceil((FORM.low-r[k])/30);return {feed:n('hunger'),brush:n('clean')};};
-export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return f.feed||f.brush?[...(f.feed?[{icon:'fork',text:`${who}餓了，跑得慢，不能加碼。餵 ${f.feed} 次`}]:[]),...(f.brush?[{icon:'smile',text:`${who}心情差，獎金打八折。刷 ${f.brush} 次`}]:[])]:[{icon:'star',ok:true,text:`${who}狀態好`}];};
+export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return [f.feed?{icon:'fork',text:`${who}餓了，跑得慢，不能加碼。餵 ${f.feed} 次`}:{icon:'star',ok:true,text:`${who}狀態好`},...(f.brush?[]:[{icon:'smile',ok:true,text:`${who}心情好，經驗 ×${MOOD_XP}`}])];};
 export function raceForm(r,base){
-  const speed=dip(r.hunger,FORM.speed),combo=dip(r.clean,FORM.combo),lv=level(r),grow=1+(lv-1)*LV_SPEED;
+  const speed=dip(r.hunger,FORM.speed),combo=1,lv=level(r),grow=1+(lv-1)*LV_SPEED;
   const config={baseSpeed:+(base.baseSpeed*speed*grow).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)
     stamina:base.stamina,startEnergy:Math.min(base.energyMax,Math.round(r.hunger*FORM.energy)),boostDuration:base.boostDuration,placeBonus:base.placeBonus};
   return {config,notes:fitNotes(r)};
@@ -86,10 +87,21 @@ export function relayForm(rs,bases,names=rs.map((_,i)=>`#${i+1}`)){
 // What a race costs and earns. WEAR: hunger and clean lost (a relay leg, a solo run): a wheat (+30) feeds about two solo
 // runs, a brushing (+30) cleans as many. xp by place 1st–5th (relay) or by the run's stars (solo), +1 per 5 perfect hits.
 export const RACE_XP=[30,20,12,8,5],SOLO_XP=[6,10,15],WEAR={relay:{hunger:20,clean:20},solo:{hunger:15,clean:12}};
-const worn=(r,w,xp)=>{const next={...r,hunger:clamp(r.hunger-w.hunger),clean:clamp(r.clean-w.clean),xp:r.xp+xp};return {care:next,xp,levelUp:level(next)>level(r)};};
+const worn=(r,w,xp)=>{if(r.clean>=FORM.low)xp=Math.round(xp*MOOD_XP);const next={...r,hunger:clamp(r.hunger-w.hunger),clean:clamp(r.clean-w.clean),xp:r.xp+xp};return {care:next,xp,levelUp:level(next)>level(r)};};
 export const afterRace=(r,{rank,perfect=0})=>worn(r,WEAR.relay,RACE_XP[rank-1]+Math.floor(perfect/5));
 export const afterSolo=(r,{stars,perfect=0})=>worn(r,WEAR.solo,SOLO_XP[stars-1]+Math.floor(perfect/5));
 
+// 全部餵飽 (2026-10-13, the user: 一鍵餵食全部): the hungriest first, each eats what it likes (likes()) until one more would be
+// wasted (over FULL), or the food is gone. buddies: [{id, species}]. -> {care, items, used: {wheat, fish}, fed: [id],
+// short: [id] (still under FORM.low), grew: [id]}.
+export const FULL=70;
+export function feedAll(care,items,buddies){
+  const next={...care},bag={...items},used={wheat:0,fish:0},fed=[],grew=[];
+  for(const b of [...buddies].sort((a,c)=>care[a.id].hunger-care[c.id].hunger)){const food=likes(b.species),it=ITEMS.find(i=>i.id===food);let r={...next[b.id]},ate=false;
+    while(r.hunger<=FULL&&bag[food]>0){bag[food]--;used[food]++;r.hunger=clamp(r.hunger+it.food);r.xp+=it.xp||0;ate=true;}
+    if(ate){fed.push(b.id);if(level(r)>level(next[b.id]))grew.push(b.id);next[b.id]=r;}}
+  return {care:next,items:bag,used,fed,short:buddies.filter(b=>next[b.id].hunger<FORM.low).map(b=>b.id),grew};
+}
 // -> {care, items, msg, levelUp?} or {fail} (nothing changes on a fail). food: the item picked in the Items panel.
 export function careAction(record,items,action,food='wheat',now=Date.now(),species='horse'){
   if(now-record.last<COOLDOWN)return {fail:'慢一點，讓牠休息一下'};

@@ -2,7 +2,7 @@
 // clear canvas over the room's picture. paint(gear) colours her clothes ({material: colour}; a missing one is as built).
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {MODEL_VERSION,livingEyes} from '../approved-assets.js?v=r644';
+import {MODEL_VERSION,livingEyes} from '../approved-assets.js?v=r646';
 export async function mountRiderView(host,gear={}){
   const g=await new GLTFLoader().loadAsync(new URL(`../assets/models/rider_part/rider_main/Rider_Showcase_Wave.glb?v=${MODEL_VERSION}`,import.meta.url).href);
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.outputColorSpace=THREE.SRGBColorSpace;host.append(r.domElement);
