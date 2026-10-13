@@ -547,7 +547,12 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 
 .team .fit{display:flex;align-items:center;gap:calc(8 * var(--u));margin:calc(8 * var(--u)) 0 0;font-size:calc(14 * var(--u))}.team .fit svg{width:calc(18 * var(--u));height:calc(18 * var(--u));flex:none}
 /* 全部餵飽 (2026-10-13): the button under the crops' counts; the card of what was eaten */
-.ranch-feed{position:absolute;z-index:3;right:var(--ui-margin);top:calc(178 * var(--u));height:calc(40 * var(--u));padding:0 calc(14 * var(--u));font-size:var(--ui-t-body)}.ranch-feed[hidden]{display:none}
+/* what can be done, one tap each (2026-10-13): feed all · sow · bait; the counts above them are what was harvested */
+.ranch-do{position:absolute;z-index:3;right:var(--ui-margin);top:calc(178 * var(--u));display:flex;flex-direction:column;align-items:flex-end;gap:calc(6 * var(--u))}
+.ranch-do .ui-btn{height:calc(40 * var(--u));padding:0 calc(14 * var(--u));font-size:var(--ui-t-body);gap:calc(6 * var(--u))}.ranch-do img{width:calc(22 * var(--u));height:calc(22 * var(--u));object-fit:contain}.ranch-do b{font-weight:inherit;margin-left:calc(-4 * var(--u))}
 .feed-all .ui-panel{display:flex;flex-direction:column;align-items:stretch;gap:var(--ui-gap);width:min(78%,calc(300 * var(--u)));padding:var(--ui-s4);text-align:center}.feed-all b{font-size:var(--ui-t-title,calc(20 * var(--u)))}
 .feed-all ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:calc(4 * var(--u))}.feed-all li{display:flex;align-items:center;gap:calc(8 * var(--u));text-align:left}.feed-all li img{width:calc(28 * var(--u));height:calc(28 * var(--u))}.feed-all li span{flex:1}
 .feed-all .warn{margin:0;color:var(--ui-yellow);font-size:var(--ui-t-label)}
+/* the shirt's patterns (我家 · 騎士服裝): one row of names under the colours */
+.shirts{display:flex;flex-wrap:wrap;gap:calc(6 * var(--u));margin-top:var(--ui-gap)}.shirts button{height:calc(34 * var(--u));padding:0 calc(12 * var(--u));border:0;border-radius:99px;background:rgb(255 255 255 / .12);color:#fff;font:inherit;font-size:var(--ui-t-label)}
+.shirts button[aria-checked=true]{background:var(--ui-yellow);color:#000}.shirts button:disabled{opacity:.4}

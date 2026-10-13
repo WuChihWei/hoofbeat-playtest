@@ -2,15 +2,15 @@
 // clear canvas over the room's picture. paint(gear) colours her clothes ({material: colour}; a missing one is as built).
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {MODEL_VERSION,livingEyes} from '../approved-assets.js?v=r646';
-export async function mountRiderView(host,gear={}){
+import {MODEL_VERSION,livingEyes,shirtPattern} from '../approved-assets.js?v=r658';
+export async function mountRiderView(host,gear={},pattern=null){
   const g=await new GLTFLoader().loadAsync(new URL(`../assets/models/rider_part/rider_main/Rider_Showcase_Wave.glb?v=${MODEL_VERSION}`,import.meta.url).href);
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.outputColorSpace=THREE.SRGBColorSpace;host.append(r.domElement);
   const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(30,1,.1,30),who=g.scene,box=new THREE.Box3().setFromObject(who),h=box.max.y-box.min.y;
   scene.add(who,new THREE.HemisphereLight('#fff6e6','#b98a5a',2.2));const sun=new THREE.DirectionalLight('#fff1d6',2);sun.position.set(-2,3,3);scene.add(sun);
   who.position.y=-box.min.y;who.rotation.y=.35;cam.position.set(0,h*.55,h*2.3);cam.lookAt(0,h*.5,0);
   const built={};who.traverse(o=>{if(o.isMesh){o.frustumCulled=false;for(const m of [].concat(o.material))built[m.name]??=[m,m.color.clone()];}});
-  const paint=gear=>{for(const [n,[m,c]] of Object.entries(built))gear[n]?m.color.set(gear[n]):m.color.copy(c);};paint(gear);
+  const paint=(gear,pat=pattern)=>{pattern=pat;for(const [n,[m,c]] of Object.entries(built))gear[n]?m.color.set(gear[n]):m.color.copy(c);if(built.Rider_Shirt)shirtPattern(built.Rider_Shirt[0],pattern);};paint(gear);   // pattern: the shirt's (approved-assets SHIRTS id, or none)
   // Stand loops and she blinks; a drag turns her round. A tap, and every 6 to 10 s left alone, she waves: the model's own
   // Wave clip (rider_showcase_rig.py), played once and faded back into Stand. 2026-10-12: a wave posed here in code, bone
   // by bone, pulled her shirt's side out with the arm; the user: fix the fault, don't drop the wave. The fault was in the

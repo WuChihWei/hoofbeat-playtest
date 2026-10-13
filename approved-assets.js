@@ -9,7 +9,7 @@ export const PRESENTATION_ASSETS=Object.freeze({horse:'animal_part/horse_main/HO
   horseFar:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Far.glb',riderFar:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Far.glb',
   horseLow:'animal_part/horse_main/HOOFBEAT_Horse_Mobile_Low.glb',riderLow:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Low.glb',riderRace:'rider_part/rider_main/HOOFBEAT_Rider_Mobile_Race.glb',   // 2026-10-11, a phone's race: Low for the rivals (seen from behind, metres off: tools/lod.py at .2 and .22), Race for the player's rider (.6: its back and helmet are all the race shows)
   coin:'environment/Coin.glb',poop:'environment/Poop.glb',relay:'environment/Relay_Canopy.glb',jump:'jump/Jump.glb'});   // a city's own dressing models: approved-environment cityModels
-export const MODEL_VERSION='lib-102';  // bump when any runtime GLB is re-exported (browser cache)
+export const MODEL_VERSION='lib-104';  // bump when any runtime GLB is re-exported (browser cache)
 export const approvedAssets=new Map();
 // The pictures a scene asks for as it is built (its sky, ground and painted cards: approved-environment, far-background)
 // come through this manager. They arrive after the scene itself, each one popping in, so a scene is shown only once they
@@ -23,8 +23,9 @@ export const loadsSettled=()=>loading?new Promise(r=>settled.push(r)):Promise.re
 let pending;
 // How many model files have been asked for and how many have arrived (the start card shows it while it waits).
 export const loadState={done:0,total:0};
-const REDONE=/\/(foal|rhino_calf)\//;   // ponytail: the two young models redone on 2026-10-12 (unprint_saddle.py) get a version of their own, so no phone fetches every other model again; drop this at the next MODEL_VERSION bump
-const fetchModel=file=>{loadState.total++;return new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${REDONE.test(file)?'lib-103':MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
+// (lib-104, 2026-10-13: the shirt's and the saddle pads' UVs, shirt_uv.py; the two young models' own version went with it)
+//   // ponytail: the two young models redone on 2026-10-12 (unprint_saddle.py) get a version of their own, so no phone fetches every other model again; drop this at the next MODEL_VERSION bump
+const fetchModel=file=>{loadState.total++;return new GLTFLoader().loadAsync(new URL(`./assets/models/${file}?v=${MODEL_VERSION}`,import.meta.url).href).then(g=>{loadState.done++;return g;},e=>{loadState.total--;throw e;});};
 const keyLoads={};
 // One presentation model by its key, once (the ranch asks for the two it needs; a race for all of them).
 const loadKey=key=>keyLoads[key]??=fetchModel(PRESENTATION_ASSETS[key]).then(gltf=>{approvedAssets.set(key,gltf);approvedAssets.set(PRESENTATION_ASSETS[key],gltf);},e=>{delete keyLoads[key];throw e;});   // by key, and by file for city dressing (preloadModels)
@@ -289,6 +290,24 @@ export function livingEyes(root,{measure,paint,arc,lights,lidColor,open,from=ope
 // Rivals (variants 1, 2) keep their coats unless the player took one, in which case that rival gets the pinto.
 // GEAR: the recolourable parts (material names shared by the race horse/rider and the stable rider); each list starts
 // with the authored palette colour (models/style/palette.json), so a missing entry in PLAYER_LOOK.gear means "as built".
+// The shirt's patterns (2026-10-13, the user's five tiles, references/shirts/sheet.png; 同一個花紋可以換五種顏色): each tile
+// is kept as a mask, not as colours (assets/rider/shirt_<id>.png: red = how dark the shirt's colour is there, green = how
+// much of the accent), so the colour worn (GEAR Rider_Shirt) tints any of them; the accent is white, or navy on a light
+// shirt. size: one tile on the shirt, m [across, up] (the shirt's UVs are metres: artifacts/hoofbeat-rider/shirt_uv.py).
+// Later the same day the user sent the five in black and white (references/shirts/bw_*.png: thin stripes, stars, wide stripes,
+// dots, plaid), which replaced the coloured sheet: black is the accent, grey part of it, white the shirt's own colour.
+export const SHIRTS=Object.freeze([{id:'pin',name:'細條紋',size:[.3,.3]},{id:'stars',name:'星星',size:[.2,.178]},{id:'stripes',name:'條紋',size:[.22,.22]},{id:'dots',name:'點點',size:[.18,.18]},{id:'plaid',name:'格紋',size:[.2,.2]}]);
+const shirtMaps={};export const PATTERNED=Object.freeze(['Rider_Shirt','Tack_Pad']),PAD_TILE=1.6;
+// (Leather pressed with the same patterns, a bump and a darker shade, was made and dropped the same day: the user, 壓花不要.
+// The seat's and the straps' UVs are still in the files.)   // PATTERNED: the parts that can wear one (PLAYER_LOOK.patterns {material: id})
+export function shirtPattern(m,id,scale=1){const s=SHIRTS.find(x=>x.id===id);   // scale: the tile's size on this part (PAD_TILE on the saddle pad, a bigger cloth)
+  if(!s){if(m.map){m.map=null;m.needsUpdate=true;}return;}
+  const t=shirtMaps[id+scale]??=new THREE.TextureLoader().load(new URL(`./assets/rider/shirt_${id}.png?v=2`,import.meta.url).href);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.NoColorSpace;t.repeat.set(1/s.size[0]/scale,1/s.size[1]/scale);
+  m.map=t;m.needsUpdate=true;if(m.userData.shirt)return;m.userData.shirt=true;const before=m.onBeforeCompile;
+  m.onBeforeCompile=(sh,r)=>{before?.call(m,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',`#ifdef USE_MAP
+    vec4 shirtMask=texture2D(map,vMapUv);vec3 shirtTint=diffuseColor.rgb;float shirtLight=step(.55,dot(shirtTint,vec3(.2126,.7152,.0722)));
+    diffuseColor.rgb=mix(shirtTint*shirtMask.r,mix(vec3(1.),vec3(.03,.05,.14),shirtLight),shirtMask.g);
+  #endif`);};const key=m.customProgramCacheKey?.bind(m);m.customProgramCacheKey=()=>(key?.()??'')+'|shirt';}
 export const GEAR=Object.freeze([
   {mat:'Tack_Saddle',name:'鞍座',colors:['#6b3f26','#2b2522','#26407a','#9a6a3e','#7a2e2e']},
   {mat:'Tack_Pad',name:'鞍墊',colors:['#3d3a3a','#f4f1ea','#2b3d8f','#c23b66','#3c9a5a']},
@@ -411,7 +430,8 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
       if(m.name==='Horse_Coat'){m.map=null;m.color.set(look.body);coat(m,look);gloss(m);m.needsUpdate=true;}
       if(m.name==='Horse_ManeTail'){m.color.set(look.mane);maneTail(m,look);gloss(m);}
       if(player&&PLAYER_LOOK.gear[m.name])m.color.set(PLAYER_LOOK.gear[m.name]);
-      if(m.name==='Tack_Pad')quilt(m);
+      if(player&&m.name==='Rider_Shirt')shirtPattern(m,PLAYER_LOOK.patterns?.Rider_Shirt);
+      if(m.name==='Tack_Pad'){if(player&&PLAYER_LOOK.patterns?.Tack_Pad)shirtPattern(m,PLAYER_LOOK.patterns.Tack_Pad,PAD_TILE);else quilt(m);}   // a patterned pad has no stitching drawn over it
       if(MARKS[m.name])markings(m,MARKS[m.name]);
       // Toy rider (rider_clean.py): every part carries its sheet colour; the player's gear comes from the Stable,
       // the rivals wear team shirts (Willow green, Luna pink, Hazel orange, Rio blue).
@@ -473,7 +493,7 @@ export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=n
   // The clips key every bone's scale (always 1): on the bones GROW sizes, those tracks go, once per model file, or the clip
   // would put a young one's head back to the grown size on its first frame.
   if(!horse.sized){horse.sized=true;for(const a of horse.animations)a.tracks=a.tracks.filter(t=>!/^(Head|Chest)\.scale$/.test(t.name));}
-  const mixer=new THREE.AnimationMixer(content),clips={run:horse.animations.find(a=>a.name==='Gallop'),idle:horse.animations.find(a=>a.name==='Idle'),walk:horse.animations.find(a=>a.name==='Walk')};   // walk: the stable's arrival (stable-view ARRIVE)
+  const mixer=new THREE.AnimationMixer(content),clips={run:horse.animations.find(a=>a.name==='Gallop'),idle:horse.animations.find(a=>a.name==='Idle'),walk:horse.animations.find(a=>a.name==='Walk'),trot:horse.animations.find(a=>a.name==='Trot')};   // walk: the stable's arrival (stable-view ARRIVE)
   if(!clips.run)throw new Error('Approved horse lacks Gallop');
   const bindings={Front_Upper:['ForeUpper.L','ForeUpper.R'],Front_Lower:['ForeLower.L','ForeLower.R'],Front_Hoof:['ForeHoof.L','ForeHoof.R'],Hind_Upper:['HindUpper.L','HindUpper.R'],Hind_Lower:['HindLower.L','HindLower.R'],Hind_Hoof:['HindHoof.L','HindHoof.R'],Neck:['NeckLower']};
   const poseBones=Object.entries(bindings).flatMap(([role,names])=>names.map(name=>({role,bone:content.getObjectByName(name.replaceAll('.','')),axis:new THREE.Vector3(1,0,0),sign:1}))).filter(b=>b.bone?.isBone);
@@ -509,7 +529,7 @@ export function mergeForRace(model){
     m.frustumCulled=false;m.castShadow=cast;m.receiveShadow=true;parent.add(m);made.push(g);return m;};
   const eyes=own.filter(o=>/_Eye$/.test(o.material.name));
   if(eyes.length>1){add(mergeGeometries(eyes.map(o=>o.geometry)),eyes[0].material,skin,eyes[0].bindMatrix,eyes[0].parent,false);eyes.forEach(o=>o.removeFromParent());}
-  for(const o of own.filter(o=>!eyes.includes(o)||eyes.length<2)){o.bind(skin,o.bindMatrix);o.castShadow=!eyes.includes(o);}
+  for(const o of own.filter(o=>!eyes.includes(o)||eyes.length<2)){if(o.skeleton.bones[0]===skin.bones[0])o.bind(skin,o.bindMatrix);o.castShadow=!eyes.includes(o);}   // one skeleton for the horse's own parts; a part of the rider's that keeps its material (the patterned shirt, 2026-10-13) stays on the rider's rig: bound to the horse's it was drawn under the horse
   // Race look (the race concept art): a glossier toy than the stable's matte vinyl. Coat and mane/tail are this model's
   // own materials; the merged parts get RACE_GLOSS × their roughness below.
   for(const o of own){const m=o.material;

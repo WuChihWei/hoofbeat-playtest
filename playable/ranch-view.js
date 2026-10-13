@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r646';
-import {applyLook,LOOK} from '../visual-style.js?v=r646';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r658';
+import {applyLook,LOOK} from '../visual-style.js?v=r658';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -398,7 +398,8 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
   // Everyone: in its stall (looking out over its door, standing) or out (on a spot, a round shadow under it).
   const herd=[],inStall=b=>{const [cx,d]=stallAt(b.stall);b.pos.copy(at(cx+D.door,d+D.y+(D.nose[b.model.species||'horse']??1.5)-D.out)).setY(Math.max(0,D.look-(D.head[b.model.species||'horse']??D.look)));b.yaw=Math.PI;b.path=[];b.go=0;b.under.visible=false;};
   for(const b of buddies){
-    const model=dress(b),trot=approvedAssets.get(ranchFile(b.coat)).animations.find(a=>a.name==='Trot'),idle=model.mixer.clipAction(model.clips.idle).play(),step=model.mixer.clipAction(trot).play();
+    const model=dress(b),trot=model.clips.trot??approvedAssets.get(ranchFile(b.coat)).animations.find(a=>a.name==='Trot'),   // its own file's: a young model (the foal, the rhino calf) walked on the grown horse's clip and was pulled to the grown size (2026-10-13, the user: 小馬走路會變大)
+      idle=model.mixer.clipAction(model.clips.idle).play(),step=model.mixer.clipAction(trot).play();
     step.setEffectiveWeight(0);step.timeScale=RANCH.trot;model.mixer.update(Math.random()*3);
     const under=spot.clone();under.rotation.x=-Math.PI/2;
     const me={id:b.id,model,idle,step,stall:null,on:0,path:[],wait:Math.random()*RANCH.rest[1],go:0,yaw:Math.random()*6.28,pos:new THREE.Vector3(),under};
