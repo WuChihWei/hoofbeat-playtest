@@ -446,7 +446,7 @@ export const STRINGS=[
   {zh:"第{0}棒 {1}",en:"Leg {0} {1}",p:1},
   // playable/home.js
   {zh:"第{0}棒",en:"Leg {0}",p:1},
-  {zh:"第 {0} 關 {1}，{2} 顆星",en:"Stage {0} {1}, {2} of 3 stars",p:1},
+  {zh:"第 {0} 關 {1}，{2} 顆星",en:"Stage {0} {1}, {2} ★",p:1},
   {zh:"第 {0} 關 {1}，先跑完第 {2} 關",en:"Stage {0} {1}, locked: finish Stage {2} first",p:1},
   {zh:"第 {0} 關 {1} 開放了！",en:"Stage {0} {1} is open!",p:1},
   {zh:"第 {0} 關",en:"Stage {0}",p:1},
@@ -586,7 +586,7 @@ export const STRINGS=[
   {zh:"蓄力 {0}／{1} 段，體力 {2}%，按蓄力鈕衝刺",en:"Charge {0}／{1} segments, stamina {2}%, press the charge button to sprint",p:1},
   {zh:"蓄力 {0}／{1} 段，體力 {2}%",en:"Charge {0}／{1} segments, stamina {2}%",p:1},
   // playable/home.js
-  {zh:"{0} 顆星",en:"{0} of 3 stars",p:1},
+  {zh:"{0} 顆星",en:"{0} ★",p:1},  {zh:"集滿 {0} 顆星",en:"Collect {0} ★",p:1},
   {zh:"最佳 {0}",en:"Best {0}",p:1},
   {zh:"{0} 場",en:"{0} races",p:1},
   // stable-care.js

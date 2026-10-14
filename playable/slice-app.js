@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r763';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r763';
-import {WEATHER,STAR_MAX} from './progress.mjs?v=r763';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r763';
-import {compositionRank} from '../race-composition.mjs?v=r763';
-import {ChaseRenderer} from '../race-scene.js?v=r763';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r763';
-import {cityModels} from '../approved-environment.js?v=r763';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r764';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r764';
+import {WEATHER,STAR_MAX} from './progress.mjs?v=r764';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r764';
+import {compositionRank} from '../race-composition.mjs?v=r764';
+import {ChaseRenderer} from '../race-scene.js?v=r764';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r764';
+import {cityModels} from '../approved-environment.js?v=r764';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r763';
-import {RaceAudio} from '../audio.js?v=r763';
-import {addLog,raceEntry} from '../playtest.js?v=r763';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r763';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r764';
+import {RaceAudio} from '../audio.js?v=r764';
+import {addLog,raceEntry} from '../playtest.js?v=r764';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r764';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1,level?.field),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r763',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r764',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -126,7 +126,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   let bet=1,staked=null;   /* 2026-10-14 (the user: 問你要壓多少錢): the stake picked, × 1, 2 or 4 (stake.bets); the weather pays nothing extra */const N=v=>Number(v).toLocaleString('en-US'),has=k=>[].concat(perks?.[0]||[]).includes(k),match=()=>SKY==='rain'&&has('water')||SKY==='snow'&&has('snow'),potNow=()=>stake?stake.purse*bet:0,feeNow=()=>stake?stake.fee*bet:0,okBet=k=>k===1||!stake.hungry()&&stake.can(k);
   function paintStake(){if(!stake)return;const t=$('slice-ticket'),of=rivals.length+1;if(!t)return;if(!okBet(bet))bet=1;const pot=potNow(),have=stake.coins();
     t.querySelector('[data-purse]').textContent=N(pot);document.querySelector('.cover-split').innerHTML=[2,3].filter(k=>stake.won(pot,k,of)>0).map(k=>`<span><img src="assets/ui/money/medal_${['gold','red','blue'][k-1]}.webp?v=4" alt="第 ${k} 名">${coin}${N(stake.won(pot,k,of))}</span>`).join('');
-    t.classList.toggle('doubled',bet>1);t.querySelector('.stamp').hidden=bet<2;const hv=document.querySelector('[data-have]');if(hv)hv.textContent=N(have);
+    t.classList.toggle('doubled',bet>1);t.classList.toggle('free',!stake.can(bet));document.querySelector('.cover-split').hidden=!stake.can(bet);
+    t.querySelector('.stamp').hidden=bet<2;const hv=document.querySelector('[data-have]');if(hv)hv.textContent=N(have);
     document.querySelectorAll('[data-bet]').forEach(el=>{const k=+el.dataset.bet,f=stake.fee*k,no=k>1&&stake.hungry()?'餓了':have<f?`還差 ${N(f-have)}`:'';el.setAttribute('aria-pressed',String(k===bet));el.classList.toggle('short',!!no);el.querySelector('small').innerHTML=no||`${coin}${N(f)}`;});   /* each stake says its fee, or why it cannot be had */
     const b=$('slice-start');if(!b.disabled)b.innerHTML=startLabel();}
   // One reason to double, the strongest there is (2026-10-13, the user: three, the most persuasive): the weather meets what this

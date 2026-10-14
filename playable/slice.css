@@ -874,3 +874,7 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 /* 2026-10-14 (the user: 綠色按鈕固定位置): the start button stays at the bottom of the bet page while the rest scrolls */
 #slice-cover section{padding-bottom:0}#slice-cover #slice-start{position:sticky;bottom:0;z-index:2;margin-top:calc(8 * var(--u));margin-bottom:max(calc(14 * var(--u)),env(safe-area-inset-bottom));box-shadow:0 calc(-14 * var(--u)) 0 calc(4 * var(--u)) #000}
 #slice-cover #slice-start{bottom:max(calc(16 * var(--u)),env(safe-area-inset-bottom));margin-bottom:max(calc(16 * var(--u)),env(safe-area-inset-bottom));box-shadow:0 calc(-14 * var(--u)) 0 calc(4 * var(--u)) #000,0 calc(18 * var(--u)) 0 calc(4 * var(--u)) #000}   /* room under it as on every sheet; black above and below it so nothing scrolls into the gaps */
+
+/* 2026-10-14 (playtest): a free run has no pot, so its ticket is greyed out */
+.cover-ticket.free{filter:grayscale(1);opacity:.45}
+.cover-split[hidden]{display:none}

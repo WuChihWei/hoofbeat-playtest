@@ -47,6 +47,7 @@ body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
 /* the screen sits under the phone's top bar, so the island covers none of the game (2026-10-12, the user) */
 .phone{position:relative;border:8px solid #1b1b1d;border-radius:36px;background:#000;overflow:hidden;padding:30px 0 12px;box-shadow:0 10px 24px #0003}
 .phone video,.phone img{width:100%;height:auto;aspect-ratio:9/16;object-fit:cover}
+.phone img.tall{aspect-ratio:360/755}
 .phone:before{content:"";position:absolute;z-index:1;left:50%;top:7px;width:30%;height:16px;margin-left:-15%;border-radius:10px;background:#1b1b1d}
 /* the three controls */
 .keys{display:grid;gap:18px;margin-top:20px}@media(min-width:760px){.keys{grid-template-columns:repeat(3,1fr)}}
@@ -62,7 +63,7 @@ body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
 .card b{display:block;font-size:19px;margin-top:12px}
 .dots{display:flex;gap:6px;justify-content:center;padding:4px 0 0}.dots i{width:8px;height:8px;border-radius:50%;background:#d9cdb8;transition:width .2s,background .2s}.dots .on{background:var(--green);width:20px;border-radius:4px}
 @media(min-width:760px){.dots{display:none}}
-.end{background:var(--ink);text-align:center}.end h2{color:#fff;margin-bottom:18px}.end .cta{max-width:360px;margin:0 auto}
+.end{background:var(--ink);text-align:center}.end .survey{color:#d8ccb8;margin:30px 0 12px}.cta.alt{background:#fff8ea;color:var(--ink);box-shadow:0 6px 0 #b8ab97}.cta.alt:active{box-shadow:0 2px 0 #b8ab97}.end h2{color:#fff;margin-bottom:18px}.end .cta{max-width:360px;margin:0 auto}
 footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padding:0 20px 28px}
 /* the bar that follows on a phone, once the first button has gone by */
 .stick{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:#fff8eaf2;border-top:1px solid var(--line);transform:translateY(110%);transition:transform .25s;z-index:5}
@@ -77,7 +78,7 @@ footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padd
   <img class="logo" src="../assets/ui/logo_zh.webp" alt="衝吧蹄蹄 ZOOMBUD" width="814" height="200">
   <h1>按住、放開、衝！<br>帶你的夥伴跑遍世界</h1>
   <a class="cta play-only" id="top-cta" href="../">馬上玩</a>
-  <small class="play-only">免下載 · 手機瀏覽器就能玩</small>
+  <small class="play-only">免下載 · 手機瀏覽器就能玩 · <a href="https://claude.ai/artifact/6fsg2V2HpPBKaYnwMKfNDW" target="_blank" rel="noopener" style="color:#fff">玩完填問卷</a></small>
   <form class="notify wait-only" id="notify" novalidate><label class="sr" for="mail1">Email</label><input id="mail1" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form>
   <small class="wait-only">遊戲準備中 · 留下 email，開放時第一個通知你</small>
 </header>
@@ -85,11 +86,19 @@ footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padd
 <section>
   <div class="wrap" style="padding-bottom:14px"><h2>好玩在這裡</h2><p>三十秒一場，每一秒都有事做</p></div>
   <div class="swipe">
-    <figure class="clip"><div class="phone"><video src="clip-limit.mp4" poster="clip-limit.jpg" muted loop playsinline preload="none" aria-label="壓到極限放開加速，衝刺中跳過前面對手的遊戲畫面"></video></div><b>挑戰極限，飛越對手</b><p>壓到極限才放開最快。衝刺時往上滑，直接從別人頭上跳過去</p></figure>
-    <figure class="clip"><div class="phone"><video src="clip-bump.mp4?2" poster="clip-bump.jpg?2" muted loop playsinline preload="none" aria-label="把旁邊的對手推開的遊戲畫面"></video></div><b>推人和後踢</b><p>旁邊有人就推開，後面有人就踢回去</p></figure>
-    <figure class="clip"><div class="phone"><video src="clip-hurdle.mp4" poster="clip-hurdle.jpg" muted loop playsinline preload="none" aria-label="跳過欄架、閃開水窪和大便的遊戲畫面"></video></div><b>障礙物</b><p>欄架要跳，水窪和大便要閃</p></figure>
-    <figure class="clip"><div class="phone"><video src="clip-apple.mp4" poster="clip-apple.jpg" muted loop playsinline preload="none" aria-label="撿金幣和吃蘋果的遊戲畫面"></video></div><b>蘋果和金幣</b><p>蘋果存衝刺，金幣帶回家養夥伴</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-start.mp4" poster="clip-start.jpg" muted loop playsinline preload="none" aria-label="五隻夥伴一起起跑、超車的遊戲畫面"></video></div><b>起跑就開搶</b><p>按住集氣，放開衝刺，從對手中間鑽出去</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-hurdle.mp4?2" poster="clip-hurdle.jpg?2" muted loop playsinline preload="none" aria-label="雨天跳過欄架、閃開水窪的遊戲畫面"></video></div><b>跳欄、閃水窪</b><p>往上滑跳欄，左右滑換道，壓到極限放開最快</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-win.mp4" poster="clip-win.jpg" muted loop playsinline preload="none" aria-label="衝過終點、贏得獎金的遊戲畫面"></video></div><b>贏了拿獎金</b><p>前三名分獎金，押越多贏越多</p></figure>
   </div>
+</section>
+
+<section class="buds"><div class="wrap" style="padding-bottom:14px"><h2>比賽前，先想好三件事</h2><p>看天氣、挑夥伴、決定押多少</p></div>
+  <div class="swipe">
+    <figure class="clip"><div class="phone"><img class="tall" src="home.webp" alt="選關卡，看天氣預報" loading="lazy"></div><b>看天氣</b><p>每一關都有天氣預報，下雨路上會有水窪</p></figure>
+    <figure class="clip"><div class="phone"><img class="tall" src="pick.webp" alt="選夥伴，騎士和夥伴一起出場" loading="lazy"></div><b>挑夥伴</b><p>不怕水的、不怕雪的，挑最適合今天的那一隻</p></figure>
+    <figure class="clip"><div class="phone"><img class="tall" src="bet.webp" alt="看對手，選押多少" loading="lazy"></div><b>押多少</b><p>小押、中押、大押。看對手多強，再決定要不要賭大的</p></figure>
+  </div>
+  <div style="height:30px"></div>
 </section>
 
 <section><div class="wrap">
@@ -102,25 +111,25 @@ footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padd
 </div></section>
 
 <section class="buds"><div class="wrap">
-  <h2>每隻夥伴都有特長</h2><p>馬、駱馬、犀牛、狼、熊、牛、斑馬。養牠、升級牠、幫牠換造型</p>
+  <h2>每隻夥伴都有特長</h2><p>馬、駱馬、犀牛、狼、熊、牛、斑馬。牛不怕水窪，熊不怕雪，過關就送新夥伴</p>
   <div class="heads">
     <img src="../assets/stable/buddy_0.webp" alt="馬" loading="lazy"><img src="../assets/stable/buddy_10.webp" alt="駱馬" loading="lazy"><img src="../assets/stable/buddy_11.webp" alt="犀牛" loading="lazy"><img src="../assets/stable/buddy_15.webp" alt="狼" loading="lazy"><img src="../assets/stable/buddy_12.webp" alt="熊" loading="lazy"><img src="../assets/stable/buddy_14.webp" alt="牛" loading="lazy"><img src="../assets/stable/buddy_13.webp" alt="斑馬" loading="lazy">
   </div>
 </div></section>
 
 <section>
-  <div class="wrap" style="padding-bottom:14px"><h2>比賽之外，還有一個家</h2><p>跑累了就回牧場</p></div>
+  <div class="wrap" style="padding-bottom:14px"><h2>比賽之外，還有一個家</h2><p>贏來的金幣帶回牧場</p></div>
   <div class="swipe" id="cards">
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="ranch1.webp" alt="牧場全景" loading="lazy"></div><div class="phone"><img src="pond.webp" alt="魚池" loading="lazy"></div></div><b>牧場</b><p>夥伴在院子散步，池邊釣魚</p></figure>
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="field.webp" alt="麥田" loading="lazy"></div><div class="phone"><img src="shop.webp" alt="商店" loading="lazy"></div></div><b>種田和買賣</b><p>種麥收成，吃不完的拿去賣</p></figure>
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="dorm1.webp" alt="宿舍裡的馬" loading="lazy"></div><div class="phone"><img src="dorm2.webp" alt="宿舍裡的狼" loading="lazy"></div></div><b>宿舍</b><p>餵食、梳毛，看牠一級一級變強</p></figure>
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="house1.webp" alt="騎士的家" loading="lazy"></div><div class="phone"><img src="house2.webp" alt="換騎士服裝" loading="lazy"></div></div><b>騎士的家</b><p>換服裝、看成績、擺獎盃</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="ranch1.webp" alt="牧場全景" loading="lazy"></div><div class="phone"><img src="field.webp" alt="麥田" loading="lazy"></div></div><b>牧場和麥田</b><p>夥伴在院子散步，麥田種麥收成</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="dorm1.webp" alt="宿舍裡的馬" loading="lazy"></div><div class="phone"><img src="dorm2.webp" alt="宿舍裡的熊" loading="lazy"></div></div><b>宿舍</b><p>餵飽才跑得快，跑越多場升越多級</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="looks.webp" alt="幫夥伴換造型" loading="lazy"></div><div class="phone"><img src="shop.webp" alt="商店" loading="lazy"></div></div><b>造型和商店</b><p>換鞍座、上衣、頭盔，先試穿不用錢</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="house1.webp" alt="騎士的家" loading="lazy"></div><div class="phone"><img src="pick.webp" alt="騎士騎著夥伴" loading="lazy"></div></div><b>騎士的家</b><p>你就是這位騎士。看成績、換服裝</p></figure>
   </div>
   <div class="dots" id="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
   <div style="height:36px"></div>
 </section>
 
-<section class="end"><div class="wrap"><h2 class="play-only">現在就開跑</h2><a class="cta play-only" href="../">馬上玩</a><h2 class="wait-only">開放時第一個通知你</h2><form class="notify wait-only" novalidate><label class="sr" for="mail2">Email</label><input id="mail2" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form><p class="wait-only" style="margin-top:14px;font-size:13px;color:#b8ab97">email 只用來通知遊戲開放，不會做其他用途</p></div></section>
+<section class="end"><div class="wrap"><h2 class="play-only">現在就開跑</h2><a class="cta play-only" href="../">馬上玩</a><p class="play-only survey">玩完了嗎？花 3 分鐘告訴我們感想</p><a class="cta alt play-only" href="https://claude.ai/artifact/6fsg2V2HpPBKaYnwMKfNDW" target="_blank" rel="noopener">填試玩問卷</a><h2 class="wait-only">開放時第一個通知你</h2><form class="notify wait-only" novalidate><label class="sr" for="mail2">Email</label><input id="mail2" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form><p class="wait-only" style="margin-top:14px;font-size:13px;color:#b8ab97">email 只用來通知遊戲開放，不會做其他用途</p></div></section>
 <footer>© 2026 ZOOMBUD 衝吧蹄蹄</footer>
 <div class="stick" id="stick"><a class="cta play-only" href="../">馬上玩</a><a class="cta wait-only" href="#notify">留 email，開放時通知我</a></div>
 <script>
