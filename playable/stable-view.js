@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r744';
-import {applyLook,LOOK} from '../visual-style.js?v=r744';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r745';
+import {applyLook,LOOK} from '../visual-style.js?v=r745';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -53,7 +53,7 @@ const BRUSH={scale:.8,strap:.3,bone:'Chest',at:[-.15,.1,.62],stroke:.3,dir:[0,-.
 // Later that day (the user, from a phone whose browser bars leave 655 pt of height: the row of heads lay over the
 // buddy's ears): everything 7.5% of the page lower. The camera looks 2.25° less down (tilt was 9.3), the plate is drawn
 // 115% tall from its top, the door stands lower (home.css).
-const CENTER_X=2.1,FIT={h:.84,w:.94};   // the camera's x when the pair is centred (HORSE.x: the buddy's own middle)
+const CENTER_X=2.1,FIT={h:.84,w:.94,top:4.4,wide:3.6};   // top, wide: a grown horse with her on it (m, measured 2026-10-14): the frame is made for it, so a foal stands smaller in it (the user: 以長大的馬為準，小馬站得小一點); anything bigger still fits   // the camera's x when the pair is centred (HORSE.x: the buddy's own middle)
 const CAM={x:1.5,fill:8.44,dist:[12,22],floor:.22,tilt:7.05,fov:30,bg:.5};
 // After the 1 s Pickup: the rider clip, how long it runs, and the horse's extra neck/head pose meanwhile (radians).
 // Brush: the horse bows its forelock to the brush. Feed: neck down, head stretched out so its mouth meets the carrot.
@@ -397,7 +397,7 @@ export async function mountStableView(host,{rider=false,center=false}={}){   // 
   }
   function fit(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;r.setSize(w,h,false);r.domElement.style.cssText='width:100%;height:100%;display:block';
     const d=Math.min(CAM.dist[1],Math.max(CAM.dist[0],CAM.fill*h/w));basePos.set(center?CENTER_X:CAM.x,CAM.floor*d,HORSE.z+d);
-    if(center&&span){const t=CAM.tilt*Math.PI/180,tan=Math.tan(CAM.fov*Math.PI/360),dd=Math.max(span.top/(FIT.h*2*tan),span.w/(FIT.w*2*tan*w/h));const aim=2*dd*tan*(.5-(1-FIT.h)/2);basePos.set(span.x,aim+dd*Math.sin(t),span.z+dd*Math.cos(t));}   /* whatever its size, the pair fills the picture: FIT.h of its height, at most FIT.w of its width; its feet always the same way up from the bottom (on the stage), its middle across */
+    if(center&&span){const t=CAM.tilt*Math.PI/180,tan=Math.tan(CAM.fov*Math.PI/360),dd=Math.max(Math.max(span.top,FIT.top)/(FIT.h*2*tan),Math.max(span.w,FIT.wide)/(FIT.w*2*tan*w/h));const aim=2*dd*tan*(.5-(1-FIT.h)/2);basePos.set(span.x,aim+dd*Math.sin(t),span.z+dd*Math.cos(t));}   /* whatever its size, the pair fills the picture: FIT.h of its height, at most FIT.w of its width; its feet always the same way up from the bottom (on the stage), its middle across */
     if(center&&span)camOff.set(basePos.x-span.rx,basePos.y,basePos.z-span.rz);   /* the camera keeps this offset from the buddy wherever it walks or settles */
     cam.position.copy(basePos);
     cam.fov=CAM.fov;cam.aspect=w/h;cam.updateProjectionMatrix();}
