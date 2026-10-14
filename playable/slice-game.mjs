@@ -1,4 +1,4 @@
-import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r691';
+import {STALLS,SLICE_CONFIG,SLICE_CHART,soloChart,SLICE_RIVALS,RIVAL_LEVEL,RIVAL_SKILL,RIVAL_BUDDY,RIVAL_AGES,RIVAL_AGES_FIELD,AFFINITY,SOLO,buddyStats,racing,courseMarks,templateCourse,sectionAt,legMains,sliceCoins,sliceApples} from './slice-config.mjs?v=r722';
 export {sectionAt};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=u=>u*u*(3-2*u);
 const hash=(k,s)=>{const x=Math.sin(k*12.9898+s*78.233)*43758.5453;return x-Math.floor(x);};   // fixed per note and rider: replays alike
@@ -68,7 +68,7 @@ export class SliceGame {
     // of the buddy in it if they broke faster, behind it if slower (rivalLanes; move: the narrow stallOverlap).
     const gate=rivals.length>2&&!rivals.some(r=>r.pace);
     this.rivals=rivals.map((r,i)=>{if(gate)r={...r,lane:STALLS[i],start:0};const horses=bestOrder(r,course),forms=horses.map(h=>({...c,...racing(buddyStats(RIVAL_BUDDY[h.type],RIVAL_LEVEL[tier])),...(r.pace?{baseSpeed:r.pace}:null)}));   // pace: the practice coach's own slow speed (slice-app PRACTICE_RIVALS)
-      return {...r,ageOff:(RIVAL_AGES[rivals.length]||RIVAL_AGES_FIELD)[i]||0,horses,forms,form:forms[0],team:[0,1,2],leg:0,stall:r.lane%1!==0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
+      return {...r,ageOff:r.tier!=null?(r.tier-2)/2:(RIVAL_AGES[rivals.length]||RIVAL_AGES_FIELD)[i]||0,horses,forms,form:forms[0],team:[0,1,2],leg:0,stall:r.lane%1!==0,distance:r.start??0,speed:forms[0].baseSpeed,phase:2*i,targetLane:r.lane,laneValue:r.lane,laneChanges:[],
         boosts:[],jumps:[],stumbles:[],jumped:new Set(),finishTime:null,energy:this.config.ball?this.config.boostCost:0,pool:forms[0].stamina,stamina:forms[0].stamina,restAt:0,skill:r.skill??RIVAL_SKILL[tier]+(r.edge??0),
         rhythmDrive:0,rhythmSpeed:0,lastRhythm:-Infinity,drive:0,driveSpeed:0,rushes:[],shield:0};});
     // Adapter fields consumed by the existing renderer.
@@ -155,7 +155,7 @@ export class SliceGame {
       if(c.ball)r.energy-=c.boostCost;r.ram={t:this.time,side:r.targetLane>this.targetLane?1:0};r.grudge=0;this.emit('ram-start',{id:r.id,side:r.ram.side});return;}
     const u=this.time-r.ram.t,side=r.ram.side,end=(why,data)=>{r.ram=null;this.ramNext=this.time+R.gap*(.7+.6*hash(this.time,r.phase+3));this.emit(why,{id:r.id,side,...data});};
     if(this.staggering(this.time,r))return end('ram-broken');   // knocked first
-    const there=beside&&apart===1&&!this.boostActive()&&!this.shielded();
+    const there=beside&&apart===1&&!this.boostActive()&&!this.shielded()&&!this.airborne();   // in the air at the hit: it goes under (2026-10-14, the user: 跳起來或換道可以避免被揍)
     if(!there&&u<R.react)return end('ram-off');                       // not committed yet: it lets it go
     if(u<R.time)return;
     if(!there){r.stumbles.push({t:this.time});r.rhythmDrive=0;r.drive=Math.min(0,r.drive);for(const x of [...r.boosts,...r.rushes])if(x.end>this.time)x.end=this.time;return end('ram-miss');}   // it threw itself at nothing
@@ -266,7 +266,8 @@ export class SliceGame {
   // a press does is whatever there is someone for, the nearest first: a runner alongside is bumped (it stumbles, and is
   // pushed a lane over if there is room), one right behind is kicked (it stumbles, its sprint ends). It always works and
   // costs the charge alone. No one in reach: nothing happens and nothing is spent. A swipe no longer bumps or kicks.
-  skillTarget(){const L=this.besideAt(this.targetLane-1),R=this.besideAt(this.targetLane+1),B=this.behind(),d=r=>Math.abs(r.distance-this.distance);
+  // The kick at the one right behind is put away (2026-10-14, the user: 先把後踢隱藏起來): config.kick switches it back on.
+  skillTarget(){const L=this.besideAt(this.targetLane-1),R=this.besideAt(this.targetLane+1),B=this.config.kick?this.behind():null,d=r=>Math.abs(r.distance-this.distance);
     return [L&&{kind:'bump',side:0,r:L},R&&{kind:'bump',side:1,r:R},B&&{kind:'kick',r:B}].filter(Boolean).sort((a,b)=>d(a.r)-d(b.r))[0]??null;}
   // A bump or a kick is given away first, as a rival's ram is (2026-10-11, the user: 「應該要一樣預告一秒」): the press
   // spends the charge and starts it (this.swing), and it lands config.skillTime later (skillLand, from advance) if that

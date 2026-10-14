@@ -584,3 +584,38 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .ranch-crops .ui-btn{background:rgb(0 0 0 / .28);color:#fff;border:calc(2 * var(--u)) solid #fff;backdrop-filter:none}   /* 全部餵飽: white words in a white frame, no picture (2026-10-13, the user) */
 .wl-dots[hidden]{display:none}
 .looks-pay{flex-wrap:wrap}.looks-short{flex:0 0 100%;order:-1;margin:0;text-align:right;font-size:var(--ui-t-label);font-weight:700}.looks-pay .ui-btn:disabled{background:rgb(255 255 255 / .14);color:rgb(255 255 255 / .5)}   /* short of coins: the reason in red over the row, the button plain and off (red is never laid on green) */
+/* 全部餵飽 reads as a button (2026-10-14, the user: 做得更像 btn，高度跟其他一致): the system's green, as tall as the capsule beside it. */
+.ranch-crops .ui-btn{height:calc(var(--ui-h-sm) + 4 * var(--u));background:var(--ui-green);color:#000;border:0;font-weight:700;box-shadow:0 calc(3 * var(--u)) 0 rgb(0 0 0 / .28)}
+.ranch-crops{align-items:stretch}.ranch-crops .ui-btn{height:auto;min-height:0}   /* as tall as the capsule, whatever that is (measured 48 against 38 with a height of its own) */
+
+/* The ranch's tools, 2026-10-14: two green buttons (全部餵飽, 全部收成), under them one capsule: seed ▸ wheat / bait ▸ fish. */
+.ranch-crops{flex-direction:column;align-items:flex-end;gap:calc(8 * var(--u))}.ranch-btns{display:flex;gap:calc(6 * var(--u))}
+.ranch-crops .ui-btn{height:calc(38 * var(--u))}
+.ui-wallet.crop{padding-right:calc(12 * var(--u))}.ui-wallet.crop u{text-decoration:none;opacity:.5;margin:0 calc(5 * var(--u));font-size:.8em}
+.ui-wallet.crop button{all:unset;display:inline-flex;align-items:center;color:inherit;font:inherit}
+.ui-wallet.crop button.none b{font-size:0}.ui-wallet.crop button.none b::after{content:'＋';font-size:calc(19 * var(--u));display:inline-grid;place-items:center;width:calc(24 * var(--u));height:calc(24 * var(--u));border-radius:50%;background:var(--ui-green);color:#000}
+
+/* The two buttons sit at the bottom, over the hint, where the thumb is; flat, no shadow (2026-10-14, the user: 下面還有空間，按鈕不要有陰影). */
+.ranch-btns{position:absolute;z-index:3;left:var(--ui-margin);right:var(--ui-margin);bottom:calc(150 * var(--u) + env(safe-area-inset-bottom));display:flex;gap:var(--ui-gap)}
+.ranch-btns .ui-btn{flex:1;height:calc(46 * var(--u));background:var(--ui-green);color:#000;border:0;font-weight:700;font-size:var(--ui-t-body);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* The ranch's tools, later the same day: two columns over the nav, the hint above them. */
+.ranch-tools{position:absolute;z-index:3;left:var(--ui-margin);right:var(--ui-margin);bottom:calc(88 * var(--u) + env(safe-area-inset-bottom));display:flex;gap:var(--ui-gap)}
+.ranch-tools>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:calc(6 * var(--u))}
+.ranch-tools .ui-btn{height:calc(46 * var(--u));background:var(--ui-green);color:#000;border:0;font-weight:700;font-size:var(--ui-t-body);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.ranch-tools .stock{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:calc(4 * var(--u));height:calc(30 * var(--u));border-radius:999px;background:var(--ui-glass-dark);color:#fff;font:700 calc(15 * var(--u))/1 var(--ui-font);font-variant-numeric:tabular-nums}
+.ranch-tools .stock img{width:calc(20 * var(--u));height:calc(20 * var(--u));object-fit:contain}.ranch-tools .stock b+img{margin-left:calc(10 * var(--u))}
+.ranch-tools .stock b.none{font-size:0}.ranch-tools .stock b.none::after{content:'＋';font-size:calc(15 * var(--u));color:var(--ui-green)}
+.page-ranch .ranch-hint,.ranch-hint{bottom:calc(184 * var(--u) + env(safe-area-inset-bottom))}
+.page-ranch .ui-toast{bottom:calc(228 * var(--u) + env(safe-area-inset-bottom))}   /* over the hint, not on it */
+
+/* The counts go up under the tabs (2026-10-14, the user's sketch); the buttons stay at the bottom, the hint over them. */
+.ranch-tools>.ui-btn,.ranch-tools>.stock{flex:1;min-width:0}
+.ranch-tools.top{bottom:auto;top:calc(134 * var(--u))}
+.page-ranch .ranch-hint,.ranch-hint{bottom:calc(148 * var(--u) + env(safe-area-inset-bottom))}
+.page-ranch .ui-toast{bottom:calc(200 * var(--u) + env(safe-area-inset-bottom))}
+
+/* The picker says the day's weather and marks the buddies that suit it (2026-10-14). */
+.pick-sky{display:flex;align-items:center;justify-content:center;gap:calc(8 * var(--u));margin:0 0 calc(10 * var(--u));padding:calc(8 * var(--u)) calc(14 * var(--u));border-radius:999px;background:var(--ui-glass-dark);color:#fff;font-weight:700;font-size:calc(15 * var(--u))}.pick-sky svg{width:calc(20 * var(--u));height:calc(20 * var(--u));flex:none}
+.buddy-tray .ui-marker{position:relative}.ui-marker .sky-ok{position:absolute;right:calc(-3 * var(--u));bottom:calc(-3 * var(--u));width:calc(24 * var(--u));height:calc(24 * var(--u));border-radius:50%;background:var(--ui-green);color:#000;display:grid;place-items:center;border:calc(2 * var(--u)) solid #fff}.ui-marker .sky-ok svg{width:calc(14 * var(--u));height:calc(14 * var(--u))}
+.pickcard .fit.sky{color:var(--ui-green);font-weight:700}

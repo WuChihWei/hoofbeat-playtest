@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r691';
-import {applyLook,LOOK} from '../visual-style.js?v=r691';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r722';
+import {applyLook,LOOK} from '../visual-style.js?v=r722';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -51,7 +51,8 @@ export const RANCH={
   // model's hay shed is moved right, and its box there; edge / gate: the ground's sides and near end; look: what the
   // opening view looks at; pan: how far a drag may take that [x0, y0, x1] (the far end follows the last row of huts).
   // house: the rider's cottage [x of its middle, y of its porch's front, half its width, its depth with the porch].
-  plan:{house:[-20,1.6,2.95,6.3],yard:[-13,-13,13,0],field:-20,pens:[-1,2.5],pond:[20.5,-7,4.6,3.6],shed:8.5,shedBox:[18.6,.3,23.3,13.2],edge:27,gate:-36,road:1.8,look:[0,-5],pan:[-21,-27,21]},
+  plan:{store:[6.5,-9,.7],house:[-20,1.6,2.95,6.3],   // store: the shop's hut [x, its row's y, its size against a hut's: .7 leaves the yard its 32 spots], in the yard's near right corner, where the opening view shows it whole (2026-10-14)
+  yard:[-13,-13,13,0],field:-20,pens:[-1,2.5],pond:[20.5,-7,4.6,3.6],shed:8.5,shedBox:[18.6,.3,23.3,13.2],edge:27,gate:-36,road:1.8,look:[0,-5],pan:[-21,-27,21]},
   // The huts (models/ranch/modular_barn.py: one stall and two end walls, half as deep as the old barn): a hut a buddy,
   // on a plot. Plots: `per` across, `pitch` m apart, a row every `step` m further back; `order`: the columns in the
   // order they fill when nobody chooses (the middle first: the main house, with the cupola and the sign). box: a
@@ -129,7 +130,7 @@ export function layout({pens=[[2,2],[2,1]],huts=autoHuts(1)}={}){
   for(let y=P.gate+5,k=0;y<yard[1]-3;y+=4.2,k++)props.push(['stook',-3.5,y,k*1.7],['stook',3.5,y,k*2.3+1]);   // sheaves of wheat stood up along the road (2026-10-12, the user: 「路邊的綠籬你用小麥堆」; they were hedges)
   for(let k=props.length-1;k>=0;k--)if(props[k][0]!=='stook'&&hits(props[k][1],props[k][2],1.8,fences))props.splice(k,1);   // the field grows with the ranch: nothing is left lying on a plot (2026-10-12, the user: logs on the wheat)
   const beside=(h,k)=>huts.includes(h.plot+k)&&Math.floor((h.plot+k)/H.per)===Math.floor(h.plot/H.per);homes.forEach(h=>{h.left=!beside(h,-1);h.right=!beside(h,1);});   // left / right: the row stops there (an end wall)
-  const blocks=[...homes.map(h=>[h.x-H.half-(h.left?H.end:0),h.d+H.box[0],h.x+H.half+(h.right?H.end:0),h.d+H.box[1]]),P.shedBox,pondBox,houseBox,...fences,...props.map(([k,x,y])=>{const [w,d]=RANCH.plants[k]?.patch??[1.4,1.2];return [x-w,y-d,x+w,y+d];})];   // a prop takes about a 3 × 2.5 m patch, a plant its own
+  const SK=P.store[2]??1,storeBox=[P.store[0]-H.half*SK,P.store[1]+H.y+(H.box[0]-H.y)*SK,P.store[0]+H.half*SK,P.store[1]+H.y+(H.box[1]-H.y)*SK],blocks=[...homes.map(h=>[h.x-H.half-(h.left?H.end:0),h.d+H.box[0],h.x+H.half+(h.right?H.end:0),h.d+H.box[1]]),P.shedBox,pondBox,houseBox,...fences,...props.map(([k,x,y])=>{const [w,d]=RANCH.plants[k]?.patch??[1.4,1.2];return [x-w,y-d,x+w,y+d];}),storeBox];   // a prop takes about a 3 × 2.5 m patch, a plant its own; the shop's hut last (it stands in the yard: tools/check-ranch counts the ones before it)
   // Trees: a belt round the ranch, two deep, and a few inside its corners; none in a building, a pen or on the worn ground.
   let n=0;const rnd=()=>(n=(n*9301+49297)%233280)/233280,trees=[],[gx0,gy0,gx1,gy1]=ground;
   for(let ring=0;ring<2;ring++){const o=ring*6.5;
@@ -143,7 +144,7 @@ export function layout({pens=[[2,2],[2,1]],huts=autoHuts(1)}={}){
       const n=3+(rnd()<.5?1:0);for(let k=0;k<n;k++){const a=rnd()*6.28,d=1.6+rnd()*1.6;trees.push([px+Math.cos(a)*d,py+Math.sin(a)*d,4.2+rnd()*2.4]);}}}
   const kept=trees.filter(([x,y,h])=>!hits(x,y,h*.41+.3,blocks)&&!hits(x,y,h*.2,earth)&&!hits(x,y,h*.41+.6,[roadOut]));   // the road runs on out through the belt of trees (2026-10-12, the user: a road to the outside), no crown over it
   const open={at:P.look,dist:A.dist,az:A.az,el:A.el};
-  return {pens:fences,beds,field,yard,lawn:yard,ground,fence,slabs,house:P.house,site:{x:[yard[0],yard[2]],y:[yard[1],yard[3]]},blocks:[...blocks,...fence.map(([a,b,c,d])=>[Math.min(a,c)-.2,Math.min(b,d)-.2,Math.max(a,c)+.2,Math.max(b,d)+.2])],homes,rows,earth,trees:kept,props,open,back,up:U,pond:P.pond,
+  return {pens:fences,beds,field,yard,lawn:yard,ground,fence,slabs,house:P.house,store:P.store,storeBox,site:{x:[yard[0],yard[2]],y:[yard[1],yard[3]]},blocks:[...blocks,...fence.map(([a,b,c,d])=>[Math.min(a,c)-.2,Math.min(b,d)-.2,Math.max(a,c)+.2,Math.max(b,d)+.2])],homes,rows,earth,trees:kept,props,open,back,up:U,pond:P.pond,
     walks:homes.map(h=>[h.x-H.half-.3,h.d+H.y-.9,h.x+H.half+.3,h.d+H.y]),pan:[P.pan[0],P.pan[1],P.pan[2],Math.max(P.look[1]+10,back-4)],
     shots:{all:P.look,field:[(field[0]+field[2])/2+4,(field[1]+field[3])/2-2],huts:[0,Math.max(2,back-12)],pond:[px-3,py-4]}};
 }
@@ -188,6 +189,9 @@ function plush(src){
 // The buildings (models/ranch/build_buildings.py → Buildings.glb, 2026-10-12: modelled from the user's sheets, coloured by
 // material): a hut's roof is green, or yellow for HUT_YELLOW of them, picked by a hut's plot (the user: 「隨機不用那麼
 // 刻意，大部分綠色一點點黃」); the main house (the first) keeps the green. HUT_ROOFS: a look's colours by material name.
+// STORE: the shop on the ranch is a hut too (2026-10-14, the user: use the dorm, white or another colour, something simple that says store):
+// white walls, the coral roof, the cupola and its board, and a bubble with the money bag over it. Tapped: the shop (onStore).
+const STORE={Wood:'#f4f1ea',WoodLight:'#ffffff',WoodDark:'#cfc7b8',Roof:'#FF6B57',RoofDark:'#d9503e'};
 const HUT_YELLOW=.2,HUT_ROOFS=[null,{Roof:'#f2c230',RoofDark:'#cf9f1f'}];
 const SOLID=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,side:THREE.DoubleSide});   // both sides: the scene's faces were kept by whether they can be seen, whichever way they face (the roof's big panes face in)
 function merged(group){
@@ -259,7 +263,7 @@ export const crowded=(x,z,nx,nz,others,apart=RANCH.apart)=>others.some(o=>{const
 // onOffer(plot): an offered plot was tapped.
 // → {shot(name), field(grown), dispose}; resolves with the first frame drawn, and only then is the canvas put on the
 // page (nothing is seen being put together).
-export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=[],open,onMove,onDoor,onBed,onPond,onOffer,onHouse,shot='all'}={}){
+export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=[],open,onMove,onDoor,onBed,onPond,onOffer,onHouse,onStore,shot='all'}={}){
   const [assets]=await Promise.all([loadScene(),preloadRanchBuddies(buddies.map(b=>b.coat),buddies.map(b=>b.stage))]),L=layout({pens,huts}),S=RANCH.strip,F=RANCH.field;open??=L.beds.length;
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;r.domElement.setAttribute('aria-hidden','true');
@@ -290,7 +294,8 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
       HUT_ROOFS.forEach((paint,v)=>{const mine=L.homes.filter(h=>+yellow(h.plot)===v),one=mine.length&&built('HUT',paint);if(!one)return;
         const mesh=new THREE.InstancedMesh(one.geometry,SOLID,mine.length);mine.forEach((h,k)=>mesh.setMatrixAt(k,m4.makeTranslation(h.x,0,-(h.d+D.y))));mesh.castShadow=mesh.receiveShadow=true;mesh.frustumCulled=false;scene.add(mesh);});
       const top=L.homes[0]&&built('TOP');if(top){top.position.set(L.homes[0].x,0,-(L.homes[0].d+D.y));scene.add(top);}
-      const house=built('HOUSE');if(house){house.position.set(L.house[0],0,-L.house[1]);scene.add(house);}}}
+      const house=built('HOUSE');if(house){house.position.set(L.house[0],0,-L.house[1]);scene.add(house);}
+      for(const n of ['HUT','TOP']){const m=built(n,STORE);if(m){m.position.set(L.store[0],0,-(L.store[1]+D.y));m.scale.setScalar(L.store[2]??1);m.castShadow=m.receiveShadow=true;scene.add(m);}}}}
   // The pond (2026-10-12, the user: dug in, 凹下去): a hole in the lawn, a shore round it, a bank down to the water below the grass. The plots the next hut may go on (offers): pale slabs, tapped to choose.
   {const [px,py,pw,pd]=L.pond,W=POND.water,disc=(r,y,col,o=1)=>{const m=new THREE.Mesh(keep(new THREE.CircleGeometry(1,48).rotateX(-Math.PI/2)),keep(new THREE.MeshStandardMaterial({color:col,roughness:o<1?.25:1,transparent:o<1,opacity:o})));m.scale.set(pw*r,1,pd*r);m.position.copy(at(px,py)).setY(y);m.receiveShadow=true;scene.add(m);};
     // a band between two ellipses (r0 at height y0 → r1 at y1): the shore on the grass, the bank down to the water
@@ -306,12 +311,16 @@ export async function mountRanchView(host,{buddies=[],doors={},pens,huts,offers=
     float.position.copy(at(x,y)).setY(POND.water+.1);float.visible=false;scene.add(float);return {x,y,ring,float,g:null};});
   // A bite is said three ways (2026-10-12, the user: 「現在有魚不明顯」): the float jumps, a ring spreads on the water round
   // it again and again, and a white bubble with the fish in it stands over it (drawn over everything, so a tree never hides it).
-  const bite=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),tex=keep(new THREE.CanvasTexture(c));tex.colorSpace=THREE.SRGBColorSpace;
-    const draw=im=>{g.clearRect(0,0,128,128);g.fillStyle='#ffffff';g.beginPath();g.arc(64,58,50,0,6.2832);g.fill();g.beginPath();g.moveTo(48,100);g.lineTo(64,126);g.lineTo(80,100);g.fill();g.lineWidth=7;g.strokeStyle='#ffcc00';g.beginPath();g.arc(64,58,47,0,6.2832);g.stroke();if(im)g.drawImage(im,22,16,84,84);tex.needsUpdate=true;};
-    draw(null);const im=new Image();im.onload=()=>draw(im);im.src=new URL('../assets/stable/item_fish.webp',import.meta.url).href;return keep(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));})();
+  const bubble=(src,round)=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),tex=keep(new THREE.CanvasTexture(c));tex.colorSpace=THREE.SRGBColorSpace;
+    const draw=im=>{g.clearRect(0,0,128,128);g.fillStyle='#ffffff';g.beginPath();g.arc(64,58,50,0,6.2832);g.fill();g.beginPath();g.moveTo(48,100);g.lineTo(64,126);g.lineTo(80,100);g.fill();g.lineWidth=7;g.strokeStyle='#ffcc00';g.beginPath();g.arc(64,58,47,0,6.2832);g.stroke();if(typeof src==='function')src(g);else if(im){if(round){g.save();g.beginPath();g.arc(64,58,43,0,6.2832);g.clip();g.drawImage(im,21,15,86,86);g.restore();}else g.drawImage(im,33,27,62,62);   /* 62 of the bubble's 94 inside its rim: room round the picture (2026-10-14, the user: icon 小一點留 padding; it was 84) */}tex.needsUpdate=true;};
+    draw(null);if(typeof src!=='function'){const im=new Image();im.onload=()=>draw(im);im.src=new URL(src,import.meta.url).href;}return keep(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));},bite=bubble('../assets/stable/item_fish.webp');
+  // The shop's sign is the user's cart picture (2026-10-14: references/shop-cart.png, its magenta keyed out → assets/ui/shop_cart.webp).
+  // What a building is, said over it (2026-10-14, the user: a bubble on top that says you can buy here; the rider's house does not read as hers): the cart over the shop, her face over her house.
+  for(const [mat,x,y,h] of [[bubble('../assets/ui/shop_cart.webp'),L.store[0],L.store[1]+RANCH.huts.y+2*(L.store[2]??1),8.9*(L.store[2]??1)],[bubble('../assets/ui/rider_0.webp',true),L.house[0],L.house[1]+3,7.4]]){const sp=new THREE.Sprite(mat);sp.scale.setScalar(3);sp.renderOrder=20;sp.position.copy(at(x,y)).setY(h);scene.add(sp);}
   for(const c of casts){c.tag=new THREE.Sprite(bite);c.tag.scale.setScalar(2.4);c.tag.renderOrder=20;c.tag.visible=false;scene.add(c.tag);
     c.wave=new THREE.Mesh(c.ring.geometry,keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false})));c.wave.position.copy(c.ring.position).setY(POND.water+.017);scene.add(c.wave);}
-  function pond(grown){casts.forEach((c,i)=>{c.g=grown[i]??null;const on=c.g!=null&&c.g>=1;c.float.visible=c.g!=null;c.ring.material.opacity=c.g==null?.75:on?1:.3;c.tag.visible=on;c.wave.visible=on;});}
+  function pond(grown){if(!grown){for(const c of casts)c.float.visible=c.ring.visible=c.tag.visible=c.wave.visible=false;return;}   /* null: the pond is put away, nothing is drawn on it (home.js) */
+    casts.forEach((c,i)=>{c.g=grown[i]??null;const on=c.g!=null&&c.g>=1;c.float.visible=c.g!=null;c.ring.material.opacity=c.g==null?.75:on?1:.3;c.tag.visible=on;c.wave.visible=on;});}
   const slabs=offers.map(p=>{const [x,d]=plotAt(p),m=new THREE.Mesh(keep(new THREE.BoxGeometry(4.3,.3,4)),keep(new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.6})));m.position.copy(at(x,d+RANCH.huts.y+2)).setY(.2);scene.add(m);return {plot:p,m};});
   const isOpen=k=>set[k]??!herd.some(b=>b.stall===k),swing=k=>{if(hung[k])hung[k].rotation.y=isOpen(k)?D.open:0;};
   // Made here, one mesh of plain boxes coloured on their vertices: the beds (a frame and its soil; a bed not opened is
@@ -503,7 +512,8 @@ dz=-s.y-b.pos.z,d=Math.hypot(dx,dz),want=Math.atan2(-dx,-dz);   // a buddy faces
         if(b){b.stall=null;delete set[door];b.under.visible=true;b.path=[];b.via=[cx+D.door,d+D.y-D.leave];swing(door);onMove?.(b.id,{at:[+(cx+D.door).toFixed(2),+(d+D.y-D.leave).toFixed(2)]});}
         else{set[door]=!isOpen(door);swing(door);onDoor?.(door,set[door]);}
         return;}}
-    if(onHouse&&off(e,hit.copy(at(L.house[0],L.house[1]+2)).setY(2))<50){onHouse();return;}   // the rider's house, tapped: her page
+    if(onHouse&&off(e,hit.copy(at(L.house[0],L.house[1]+2)).setY(2))<50){onHouse();return;}
+    if(onStore&&off(e,hit.copy(at(L.store[0],L.store[1]+RANCH.huts.y+2)).setY(2))<50){onStore();return;}   /* the shop's hut, tapped */   // the rider's house, tapped: her page
     let near;   // r524–r530: this was declared by the door's tap, which went with the doors; without it every tap below threw (no sowing, no casting)
     {let pick=null,near=70;for(const o of slabs){const d=off(e,o.m.position);if(d<near){near=d;pick=o;}}if(pick){onOffer?.(pick.plot);return;}}
     if(onPond){let k=-1;near=56;casts.forEach((c,i)=>{const d=off(e,hit.copy(at(c.x,c.y)).setY(POND.water));if(d<near){near=d;k=i;}});if(k>=0){onPond(k,e.clientX,e.clientY);return;}}

@@ -780,3 +780,62 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 #ball-ring.dead i{box-shadow:0 0 0 calc(3 * var(--u)) rgb(255 59 48 / .4)}
 /* red (ui-v2 --ui-red): the pop, and a refusal on the start card (cannot raise: hungry, or short of coins) */
 #slice-feedback.red{color:var(--ui-red)}#slice-cover .cover-why.no{color:var(--ui-red)!important}
+
+
+/* The track, 2026-10-14 (the user: 黃金圈變寬 10%，紅色會爆的地方改成向內的鋸齒尖狀; dev page _ring.html): the yellow band is 79.25–94% of the
+   ring (was 80.5–93), the pop is red teeth pointing in, their tips at 94% where the ball pops; drawn 9% past the ring. */
+#ball-ring i{inset:-9%;border:0;border-radius:0;box-shadow:none;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%22-109 -109 218 218%22%3E%3Ccircle r=%2292%22 fill=%22none%22 stroke=%22%23FFCC00%22 stroke-width=%2225.5%22/%3E%3Cpath fill=%22%23FF6B57%22 fill-rule=%22evenodd%22 d=%22M-109,0a109,109 0 1,0 218,0a109,109 0 1,0 -218,0ZM88.0,0.0L102.9,14.8L84.4,24.8L94.6,43.2L74.0,47.6L78.6,68.1L57.6,66.5L56.2,87.5L36.6,80.0L29.3,99.8L12.5,87.1L0.0,104.0L-12.5,87.1L-29.3,99.8L-36.6,80.0L-56.2,87.5L-57.6,66.5L-78.6,68.1L-74.0,47.6L-94.6,43.2L-84.4,24.8L-102.9,14.8L-88.0,0.0L-102.9,-14.8L-84.4,-24.8L-94.6,-43.2L-74.0,-47.6L-78.6,-68.1L-57.6,-66.5L-56.2,-87.5L-36.6,-80.0L-29.3,-99.8L-12.5,-87.1L-0.0,-104.0L12.5,-87.1L29.3,-99.8L36.6,-80.0L56.2,-87.5L57.6,-66.5L78.6,-68.1L74.0,-47.6L94.6,-43.2L84.4,-24.8L102.9,-14.8Z%22/%3E%3C/svg%3E") center/100% 100% no-repeat}   /* later the same day (the user: 尖刺加大，壓在黃圈上不要間隔): 22 teeth, tips at 88%, the yellow runs on under them */
+#ball-ring.max i{border-width:0}#ball-ring.dead i{box-shadow:none}#ball-ring i::before{top:20.8%}
+/* Behind (rank 3 or worse) the band that scores reaches further in (slice-game goodAt): it was drawn as a white ring over the
+   yellow (2026-10-14, the user: 為什麼這裡白圈); now the yellow itself is wider, from 72%. */
+#ball-ring.wide span{background:none}#ball-ring.wide i{background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%22-109 -109 218 218%22%3E%3Ccircle r=%2288.4%22 fill=%22none%22 stroke=%22%23FFCC00%22 stroke-width=%2232.8%22/%3E%3Cpath fill=%22%23FF6B57%22 fill-rule=%22evenodd%22 d=%22M-109,0a109,109 0 1,0 218,0a109,109 0 1,0 -218,0ZM88.0,0.0L102.9,14.8L84.4,24.8L94.6,43.2L74.0,47.6L78.6,68.1L57.6,66.5L56.2,87.5L36.6,80.0L29.3,99.8L12.5,87.1L0.0,104.0L-12.5,87.1L-29.3,99.8L-36.6,80.0L-56.2,87.5L-57.6,66.5L-78.6,68.1L-74.0,47.6L-94.6,43.2L-84.4,24.8L-102.9,14.8L-88.0,0.0L-102.9,-14.8L-84.4,-24.8L-94.6,-43.2L-74.0,-47.6L-78.6,-68.1L-57.6,-66.5L-56.2,-87.5L-36.6,-80.0L-29.3,-99.8L-12.5,-87.1L-0.0,-104.0L12.5,-87.1L29.3,-99.8L36.6,-80.0L56.2,-87.5L57.6,-66.5L78.6,-68.1L74.0,-47.6L94.6,-43.2L84.4,-24.8L102.9,-14.8Z%22/%3E%3C/svg%3E")}   /* one drawing, so the wider band is one ring (r694 drew it as a second, brighter ring inside) */
+/* The track is solid (2026-10-14, the user: 黃範圍延伸到紅刺下面，現在為什麼有黑陰影): at .55 the ring's dark disc showed through the yellow
+   inside it and not through the part drawn past its edge, so the band looked like two. */
+#ball-ring i,#ball-ring.hot i{opacity:1;filter:none}
+
+/* The ticket says how many run and how many places pay (2026-10-14, the first-look reviews: nobody could weigh the stake). */
+.cover-field{margin:0 0 calc(8 * var(--u));text-align:center;color:var(--ui-text-2);font-size:calc(13 * var(--u))}
+
+/* A stage's new control is pointed at by a word until it is first used (2026-10-14): lanes and the fist on stage 2, the jump and
+   the sprint on stage 3. The ring itself is drawn the same on every stage: its arrows stand outside it now. */
+.tip{display:none;position:absolute;z-index:8;left:50%;bottom:118%;translate:-50% 0;white-space:nowrap;border-radius:999px;background:#fff;color:#000;font:700 calc(13 * var(--u))/1 var(--ui-font);padding:calc(6 * var(--u)) calc(11 * var(--u));pointer-events:none;font-style:normal;animation:ball-zone .5s ease-in-out infinite alternate}
+.hint-lane .tip-lane,.hint-skill .tip-skill,.hint-sprint .tip-sprint{display:block}.hint-jump:not(.hint-lane) .tip-jump{display:block}
+#ball-ring.held .tip{opacity:0}
+#slice-skill .tip,.charge-btn .tip{left:auto;right:0;translate:0 0;bottom:132%}.charge-btn{overflow:visible}
+#ball-ring::before{left:-13%;color:#fff;opacity:1;text-shadow:0 1px 3px rgb(0 0 0 / .5)}#ball-ring::after{left:113%;color:#fff;opacity:1;text-shadow:0 1px 3px rgb(0 0 0 / .5)}
+#ball-ring i::before{top:-4%;color:#fff;opacity:1;text-shadow:0 1px 3px rgb(0 0 0 / .5)}
+/* inside the ring an older rule (#ball-ring small) styles and hides every small: the tips are set again over it */
+#ball-ring small.tip{display:none;left:50%;top:auto;bottom:126%;translate:-50% 0;background:#fff;color:#000;padding:calc(6 * var(--u)) calc(11 * var(--u))}
+.hint-lane #ball-ring small.tip-lane{display:block}.hint-jump:not(.hint-lane) #ball-ring small.tip-jump{display:block}
+#slice-skill .tip{bottom:146%}   /* over the three charge pips, not on them */
+#ball-ring small.tip-jump{left:34%}   /* clear of the sprint button on its right */
+
+/* The ticket shows the wallet beside the fee, and the raise says how much is missing (2026-10-14, two more first-look reviews: nobody raised). */
+.cover-stake>span{flex-wrap:wrap}.cover-have{flex-basis:100%;font-size:calc(12 * var(--u));color:var(--ui-text-2)}
+
+/* Rain and snow over the race (2026-10-14, the user: 用模擬的雨滴; five first-look reviewers: it said rain under a blue sky): a grey
+   wash and two layers of falling drops (flakes), drawn over the scene and under the controls. Still for reduced motion. */
+#slice-sky{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;background:linear-gradient(rgb(52 70 98 / .34),rgb(52 70 98 / .1) 70%)}
+#slice-sky[data-sky=snow]{background:linear-gradient(rgb(200 214 232 / .38),rgb(200 214 232 / .12) 70%)}
+#slice-sky::before,#slice-sky::after{content:'';position:absolute;inset:-240px 0 0 0;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22240%22 viewBox=%220 0 160 240%22%3E%3Cg stroke=%22%23fff%22 stroke-opacity=%22.55%22 stroke-width=%221.6%22 stroke-linecap=%22round%22%3E%3Cline x1=%2268%22 y1=%2277%22 x2=%2263%22 y2=%2299%22/%3E%3Cline x1=%2234%22 y1=%22184%22 x2=%2229%22 y2=%22206%22/%3E%3Cline x1=%22109%22 y1=%22122%22 x2=%22104%22 y2=%22144%22/%3E%3Cline x1=%2247%22 y1=%2223%22 x2=%2242%22 y2=%2245%22/%3E%3Cline x1=%2225%22 y1=%225%22 x2=%2220%22 y2=%2227%22/%3E%3Cline x1=%22110%22 y1=%22140%22 x2=%22105%22 y2=%22162%22/%3E%3Cline x1=%2282%22 y1=%22195%22 x2=%2277%22 y2=%22217%22/%3E%3Cline x1=%2223%22 y1=%2256%22 x2=%2218%22 y2=%2278%22/%3E%3Cline x1=%22141%22 y1=%22137%22 x2=%22136%22 y2=%22159%22/%3E%3C/g%3E%3C/svg%3E") 0 0/160px 240px;animation:sky-fall .5s linear infinite}
+#slice-sky::after{background-size:110px 165px;opacity:.6;animation-duration:.72s}
+#slice-sky[data-sky=snow]::before,#slice-sky[data-sky=snow]::after{background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22240%22 viewBox=%220 0 160 240%22%3E%3Cg fill=%22%23fff%22 fill-opacity=%22.85%22%3E%3Ccircle cx=%2298%22 cy=%2276%22 r=%221.6%22/%3E%3Ccircle cx=%2233%22 cy=%2273%22 r=%221.6%22/%3E%3Ccircle cx=%2212%22 cy=%22218%22 r=%223%22/%3E%3Ccircle cx=%2272%22 cy=%22210%22 r=%222.2%22/%3E%3Ccircle cx=%2255%22 cy=%2248%22 r=%222.2%22/%3E%3Ccircle cx=%2280%22 cy=%22166%22 r=%223%22/%3E%3Ccircle cx=%22101%22 cy=%2228%22 r=%223%22/%3E%3Ccircle cx=%2292%22 cy=%22177%22 r=%222.2%22/%3E%3Ccircle cx=%22135%22 cy=%2269%22 r=%221.6%22/%3E%3Ccircle cx=%2269%22 cy=%22127%22 r=%222.2%22/%3E%3Ccircle cx=%2228%22 cy=%22215%22 r=%223%22/%3E%3C/g%3E%3C/svg%3E");animation-duration:3.2s}#slice-sky[data-sky=snow]::after{animation-duration:4.6s}
+@keyframes sky-fall{to{transform:translate3d(0,var(--fall,240px),0)}}#slice-sky::after{--fall:165px}   /* each layer falls by one tile of its own, so the loop has no seam */
+@media (prefers-reduced-motion:reduce){#slice-sky::before,#slice-sky::after{animation:none}}
+/* A run that won nothing has no laurels; the line under the time says what happened in it. */
+.res-banner.plain img{visibility:hidden}
+.res-how{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(4 * var(--u)) calc(10 * var(--u));margin:calc(6 * var(--u)) 0 0;color:#fff;font-size:calc(13 * var(--u));font-weight:600;text-shadow:0 1px 3px rgb(0 0 0 / .45)}
+.cover-have span{display:inline!important}   /* 你有 200 on one line (.cover-stake span is a flex box) */
+
+/* Who runs, each with their tier (2026-10-14): a row under the pot, highest first, the player's own picked out. */
+.cover-who{list-style:none;margin:0 0 calc(10 * var(--u));padding:0;display:flex;justify-content:center;flex-wrap:wrap;gap:calc(6 * var(--u))}
+.cover-who li{display:flex;flex-direction:column;align-items:center;gap:calc(2 * var(--u));width:calc(54 * var(--u));font-size:calc(11 * var(--u));color:var(--ui-text-2)}
+.cover-who img{width:calc(34 * var(--u));height:calc(34 * var(--u));object-fit:contain}.cover-who span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cover-who li.you span{color:var(--ui-yellow);font-weight:700}
+/* the five shields are drawn at one scale on one band of rows (wings and the crown reach out of it): one height, their own widths */
+.cover-who li{width:auto;min-width:calc(48 * var(--u))}.cover-who img{width:auto;height:calc(40 * var(--u))}
+
+/* The tier's stars as a number under the shield (2026-10-14: the stars were too small to count); the result's tier line. */
+.cover-who li{position:relative}.cover-who .tn{font:800 calc(11 * var(--u))/1 var(--ui-font);color:var(--ui-yellow);margin-top:calc(-2 * var(--u))}
+.res-tier{display:flex;align-items:center;justify-content:center;gap:calc(6 * var(--u));margin:calc(4 * var(--u)) 0 0;color:#fff;font-size:calc(13 * var(--u));font-weight:700;text-shadow:0 1px 3px rgb(0 0 0 / .45)}.res-tier img{height:calc(26 * var(--u));width:auto}
+.cover-ticket .pot-base{display:block;font-style:normal;font-size:calc(11 * var(--u));color:#7a6a4a;margin-top:calc(2 * var(--u))}

@@ -5,9 +5,9 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice} from './slice-app.js?v=r691';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r691';
-import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r691';
+import {startSlice} from './slice-app.js?v=r722';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r722';
+import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r722';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
@@ -23,17 +23,17 @@ const step=(name,k)=>()=>{window.zbMark?.('loaded: '+name);dispatchEvent(new Cus
 setTimeout(()=>{window.zbMark?.('preload starts');dispatchEvent(new CustomEvent('zb-load',{detail:.15}));
   preloadPresentation(false).catch(()=>{}).then(step('race models',.7)).then(()=>{warmCity(profile.city);step('city pictures',1)();dispatchEvent(new Event('zb-ready'));barn.src='assets/stable/barn-plate.webp';
     return preloadRanch(owned().slice(0,14).map(h=>h.coat),owned().slice(0,14).map(lvOf));}).catch(()=>{}).then(step('ranch models',1)).then(()=>preloadStable()).catch(()=>{}).then(step('stable models',1)).then(()=>preloadPresentation()).catch(()=>{}).then(step('rivals\' light models',1));},50);
-import {lang,setLang,translate} from '../i18n.js?v=r691';
-import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r691';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r691';
-import {mountStableView,preloadStable} from './stable-view.js?v=r691';
-import {mountRiderView} from './rider-view.js?v=r691';
-import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r691';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll} from '../farm.mjs?v=r691';
-import {cityPictures} from '../approved-environment.js?v=r691';
-import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r691';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r691';
-import {LEVELS,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT,rivalPace} from './progress.mjs?v=r691';
+import {lang,setLang,translate} from '../i18n.js?v=r722';
+import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r722';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r722';
+import {mountStableView,preloadStable} from './stable-view.js?v=r722';
+import {mountRiderView} from './rider-view.js?v=r722';
+import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r722';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll} from '../farm.mjs?v=r722';
+import {cityPictures} from '../approved-environment.js?v=r722';
+import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r722';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r722';
+import {LEVELS,SHOWN,STAGES,TIERS,TIER_AT,tierOf,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,DOUBLE,rivalAge,POT,rivalPace} from './progress.mjs?v=r722';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -43,7 +43,8 @@ try{Object.keys(localStorage).filter(k=>/^hoofbeat\.(solo\.v[123]$|ghost\.v[123]
 // out and every stage open. The wallets read as ∞ and are left alone (nothing is paid in or out), so going back to
 // 一般使用者 finds them as they were; what was bought or won meanwhile stays.
 const ROLE='hoofbeat.role.v1',admin=()=>store.get(ROLE)==='admin';
-export const readCoins=()=>admin()?Infinity:+store.get(WALLET)||0;
+// A new player's wallet starts with START_COINS (2026-10-14: with a star at 10 coins, one lost race on stage 2 left 53, under stage 3's fee of 60: no stake to play for; 100 for an hour, then 200, the user: enough to raise on the first two stakes, not on a third after two losses).
+export const START_COINS=200,readCoins=()=>admin()?Infinity:store.get(WALLET)==null?START_COINS:+store.get(WALLET)||0;
 export const addCoins=n=>admin()||store.set(WALLET,String(readCoins()+n));
 const spendCoins=n=>readCoins()>=n&&(addCoins(-n),true);
 
@@ -109,6 +110,9 @@ const horseById=id=>ROSTER.find(h=>h.id===id)||ROSTER[0];
 // A buddy's own name (profile.names {id: name}), asked once as it arrives (PAGES.stable: newBuddy).
 const cleanName=n=>String(n??'').replace(/[<>&"'`]/g,'').trim().slice(0,12);   // names go into the pages' markup as they are
 for(const h of ROSTER){const n=cleanName(profile.names?.[h.id]);if(n)h.name=n;}
+// The sky of a stage's next run (2026-10-14, after three first-look reviews: the weather was told on the ticket, after the buddy was picked):
+// drawn when the picker opens, kept until that run is finished, handed to the race (startSlice sky).
+const skyFor={},skyOf=city=>skyFor[city]??=(w=>w[Math.floor(Math.random()*w.length)])(LEVELS[levelOf(city)]?.weather||['sun']),SKY_NEED={rain:'water',snow:'snow'},SKY_TEXT={rain:'今天下雨，路上水窪多',snow:'今天下雪，路上有雪堆'};
 let newBuddy=null;   // a buddy just given or bought, this session: the next page is the dorm, where it walks in and is named
 // Progress (progress.mjs): stars per level, the horses owned, runs, the daily bonus. The relay team and the solo horse
 // are always horses the player owns.
@@ -134,8 +138,10 @@ function applyLook(h=horseById(profile.horse),stage=lvOf(h)){Object.assign(PLAYE
 // user: not sold in the shop, a setting of the animal). profile.manes = {buddy id: style id}; none: the classic one.
 const maneOf=id=>HAIR.some(x=>x.id===profile.manes?.[id])&&maneOpen(prog,profile.manes[id])?profile.manes[id]:'classic';
 // What clearing a stage gives (progress.mjs: a buddy by its price's `stage`, or a PERK), as words; '' when nothing.
-const stageGift=n=>{const b=Object.entries(HORSE_PRICE).find(([,c])=>c.stage===n);const g=STAGE_GIFT[n];if(g)return g.items?'種子和魚餌':`${g.coins} 金幣`;if(n===TROPHY_STAGE)return '冠軍獎盃';if(n===PERKS.rider.stage)return '騎士服裝顏色';return b?horseById(+b[0]).name:!Object.values(PERKS).some(x=>x.stage===n)?'':MVP.perks?(PERKS.mane.stage===n?HAIR.find(x=>x.id===PERKS.mane.id).name:'騎士服裝顏色'):`${PERK_COINS} 金幣`;};
+const stageGift=n=>{const b=Object.entries(HORSE_PRICE).find(([,c])=>c.stage===n);const g=STAGE_GIFT[n];if(g)return g.items?'種子和魚':`${g.coins} 金幣`;if(n===TROPHY_STAGE)return '冠軍獎盃';if(n===PERKS.rider.stage)return '騎士服裝顏色';return b?horseById(+b[0]).name:!Object.values(PERKS).some(x=>x.stage===n)?'':MVP.perks?(PERKS.mane.stage===n?HAIR.find(x=>x.id===PERKS.mane.id).name:'騎士服裝顏色'):`${PERK_COINS} 金幣`;};
 let care=readCare({getItem:store.get},ROSTER.map(h=>h.id)),bag=readItems({getItem:store.get});
+// Fishing is put away (2026-10-14): bait already in the bag becomes the fish it would have caught.
+if(bag.bait>0){bag={...bag,fish:(bag.fish||0)+bag.bait*FARM.yield,bait:0};saveCare({setItem:store.set},care,bag);}
 let justRan=null;   // {id, at, won}: the buddy of the last solo run, this session
 if(/[?&]debug\b/.test(location.search))window.__home={ran:(id,won=true)=>{justRan={id,at:Date.now(),won};}};   // dev: as if that buddy had just run
 // While you were away (SPEC 11 P2): back on the ranch after AWAY ms, its line first says the one thing that waits for
@@ -162,16 +168,16 @@ const bestOn=city=>{const v=Object.entries(readSolo()).filter(([k])=>k.startsWit
 // for every buddy (STAT_FULL): bright to what it uses now, dim to its own top.
 const lvOf=h=>level(care[h.id]??{xp:0}),lv=h=>MVP.levels?`${AGE[lvOf(h)-1]} LV ${lvOf(h)}`:'',sub=h=>[MVP.types?TYPE_NAME[h.type]:'',lv(h)].filter(Boolean).join(' · ');   // MVP: no level, no type label
 const STAT_NAME={Speed:'速度',Accel:'加速',Stamina:'體力'};
-const PERK_TEXT={water:'不怕水窪：踩到水不會變慢',tough:'皮粗肉厚：被撞恢復快一倍',quick:'出手快：撞人更快打到',snow:'不怕雪：踩到雪不會變慢',charge:'集氣快：能量球漲得更快',clean:'腳步穩：踩到便便不會滑'},perksOf=h=>BUDDY_PERK[COATS[h.coat]?.species||'horse']||[],perkOf=h=>perksOf(h).slice(0,lvOf(h)-1);   // the first opens at LV 2, the second at LV 3
+const PERK_TEXT={water:'不怕水窪：踩到水不會變慢',tough:'皮粗肉厚：被撞恢復快一倍',quick:'出手快：撞人更快打到',snow:'不怕雪：踩到雪不會變慢',charge:'集氣快：能量球漲得更快',clean:'腳步穩：踩到便便不會滑'},perksOf=h=>BUDDY_PERK[COATS[h.coat]?.species||'horse']||[],perkOf=h=>perksOf(h).slice(0,lvOf(h));   // the first is there from LV 1 (2026-10-14: a buddy given for the rain has to be good in the rain the day it comes), the second from LV 2 (they were LV 2 and LV 3)
 // The three ages (approved-assets GROW) and what the next one brings, for the buddy's cards and the level-up.
 const AGE=['幼年','成年','成熟'],perkName=p=>PERK_TEXT[p].split('：')[0],pips=l=>`<i class="lv-pips" role="img" aria-label="第 ${l} 級，共 ${LV_TOP} 級">${AGE.map((_,k)=>`<i class="${k<l?'on':''}"></i>`).join('')}</i>`,RUN_XP=12;   // RUN_XP: what a run gives, about (stable-care SOLO_XP and the perfect hits)
-const nextUp=h=>{const cr=care[h.id]??{xp:0},l=level(cr),p=perksOf(h)[l-1];return l>=LV_TOP?'已經長到最大了':`再 ${Math.ceil(lvLeft(cr)/RUN_XP)} 場長成${AGE[l]}${p?`，解鎖「${perkName(p)}」`:''}`;};
-const grewCard=h=>{const l=lvOf(h),p=perksOf(h)[l-2];return {img:buddyImg(h),text:`${h.name} 長成${AGE[l-1]}了！`,name:h.name,tag:'長大了',sub:[`速度 +${Math.round((l-1)*LV_SPEED*100)}%`,p&&perkName(p)].filter(Boolean).join(' · '),what:`${p?`新特長　${PERK_TEXT[p]}。`:''}到宿舍看牠的新樣子。`};};
+const nextUp=h=>{const cr=care[h.id]??{xp:0},l=level(cr),p=perksOf(h)[l];return l>=LV_TOP?'已經長到最大了':`再 ${Math.ceil(lvLeft(cr)/RUN_XP)} 場長成${AGE[l]}${p?`，解鎖「${perkName(p)}」`:''}`;};
+const grewCard=h=>{const l=lvOf(h),p=perksOf(h)[l-1];return {img:buddyImg(h),text:`${h.name} 長成${AGE[l-1]}了！`,name:h.name,tag:'長大了',sub:[`速度 +${Math.round((l-1)*LV_SPEED*100)}%`,p&&perkName(p)].filter(Boolean).join(' · '),what:`${p?`新特長　${PERK_TEXT[p]}。`:''}到宿舍看牠的新樣子。`};};
 // What seeds and bait are for, said wherever they are given (a stage, the day's gift).
-const WHAT_SEEDS='種子種在麥田，魚餌放進魚池。收成的小麥和魚用來餵夥伴，餵了會成長。';
+const WHAT_SEEDS='種子種在麥田，長成小麥。小麥和魚用來餵夥伴，餵了會成長。魚在商店買。';
 // A buddy whole, at a stage (tools/grow-photos.sh), and its growth card: the three ages side by side, each with what it has.
 const growImg=(h,l)=>`assets/ui/grow/${h.coat}_${l}.webp?v=1`;
-const growCard=h=>`<div class="grow-ages">${AGE.map((a,k)=>{const l=k+1,p=perksOf(h)[k-1],now=lvOf(h)===l;return `<div class="${now?'now':lvOf(h)>l?'done':'later'}"><img src="${growImg(h,l)}" alt=""><b>${a}</b><small>LV ${l}${now?' · 現在':''}</small><span>${l>1?`速度 +${Math.round(k*LV_SPEED*100)}%`:'基本速度'}</span><span>${p?PERK_TEXT[p]:l===1?'還沒有特長':''}</span></div>`;}).join('')}</div>`;
+const growCard=h=>`<div class="grow-ages">${AGE.map((a,k)=>{const l=k+1,p=perksOf(h)[k],now=lvOf(h)===l;return `<div class="${now?'now':lvOf(h)>l?'done':'later'}"><img src="${growImg(h,l)}" alt=""><b>${a}</b><small>LV ${l}${now?' · 現在':''}</small><span>${l>1?`速度 +${Math.round(k*LV_SPEED*100)}%`:'基本速度'}</span><span>${p?PERK_TEXT[p]:''}</span></div>`;}).join('')}</div>`;
 // The wardrobe (2026-10-13, the user: 建立花錢的地方): a colour or a pattern of a part is bought once in the shop (PAGES.looks)
 // and then owned (profile.wardrobe ['<material>:<colour or pattern id>']); a part's first colour and no pattern are everyone's.
 // The dorm and the house only list what is owned; wearing it costs nothing. Colours and patterns are bought apart and worn
@@ -215,7 +221,7 @@ const readPurses=()=>({...PURSE_START,...readJson(PURSES)}),rivalOf=id=>SLICE_RI
 function payRivals(field,fee,pot){const p=readPurses(),of=field.length+1,made={};for(const f of field){made[f.id]=purseWon(pot,f.rank,of)-fee;p[f.id]=Math.max(0,(p[f.id]??0)+made[f.id]);}store.set(PURSES,JSON.stringify(p));return made;}
 // only: the ids to list (a race's field), else everyone. made: {id: coins made just now}, mine: what the player made.
 function richList(only=null,made=null,mine=null){const p=readPurses(),me={name:profile.name||'你',coins:admin()?0:readCoins(),you:true,coat:horseById(profile.solo??profile.horse).coat,made:mine};
-  const all=[...SLICE_RIVALS.filter(r=>!only||only.includes(r.id)).map(r=>({name:r.name,coins:p[r.id]??0,coat:r.coats[0],made:made?.[r.id]??null})),me].sort((a,b)=>b.coins-a.coins);return {all,rank:all.indexOf(me)+1,next:all[all.indexOf(me)-1]||null};}
+  const all=[...SLICE_RIVALS.filter(r=>!only||only.includes(r.id)).map(r=>({id:r.id,name:r.name,coins:p[r.id]??0,coat:r.coats[0],made:made?.[r.id]??null})),me].sort((a,b)=>b.coins-a.coins);return {all,rank:all.indexOf(me)+1,next:all[all.indexOf(me)-1]||null};}
 function richSheet(el){const {all,rank,next}=richList(),n=v=>v.toLocaleString('en-US');
   el.insertAdjacentHTML('beforeend',`<div class="ui-scrim"></div><section class="ui-modal ui-panel deep rich" role="dialog" aria-modal="true" aria-label="誰有多少錢"><header><h2>誰有多少錢</h2><button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>
     <p class="rich-next">${next?`<span>你第 ${rank} 名，再</span><b>${n(next.coins-readCoins()+1)}</b>${coin}<span>超過 ${esc(next.name)}</span>`:'你是第 1 名！'}</p>
@@ -223,16 +229,17 @@ function richSheet(el){const {all,rank,next}=richList(),n=v=>v.toLocaleString('e
   const sheet=el.lastElementChild,scrim=sheet.previousElementSibling,close=()=>{sheet.remove();scrim.remove();};scrim.onclick=close;sheet.querySelector('[data-close]').onclick=close;}
 const LAST_RANK='hoofbeat.lastrank.v1';   // {city: the place of the last solo run there}: a reason to double (slice-app stake)
 const tipFor=(r,f)=>r.pops>1?'別壓過頭：爆掉會絆一下':r.perfect<3?'快到頂再放手：極限衝得更久':r.coins<4?'路上的金幣多吃一點':f.runStars<3?'蓄滿就衝刺，直線最划算':'已經很強了：換一關試試';
-function rewards(f,city,seconds){if(f.gifts.length)newBuddy=f.gifts.at(-1);return rewards0(f,city,seconds);}
+function rewards(f,city,seconds){if(f.gifts.length)newBuddy=f.gifts.at(-1);const out=rewards0(f,city,seconds);if(f.gifts.length&&out.next)out.next={...out.next,label:`看新夥伴 ${horseById(newBuddy).name}`};return out;}   // the next page is the dormitory, where it walks in: the button said 下一關 and went there (2026-10-14, the first-look reviews)
 function rewards0(f,city,seconds){
   const t=seconds!=null&&nextStarTime(city,f.stars);
-  return {extra:f.coins,stars:f.stars,runStars:f.runStars??null,newStars:f.newStars,starHint:t?`再快 ${(seconds-t).toFixed(1)} 秒拿第 ${f.stars+1} 顆星`:'',starGap:t?Math.min(1,t/seconds):null,   // how close the run came to the next star, 0–1 (the bar)
+  const pts=f.p?.points??0,tk=tierOf(pts),tierLine=f.points?(f.tierUp!=null?{img:TIERS[f.tierUp].img,text:`升上${TIERS[f.tierUp].name}！`}:{img:TIERS[tk].img,text:tk<TIERS.length-1?`牌位積分 +${f.points}，再 ${TIER_AT[tk+1]-pts} 分升${TIERS[tk+1].name}`:`牌位積分 +${f.points}`}):null;   // the tier: what this run added, how far the next one is (2026-10-14)
+  return {tierLine,extra:f.coins,stars:f.stars,runStars:f.runStars??null,newStars:f.newStars,starHint:t?`再快 ${(seconds-t).toFixed(1)} 秒拿第 ${f.stars+1} 顆星`:'',starGap:t?Math.min(1,t/seconds):null,   // how close the run came to the next star, 0–1 (the bar)
     missions:f.missions,missionCoins:f.missionCoins,daily:f.daily,next:f.opened[0]?{city:f.opened[0],label:`下一關：${cityName(f.opened[0])}`}:null,goal:goalLine(),
     // lines for what has no card of its own (a card says the rest: the chest, slice-app openChest)
     news:[...f.opened.map(id=>`第 ${levelOf(id)+1} 關 ${cityName(id)} 開放了！`),...(f.relayOpened?['三棒接力開放了！']:[])],
     // What was given (a buddy, a mane style, the rider's colours): each comes out of the prize chest first (slice-app openChest).
     // img, name, tag, sub: its card (ui chest()); text: the line under the chest.
-    prizes:[...(f.trophy?[{img:'assets/ui/award_trophy.webp?v=5',text:'冠軍獎盃放進騎士的家了！',name:'冠軍獎盃',tag:'全破',what:'十關全部破完的紀念。到牧場的「我家」，架子上看得到。'}]:[]),...(f.items?[{img:'assets/stable/item_seed.webp',text:'種子和魚餌各 +5',name:'種子和魚餌',tag:'過關獎勵',what:WHAT_SEEDS}]:[]),...f.gifts.map(id=>{const h=horseById(id);return {img:buddyImg(h),text:`新夥伴 ${h.name} 加入牧場！`,name:h.name,tag:'新夥伴',sub:MVP.types?TYPE_NAME[h.type]:'',what:`選夥伴時可以騎牠出賽。牠從幼年開始，${perksOf(h).map((p,k)=>`${AGE[k+1]}學會「${perkName(p)}」`).join('，')}。`};}),
+    prizes:[...(f.trophy?[{img:'assets/ui/award_trophy.webp?v=5',text:'冠軍獎盃放進騎士的家了！',name:'冠軍獎盃',tag:'全破',what:'十關全部破完的紀念。到牧場的「我家」，架子上看得到。'}]:[]),...(f.items?[{img:'assets/stable/item_seed.webp',text:'種子 +5，魚 +15',name:'種子和魚',tag:'過關獎勵',what:WHAT_SEEDS}]:[]),...f.gifts.map(id=>{const h=horseById(id);return {img:buddyImg(h),text:`新夥伴 ${h.name} 加入牧場！`,name:h.name,tag:'新夥伴',sub:MVP.types?TYPE_NAME[h.type]:'',what:`選夥伴時可以騎牠出賽。${perksOf(h).map((p,k)=>k?`長成${AGE[k]}學會「${perkName(p)}」`:`牠一開始就會「${perkName(p)}」`).join('，')}。`};}),
       ...(f.perks||[]).map(k=>{const mane=HAIR.find(x=>x.id===PERKS.mane.id).name;return k==='mane'?{img:`assets/ui/hair_${PERKS.mane.id}.webp?v=1`,text:`新造型：${mane}`,name:mane,tag:'新造型',sub:'鬃毛造型',what:'在宿舍的「造型」裡換上。'}
         :{img:'assets/ui/rider_0.webp?v=2',text:'騎士服裝的顏色開放了！',name:'騎士服裝顏色',tag:'新開放',what:'到牧場的「我家」，幫騎士換帽子、上衣、褲子的顏色。'};})]};
 }
@@ -319,10 +326,14 @@ const readRanch=()=>{let r={};try{r=JSON.parse(store.get(RANCH_KEY)||'{}')}catch
 function placed(R,stalls=1){const all=owned().slice(0,RANCH_DRAWN),outs=new Set(whoIsOut(all).map(h=>h.id)),taken=new Set(),list=[];
   for(const h of all){const w=R.place[h.id];if(w?.stall!=null&&w.stall<stalls&&!taken.has(w.stall)){taken.add(w.stall);list.push([h,{stall:w.stall}]);}else list.push([h,Array.isArray(w?.at)?{at:w.at}:null]);}
   return list.map(([h,w])=>{if(w)return [h,w];if(outs.has(h.id))return [h,{}];let k=0;while(taken.has(k))k++;if(k>=stalls)return [h,{}];taken.add(k);return [h,{stall:k}];});}
-const RANCH_TABS=[{shot:'all',name:'全景'},{dorm:true,name:'宿舍'},{shot:'field',name:'麥田'},{shot:'pond',name:'魚池'},{house:true,name:'我家'}];   // 我家: the rider's house (2026-10-12, the user: the house on the ranch was hard to find)
+const RANCH_TABS=[{shot:'all',name:'全景'},{dorm:true,name:'宿舍'},{shot:'field',name:'麥田'},{house:true,name:'我家'}];   // 我家: the rider's house (2026-10-12, the user: the house on the ranch was hard to find)
 // Seeds and wheat counted like the coins (the user: 「種子和收成要有數值和對應的icon像錢幣一樣」), in a row of their own
 // under the tabs, on the field's shot only (「不應該跟金幣在同一行？他只出現在農場的時候？」).
-const cropPills=bag=>`<div class="ui-wallet crop" aria-label="小麥和魚"><img src="assets/stable/item_wheat.webp" alt=""><b data-wheat>${bag.wheat||0}</b><i>/</i><img src="assets/stable/item_fish.webp" alt=""><b data-fish>${bag.fish||0}</b></div>`;   // what was harvested, counted like the coins; seeds and bait are tools: on their buttons (2026-10-13, the user)
+// The ranch's tools (2026-10-14, the user: 這一層 UI 複雜有問題；數字超過一百怎麼辦): two columns at the bottom, each a button with what it
+// uses over it: 全部餵飽 under the food (wheat, fish), 全部收成 under what it sows with (seed, bait). The second is a button to the shop;
+// a count of 0 there is a ＋.
+const ranchTools=bag=>{const n=(k,img)=>`<img src="assets/stable/item_${img}.webp" alt=""><b data-${k}>${bag[k]||0}</b>`;
+  return `<div class="ranch-tools top"><p class="stock" aria-label="小麥和魚">${n('wheat','wheat')}${n('fish','fish')}</p><button type="button" class="stock" data-buy aria-label="種子">${n('seed','seed')}</button></div><div class="ranch-tools"><button class="ui-btn" data-do="feed">全部餵飽</button><button class="ui-btn" data-do="reap">全部收成</button></div>`;};   /* the counts are a row under the tabs (later the same day, the user's sketch), each over its button's side */
 const ranchTabs=on=>`<div class="ui-tabs ui-panel deep ranch-shots" role="tablist" aria-label="畫面" style="--n:${RANCH_TABS.length}">${RANCH_TABS.map((t,i)=>`<button role="tab" data-rtab="${i}" aria-selected="${i===on}">${t.name}</button>`).join('')}</div>`;
 // The first opening (2026-10-12, the user): the player names the rider (「他就是那個騎士」), then five pages to swipe or skip:
 // three of the race, with the introduction page's clips (dist/intro), and two of the ranch. Once per browser (WELCOME).
@@ -336,7 +347,7 @@ function welcome(host){
     <form class="wl-name"><img src="assets/ui/rider_0.webp?v=2" alt=""><h2>你就是這位騎士</h2><p>幫自己取個名字</p>
       <input id="wl-name" maxlength="16" autocomplete="off" enterkeyhint="done" placeholder="騎士名字" value="${esc(profile.name===defaults.name?'':profile.name)}" aria-label="騎士名字"><button class="ui-btn primary block">開始</button></form>
     <div class="wl-tour" hidden>
-      <div class="wl-slides">${TOUR.map(s=>`<article><div class="wl-shot">${s.clip?`<video src="intro/${s.clip}.mp4?5" poster="intro/${s.clip}.jpg?5" muted loop playsinline preload="none"></video>`:`<img src="intro/${s.still}.webp" alt="">`}</div><h2>${s.title}</h2><p>${s.text}</p></article>`).join('')}</div>
+      <div class="wl-slides">${TOUR.map(s=>`<article><div class="wl-shot">${s.clip?`<video src="intro/${s.clip}.mp4?6" poster="intro/${s.clip}.jpg?6" muted loop playsinline preload="none"></video>`:`<img src="intro/${s.still}.webp" alt="">`}</div><h2>${s.title}</h2><p>${s.text}</p></article>`).join('')}</div>
       <div class="wl-dots" aria-hidden="true">${TOUR.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div><button class="ui-btn primary block wl-next" type="button">下一頁</button></div></section>`);
   const el=host.querySelector('.welcome'),form=el.querySelector('.wl-name'),tour=el.querySelector('.wl-tour'),row=el.querySelector('.wl-slides'),dots=[...el.querySelectorAll('.wl-dots i')],next=el.querySelector('.wl-next');
   const done=()=>{store.set(WELCOME,'1');el.remove();profile.city=LEVELS[0].city;profile.mode='solo';saveProfile();go('solo');},at=()=>Math.round(row.scrollLeft/Math.max(1,row.clientWidth));
@@ -359,12 +370,12 @@ const PAGES={
     bag=readItems({getItem:store.get});let farm=readFarm({getItem:store.get});
     const el=frame('page-ranch ui-live',`<div class="view"></div>${loadingCard('夥伴們正在集合…')}
       <header class="ui-header st-top"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button><h1>牧場</h1>${wallet(readCoins(),{gems:gemsShown()})}</header>
-      ${ranchTabs(tabOf(PAGES.ranch.shot))}<div class="ranch-crops"><button class="ui-btn" data-do="feed">全部餵飽</button>${cropPills(bag)}</div><div class="ranch-do"><button class="ui-btn" data-do="sow" aria-label="播種"><img src="assets/stable/item_seed.webp" alt=""><b data-seed>${bag.seed||0}</b></button><button class="ui-btn" data-do="cast" aria-label="下餌"><img src="assets/stable/item_bait.webp" alt=""><b data-bait>${bag.bait||0}</b></button></div><p class="ranch-hint ui-panel deep"></p>${nav('ranch')}`),toast=toaster(el);
+      ${ranchTabs(tabOf(PAGES.ranch.shot))}${ranchTools(bag)}<p class="ranch-hint ui-panel deep"></p>${nav('ranch')}`),toast=toaster(el);
     let view=null,alive=true;const grow=setInterval(()=>show(),1000);leave=()=>{alive=false;clearInterval(grow);view?.dispose();};
     const tabs=[...el.querySelectorAll('[data-rtab]')],hint=el.querySelector('.ranch-hint');let news;
     // The wheat field (farm.mjs): a tap on an empty bed sows a seed, on a ripe one reaps it; the line over the nav says
     // what can be done (on the field's shot), the crops are redrawn every few seconds as they grow.
-    const show=()=>{view?.field(farm.beds.slice(0,beds).map(b=>b?growth(b):null));view?.pond(farm.pond.map(b=>b?growth(b):null));for(const k of ['seed','wheat','bait','fish']){const b=el.querySelector(`[data-${k}]`);if(b)b.textContent=bag[k]||0;}say();};
+    const show=()=>{view?.field(farm.beds.slice(0,beds).map(b=>b?growth(b):null));view?.pond(null);for(const k of ['seed','wheat','bait','fish']){const b=el.querySelector(`[data-${k}]`);if(b)b.textContent=bag[k]||0;}for(const k of ['seed'])el.querySelector(`[data-${k}]`)?.classList.toggle('none',!(bag[k]>0));say();};
     const say=()=>{const id=PAGES.ranch.shot,st=farm.beds.slice(0,beds).map(b=>stage(b)),ripe=st.filter(s=>s===3).length;
       tabs[tabOf('field')]?.classList.toggle('has-dot',ripe>0);const ps=farm.pond.map(b=>stage(b)),on=ps.filter(s=>s===3).length;tabs[tabOf('pond')]?.classList.toggle('has-dot',on>0);
       if(!news&&id==='pond'){hint.textContent=on?`${on} 條魚上鉤了 · 點浮標收魚`:ps.includes(0)?(bag.bait>0?`魚餌 ×${bag.bait} · 點白圈下餌`:'沒有魚餌 · 去商店買'):'魚還沒上鉤 · 晚點再來';return;}
@@ -397,14 +408,14 @@ const PAGES={
       const short=res.short.length?`<p class="warn">${esc(names(res.short))} 還餓，食物不夠了</p>`:'';
       el.insertAdjacentHTML('beforeend',`<div class="ui-prize feed-all" role="dialog" aria-modal="true" aria-label="全部餵飽"><div class="ui-panel deep"><b>${res.fed.length?`餵了 ${res.fed.length} 隻`:'沒有食物可以餵'}</b>${rows?`<ul>${rows}</ul>`:''}${short}<button class="ui-btn primary">好</button></div></div>`);
       const card=el.lastElementChild;card.querySelector('button').onclick=()=>{card.remove();feedBtn.disabled=false;};card.querySelector('button').focus();};
-    // 播種 and 下餌 (2026-10-13, the user): from any tab, the view goes there, every ripe one is taken and every empty one set
-    // (farm.mjs tendAll, castAll). Tapping one bed or float still does that one.
-    const doAll=(shot,res,crop,unit,none,wait)=>{if(PAGES.ranch.shot!==shot){view?.shot(shot);mark(shot);}
-      if(!res.reaped&&!res.sown){toast((shot==='field'?farm.beds.slice(0,beds):farm.pond).some(b=>!b)?none:wait);return;}
-      farm=res.farm;bag=res.items;saveFarm({setItem:store.set},farm);saveCare({setItem:store.set},care,bag);show();
-      toast([res.reaped?`收了 ${res.reaped*FARM.yield} ${crop}`:'',res.sown?`${unit} ${res.sown} 格`:''].filter(Boolean).join('，'));};
-    el.querySelector('[data-do=sow]').onclick=()=>doAll('field',tendAll(farm,bag,beds),'個小麥','種了','沒有種子：去商店買，或跑比賽拿','麥子在長，晚點再來');
-    el.querySelector('[data-do=cast]').onclick=()=>doAll('pond',castAll(farm,bag),'條魚','下餌','沒有魚餌：去商店買','魚還沒上鉤，晚點再來');
+    // 全部收成 (2026-10-14; it was two buttons, 播種 and 下餌, that nobody read as buttons): every ripe bed and float is taken, then
+    // every empty one is set with what there is (farm.mjs tendAll, castAll). Tapping one bed or float still does that one.
+    el.querySelector('[data-do=reap]').onclick=()=>{if(PAGES.ranch.shot!=='all'){view?.shot('all');mark('all');}
+      const a=tendAll(farm,bag,beds),b={...a,reaped:0,sown:0};   /* the pond is put away (2026-10-14): the field only */
+      if(!a.reaped&&!a.sown&&!b.reaped&&!b.sown){const noSeed=farm.beds.slice(0,beds).some(x=>!x),noBait=false;toast(noSeed&&noBait?'沒有種子和魚餌：去商店買':noSeed?'沒有種子：去商店買，或跑比賽拿':noBait?'沒有魚餌：去商店買':'還沒熟，晚點再來');return;}
+      farm=b.farm;bag=b.items;saveFarm({setItem:store.set},farm);saveCare({setItem:store.set},care,bag);show();
+      toast([a.reaped?`小麥 +${a.reaped*FARM.yield}`:'',b.reaped?`魚 +${b.reaped*FARM.yield}`:'',a.sown?`種了 ${a.sown} 格`:'',b.sown?`下餌 ${b.sown} 格`:''].filter(Boolean).map(t=>translate(t)).join(' · '));};   /* each part put into the language by itself: the whole line matched no pattern */
+    el.querySelector('.ranch-tools [data-buy]').onclick=()=>go('shop');
     const open=i=>{const t=RANCH_TABS[i];if(!t)return;if(t.house)return go('house');if(t.dorm)return go('stable');view?.shot(t.shot);mark(t.shot);};
     mark(PAGES.ranch.shot);tabs.forEach((b,i)=>b.onclick=()=>open(i));
     // The huts (ranch-view layout): a hut a buddy, each on its plot, for good. A save from before the huts has them where
@@ -422,7 +433,7 @@ const PAGES={
       const sure=k=>{p.innerHTML=`<p><b>確定蓋在${k?'右邊':'左邊'}嗎？</b><small>蓋了就不能搬</small></p><div><button class="ui-btn" data-no>再想想</button><button class="ui-btn primary" data-yes>確定</button></div>`;p.querySelector('[data-no]').onclick=ask;p.querySelector('[data-yes]').onclick=()=>build(offers[k]);};   // asked once more: it cannot be moved (2026-10-11)
       pick=plot=>sure(offers.indexOf(plot));ask();}
     mountRanchView(el.querySelector('.view'),{buddies:placed(R,huts.length).map(([h,where])=>({id:h.id,coat:h.coat,hair:maneOf(h.id),stage:lvOf(h),...where,ran:justRan?.id===h.id&&Date.now()-justRan.at<60e3?{left:60-(Date.now()-justRan.at)/1000,won:justRan.won}:null})),doors:R.doors,pens,huts,offers,open:beds,shot:PAGES.ranch.shot,
-      onHouse:()=>go('house'),onOffer:plot=>pick?.(plot),onBed:bed,onPond:hook,onMove:(id,where)=>{R.place[id]=where;for(const k in R.doors)delete R.doors[k];saveRanch(R);},onDoor:(k,on)=>{R.doors[k]=on;saveRanch(R);}})
+      onHouse:()=>go('house'),onStore:()=>go('shop'),onOffer:plot=>pick?.(plot),onBed:bed,onPond:()=>{},onMove:(id,where)=>{R.place[id]=where;for(const k in R.doors)delete R.doors[k];saveRanch(R);},onDoor:(k,on)=>{R.doors[k]=on;saveRanch(R);}})
       .then(v=>{window.zbMark?.(`ranch shown (+${Math.round(performance.now()-ranchT0)} ms)`);if(!alive){v.dispose();return;}view=v;el.querySelector('.stage-loading')?.remove();show();})
       .catch(e=>{console.error(e);const l=el.querySelector('.stage-loading');if(l)l.textContent='3D 無法載入';});
   },
@@ -431,16 +442,16 @@ const PAGES={
     // The day's gift comes as cards out of the chest (2026-10-12, the user: 「每天開app就要先送幾張卡片」; it was a toast): after the
     // boot cover has gone, and after the first opening's pages if those are up.
     if(loginGift){loginGift=false;const cards=()=>{if(shown!=='home')return;const host=app().firstElementChild;if(host.querySelector('.welcome'))return setTimeout(cards,600);
-        const prizes=[['seed','小麥種子'],['bait','魚餌']].map(([k,n])=>({img:`assets/stable/item_${k}.webp`,name:`${n} ×${LOGIN_GIFT[k]}`,tag:'每日登入'}));
-        host.insertAdjacentHTML('beforeend',`<div class="ui-prize daily" role="dialog" aria-modal="true" aria-label="每日登入">${chest(prizes)}<p>今天的禮物：種子和魚餌<small>${WHAT_SEEDS}</small></p><button class="ui-btn primary">收下</button></div>`);
+        const prizes=[['seed','小麥種子'],['fish','魚']].map(([k,n])=>({img:`assets/stable/item_${k}.webp`,name:`${n} ×${LOGIN_GIFT[k]}`,tag:'每日登入'}));
+        host.insertAdjacentHTML('beforeend',`<div class="ui-prize daily" role="dialog" aria-modal="true" aria-label="每日登入">${chest(prizes)}<p>今天的禮物：種子和魚<small>${WHAT_SEEDS}</small></p><button class="ui-btn primary">收下</button></div>`);
         const layer=host.lastElementChild;layer.querySelector('button').onclick=()=>layer.remove();};
       setTimeout(cards,2600);}   // ponytail: a fixed wait for the boot cover to go (index.html: 1.5 s and a fade); hook its end if the cover's time changes
     // Home (2026-10-04, the user's third sketch): the course card stays at the bottom, over the nav; above it the stages are wide cards
     // in a list, stage 1 first, scrolling beneath the card. Tapping one picks it: the scene and the card follow. The card says one thing (what to beat next) and has the one button → the buddy (#race).
     // 2026-10-05 (the user): every stage card says how hard it is (the course's difficulty: its word and one to three dots).
     const s=totalStars(prog);
-    const el=frame('page-home',`<i class="home-scene" aria-hidden="true"></i><header class="ui-top">${brand()}<button class="rich-open" aria-label="富豪榜">${wallets()}<small>第 ${richList().rank} 名 ›</small></button></header>
-      <main class="stage-row" aria-label="關卡">${LEVELS.map((l,i)=>{const open=stageOpen(l.city),st=prog.stars[l.city]||0,d=COURSES.find(c=>c.id===l.city).difficulty;
+    const el=frame('page-home',`<i class="home-scene" aria-hidden="true"></i><header class="ui-top">${brand()}<button class="rich-open" aria-label="富豪榜">${wallets()}</button></header>
+      <main class="stage-row" aria-label="關卡">${SHOWN.map((l,i)=>{const open=stageOpen(l.city),st=prog.stars[l.city]||0,d=COURSES.find(c=>c.id===l.city).difficulty;
         return `<button class="stage ${open?'':'locked'}" data-level="${l.city}" aria-label="第 ${i+1} 關 ${cityName(l.city)}${open?`，${st} 顆星`:`，先跑完第 ${i} 關`}">
           <span class="dot"><canvas width="700" height="352" aria-hidden="true"></canvas>${open?'':icon('lock')}</span><b>${i+1} · ${cityName(l.city)}</b><small class="ui-tag diff">${[1,2,3].map(k=>`<i class="${k<=d?'on':''}"></i>`).join('')}${DIFF[d]}</small>${open?starRow(st):`<small class="ui-tag muted">${icon('lock')}</small>`}</button>`;}).join('')}</main><section class="next-race ui-panel" aria-live="polite"></section>${nav('home')}`);
     el.querySelector('.rich-open').onclick=()=>richSheet(el);
@@ -474,11 +485,12 @@ const PAGES={
     if(!MVP.relay||!relayOk||!profile.mode)profile.mode='solo';
     fixOrder();
     const cond=(n,foes=null)=>`<article class="ui-panel soft ui-card-body cond"><div><b>賽道狀況</b><p><span>${wl}</span><span>${bc.surface}</span><span>${n} 跳欄</span>${foes?`<span>${foes} 位對手</span>`:''}</p></div>${icon(wi)}</article>`;
-    const head=(h,attr,cls='')=>`<button class="ui-marker ${cls} ${owns(prog,h.id)?'':'locked'}" role="listitem" ${attr}="${h.id}" aria-label="${h.name}${owns(prog,h.id)?'':'（還沒解鎖）'}">${owns(prog,h.id)?`<img src="${buddyImg(h)}" alt="">`:icon('lock')}</button>`;
+    const sky=skyOf(c.id),suits=h=>!!SKY_NEED[sky]&&owns(prog,h.id)&&[].concat(perkOf(h)).includes(SKY_NEED[sky]);
+    const head=(h,attr,cls='')=>`<button class="ui-marker ${cls} ${owns(prog,h.id)?'':'locked'} ${attr==='data-solo'&&suits(h)?'suits':''}" role="listitem" ${attr}="${h.id}" aria-label="${h.name}${owns(prog,h.id)?'':'（還沒解鎖）'}">${owns(prog,h.id)?`<img src="${buddyImg(h)}" alt="">`:icon('lock')}${attr==='data-solo'&&suits(h)?`<i class="sky-ok">${icon(sky==='rain'?'rain':'cloud')}</i>`:''}</button>`;
     const rc=relayCourse(c.id),bests=readSolo();
     const el=frame('page-race',`${header('選夥伴',readCoins())}<main class="page-body">
       ${MVP.relay?`<div class="ctr"><div class="ui-tabs" role="tablist" aria-label="比賽方式" style="--n:2"><button role="tab" data-mode="solo">單騎</button><button role="tab" data-mode="relay" ${relayOk?'':'disabled'}>${relayOk?'三棒接力':`${icon('lock')}接力 · 要 3 位夥伴`}</button></div></div>`:''}
-      <section data-for="solo"><div class="buddy-tray" role="list" aria-label="夥伴">${[...mine,...ROSTER.filter(h=>!owns(prog,h.id))].map(h=>head(h,'data-solo')).join('')}</div>
+      <section data-for="solo">${SKY_TEXT[sky]?`<p class="pick-sky">${icon(sky==='rain'?'rain':'cloud')}<span>${SKY_TEXT[sky]}</span></p>`:''}<div class="buddy-tray" role="list" aria-label="夥伴">${[...mine,...ROSTER.filter(h=>!owns(prog,h.id))].map(h=>head(h,'data-solo')).join('')}</div>
         <div class="stack"><article class="ui-panel ui-card-body pickcard"></article><div class="ui-pillrow">${icon('horse')}<span>類型</span><b class="pick-type"></b></div><div class="go-row"></div></div></section>
       <section data-for="relay"><div class="legs">${[0,1,2].map(k=>`<div><button class="ui-marker big" data-leg="${k}"></button><span class="ui-tag"></span></div>`).join('')}</div>
         <div class="buddy-tray" role="list" aria-label="我的夥伴">${mine.map(h=>head(h,'data-horse')).join('')}</div>
@@ -491,8 +503,8 @@ const PAGES={
       el.querySelectorAll('[data-for]').forEach(x=>x.hidden=x.dataset.for!==profile.mode);
       if(solo){
         const h=horseById(see),has=owns(prog,h.id),best=bests[`${c.id}:${h.id}`],p=HORSE_PRICE[h.id],st=buddyStats(h.stats,MAX_LEVEL),next=nextStarTime(c.id,prog.stars[c.id]||0);
-        el.querySelector('.pickcard').innerHTML=`<div class="ui-card-head"><b>${h.name}</b><span>${lv(h)}</span></div>${perksOf(h).map((p,k)=>`<p class="pick-perk ${k<lvOf(h)-1?'':'shut'}"><i>${k<lvOf(h)-1?'特長':`LV ${k+2}`}</i><span>${PERK_TEXT[p]}</span></p>`).join('')}
-          ${has?`${fitNotes(care[h.id]).map(n=>`<p class="fit ${n.ok?'ok':'bad'} ${n.icon}">${icon(n.icon)}<span>${n.text}</span></p>`).join('')}${best?`<p class="fit">${icon('flag')}<span>這條賽道最快 ${wallTime(best,profile.city)}</span></p>`:''}`
+        el.querySelector('.pickcard').innerHTML=`<div class="ui-card-head"><b>${h.name}</b><span>${lv(h)}</span></div>${perksOf(h).map((p,k)=>`<p class="pick-perk ${k<lvOf(h)?'':'shut'}"><i>${k<lvOf(h)?'特長':`LV ${k+1}`}</i><span>${PERK_TEXT[p]}</span></p>`).join('')}
+          ${has&&suits(h)?`<p class="fit ok sky">${icon(sky==='rain'?'rain':'cloud')}<span>適合今天的天氣，獎金 ×${POT.match}</span></p>`:''}${has?`${fitNotes(care[h.id]).map(n=>`<p class="fit ${n.ok?'ok':'bad'} ${n.icon}">${icon(n.icon)}<span>${n.text}</span></p>`).join('')}${best?`<p class="fit">${icon('flag')}<span>這條賽道最快 ${wallTime(best,profile.city)}</span></p>`:''}`
             :`<p class="pickprice">${MVP.gems?`${p.coins?`${coin}${p.coins} 或 `:''}${GEM}${p.gems}`:`${coin}${p.coins}`}${p.stars?` · 集滿 ${p.stars} ★ 免費`:p.stage?` · 破第 ${p.stage} 關送`:''}</p>`}`;
         {const t=el.querySelector('.pick-type');t.textContent=TYPE_NAME[h.type];t.closest('.ui-pillrow').style.display=MVP.types?'':'none';}
         el.querySelectorAll('[data-solo]').forEach(b=>b.classList.toggle('is-selected',+b.dataset.solo===h.id));
@@ -553,7 +565,7 @@ const PAGES={
     let session=null,gone=false;leave=()=>{gone=true;session?.exit();applyLook();};
     // The stake (progress.mjs entryFee): paid as a run starts (pay), the share of the pot won comes with the result (r.stake).
     const fee=entryFee(c.id),stake=fee?{fee,purse:fee*PURSE,double:DOUBLE,pot:POT,hungry:()=>fitness(care[h.id]).feed>0,fit:()=>!fitness(care[h.id]).feed,lastWon:()=>readJson(LAST_RANK)[c.id]===1,won:purseWon,can:d=>readCoins()>=fee*(d?DOUBLE.fee:1),pay:d=>{const f=fee*(d?DOUBLE.fee:1);if(readCoins()<f)return false;addCoins(-f);return true;},coins:readCoins}:null;
-    const bank=r=>{if(r.stake?.won)addCoins(r.stake.won);const made=r.stake&&r.field?payRivals(r.field,r.stake.fee,r.stake.purse):null;if(r.rank){const lr=readJson(LAST_RANK);lr[c.id]=r.rank;store.set(LAST_RANK,JSON.stringify(lr));}const all=readSolo(),best=all[key]||0,newBest=!best||r.finishTime<best,seconds=r.finishTime/tempoOf(c.id);
+    const bank=r=>{delete skyFor[c.id];if(r.stake?.won)addCoins(r.stake.won);const made=r.stake&&r.field?payRivals(r.field,stake.fee,stake.purse)   /* the rivals ran for the plain pot: the player's raise and weather bonus are the player's own (2026-10-14: a horse took 360 on a rain stage) */:null;if(r.rank){const lr=readJson(LAST_RANK);lr[c.id]=r.rank;store.set(LAST_RANK,JSON.stringify(lr));}const all=readSolo(),best=all[key]||0,newBest=!best||r.finishTime<best,seconds=r.finishTime/tempoOf(c.id);
       if(newBest){all[key]=+r.finishTime.toFixed(3);store.set(SOLO_BEST,JSON.stringify(all));if(r.trace)store.set(GHOST+key,JSON.stringify(r.trace));}
       const f=finish(prog,{city:c.id,solo:true,result:{...r,seconds},today:today()});prog=f.p;saveProg();addCoins(r.coins*(f.first?2:1)+f.coins);addGems(f.gems);if(f.items)for(const [k,n] of Object.entries(f.items))bag={...bag,[k]:(bag[k]||0)+n};   // the day's first run: its coins twice; a stage's seeds and bait (progress.mjs STAGE_GIFT)
       const bestCombo=+store.get(BEST)||0;store.set(BEST,String(Math.max(bestCombo,r.bestCombo||0)));   // the settings page's 「最高連擊」 (2026-10-10: only the relay wrote it)
@@ -565,12 +577,12 @@ const PAGES={
       return {total:readCoins(),gems:gemsShown(),best,newBest,xp:a.xp,level:level(a.care),toNext:lvLeft(a.care),levelUp:a.levelUp,hot,hotCoins,...rw,extra:(rw.extra||0)+(r.stake?.won||0),runs:Math.ceil(lvLeft(a.care)/RUN_XP),age:AGE[level(a.care)-1],nextAge:AGE[level(a.care)]||'',
         // the money of this run, in the order it is read: [what for, coins]; net: all of it, the fee taken off
         money:made?richList(r.field.map(f=>f.id),made,(r.stake.won||0)-r.stake.fee+r.coins*(f.first?2:1)+f.coins).all:null,   // the player's: all the run made, as the big number says
-        parts:[['獎金',r.stake?.won||0],['報名費',-(r.stake?.fee||0)],[f.first?'路上撿的 ×2':'路上撿的',r.coins*(f.first?2:1)],['星星和過關',f.coins]].filter(p=>p[1])};};
+        parts:[['獎金',r.stake?.won||0],['報名費',-(r.stake?.fee||0)],[f.first?'路上撿的，今天第一場 ×2':'路上撿的',r.coins*(f.first?2:1)],['星星和過關',f.coins]].filter(p=>p[1])};};
     const ghost=()=>{try{return JSON.parse(store.get(GHOST+key)||'null')}catch{return null}};
     // What the ranch gives a solo run (2026-10-06: a tester could not feel the items; they only reached the relay): the start
     // energy, from how rested the buddy is (精神) plus an energy bar. Only ever a help: nothing here slows a solo run.
     const soloForm=()=>careForm(care[h.id],{...SLICE_CONFIG,...racing(buddyStats(h.stats,MAX_LEVEL))});   // this buddy's own numbers at its level, then its care: felt on every stage (2026-10-10; the first two had none)
-    session=await startSlice({city:c.id,solo:true,stage:L,stake,rivalGrow:(1+(rivalAge(c.id)-1)*LV_SPEED)*rivalPace(c.id),rivalStep:LV_SPEED,perks:[perkOf(h)],thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
+    session=await startSlice({city:c.id,solo:true,stage:L,stake,sky:skyOf(c.id),tiers:{me:tierOf(prog.points),list:TIERS,you:profile.name||'你'},rivalGrow:(1+(rivalAge(c.id)-1)*LV_SPEED)*rivalPace(c.id),rivalStep:LV_SPEED,perks:[perkOf(h)],thumb:levelOf(c.id)===0,arrows:{lane:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.lane),jump:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.hurdle),skill:levelOf(c.id)===LEVELS.findIndex(l=>l.rivals>0),sprint:levelOf(c.id)===LEVELS.findIndex(l=>!l.locks?.sprint)},ease:eased(prog,c.id),intro:!prog.stars[c.id]&&levelOf(c.id)===LEVELS.findIndex(l=>l.ram),rivalCount:L?.rivals??0,team:[racer(h)],getForm:soloForm,onFinish:bank,getBest:()=>readSolo()[key],getBrief:()=>brief(c,true),getGhost:ghost,lean:prog.runs>=3,
       tag:`${c.city.toUpperCase()} · ${c.title.toUpperCase()} · SOLO · ${h.name.toUpperCase()}`,
       onExit:(result,dest)=>{if(location.hash!=='#solo')return;  // already navigated away (back gesture)
         if(newBuddy!=null){stableFocus=newBuddy;go('stable',{replace:true});return;}   // a buddy came with this run: it walks in first
@@ -611,7 +623,7 @@ const PAGES={
     // A buddy that grew (grew: in a race, or fed just now) is shown as it was, with a card over it: its new age and what
     // that brings. Closing the card changes it (2026-10-12, the user: no flash; the card first, then the change).
     const shownLv=h=>grew.get(h.id)??lvOf(h);let growing=0;
-    const grow=h=>{if(growing||!view||!grew.has(h.id))return;growing=setTimeout(()=>{if(!alive)return;const l=lvOf(h),p=perksOf(h)[l-2];
+    const grow=h=>{if(growing||!view||!grew.has(h.id))return;growing=setTimeout(()=>{if(!alive)return;const l=lvOf(h),p=perksOf(h)[l-1];
       el.insertAdjacentHTML('beforeend',`<div class="ui-prize grow" role="dialog" aria-modal="true" aria-label="長大了"><div class="grow-card ui-panel"><span class="ui-tag yellow">長大了</span><img src="${growImg(h,l)}" alt=""><b>${h.name} 長成${AGE[l-1]}了！</b>${pips(l)}
         <ul><li>速度 +${Math.round((l-1)*LV_SPEED*100)}%</li>${p?`<li>新特長　${PERK_TEXT[p]}</li>`:''}<li>樣子變了</li></ul></div><button class="ui-btn primary">看看牠</button></div>`);
       const layer=el.lastElementChild;layer.querySelector('button').onclick=()=>{layer.remove();growing=0;grew.delete(h.id);paint();view?.cheer();};},1200);};
@@ -835,9 +847,9 @@ const PAGES={
     // room's picture, her name on the plank, the stars on the cork board, her standing on the rug, and three rows:
     // her clothes' colours (GEAR's Rider_ parts, open from PERKS.rider.stage), the wall of results, Settings.
     const solo=readSolo(),bestOf=c=>{const t=Object.entries(solo).filter(([k])=>k.split(':')[0]===c).map(([,v])=>v/tempoOf(c));return t.length?Math.min(...t):0;};
-    const done=LEVELS.filter(l=>prog.stars[l.city]>0).length,parts=GEAR.filter(g=>g.mat.startsWith('Rider_')),open=true;
+    const done=SHOWN.filter(l=>prog.stars[l.city]>0).length,parts=GEAR.filter(g=>g.mat.startsWith('Rider_')),open=true;
     const el=frame('page-house',`<div class="room"><div class="plank"><b>${esc(profile.name)}</b></div>
-      <div class="board"><b>★ ${totalStars(prog)} / ${LEVELS.length*3}</b><small>過了 ${done} 關</small></div>${trophy(prog)?'<img class="trophy" src="assets/ui/award_trophy.webp?v=5" alt="冠軍獎盃">':''}<div class="view"></div></div>
+      <div class="board"><b>★ ${totalStars(prog)} / ${SHOWN.length*3}</b><small>過了 ${done} 關</small></div>${trophy(prog)?'<img class="trophy" src="assets/ui/award_trophy.webp?v=5" alt="冠軍獎盃">':''}<div class="view"></div></div>
       <header class="ui-header"><button class="ui-icon-btn" data-back aria-label="返回">${icon('back','')}</button></header>
       <ul class="ui-list ui-panel deep rows"><li><button data-pane="gear"><b>騎士服裝</b><small>換顏色 ›</small></button></li>
         <li><button data-pane="wall"><b>成績牆</b><small>十關的星星和最快時間 ›</small></button></li><li><button data-go="settings"><b>設定</b><small>›</small></button></li></ul>
@@ -849,7 +861,7 @@ const PAGES={
       pane.innerHTML=`<header><b>${k==='gear'?'騎士服裝':'成績牆'}</b><button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>`+(k==='gear'
         ?`<div class="parts" role="tablist" style="grid-template-columns:repeat(${parts.length},1fr)">${parts.map(x=>`<button role="tab" aria-selected="${x.mat===part}" data-part="${x.mat}"><i style="background:${worn(x)}"></i>${x.name}</button>`).join('')}</div>
           <div class="swatches" role="radiogroup" aria-label="${g.name}顏色">${g.colors.filter(c=>hasLook(g.mat,c)).map((c,i)=>`<button role="radio" aria-label="${i?c:'原色'}" aria-checked="${worn(g)===c}" data-color="${c}" style="background:${c}"></button>`).join('')}</div>${patternRow(part)}<button class="ui-btn block looks-more" data-looks="rider">去商店買更多${icon('arrow','')}</button>${open?'':`<p class="look-note ui-label">${icon('lock')}破第 ${PERKS.rider.stage} 關開放</p>`}`
-        :`<ol class="wall">${LEVELS.map((l,i)=>{const s=prog.stars[l.city]||0,t=bestOf(l.city);return `<li><span>${i+1}</span><i>${'★'.repeat(s)}<s>${'★'.repeat(3-s)}</s></i><em>${t?t.toFixed(1)+' 秒':'還沒跑'}</em></li>`;}).join('')}</ol>`);
+        :`<ol class="wall">${SHOWN.map((l,i)=>{const s=prog.stars[l.city]||0,t=bestOf(l.city);return `<li><span>${i+1}</span><i>${'★'.repeat(s)}<s>${'★'.repeat(3-s)}</s></i><em>${t?t.toFixed(1)+' 秒':'還沒跑'}</em></li>`;}).join('')}</ol>`);
       pane.querySelector('[data-close]').onclick=()=>show(null);
       pane.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{part=b.dataset.part;show('gear');});
       pane.querySelector('[data-looks]')?.addEventListener('click',()=>{PAGES.looks.part=part;go('looks');});
@@ -885,7 +897,7 @@ const PAGES={
         <li><span><b>左右滑</b><small class="note">換道</small></span></li>
         <li><span><b>往上滑</b><small class="note">跳過障礙</small></span></li>
         <li><span><b>衝刺鈕 ⚡</b><small class="note">漂亮放開 3 次存一段，按一下衝刺（空白鍵）</small></span></li>
-        <li><span><b>撞擊鈕</b><small class="note">用同一段；對手並排時撞牠，在正後方時踢牠</small></span></li>
+        <li><span><b>撞擊鈕</b><small class="note">用同一段；對手並排時按拳頭撞牠</small></span></li>
         <li><span><b>Ⅱ / Esc</b><small class="note">暫停：繼續、重新開始、音效、離開</small></span></li></ul></section>
       <section class="ui-modal ui-panel deep plog" role="dialog" aria-modal="true" aria-label="測試紀錄" hidden><header><h2>測試紀錄</h2>
         <button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header>
@@ -920,12 +932,12 @@ PAGES.collection=PAGES.horses;   // old links
 
 
 // The day's first opening gives seeds and bait (2026-10-12, the user: 「每天登入獲得小麥種子和魚餌」); home() says so once.
-const LOGIN='hoofbeat.login.v1',LOGIN_GIFT={seed:3,bait:3};let loginGift=false;
+const LOGIN='hoofbeat.login.v1',LOGIN_GIFT={seed:3,fish:9};let loginGift=false;
 export function startHome(){
   if(store.get(LOGIN)!==today()){addLog({kind:'open',stars:totalStars(prog),stage:levelOf(currentLevel(prog).city)+1,buddies:prog.owned.length});   // one row a day: day 1 and on is someone who came back (playtest.js)
     store.set(LOGIN,today());for(const [k,n] of Object.entries(LOGIN_GIFT))bag={...bag,[k]:(bag[k]||0)+n};saveCare({setItem:store.set},care,bag);loginGift=true;}
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r691',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r691');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r722',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r722');   // a frame counter in the corner (fps.js)
   // Opening the game always lands on the race menu (the home page) once the cover has gone (2026-10-12, the user:
   // 「封面圖跑完應該進比賽選單」): it opened on whatever page the address named, the ranch if that was where it was closed.
   // ?debug keeps the address's page (a dev link straight to a page).

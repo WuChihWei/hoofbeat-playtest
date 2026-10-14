@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r691';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r691';
-import {WEATHER} from './progress.mjs?v=r691';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r691';
-import {compositionRank} from '../race-composition.mjs?v=r691';
-import {ChaseRenderer} from '../race-scene.js?v=r691';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r691';
-import {cityModels} from '../approved-environment.js?v=r691';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r722';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r722';
+import {WEATHER} from './progress.mjs?v=r722';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r722';
+import {compositionRank} from '../race-composition.mjs?v=r722';
+import {ChaseRenderer} from '../race-scene.js?v=r722';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r722';
+import {cityModels} from '../approved-environment.js?v=r722';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r691';
-import {RaceAudio} from '../audio.js?v=r691';
-import {addLog,raceEntry} from '../playtest.js?v=r691';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples} from './slice-config.mjs?v=r691';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r722';
+import {RaceAudio} from '../audio.js?v=r722';
+import {addLog,raceEntry} from '../playtest.js?v=r722';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r722';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -28,7 +28,7 @@ const HOW=[   // the ball game (2026-10-11: the cards still taught the rhythm ga
   ['<i class="how-key">●</i>','按住圓球蓄力，放開就衝','長到黃圈放開最快，早一點也可以，碰到紅圈會爆掉'],
   ['<i class="how-key">‹</i><i class="how-key">›</i>','左右滑換道，往上滑跳欄','圓球會跟著手指'],
   ['<i class="how-key">🍎</i>','吃到蘋果無敵 4 秒','欄架、水坑、對手都不怕'],
-  ['<i class="how-key">撞</i>','漂亮放開 3 次存一段','按 ⚡ 衝刺 · 對手並排時撞牠 · 在正後方踢牠'],
+  ['<i class="how-key">撞</i>','漂亮放開 3 次存一段','按 ⚡ 衝刺 · 對手並排時按拳頭撞牠'],
 ];
 // ?auto=<share> in the page URL (testing and demos): that share of the notes is hit for you, hurdles are jumped;
 // the charge button stays yours.
@@ -44,25 +44,25 @@ const APPLE='<svg class="apple-ico" viewBox="0 0 24 24" aria-hidden="true"><path
 const BUZZ={tap:['impact',{style:'LIGHT'},12],hit:['impact',{style:'MEDIUM'},22],strong:['impact',{style:'HEAVY'},[25,30,25]],good:['notification',{type:'SUCCESS'},[10,20,10]],bad:['notification',{type:'ERROR'},30]};
 const buzz=kind=>{const [method,options,pattern]=BUZZ[kind],native=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.nativePromise;
   if(native)native('Haptics',method,options).catch(()=>{});else navigator.vibrate?.(pattern);};
-export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,arrows=null,perks=null,rivalCount=0,rivalGrow=1,rivalStep=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
+export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,sky=null,tiers=null,arrows=null,perks=null,rivalCount=0,rivalGrow=1,rivalStep=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
   const TEMPO=level?.tempo??SLICE_CONFIG.tempo,BALL=/[?&]ball=([\d.,]+)/.exec(location.search)?.[1].split(',').map(Number)||[1],   // 2026-10-07 (the user: 「就改成這遊戲方法」): the ball is the game; ?ball=1,fill,fall,pop (real seconds) tunes it
   locks={...level?.locks};
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r691',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r722',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
-  app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${lefty?' lefty':''}${lean?' lean':''}${locks.lane?' no-lanes':''}${arrows?.lane?' hint-lane':''}${arrows?.jump?' hint-jump':''}${locks.sprint?' no-sprint':''}${BALL?' is-ball':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp${new URL(import.meta.url).search})"><canvas id="slice-canvas" aria-label="ZOOMBUD 三車道賽道"></canvas>
+  app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${lefty?' lefty':''}${lean?' lean':''}${locks.lane?' no-lanes':''}${arrows?.lane?' hint-lane':''}${arrows?.jump?' hint-jump':''}${arrows?.skill?' hint-skill':''}${arrows?.sprint?' hint-sprint':''}${locks.sprint?' no-sprint':''}${BALL?' is-ball':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp${new URL(import.meta.url).search})"><canvas id="slice-canvas" aria-label="ZOOMBUD 三車道賽道"></canvas>
     ${raceHudMarkup(rivals)}
     <i id="slice-flash" aria-hidden="true"></i><i id="slice-hurt" aria-hidden="true"></i><i id="slice-dizzy" aria-hidden="true" hidden><b>⭐</b><b>💫</b><b>⭐</b></i><div id="slice-feedback" aria-live="polite"></div><div id="slice-pass" aria-live="polite"></div><div id="slice-count" aria-live="assertive"></div>${field?`<div id="slice-rank"><b></b><small></small></div><div id="slice-purse" hidden><small>現在領</small><span>${coin}<b></b></span></div>`:''}<div id="slice-goal" hidden></div>${solo?`<div id="slice-apples" hidden>${APPLE}<b>0</b></div>`:''}<div id="slice-final-call" hidden></div><div id="slice-chase" hidden></div><i id="chase-left" class="chase-edge" hidden>‹</i><i id="chase-right" class="chase-edge" hidden>›</i><div id="slice-jump-hint"></div>
     ${raceControlsMarkup()}
     <div id="slice-result" hidden></div><div id="slice-cover"><button id="slice-back" class="ui-icon-btn cover-back" aria-label="返回">${icon('back','')}</button><button id="slice-help" class="ui-icon-btn cover-help" aria-label="玩法說明" aria-expanded="false">?</button>
       <section class="${stake?'has-stake':''}"><small>${esc(info?.title??tag)}</small><h1>${esc(info?.goal??(relay?'三棒接力':'單騎練跑'))}</h1>
         ${info&&solo&&!relay?`<p class="cover-stars" role="img" aria-label="${info.stars} 顆星">${[0,1,2].map(k=>`<i class="${k<info.stars?'on':''}">★</i>`).join('')}</p>`:''}
-        ${stake?`<div class="cover-ticket" id="slice-ticket"><img class="stamp" src="assets/ui/money/stamp_red.webp" alt="" hidden><div class="print"><small>這場獎金最高</small><b>${coin}<span data-purse></span></b></div></div><p class="cover-split" data-share></p>
-          <p class="cover-why" hidden></p><p class="cover-stake"><span>報名費<b>${coin}<span data-fee></span></b></span><button id="slice-double" class="ui-btn" aria-pressed="false"><img src="assets/ui/money/bag.webp" alt=""><span>加碼押注 ×${stake.double.purse}</span></button></p>`:''}
+        ${stake?`<div class="cover-ticket" id="slice-ticket"><img class="stamp" src="assets/ui/money/stamp_red.webp" alt="" hidden><div class="print"><small data-pot-what>這場獎金最高</small><b>${coin}<span data-purse></span></b><em class="pot-base" hidden></em></div></div><p class="cover-split" data-share></p>
+          <p class="cover-field"></p>${tiers&&rivals.length?`<ul class="cover-who">${[{name:tiers.you,t:tiers.me,you:true},...rivals.map((x,i)=>({name:x.name,t:x.tier??0}))].sort((a,b)=>b.t-a.t).map(x=>`<li class="${x.you?'you':''}"><img src="assets/ui/tier/${tiers.list[x.t].img}.webp" alt="${tiers.list[x.t].name}"><b class="tn">${tiers.list[x.t].name}</b><span>${esc(x.name)}</span></li>`).join('')}</ul>`:''}<p class="cover-why" hidden></p><p class="cover-stake"><span>報名費<b>${coin}<span data-fee></span></b><small class="cover-have">你有 <span data-have></span></small></span><button id="slice-double" class="ui-btn" aria-pressed="false"><img src="assets/ui/money/bag.webp" alt=""><span>加碼押注 ×${stake.double.purse}<small data-raise>報名費和獎金都變 ${stake.double.purse} 倍</small></span></button></p>`:''}
         ${info?.missions?`<details class="cover-fold" ${lean?'':'open'}><summary>這場的任務 ×${info.missions.length}</summary><ul class="cover-missions">${info.missions.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></details>`:''}
         <div class="how-wrap" hidden>${howTo()}${touch?'':'<p class="slice-keys">鍵盤：空白鍵 衝刺 · Esc 暫停</p>'}</div><p class="slice-form" hidden></p>
         <button id="slice-start" class="ui-btn primary block" disabled>準備中…</button></section></div></main>`;
@@ -78,7 +78,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   let trace=[],ghost=null,target=null,leading=null,passAt=0,lostAt=-9,hurry=-1,resumeTimer=0;   // trace: this run's metres every GHOST_STEP; ghost: the best run's; target: the time for the next star
   // Playtest log (playtest.js): each run once, as it ends: finished, left, or restarted part-way.
   const logRun=result=>{if(!game||game.logged)return;game.logged=true;
-    addLog(raceEntry(game,result,{city,stake:staked&&{fee:staked.fee,doubled:staked.doubled,won:result==='finish'?stake.won(staked.purse,game.metrics().rank,rivals.length+1):0},mode:solo&&!relay?'solo':'relay',eased:ease,team:team.map(h=>h.name),fps:renderer?.frameAverage?Math.round(1000/renderer.frameAverage):null,perf:perfLog()}));};
+    addLog(raceEntry(game,result,{city,sky:SKY,match:match(),stake:staked&&{fee:staked.fee,doubled:staked.doubled,won:result==='finish'?stake.won(staked.purse,game.metrics().rank,rivals.length+1):0},mode:solo&&!relay?'solo':'relay',eased:ease,team:team.map(h=>h.name),fps:renderer?.frameAverage?Math.round(1000/renderer.frameAverage):null,perf:perfLog()}));};
   const midRace=()=>['running','paused','countdown'].includes(phase);
   const cover=$('slice-cover');let howTimer=0;
   function howTo(){const how=HOW;
@@ -126,8 +126,9 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // is worth now (#slice-purse).
   let doubled=false,staked=null;const N=v=>Number(v).toLocaleString('en-US'),has=k=>[].concat(perks?.[0]||[]).includes(k),match=()=>SKY==='rain'&&has('water')||SKY==='snow'&&has('snow'),potNow=()=>stake?Math.round(stake.purse*(doubled?stake.double.purse:1)*(match()?stake.pot.match:1)):0,feeNow=()=>stake?stake.fee*(doubled?stake.double.fee:1):0;
   function paintStake(){if(!stake)return;const t=$('slice-ticket'),of=rivals.length+1,pot=potNow();if(!t)return;if(doubled&&(!stake.can(true)||stake.hungry()))doubled=false;
-    t.querySelector('[data-purse]').textContent=N(potNow());document.querySelector('.cover-split').innerHTML=[1,2,3].filter(k=>stake.won(pot,k,of)>0).map(k=>`<span><img src="assets/ui/money/medal_${['gold','red','blue'][k-1]}.webp?v=4" alt="第 ${k} 名">${coin}${N(stake.won(pot,k,of))}</span>`).join('');
-    t.classList.toggle('doubled',doubled);t.querySelector('.stamp').hidden=!doubled;document.querySelector('.cover-stake [data-fee]').textContent=N(feeNow());
+    t.querySelector('[data-purse]').textContent=N(potNow());{const own=potNow()!==stake.purse,w=t.querySelector('[data-pot-what]'),b=t.querySelector('.pot-base');w.textContent=own?'你最高拿':'這場獎金最高';b.hidden=!own;b.textContent=`對手最高 ${N(stake.purse)}`;}   /* the raise and the weather's buddy are the player's own: the rivals run for the plain pot (2026-10-14: 最高 360 and the winner took 240) */document.querySelector('.cover-split').innerHTML=[1,2,3].filter(k=>stake.won(pot,k,of)>0).map(k=>`<span><img src="assets/ui/money/medal_${['gold','red','blue'][k-1]}.webp?v=4" alt="第 ${k} 名">${coin}${N(stake.won(pot,k,of))}</span>`).join('');
+    t.classList.toggle('doubled',doubled);t.querySelector('.stamp').hidden=!doubled;{const paid=[1,2,3,4,5].filter(k=>k<=of&&stake.won(pot,k,of)>0).length,f=document.querySelector('.cover-field');if(f)f.textContent=`${of} 位出賽，前 ${paid} 名有獎金`;}document.querySelector('.cover-stake [data-fee]').textContent=N(feeNow());
+    {const have=stake.coins(),need=stake.fee*stake.double.fee,r=document.querySelector('[data-raise]'),hv=document.querySelector('[data-have]');if(hv)hv.textContent=N(have);if(r)r.textContent=stake.hungry()?'餓了，不能加碼':have<need?`還差 ${N(need-have)}`:`報名費和獎金都變 ${stake.double.purse} 倍`;}
     const d=$('slice-double');d.setAttribute('aria-pressed',String(doubled));d.classList.toggle('short',!stake.can(true)||stake.hungry());const b=$('slice-start');if(!b.disabled)b.innerHTML=startLabel();}
   // One reason to double, the strongest there is (2026-10-13, the user: three, the most persuasive): the weather meets what this
   // buddy is good at · it won here last time · it is fed and happy. None: nothing is said.
@@ -224,7 +225,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // A run's weather (2026-10-12): drawn once when the stage is opened from what the stage allows (progress.mjs LEVELS
   // weather; a retry keeps it), 'sun' when it names none. It decides the sky (the renderer's city 'id~weather') and what
   // lies on the road (WEATHER: water or snow, how often). ?weather=snow (dev) picks it.
-  const SKY=(()=>{const w=level?.weather||['sun'],asked=new URLSearchParams(location.search).get('weather');return WEATHER[asked]?asked:w[Math.floor(Math.random()*w.length)];})();
+  const SKY=(()=>{const w=level?.weather||['sun'],asked=new URLSearchParams(location.search).get('weather');return WEATHER[asked]?asked:WEATHER[sky]?sky:w[Math.floor(Math.random()*w.length)];})();   // sky: drawn by the home page before the buddy was picked (home.js skyOf)
+  if(SKY==='rain'||SKY==='snow')document.querySelector('.slice-shell')?.insertAdjacentHTML('beforeend',`<i id="slice-sky" data-sky="${SKY}" aria-hidden="true"></i>`);   // rain or snow falling over the race (slice.css #slice-sky); here, not in the page's first markup: SKY is not known up there
   // The hurdles of a stage whose road is new every run (LEVELS random): as many as the track has, somewhere else on its
   // straights each time, 80 m from the start, 70 from the line, 60 apart.
   const scatter=course=>{const n=(course.hurdles||[]).length,out=[];for(let tries=0;out.length<n&&tries<400;tries++){const d=80+Math.random()*(course.length-150),sec=course.sections?.find(s=>d>=s.s0&&d<s.s1);
@@ -299,7 +301,9 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // first stage only (the `thumb` option, home.js; 2026-10-11, the user: it was on every stage).
   let ballT=0;
   if(BALL){const SWIPE=30;
-    shell.insertAdjacentHTML('beforeend',`<div id="ball-pad" aria-hidden="true"></div><div id="ball-ring"${thumb?' class="hint"':''} aria-hidden="true"><u></u><i></i><b></b><span></span><em></em><s></s><strong>放開！</strong></div><button id="slice-skill" type="button" aria-label="技能"><i></i><i></i><i></i><b></b><span></span><em class="charge-count">0</em></button>`);
+    shell.insertAdjacentHTML('beforeend',`<div id="ball-pad" aria-hidden="true"></div><div id="ball-ring"${thumb?' class="hint"':''} aria-hidden="true"><u></u><i></i><b></b><span></span><em></em><s></s><strong>放開！</strong><small class="tip tip-lane">左右滑：換道</small><small class="tip tip-jump">往上滑：跳欄</small></div><button id="slice-skill" type="button" aria-label="技能"><i></i><i></i><i></i><b></b><span></span><em class="charge-count">0</em></button>`);
+    shell.querySelector('.charge-btn')?.insertAdjacentHTML('beforeend','<small class="tip tip-sprint">存了一段：按我衝刺</small>');
+    $('slice-skill').insertAdjacentHTML('beforeend','<small class="tip tip-skill">並排時按：撞他</small>');   /* last: the three pips are found by their place among the button's children */
     if(!field)$('slice-skill').hidden=true;   // no rivals on this stage: nothing to use it on
     $('slice-skill').addEventListener('pointerdown',e=>{e.preventDefault();if(phase!=='running')return;tick(simTime(performance.now()));game.useSkill();},on);
     const pad=$('ball-pad'),ring=$('ball-ring');let g=null;
@@ -331,6 +335,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     if(phase==='countdown'&&t>=0){phase='running';banner('GO!','go',520);buzz('strong');renderer.dustBurst(16);$('slice-goal').hidden=true;}
     tick(t);
     for(const e of game.actions.slice(seen)){
+      {const used={lane:'hint-lane',jump:'hint-jump',leap:'hint-jump','skill-start':'hint-skill',skill:'hint-skill',boost:'hint-sprint'}[e.type];if(used)shell.classList.remove(used);}   // a stage's new control is pointed at until it is first used (2026-10-14, the first-look reviews: 新按鈕完全沒教)
       if(e.type==='lane')sound.cue('lane');
       else if(e.type==='boundary'){feedback('旁邊沒路了','hint');sound.cue('deny');}
       else if(e.type==='lane-blocked'){feedback('旁邊有人','hint');sound.cue('deny');}
@@ -422,7 +427,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     // Relay: the place, alone (2026-10-04, the user: the metres to the horses ahead and behind meant nothing).
     if(field){const card=$('slice-rank'),rank=compositionRank(game,game.metrics());
       put(card.firstChild,'text',String(rank));put(card.lastChild,'text','/'+(others.length+1));put(card,'className',rank===1?'first':'');
-      const p=$('slice-purse');if(p){const now=staked?stake.won(staked.purse,rank,others.length+1):0;p.hidden=!staked;put(p.querySelector('b'),'text',N(now));put(p,'className',now?'':'none');}}
+      const p=$('slice-purse');if(p){const now=staked?stake.won(staked.purse,rank,others.length+1):0;p.hidden=!staked;put(p.querySelector('b'),'text',N(now));put(p,'className',now?'':'none');if(staked)put(p.querySelector('small'),'text',now?'現在領':`前 ${[1,2,3,4,5].filter(k=>k<=others.length+1&&stake.won(staked.purse,k,others.length+1)>0).length} 名有獎金`);}}
     if(phase==='running'||phase==='countdown')sound.speedFeedback(game.speed/game.config.baseSpeed,game.surge(),game.rush());   // not once the race is over: this brought the wind back every frame after stop() (2026-10-06, the user: the sound should end with the race)
     if(BALL)ballHud(t);
     shell.classList.toggle('is-rush',phase==='running'&&(game.boostActive()||DEV_RUSH));   // the picture's edge glows for as long as the sprint lasts (slice.css)
@@ -454,7 +459,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     if(game.finished&&phase==='running'){
       phase='finished';sound.stop();sound.accent('finish');logRun('finish');
       const m=game.metrics(),c=game.config,cleared=game.hurdles.filter(h=>h.state==='cleared').length;
-      const tally={bestCombo:Math.max(0,...game.actions.filter(a=>a.type==='release').map(a=>a.streak)),perfect:game.actions.filter(a=>a.type==='release'&&a.max).length,finishTime:game.finishTime,pickups:game.coinCount,releases:game.actions.filter(a=>a.type==='release').length,limits:game.actions.filter(a=>a.type==='release'&&a.max).length,pops:game.actions.filter(a=>a.type==='blown').length,boosts:game.boosts.length,stumbles:game.stumbles.length,cleared,apples:game.appleCount};   // the streak is the combo, a release at the limit the Perfect
+      const tally={bestCombo:Math.max(0,...game.actions.filter(a=>a.type==='release').map(a=>a.streak)),perfect:game.actions.filter(a=>a.type==='release'&&a.max).length,finishTime:game.finishTime,pickups:game.coinCount,releases:game.actions.filter(a=>a.type==='release').length,limits:game.actions.filter(a=>a.type==='release'&&a.max).length,pops:game.actions.filter(a=>a.type==='blown').length,boosts:game.boosts.length,stumbles:game.stumbles.length,cleared,apples:game.appleCount,rammed:game.actions.filter(a=>a.type==='rammed').length,bumps:game.actions.filter(a=>a.type==='skill').length,gap:(()=>{const o=game.metrics().rivals.map(x=>x.finishTime).filter(t=>t!=null).sort((x,y)=>x-y);return o.length?Math.abs(game.finishTime-(game.metrics().rank===1?o[0]:Math.min(o[0],game.finishTime)))/TEMPO:null;})()};   // the streak is the combo, a release at the limit the Perfect
       if(solo&&!relay){const beat=field?rivals.length+1-m.rank:0,comeback=field&&behindOnce&&m.rank===1;if(comeback)feedback('逆轉勝！','gold',true);result={solo:true,rank:field?m.rank:null,of:rivals.length+1,bonus:beat*c.coinValue,comeback,coins:(game.coinCount+beat)*c.coinValue+(comeback?COMEBACK:0),appleTotal:game.apples.length,topSpeed:peak,trace,splits:splits(),stake:staked?{...staked,won:stake.won(staked.purse,m.rank,rivals.length+1)}:null,field:[...m.rivals].sort((a,b)=>a.finishTime-b.finishTime).map((x,i)=>({id:x.id,rank:i+1+(i+1>=m.rank?1:0)})),...tally};staked=null;doubled=false;}   // solo: the time is the result (the stars); coins picked up are banked, and a coin's worth for every rival beaten
       else{const bonus=c.placeBonus[m.rank-1]||0;result={rank:m.rank,coins:game.coinCount*c.coinValue+bonus,gems:c.gemBonus?.[m.rank-1]||0,bonus,lead:c.length-Math.max(...m.rivals.map(x=>x.distance)),...tally};}   // lead: m ahead of the best rival at the line
       const bank=onFinish?.(result)||{};
@@ -476,6 +481,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   function showResults(r,m,bank,grade){
     const tempo=TEMPO,n=v=>Number(v).toLocaleString('en-US'),total=bank.total??0,parts=bank.parts??[['名次',r.bonus||0],['路上撿的',r.coins-(r.bonus||0)],['其他',bank.extra||0]].filter(x=>x[1]),gain=parts.reduce((a,x)=>a+x[1],0);   // parts: [what for, coins] (home.js); gain: what the run made, the entry fee taken off
     const off=bank.best?(r.finishTime-bank.best)/tempo:null,gems=MVP.gems?(r.gems||0)+(bank.newStars||0)+(bank.daily?.gems||0):0;
+    // What happened in the run, in one line (2026-10-14, two first-look reviews put 輸了不知道為什麼輸 first): hits taken and given, the gap to the winner or to the next. No count of releases or pops (a third review: 爆掉 4 次 reads as a telling-off).
+    const how=r.solo&&r.releases!=null?`<p class="res-how">${[r.rammed?`被撞 ${r.rammed} 次`:'',r.bumps?`撞人 ${r.bumps} 次`:'',r.gap!=null?(r.rank===1?`領先第 2 名 ${r.gap.toFixed(1)} 秒`:`差第 1 名 ${r.gap.toFixed(1)} 秒`):''].filter(Boolean).map(t=>`<span>${t}</span>`).join('')}</p>`:'';
     let again=r.solo?(stake?.can(false)?`再跑一次 · 付 <span class="amt">${N(stake.fee)}${coin}</span>`:'再跑一次'):'再來一場',near='',board='';
     if(!r.solo){
       const rows=[{name:`You · ${team.map(h=>h.name).join(' / ')}`,coat:team.at(-1).coat,time:r.finishTime,you:true},
@@ -488,8 +495,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       // who has how much, of the ones that ran (home.js richList): on a panel of its own, over the buddy's row and as wide. It
       // comes up as things stood before the run and then moves (moneyMove): the coins count to what they are now, what each made
       // shows, and the rows slide to their new places.
-      (bank.money?(()=>{const rows=bank.money.map(x=>({...x,was:x.coins-(x.made||0)})).sort((a,b)=>b.was-a.was);
-        return `<ol class="res-money">${rows.map((x,i)=>`<li class="${x.you?'you':''}" data-before="${x.was}" data-after="${x.coins}"><b class="rk">${i+1}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span>${x.made?`<i class="${x.made>0?'up':'down'}">${x.made>0?'+':'−'}${n(Math.abs(x.made))}</i>`:''}<b class="amt"><span>${n(x.was)}</span>${coin}</b></li>`).join('')}</ol>`;})():'')+
+      (bank.money?(()=>{const rows=bank.money.map(x=>({...x,was:x.coins-(x.made||0),place:x.you?r.rank:r.field?.find(f=>f.id===x.id)?.rank??9})).sort((a,b)=>a.place-b.place);   // in this run's order, its places as the numbers (2026-10-14: it was ordered by wealth, so the top said 4th and the list put the player 5th)
+        return `<ol class="res-money">${rows.map((x,i)=>`<li class="${x.you?'you':''}" data-before="${x.was}" data-after="${x.coins}"><b class="rk">${x.place}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span>${x.made?`<i class="${x.made>0?'up':'down'}">${x.made>0?'+':'−'}${n(Math.abs(x.made))}</i>`:''}<b class="amt"><span>${n(x.was)}</span>${coin}</b></li>`).join('')}</ol>`;})():'')+
       `<ol class="res-rank">${MVP.levels&&bank.age?`<li class="ui-pillrow glass res-age">${icon('horse')}<span>${esc(team[0].name)} · ${bank.age}</span><b>${bank.nextAge?`再 ${bank.runs} 場長成${bank.nextAge}`:'長到最大了'}</b></li>`:''}${
       bank.starHint?`<li class="ui-pillrow glass res-gap" style="--p:${bank.starGap??0}">${icon('star')}<span>下一顆星</span><b>${bank.starHint}</b></li>`:''}${
       bank.hot>1?`<li class="ui-pillrow glass">${icon('bolt')}<span>連續進步 ×${bank.hot}</span><b>+${bank.hotCoins}</b></li>`:''}${
@@ -499,7 +506,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     const award=['gold','red','blue'][r.solo&&!r.rank?3-(bank.stars??0):r.rank-1];   // 1st gold, 2nd red, 3rd blue (the user); solo: by its stars
     const tag='<span class="ui-tag yellow">新紀錄</span>',el=$('slice-result');
     el.innerHTML=`<header class="ui-top">${brand()}<div class="res-wallets">${wallet(total-Math.max(0,gain),{gems:bank.gems??null})}</div></header>
-      <div class="res-banner ui-glass ui-enter"><img src="assets/ui/res_laurel_l.webp" alt=""><div><small>${small}</small><b class="res-big">${r.solo?wall(r.finishTime):`第 ${r.rank} 名`}</b></div><img src="assets/ui/res_laurel_r.webp" alt=""></div>
+      <div class="res-banner ui-glass ui-enter${!r.rank||r.rank===1||r.stake?.won?'':' plain'}"><img src="assets/ui/res_laurel_l.webp" alt=""><div><small>${small}</small><b class="res-big">${r.solo?wall(r.finishTime):`第 ${r.rank} 名`}</b></div><img src="assets/ui/res_laurel_r.webp" alt=""></div>${how}${bank.tierLine?`<p class="res-tier"><img src="assets/ui/tier/${bank.tierLine.img}.webp" alt=""><span>${esc(bank.tierLine.text)}</span></p>`:''}
       ${r.solo&&bank.stars!=null?`<p class="res-stars" role="img" aria-label="${bank.stars} 顆星">${[0,1,2].map(k=>`<i class="${k<bank.stars?'on':''}${k>=bank.stars-bank.newStars&&k<bank.stars?' new':''}">★</i>`).join('')}</p>`:''}
       <div class="res-ticket ${gain<0?'lost':'won'}"><img class="art" src="assets/ui/money/${gain<0?'bag_empty':'pile'}.webp" alt=""><div><b><span data-count>${gain<0?'−':'+'}0</span>${coin}</b>
         <span class="parts">${parts.map(([k,v])=>`<i>${esc(k)} ${v<0?'−':'+'}${n(Math.abs(v))}</i>`).join('')}</span></div>${r.stake?.won?'<img class="stamp" src="assets/ui/money/stamp_gold.webp" alt="">':''}</div>
@@ -535,10 +542,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // show, then the rows slide to their new order (the player passing someone: a buzz and the overtake sound).
   function moneyMove(el,after=1500){const ol=el.querySelector('.res-money');if(!ol)return;const rows=[...ol.children],n=v=>Number(v).toLocaleString('en-US');let done=false;
     const fin=()=>{if(done||!ol.isConnected)return;done=true;rows.forEach(r=>{r.querySelector('.amt span').textContent=n(r.dataset.after);r.classList.add('shown');});
-      const sorted=[...rows].sort((a,b)=>b.dataset.after-a.dataset.after),top=new Map(rows.map(r=>[r,r.getBoundingClientRect().top])),me=ol.querySelector('.you'),up=sorted.indexOf(me)<rows.indexOf(me);
-      sorted.forEach((r,i)=>{ol.append(r);r.querySelector('.rk').textContent=i+1;});
-      if(!still)sorted.forEach(r=>{const d=top.get(r)-r.getBoundingClientRect().top;if(d)r.animate([{translate:`0 ${d}px`},{translate:'0 0'}],{duration:560,easing:'cubic-bezier(.3,1.25,.5,1)'});});
-      if(up&&!el.hidden){buzz('strong');sound.accent('overtake');}};
+      };   // the rows stay in the run's order (they were sorted again by wealth and slid there)
     if(still){fin();return;}
     setTimeout(()=>{if(!ol.isConnected)return;rows.forEach(r=>r.classList.add('shown'));const t0=performance.now();
       const step=now=>{if(done||!ol.isConnected)return;const u=Math.min(1,(now-t0)/650);rows.forEach(r=>{const a=+r.dataset.before,b=+r.dataset.after;r.querySelector('.amt span').textContent=n(Math.round(a+(b-a)*u));});if(u<1)requestAnimationFrame(step);else setTimeout(fin,250);};
@@ -584,7 +588,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     if(e.code in laneKeys){e.preventDefault();lane(laneKeys[e.code]);}
     else if(e.code==='Space'){e.preventDefault();charge(e.timeStamp);}
   },on);
-  window.addEventListener('blur',pause,on);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();},on);
+  if(!AUTO){window.addEventListener('blur',pause,on);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();},on);}   // a self-playing test run (?auto) is not paused when its window is not the front one
   $('slice-canvas').addEventListener('race-render-error',pause);
   async function load(){
     startHow();

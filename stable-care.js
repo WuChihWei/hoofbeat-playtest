@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MVP} from './playable/slice-config.mjs?v=r691';
+import {MVP} from './playable/slice-config.mjs?v=r722';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -15,7 +15,8 @@ export const ITEMS=[
   // the pond's catch (farm.mjs, 2026-10-11: the field's rules again): fish, and the bait that is cast for it. sell: what one
   // of a harvest brings in the shop (4 while a crop takes 45 s in the playtest build: 3 a plot less the 10 of its seed is
   // about what a race pays for the same time; meant: 5, with a crop that takes hours)
-  {id:'fish',name:'魚',kind:'food',food:30,xp:2,sell:5},{id:'bait',name:'魚餌',kind:'seed',price:10,note:'放進魚池，釣到魚'},
+  {id:'fish',name:'魚',kind:'food',food:30,xp:2,price:8},{id:'bait',name:'魚餌',kind:'seed',hidden:true,note:'放進魚池，釣到魚'},   // fishing is put away (2026-10-14, the user: hide the fishing, fish is bought with coins): fish 8 a piece in the shop, not sold back; bait has no price, so the shop does not list it (the pond's rules stay in farm.mjs)
+ 
   // treats: a little filling, a little xp
   ...[{id:'carrot',name:'紅蘿蔔',kind:'food',food:10,xp:2,price:15},{id:'apple',name:'蘋果',kind:'food',food:10,xp:3,price:20},
   {id:'cookie',name:'夥伴餅乾',kind:'food',food:15,xp:5,price:35}].map(i=>MVP.treats?i:{...i,kind:'hidden',hidden:true}),   // MVP: wheat is the food
