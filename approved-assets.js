@@ -75,7 +75,10 @@ export const preloadBuddies=(coats,stages)=>preloadModels([...coats.map(c=>COATS
 // rig and clips: what walks about in the ranch overview, where a buddy is 40–60 px tall (ranch-view.js). One file per
 // kind of animal, beside its full model.
 export const ranchFile=coat=>(COATS[coat]?.model??PRESENTATION_ASSETS.horse).replace('_Mobile.glb','_Ranch.glb');
-export const preloadRanchBuddies=(coats,stages)=>preloadModels([...new Set([...coats.map(ranchFile),...youngs(coats,stages).filter(Boolean)])]);   // and a young model of its own (GROW: the foal, the rhino calf): r576 left them out and the ranch of anyone with a young rhino did not load
+// 2026-10-14 (the user: the ranch took long to load): a young buddy in the ranch is its _Far model (the foal 0.7 MB, 5.5k
+// triangles, the same parts and clips; it was the 1.2 MB one, 15.8k triangles, for a buddy 40–60 px tall).
+export const ranchYoung=m=>m?.replace('_Mobile.glb','_Mobile_Far.glb');
+export const preloadRanchBuddies=(coats,stages)=>preloadModels([...new Set([...coats.map(ranchFile),...youngs(coats,stages).filter(Boolean).map(ranchYoung)])]);   // and a young model of its own (GROW: the foal, the rhino calf): r576 left them out and the ranch of anyone with a young rhino did not load
 // Eyes, set up the same way on every buddy. The model's side (artifacts/tripo-retarget/build_animal.py): a mesh `Eyes`,
 // its two eyeballs where the model has them, material Buddy_Eye (the horse keeps its own three names: export_final.py
 // add_eyes); the socket, lids, lash lines and brows are the model's own parts and are drawn as modelled. On the
@@ -416,7 +419,7 @@ function nub(o,content){const bodyMesh=bodyOf(content,o),skin=bodyMesh?.material
 export function createApprovedHorse(variant=0,coatOverride=null,far=false,hair=null,bare=false,ranch=false,stage=null){   // ranch: its ranch model (ranchFile)   // bare: the buddy with nobody on it (the ranch: it does not wait for the rider's model)   // coatOverride, hair: a relay leg's own coat and mane style (else the look's)
   const player=variant===0,coatIx=coatOverride??(player?PLAYER_LOOK.coat:variant===PLAYER_LOOK.coat?0:variant),base0=COATS[coatIx]??COATS[0],G0=GROW[stage??(player?DEV_GROW||PLAYER_LOOK.stage:0)]??GROW[2],G=G0.by?{...G0,...G0.by[base0.species??'horse']}:G0,base=G.model?{name:base0.name,species:G.as,model:G.model,forward:base0.forward}:base0;   // a young model of its own stands in for the buddy's
   const pull=(c,to,by)=>'#'+new THREE.Color(c).lerp(new THREE.Color(to),by).getHexString(),look=G.tint&&!base.species?{...base,body:pull(base.body,G.tint,G.by),mane:pull(base.mane,G.tint,G.by*.6),...(base.tail?{tail:pull(base.tail,G.tint,G.by*.6)}:null),}:base;   // a horse's coat at this stage
-  const horse=approvedAssets.get(G.model??(ranch?ranchFile(coatIx):null)??look.model??(far==='low'?'horseLow':far===true?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far==='low'?'riderLow':far==='race'?'riderRace':far?'riderFar':'rider');   // far: true (the Far pair) | 'low' (the Low pair) | 'race' (the full buddy, the Race rider)
+  const horse=approvedAssets.get((ranch&&G.model?ranchYoung(G.model):G.model)??(ranch?ranchFile(coatIx):null)??look.model??(far==='low'?'horseLow':far===true?'horseFar':'horse')),rider=bare?{scene:new THREE.Group(),animations:[]}:approvedAssets.get(far==='low'?'riderLow':far==='race'?'riderRace':far?'riderFar':'rider');   // far: true (the Far pair) | 'low' (the Low pair) | 'race' (the full buddy, the Race rider)
   if(!horse||!rider)throw new Error('Approved horse/rider assets not loaded');
   const root=new THREE.Group(),scene=new THREE.Group(),fit=new THREE.Group(),orientation=new THREE.Group();
   root.add(scene);scene.add(fit);fit.add(orientation);orientation.rotation.y=Math.PI;

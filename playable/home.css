@@ -685,3 +685,7 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .page-race{background-position:50% -8svh;background-color:#b5864f}.page-race .view{top:calc(max(107.3cqw,53.95cqh) - 34cqh * .97 - 8cqh)}
 .page-looks .view{top:21%;height:40%}   /* the pair fitted into the room over the rug (stable-view center): its feet on the rug, clear of the heads and the panel */
 .page-looks .view{top:24%}
+.page-race{background-position:50% 0}.page-race .view{top:auto}   /* placed by home.js place(): the stage just over the card panel */
+/* 2026-10-14 (the user: 能力值排在 LV 下面): beside the head, the level and under it the perk icons; the name under them */
+.pick-card .top .side{display:flex;flex-direction:column;gap:calc(3 * var(--u))}.pick-card .top .side .perks img{height:calc(20 * var(--u))}
+.pick-card>b{margin-top:calc(2 * var(--u))}

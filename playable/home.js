@@ -5,9 +5,9 @@
 //         └ BUDDIES → #horses (a horse opens it in #stable)
 //   bottom nav: #home · #ranch (the whole ranch, the buddies out on it; a tap on one → #stable: Feed · Brush · Buddies · Items; Gear and the relay on the horse card) · #shop (Feed · Care · Decor) · #settings
 // Profile, wallet and care live in localStorage; the player's look feeds the race through PLAYER_LOOK.
-import {startSlice} from './slice-app.js?v=r758';
-import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r758';
-import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r758';
+import {startSlice} from './slice-app.js?v=r763';
+import {COURSES,buildCourse,relayCourse,soloCourse} from '../course/courses.mjs?v=r763';
+import {PLAYER_LOOK,GEAR,SHIRTS,PATTERNED,HAIR,COATS,MODEL_VERSION,preloadPresentation} from '../approved-assets.js?v=r763';
 // In the background from the moment the game is open (2026-10-06, the user: the ranch took five seconds on a phone, and a
 // race was seen being put together), in the order they are likely to be wanted: the ranch's models and its barn
 // painting, the race's near models, the pictures of the chosen city's scene (warmCity), the rivals' light models.
@@ -23,17 +23,17 @@ const step=(name,k)=>()=>{window.zbMark?.('loaded: '+name);dispatchEvent(new Cus
 setTimeout(()=>{window.zbMark?.('preload starts');dispatchEvent(new CustomEvent('zb-load',{detail:.15}));
   preloadPresentation(false).catch(()=>{}).then(step('race models',.7)).then(()=>{warmCity(profile.city);step('city pictures',1)();dispatchEvent(new Event('zb-ready'));barn.src='assets/stable/barn-plate.webp';
     return preloadRanch(owned().slice(0,14).map(h=>h.coat),owned().slice(0,14).map(lvOf));}).catch(()=>{}).then(step('ranch models',1)).then(()=>preloadStable()).catch(()=>{}).then(step('stable models',1)).then(()=>preloadPresentation()).catch(()=>{}).then(step('rivals\' light models',1));},50);
-import {lang,setLang,translate} from '../i18n.js?v=r758';
-import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r758';
-import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r758';
-import {mountStableView,preloadStable} from './stable-view.js?v=r758';
-import {mountRiderView} from './rider-view.js?v=r758';
-import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r758';
-import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll,reapAll,sowAll} from '../farm.mjs?v=r758';
-import {cityPictures} from '../approved-environment.js?v=r758';
-import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r758';
-import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r758';
-import {STAR_MAX,LEVELS,SHOWN,STAGES,TIERS,TIER_AT,tierOf,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,BETS,BET_NAME,forecast,rivalAge,rivalPace} from './progress.mjs?v=r758';
+import {lang,setLang,translate} from '../i18n.js?v=r763';
+import {ITEMS,itemEffect,likes,sellAll,readCare,readItems,saveCare,careAction,level,LV_TOP,LV_SPEED,lvLeft,lvPart,soloForm as careForm,fitNotes,fitness,feedAll,FULL,afterRace,afterSolo} from '../stable-care.js?v=r763';
+import {SLICE_CONFIG,SOLO,MAX_LEVEL,STAT_FULL,buddyStats,racing,MVP,BUDDY_PERK,SLICE_RIVALS} from './slice-config.mjs?v=r763';
+import {mountStableView,preloadStable} from './stable-view.js?v=r763';
+import {mountRiderView} from './rider-view.js?v=r763';
+import {mountRanchView,preloadRanch,RANCH,autoHuts,hutOffers} from './ranch-view.js?v=r763';
+import {FARM,readFarm,saveFarm,stage,growth,tend,bedsFor,stallsFor,pensFor,cast,rush,tendAll,castAll,reapAll,sowAll} from '../farm.mjs?v=r763';
+import {cityPictures} from '../approved-environment.js?v=r763';
+import {readLog,clearLog,summary,FEEDBACK_URL,addLog,dayNumber} from '../playtest.js?v=r763';
+import {esc,icon,brand,coin,wallet,header,nav,bar,toaster,chest} from '../ui/ui.js?v=r763';
+import {STAR_MAX,LEVELS,SHOWN,STAGES,TIERS,TIER_AT,tierOf,PERKS,PERK_COINS,STAGE_GIFT,TROPHY_STAGE,trophy,HORSE_PRICE,STARTERS,whoIsOut,cleared,maneOpen,riderColors,fresh,restore,totalStars,levelOf,unlocked,relayOpen,owns,nextStarTime,currentLevel,missionsFor,finish,buy,nextGoal,eased,entryFee,PURSE,purseWon,BETS,BET_NAME,forecast,rivalAge,rivalPace} from './progress.mjs?v=r763';
 
 const GHOST='hoofbeat.ghost.v4.',HOT='hoofbeat.hot.v1',SOLO_BEST='hoofbeat.solo.v4',RELAY_BEST='hoofbeat.relay.v3',WALLET='hoofbeat.wallet.v1',PROFILE='hoofbeat.profile.v1',BEST='hoofbeat.bestcombo.v1',OWNED_DECOR='hoofbeat.decor.v1',PROGRESS='hoofbeat.progress.v1';
 const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
@@ -496,7 +496,7 @@ const PAGES={
     // 2026-10-14 (the user: 卡牌方式顯示，夥伴要有屬性的 icon，直接秀出騎士和夥伴的 3D): a grid of cards, each with its perks
     // (lit from its level, dim before), suits today / hungry; the chosen one is ridden in 3D above (stable-view with the rider).
     const card=h=>{const has=owns(prog,h.id),p=HORSE_PRICE[h.id]||{},hungry=has&&fitness(care[h.id]).feed>0;   // 2026-10-14 (the user: names may be long; hungry and 👍 in the corner): the head and its level, the name on a line of its own, the perks as icons
-      return `<button class="pick-card ${has?'':'locked'}" role="listitem" data-solo="${h.id}" aria-label="${h.name}"><span class="top"><img src="${buddyImg(h)}" alt=""><small>${has?lv(h):p.stage?`破第 ${p.stage} 關送`:p.stars?`集滿 ${p.stars} 顆星`:`${coin}${p.coins??''}`}</small></span><span class="badges">${has&&suits(h)?'<i aria-label="推薦">👍</i>':''}${hungry?`<i class="hungry" aria-label="餓了">${icon('fork')}</i>`:''}</span><b>${h.name}</b><span class="perks">${perksOf(h).map((x,k)=>`<img class="${has&&k<lvOf(h)?'':'shut'}" src="assets/ui/perk/${x}.webp" alt="${perkName(x)}" title="${PERK_TEXT[x]}">`).join('')}</span></button>`;};
+      return `<button class="pick-card ${has?'':'locked'}" role="listitem" data-solo="${h.id}" aria-label="${h.name}"><span class="top"><img src="${buddyImg(h)}" alt=""><span class="side"><small>${has?lv(h):p.stage?`破第 ${p.stage} 關送`:p.stars?`集滿 ${p.stars} 顆星`:`${coin}${p.coins??''}`}</small><span class="perks">${perksOf(h).map((x,k)=>`<img class="${has&&k<lvOf(h)?'':'shut'}" src="assets/ui/perk/${x}.webp" alt="${perkName(x)}" title="${PERK_TEXT[x]}">`).join('')}</span></span></span><span class="badges">${has&&suits(h)?'<i aria-label="推薦">👍</i>':''}${hungry?`<i class="hungry" aria-label="餓了">${icon('fork')}</i>`:''}</span><b>${h.name}</b></button>`;};
     let view=null,alive=true,shown=null;
     const rc=relayCourse(c.id),bests=readSolo();
     const el=frame('page-race',`<div class="view" aria-hidden="true"></div>${header('選夥伴',readCoins())}<main class="page-body">
@@ -531,8 +531,17 @@ const PAGES={
     el.querySelectorAll('[data-solo]').forEach(b=>b.onclick=()=>{see=+b.dataset.solo;if(owns(prog,see)){profile.solo=see;saveProfile();}paint();});
     el.querySelectorAll('[data-leg]').forEach(b=>b.onclick=()=>{sel=+b.dataset.leg;paint();});
     el.querySelectorAll('[data-horse]').forEach(b=>b.onclick=()=>{putOnLeg(+b.dataset.horse,sel);sel=(sel+1)%3;saveProfile();paint();});
-    paint();{const sc=el.querySelector('.pick-cards'),c0=sc?.querySelector('.pick-card');if(c0)requestAnimationFrame(()=>{const gap=parseFloat(getComputedStyle(sc).rowGap)||0;sc.style.maxHeight=`${c0.offsetHeight*2.5+gap*2}px`;const on=sc.querySelector('.is-selected');if(on)sc.scrollTop=on.offsetTop-sc.offsetTop;});}   /* two rows and a half in view (2026-10-14, the user), the chosen buddy's row at the top */
-    leave=()=>{alive=false;view?.dispose();applyLook();};
+    paint();{const sc=el.querySelector('.pick-cards'),c0=sc?.querySelector('.pick-card');if(c0)requestAnimationFrame(()=>{const gap=parseFloat(getComputedStyle(sc).rowGap)||0;sc.style.maxHeight=`${c0.offsetHeight*2.5+gap*2}px`;const on=sc.querySelector('.is-selected');if(on)sc.scrollTop=on.offsetTop-sc.offsetTop;place();});}   /* two rows and a half in view (2026-10-14, the user), the chosen buddy's row at the top */
+    // The paddock's stage and the pair on it sit just over the card panel, whatever the screen (2026-10-14, the user: the pair
+    // was under the panel on a phone): the picture is moved so its stage (54% down it, cover) is there, and the 3D frame's
+    // feet with it. Measured, not guessed from the screen's shape: the panel's height depends on the cards.
+    const PADDOCK={stage:.5395,ratio:2149/1080};
+    function place(){const pn=el.querySelector('.pick-panel'),v=el.querySelector('.view');if(!pn||!v)return;const box=el.getBoundingClientRect(),W=box.width,H=box.height,bgH=Math.max(H,W*PADDOCK.ratio);
+      let T=pn.getBoundingClientRect().top-box.top-12,y=T-PADDOCK.stage*bgH;if(y>0){y=0;T=PADDOCK.stage*bgH;}   // never a gap over the sky
+      const over=el.querySelector('.pick-sky')||el.querySelector('.ui-header'),top=over?over.getBoundingClientRect().bottom-box.top+6:0,vh=Math.max(120,Math.min(.34*H,(T-top)/.97));   /* no taller than the room between the weather bar and the stage */
+      el.style.backgroundPosition=`50% ${y}px`;v.style.height=`${vh}px`;v.style.top=`${T-vh*.97}px`;}
+    const ro=new ResizeObserver(()=>place());ro.observe(el);{const pn=el.querySelector('.pick-panel');if(pn)ro.observe(pn);}   /* again whenever the page or the panel changes size (the first measure came before the cards were laid out) */
+    leave=()=>{alive=false;ro.disconnect();view?.dispose();applyLook();};
     applyLook(horseById(see));shown=see;mountStableView(el.querySelector('.view'),{rider:true,center:true}).then(v=>{if(!alive){v.dispose();return;}view=v;applyLook(horseById(shown));v.show(null,true);el.classList.add('has-view');}).catch(e=>console.error(e));   // the 3D shows once it is whole (.has-view)
   },
 
@@ -899,7 +908,7 @@ const PAGES={
         <li><button class="row" data-help>${icon('info')}<span>Race controls</span>${icon('arrow','chev')}</button></li>
         <li><button class="row" data-log>${icon('info')}<span>測試紀錄</span><small>${summary().races} 場</small>${icon('arrow','chev')}</button></li>
         <li>${icon('horse')}<span style="white-space:nowrap">About ZOOMBUD</span><small style="text-align:right">${new URL(import.meta.url).searchParams.get('v')||''} · 模型 ${MODEL_VERSION} · ${innerWidth}×${Math.round(window.visualViewport?.height??innerHeight)}/${innerHeight} · 載入 ${store.get('hoofbeat.loadtime.ranch')||'–'}/${store.get('hoofbeat.loadtime.race')||'–'} s</small></li>
-        <li><button class="row danger" id="reset">${icon('reset')}<span>Reset progress</span>${icon('arrow','chev')}</button></li></ul></main>
+        <li><button class="row danger" id="reset">${icon('reset')}<span>清除紀錄，從頭開始</span>${icon('arrow','chev')}</button></li></ul></main>
       <div class="ui-scrim" hidden></div><section class="ui-modal ui-panel deep" role="dialog" aria-modal="true" hidden><header><h2>Race controls</h2>
         <button class="ui-icon-btn sm plain" data-close aria-label="關閉">${icon('close','')}</button></header><ul class="ui-list controls">
         <li><span><b>按住圓球</b><small class="note">長到黃圈放開最快；早一點也可以，碰到紅圈會爆掉</small></span></li>
@@ -932,9 +941,12 @@ const PAGES={
     el.querySelector('#lang').onchange=e=>setLang(e.target.checked?'en':'zh');
     el.querySelector('#hand').onchange=e=>store.set('hoofbeat.hand.v1',e.target.checked?'left':'right');
     el.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{store.set(ROLE,b.dataset.role);fixCity();saveProfile();go('settings');});
-    el.querySelector('#reset').onclick=()=>{if(!confirm(translate('確定要重設所有進度（關卡、星星、解鎖的夥伴、金幣、照顧、外觀）？')))return;[WALLET,PROFILE,BEST,SOLO_BEST,RELAY_BEST,PROGRESS,OWNED_DECOR,'hoofbeat.tutorial.v1','hoofbeat.latency.v1','hoofbeat.care.v2','hoofbeat.items.v1','hoofbeat.gems.v1','hoofbeat.hand.v1','hoofbeat.jumps.v1'].forEach(store.del);
-      try{Object.keys(localStorage).filter(k=>k.startsWith(GHOST)).forEach(store.del)}catch{}prog=fresh();
-      profile={...defaults,gear:{}};care=readCare({getItem:store.get},ROSTER.map(h=>h.id));bag=readItems({getItem:store.get});applyLook();go('home');};
+    // 2026-10-14 (the user: 把 Jordan 的歷史紀錄洗掉): everything this game keeps in the browser goes (the name, the wallet, the
+    // buddies, the rivals' purses, the field, the tier, the test log), but the language and the sound; the page starts as on a
+    // first opening. It listed keys one by one before and left a dozen behind.
+    el.querySelector('#reset').onclick=()=>{if(!confirm(translate('確定要清除所有紀錄，從頭開始（名字、關卡、夥伴、金幣、牌位、測試紀錄）？')))return;
+      try{Object.keys(localStorage).filter(k=>k.startsWith('hoofbeat.')&&!['hoofbeat.lang.v1','hoofbeat.muted'].includes(k)).forEach(k=>localStorage.removeItem(k));}catch{}
+      location.hash='';location.reload();};
   },
 };
 PAGES.collection=PAGES.horses;   // old links
@@ -945,8 +957,8 @@ const LOGIN='hoofbeat.login.v1',LOGIN_GIFT={seed:3,fish:9};let loginGift=false;
 export function startHome(){
   if(store.get(LOGIN)!==today()){addLog({kind:'open',stars:totalStars(prog),stage:levelOf(currentLevel(prog).city)+1,buddies:prog.owned.length});   // one row a day: day 1 and on is someone who came back (playtest.js)
     store.set(LOGIN,today());for(const [k,n] of Object.entries(LOGIN_GIFT))bag={...bag,[k]:(bag[k]||0)+n};saveCare({setItem:store.set},care,bag);loginGift=true;}
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r758',import.meta.url);document.head.append(css);
-  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r758');   // a frame counter in the corner (fps.js)
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./home.css?v=r763',import.meta.url);document.head.append(css);
+  if(/[?&]fps\b/.test(location.search))import('./fps.js?v=r763');   // a frame counter in the corner (fps.js)
   // Opening the game always lands on the race menu (the home page) once the cover has gone (2026-10-12, the user:
   // 「封面圖跑完應該進比賽選單」): it opened on whatever page the address named, the ranch if that was where it was closed.
   // ?debug keeps the address's page (a dev link straight to a page).
