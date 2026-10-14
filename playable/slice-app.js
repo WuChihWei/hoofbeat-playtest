@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r749';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r749';
-import {WEATHER,STAR_MAX} from './progress.mjs?v=r749';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r749';
-import {compositionRank} from '../race-composition.mjs?v=r749';
-import {ChaseRenderer} from '../race-scene.js?v=r749';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r749';
-import {cityModels} from '../approved-environment.js?v=r749';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r756';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r756';
+import {WEATHER,STAR_MAX} from './progress.mjs?v=r756';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r756';
+import {compositionRank} from '../race-composition.mjs?v=r756';
+import {ChaseRenderer} from '../race-scene.js?v=r756';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r756';
+import {cityModels} from '../approved-environment.js?v=r756';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r749';
-import {RaceAudio} from '../audio.js?v=r749';
-import {addLog,raceEntry} from '../playtest.js?v=r749';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r749';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r756';
+import {RaceAudio} from '../audio.js?v=r756';
+import {addLog,raceEntry} from '../playtest.js?v=r756';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r756';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1,level?.field),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r749',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r756',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -497,7 +497,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       // comes up as things stood before the run and then moves (moneyMove): the coins count to what they are now, what each made
       // shows, and the rows slide to their new places.
       (bank.money?(()=>{const rows=bank.money.map(x=>({...x,was:x.coins-(x.made||0),place:x.you?r.rank:r.field?.find(f=>f.id===x.id)?.rank??9})).sort((a,b)=>a.place-b.place);   // in this run's order, its places as the numbers (2026-10-14: it was ordered by wealth, so the top said 4th and the list put the player 5th)
-        return `<ol class="res-money">${rows.map((x,i)=>`<li class="${x.you?'you':''}" data-before="0" data-after="${x.made||0}"><b class="rk">${x.place}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span><b class="amt ${x.made>0?'up':x.made<0?'down':''}"><span>0</span>${coin}</b></li>`).join('')}</ol>`;})():'')+   /* 2026-10-14 (two reviewers felt crushed by the rivals' 2,560 against their 165): what each made this run, not what each has */
+        return `<ol class="res-money">${rows.map((x,i)=>`<li class="${x.you?'you':''}" data-before="0" data-after="${x.made||0}"><b class="rk">${x.place}</b><img src="assets/ui/rider_${x.you?0:Math.max(0,rivals.findIndex(r=>r.id===x.id))+1}.webp" alt=""><span>${esc(x.name)}</span><b class="amt ${x.made>0?'up':x.made<0?'down':''}"><span>0</span>${coin}</b></li>`).join('')}</ol>`;})():'')+   /* 2026-10-14 (two reviewers felt crushed by the rivals' 2,560 against their 165): what each made this run, not what each has; each row the rider's own face (the user: 名次直接是騎士大頭貼), the portrait the race gave that rider */
       `<ol class="res-rank">${MVP.levels&&bank.age?`<li class="ui-pillrow glass res-age">${icon('horse')}<span>${esc(team[0].name)} · ${bank.age}</span><b>${bank.nextAge?`再 ${bank.runs} 場升 ${bank.nextAge}`:'長到最大了'}</b></li>`:''}${
       bank.starHint?`<li class="ui-pillrow glass res-gap" style="--p:${bank.starGap??0}">${icon('star')}<span>下一顆星</span><b>${bank.starHint}</b></li>`:''}${
       bank.hot>1?`<li class="ui-pillrow glass">${icon('bolt')}<span>連續進步 ×${bank.hot}</span><b>+${bank.hotCoins}</b></li>`:''}${

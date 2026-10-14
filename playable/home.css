@@ -668,3 +668,18 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .pick-card .rec{position:absolute;top:calc(6 * var(--u));right:calc(8 * var(--u));font-style:normal;font-size:calc(18 * var(--u))}   /* recommended for today's weather */
 .page-race .pick-panel{max-height:none}.pick-cards{scroll-snap-type:y mandatory}.pick-card{scroll-snap-align:start}
 .pick-cards{align-content:start;grid-auto-rows:max-content}.page-race .pick-panel{flex:none}
+/* 2026-10-14 the ranch: three buttons, 播種 says how many seeds are left */
+.ranch-tools.three{grid-template-columns:repeat(3,1fr)}.ranch-tools.three .ui-btn{padding:0 calc(6 * var(--u));gap:calc(4 * var(--u))}.ranch-tools [data-do=sow] small{font-weight:600;opacity:.75}.ranch-tools [data-do=sow] small.none{opacity:.4}
+.ranch-tools.three .ui-btn{flex:1}
+/* 2026-10-14 the card redone: head + level, then the name full width, then the perk icons; 👍 and hungry in the top right corner */
+.pick-card{display:flex;flex-direction:column;align-items:flex-start;gap:calc(4 * var(--u));padding:calc(8 * var(--u)) calc(10 * var(--u))}
+.pick-card .top{display:flex;align-items:center;gap:calc(8 * var(--u))}.pick-card .top img{width:calc(40 * var(--u));height:calc(40 * var(--u));border-radius:50%;object-fit:cover;background:#000}.pick-card .top small{font-size:calc(12 * var(--u));color:rgb(255 255 255 / .7);display:inline-flex;align-items:center;gap:calc(3 * var(--u))}
+.pick-card>b{width:100%;font-size:calc(15 * var(--u))}
+.pick-card .perks{display:flex;gap:calc(6 * var(--u));margin:0}.pick-card .perks img{height:calc(24 * var(--u));width:auto}.pick-card .perks img.shut{filter:grayscale(1);opacity:.4}
+.pick-card .badges{position:absolute;top:calc(6 * var(--u));right:calc(8 * var(--u));display:flex;gap:calc(4 * var(--u));font-size:calc(18 * var(--u))}.pick-card .badges i{font-style:normal}.pick-card .badges .hungry{display:grid;place-items:center;width:calc(24 * var(--u));height:calc(24 * var(--u));border-radius:50%;background:var(--ui-yellow);color:#000}.pick-card .badges .hungry svg{width:calc(14 * var(--u));height:calc(14 * var(--u))}
+.pick-card.locked>.top img{filter:grayscale(1) brightness(.6)}
+/* the weather is the point (the user): larger on the picker's bar and the home card */
+.pick-sky{font-size:calc(17 * var(--u))!important;font-weight:700}.pick-sky .wx{width:calc(40 * var(--u))!important}
+.next-race .stage-facts{font-size:calc(16 * var(--u))}.next-race .stage-facts dd{font-weight:700}.next-race .stage-facts .wx{width:calc(30 * var(--u))}
+/* the paddock a little higher (the user: 背景上移): the picture and the pair 8% up */
+.page-race{background-position:50% -8svh;background-color:#b5864f}.page-race .view{top:calc(max(107.3cqw,53.95cqh) - 34cqh * .97 - 8cqh)}

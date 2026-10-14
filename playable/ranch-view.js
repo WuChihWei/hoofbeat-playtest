@@ -12,8 +12,8 @@
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
 import {mergeGeometries,mergeVertices} from '../vendor/BufferGeometryUtils.js';
-import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r749';
-import {applyLook,LOOK} from '../visual-style.js?v=r749';
+import {approvedAssets,createApprovedHorse,preloadRanchBuddies,ranchFile,MODEL_VERSION} from '../approved-assets.js?v=r756';
+import {applyLook,LOOK} from '../visual-style.js?v=r756';
 
 // The scene's own numbers are Blender's (x right, y away from the gate, metres): at(x, y) is that spot on the ground here.
 const at=(x,y)=>new THREE.Vector3(x,0,-y);
@@ -51,7 +51,7 @@ export const RANCH={
   // model's hay shed is moved right, and its box there; edge / gate: the ground's sides and near end; look: what the
   // opening view looks at; pan: how far a drag may take that [x0, y0, x1] (the far end follows the last row of huts).
   // house: the rider's cottage [x of its middle, y of its porch's front, half its width, its depth with the porch].
-  plan:{store:[6.5,-9,.7],house:[-20,1.6,2.95,6.3],   // store: the shop's hut [x, its row's y, its size against a hut's: .7 leaves the yard its 32 spots], in the yard's near right corner, where the opening view shows it whole (2026-10-14)
+  plan:{store:[7.5,-19.5,.8],house:[-20,1.6,2.95,6.3],   // store: the shop's hut [x, its row's y, its size against a hut's], off the yard (2026-10-14, the user: 商店不要在走動的場地，移到路上): on the grass beside the road, in front of the yard
   yard:[-13,-13,13,0],field:-20,pens:[-1,2.5],pond:[20.5,-7,4.6,3.6],shed:8.5,shedBox:[18.6,.3,23.3,13.2],edge:27,gate:-36,road:1.8,look:[0,-5],pan:[-21,-27,21]},
   // The huts (models/ranch/modular_barn.py: one stall and two end walls, half as deep as the old barn): a hut a buddy,
   // on a plot. Plots: `per` across, `pitch` m apart, a row every `step` m further back; `order`: the columns in the

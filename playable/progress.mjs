@@ -1,8 +1,8 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r749';
-import {COURSES} from '../course/courses.mjs?v=r749';
+import {MVP} from './slice-config.mjs?v=r756';
+import {COURSES} from '../course/courses.mjs?v=r756';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -108,7 +108,9 @@ export const BETS=Object.freeze([1,2,4]),BET_NAME=Object.freeze(['小押','中�
 // the field grows from three to five and its rivals are a year older.)
 // 2026-10-14: stages 2–5 send lower tiers now (LEVELS field), so their pace went up to keep the places the sweep had (S4 rain:
 // the right buddy about 1st, the wrong one about 3rd, riding casually).
-export const RIVAL_PACE=Object.freeze([1,.9,1,.94,.91,.88,.9,.92,.92,.94]),rivalPace=city=>RIVAL_PACE[levelOf(city)]??1;
+// 2026-10-14 (the user: 遊戲難度需要提升 20%): every shown stage's rivals 3% faster (+.03). Faster still and a casual rider can no
+// longer win at all (tools/rival-sweep.mjs); this moves a casual rider from about 1st to about 2nd, a good one still wins.
+export const RIVAL_PACE=Object.freeze([1,.93,1.03,.97,.94,.91,.9,.92,.92,.94]),rivalPace=city=>RIVAL_PACE[levelOf(city)]??1;
 export const rivalAge=city=>{const n=levelOf(city)+1;return n<=3?1:n<=7?2:3;};   // POT (× 1.5 for the weather's buddy) is gone (2026-10-14, the user: the weather is told, not paid)   // (× .8 for a low mood was dropped the same day: mood costs nothing, stable-care MOOD_XP)
 export const purseWon=(pot,rank,of)=>!(rank&&of>1)?0:rank===1?pot:rank>=of?0:Math.round(pot*(PURSE_SHARE[rank-1]??0));
 export const PERK_COINS=100;   // MVP.perks off: a stage that gave a perk pays this instead
@@ -235,7 +237,7 @@ function demo(){
   const run={bestCombo:25,releases:8,limits:3,pops:0,pickups:12,stumbles:0,boosts:3,perfect:31,apples:4,hits:50,notes:55,seconds:24};
   let f=finish(p,{city:'taipei',solo:true,result:run,today:'2026-10-04'});
   ok(f.newStars===s2&&f.stars===s2&&f.missionCoins===100&&f.daily.coins===50&&f.coins===s2*STAR_REWARD.coins+100+50&&f.gems===s2,'first run pays stars, missions and the day');
-  ok(entryFee('taipei')===0&&entryFee('tokyo')===40&&entryFee('paris')===40&&entryFee('seoul')===80&&entryFee('stockholm')===80&&entryFee('taipei2')===160&&entryFee('seoul2')===80&&purseWon(240,1,5)===240&&purseWon(240,2,5)===120&&purseWon(240,3,5)===80&&purseWon(240,4,5)===0&&purseWon(120,2,2)===0&&purseWon(120,1,2)===120&&purseWon(180,3,3)===0&&purseWon(180,2,3)===90&&[1,2,3,4,5].reduce((a,k)=>a+purseWon(240,k,5),0)/5<100&&BETS.join()==='1,2,4'&&rivalAge('paris')===1&&rivalAge('seoul')===2&&rivalAge('tokyo2')===2&&rivalAge('stockholm2')===3&&RIVAL_PACE.length===LEVELS.length&&rivalPace('seoul')===.94&&rivalPace('seoul2')===.94&&RIVAL_PACE.every(p=>p>.8&&p<=1),'the stake: a fee by stage, the pot shared by place, nothing for the last');
+  ok(entryFee('taipei')===0&&entryFee('tokyo')===40&&entryFee('paris')===40&&entryFee('seoul')===80&&entryFee('stockholm')===80&&entryFee('taipei2')===160&&entryFee('seoul2')===80&&purseWon(240,1,5)===240&&purseWon(240,2,5)===120&&purseWon(240,3,5)===80&&purseWon(240,4,5)===0&&purseWon(120,2,2)===0&&purseWon(120,1,2)===120&&purseWon(180,3,3)===0&&purseWon(180,2,3)===90&&[1,2,3,4,5].reduce((a,k)=>a+purseWon(240,k,5),0)/5<100&&BETS.join()==='1,2,4'&&rivalAge('paris')===1&&rivalAge('seoul')===2&&rivalAge('tokyo2')===2&&rivalAge('stockholm2')===3&&RIVAL_PACE.length===LEVELS.length&&rivalPace('seoul')===.97&&rivalPace('seoul2')===.94&&RIVAL_PACE.every(p=>p>.8&&p<=1.1),'the stake: a fee by stage, the pot shared by place, nothing for the last');
   ok(f.opened.join()==='tokyo'&&!f.relayOpened&&f.gifts.join()==='13'&&owns(f.p,13)&&!f.perks.length,'a finished run opens level 2; clearing stage 1 gives the second buddy');p=f.p;
   f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:70},today:'2026-10-04'});ok(f.newStars===0&&f.stars===s2&&!f.daily&&f.p.runs===2,'a slower run keeps the stars; one daily bonus a day');p=f.p;
   f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:18},today:'2026-10-05'});ok(f.newStars===(STAR_MAX>2?1:0)&&!f.relayOpened&&!f.gifts.length&&f.daily.streak===2&&f.daily.coins===60,'a third star: no relay yet (two buddies); day 2 pays more');p=f.p;

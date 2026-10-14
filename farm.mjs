@@ -37,10 +37,11 @@ const work=(farm,key,items,i,now,seed,crop,none,early)=>{
 export const rush=(farm,key,i,now=Date.now())=>{const b=farm[key]?.[i];if(!b||stage(b,now)===3)return null;const next=[...farm[key]];next[i]={at:now-FARM.grow};return {...farm,[key]:next};};
 // One tap for all of it (2026-10-13, the user: 一鍵收，再種): every ripe one of the first `n` is reaped, then every empty one
 // sown while there is seed (bait). -> {farm, items, reaped, sown} (both 0: nothing could be done).
-const workAll=(farm,key,items,n,now,seed,crop)=>{const next=[...(farm[key]||[])],bag={...items};let reaped=0,sown=0;
-  for(let i=0;i<Math.min(n,next.length);i++){if(stage(next[i],now)===3){bag[crop]=(bag[crop]||0)+FARM.yield;next[i]=null;reaped++;}
-    if(!next[i]&&bag[seed]>0){bag[seed]--;next[i]={at:now};sown++;}}
+const workAll=(farm,key,items,n,now,seed,crop,{reap=true,sow=true}={})=>{const next=[...(farm[key]||[])],bag={...items};let reaped=0,sown=0;
+  for(let i=0;i<Math.min(n,next.length);i++){if(reap&&stage(next[i],now)===3){bag[crop]=(bag[crop]||0)+FARM.yield;next[i]=null;reaped++;}
+    if(sow&&!next[i]&&bag[seed]>0){bag[seed]--;next[i]={at:now};sown++;}}
   return {farm:{...farm,[key]:next},items:bag,reaped,sown};};
-export const tendAll=(farm,items,n=FARM.beds,now=Date.now())=>workAll(farm,'beds',items,n,now,'seed','wheat'),castAll=(farm,items,now=Date.now())=>workAll(farm,'pond',items,FARM.pond,now,'bait','fish');
+export const tendAll=(farm,items,n=FARM.beds,now=Date.now())=>workAll(farm,'beds',items,n,now,'seed','wheat'),reapAll=(farm,items,n=FARM.beds,now=Date.now())=>workAll(farm,'beds',items,n,now,'seed','wheat',{sow:false}),sowAll=(farm,items,n=FARM.beds,now=Date.now())=>workAll(farm,'beds',items,n,now,'seed','wheat',{reap:false}),   /* 2026-10-14 (the user: 種子變成播種，有剩餘次數，和餵飽、收成放一起): 收成 and 播種 are two buttons again */
+  castAll=(farm,items,now=Date.now())=>workAll(farm,'pond',items,FARM.pond,now,'bait','fish');
 export const tend=(farm,items,i,now=Date.now())=>work(farm,'beds',items,i,now,'seed','wheat','沒有種子：去商店買，或跑比賽拿','還沒熟');
 export const cast=(farm,items,i,now=Date.now())=>work(farm,'pond',items,i,now,'bait','fish','沒有魚餌：去商店買','魚還沒上鉤');
