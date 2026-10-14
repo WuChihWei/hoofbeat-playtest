@@ -1,4 +1,4 @@
 // stockholm, a second time (stages 7–10, 2026-10-12): the city's own track and look; its weather is drawn for every run
 // (progress.mjs LEVELS weather; course/cities/index.mjs cityById 'id~weather').
-import base from './stockholm.mjs?v=r756';
+import base from './stockholm.mjs?v=r758';
 export default {...base,id:'stockholm2',mvp:false,difficulty:3,track:{...base.track,gameplay:h=>({...base.track.gameplay(h),soloLaps:2})}};

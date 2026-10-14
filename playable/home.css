@@ -683,3 +683,5 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 .next-race .stage-facts{font-size:calc(16 * var(--u))}.next-race .stage-facts dd{font-weight:700}.next-race .stage-facts .wx{width:calc(30 * var(--u))}
 /* the paddock a little higher (the user: 背景上移): the picture and the pair 8% up */
 .page-race{background-position:50% -8svh;background-color:#b5864f}.page-race .view{top:calc(max(107.3cqw,53.95cqh) - 34cqh * .97 - 8cqh)}
+.page-looks .view{top:21%;height:40%}   /* the pair fitted into the room over the rug (stable-view center): its feet on the rug, clear of the heads and the panel */
+.page-looks .view{top:24%}
