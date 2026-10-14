@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r745';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r745';
-import {WEATHER,STAR_MAX} from './progress.mjs?v=r745';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r745';
-import {compositionRank} from '../race-composition.mjs?v=r745';
-import {ChaseRenderer} from '../race-scene.js?v=r745';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r745';
-import {cityModels} from '../approved-environment.js?v=r745';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r749';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r749';
+import {WEATHER,STAR_MAX} from './progress.mjs?v=r749';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r749';
+import {compositionRank} from '../race-composition.mjs?v=r749';
+import {ChaseRenderer} from '../race-scene.js?v=r749';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r749';
+import {cityModels} from '../approved-environment.js?v=r749';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r745';
-import {RaceAudio} from '../audio.js?v=r745';
-import {addLog,raceEntry} from '../playtest.js?v=r745';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r745';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r749';
+import {RaceAudio} from '../audio.js?v=r749';
+import {addLog,raceEntry} from '../playtest.js?v=r749';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r749';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -50,7 +50,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1,level?.field),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r745',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r749',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -459,7 +459,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       phase='finished';sound.stop();sound.accent('finish');logRun('finish');
       const m=game.metrics(),c=game.config,cleared=game.hurdles.filter(h=>h.state==='cleared').length;
       const tally={bestCombo:Math.max(0,...game.actions.filter(a=>a.type==='release').map(a=>a.streak)),perfect:game.actions.filter(a=>a.type==='release'&&a.max).length,finishTime:game.finishTime,pickups:game.coinCount,releases:game.actions.filter(a=>a.type==='release').length,limits:game.actions.filter(a=>a.type==='release'&&a.max).length,pops:game.actions.filter(a=>a.type==='blown').length,boosts:game.boosts.length,stumbles:game.stumbles.length,cleared,apples:game.appleCount,rammed:game.actions.filter(a=>a.type==='rammed').length,bumps:game.actions.filter(a=>a.type==='skill').length,gap:(()=>{const o=game.metrics().rivals.map(x=>x.finishTime).filter(t=>t!=null).sort((x,y)=>x-y);return o.length?Math.abs(game.finishTime-(game.metrics().rank===1?o[0]:Math.min(o[0],game.finishTime)))/TEMPO:null;})()};   // the streak is the combo, a release at the limit the Perfect
-      if(solo&&!relay){const beat=field?rivals.length+1-m.rank:0,comeback=field&&behindOnce&&m.rank===1;if(comeback)feedback('逆轉勝！','gold',true);result={solo:true,rank:field?m.rank:null,of:rivals.length+1,bonus:beat*c.coinValue,comeback,coins:(game.coinCount+beat)*c.coinValue+(comeback?COMEBACK:0),appleTotal:game.apples.length,topSpeed:peak,trace,splits:splits(),stake:staked?{...staked,won:stake.won(staked.purse,m.rank,rivals.length+1)}:null,field:[...m.rivals].sort((a,b)=>a.finishTime-b.finishTime).map((x,i)=>({id:x.id,rank:i+1+(i+1>=m.rank?1:0)})),...tally};staked=null;doubled=false;}   // solo: the time is the result (the stars); coins picked up are banked, and a coin's worth for every rival beaten
+      if(solo&&!relay){const beat=field?rivals.length+1-m.rank:0,comeback=field&&behindOnce&&m.rank===1;if(comeback)feedback('逆轉勝！','gold',true);result={solo:true,rank:field?m.rank:null,of:rivals.length+1,bonus:beat*c.coinValue,comeback,coins:(game.coinCount+beat)*c.coinValue+(comeback?COMEBACK:0),appleTotal:game.apples.length,topSpeed:peak,trace,splits:splits(),stake:staked?{...staked,won:stake.won(staked.purse,m.rank,rivals.length+1)}:null,field:[...m.rivals].sort((a,b)=>a.finishTime-b.finishTime).map((x,i)=>({id:x.id,rank:i+1+(i+1>=m.rank?1:0)})),...tally};staked=null;}   // solo: the time is the result (the stars); coins picked up are banked, and a coin's worth for every rival beaten
       else{const bonus=c.placeBonus[m.rank-1]||0;result={rank:m.rank,coins:game.coinCount*c.coinValue+bonus,gems:c.gemBonus?.[m.rank-1]||0,bonus,lead:c.length-Math.max(...m.rivals.map(x=>x.distance)),...tally};}   // lead: m ahead of the best rival at the line
       const bank=onFinish?.(result)||{};
       // The line is a moment of its own: FINISH, a flash and a tune for how it went, then the results (a tap skips ahead).
@@ -467,7 +467,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       banner('FINISH','finish',900);flash('#ffffff',.55,180);sound.accent(grade);buzz(grade==='lost'?'hit':'strong');
       const show=()=>{clearTimeout(resultTimer);if(phase==='finished'&&$('slice-result').hidden)showResults(result,m,bank,grade);};
       const won=BALL&&(!field||game.metrics().rank===1);if(won)renderer.win();   // first home: the buddy rears, the fist goes up, and the result waits for it
-      resultTimer=setTimeout(show,won?2300:1700);document.querySelector('.slice-shell').classList.add('finish-shot');   // long enough for the camera to come round (race-scene FINISH_SHOT); the controls step asidedocument.querySelector('.slice-shell').addEventListener('pointerdown',show,{once:true,signal:ac.signal});
+      resultTimer=setTimeout(show,won?2300:1700);document.querySelector('.slice-shell').classList.add('finish-shot');   /* long enough for the camera to come round (race-scene FINISH_SHOT); the controls step aside */
+      setTimeout(()=>document.querySelector('.slice-shell')?.addEventListener('pointerdown',show,{once:true,signal:ac.signal}),1200);   /* a tap skips to the result, but not the finger still on the ball at the line (2026-10-14: a mid-line // comment had swallowed this) */
     }
     frameId=requestAnimationFrame(frame);
   }

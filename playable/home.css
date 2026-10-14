@@ -660,3 +660,11 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
    so its stage sits lower; the picture of the pair is placed from it: the stage's middle is 107.3% of the width down when the
    picture is fitted by width, 54% of the height when by height (cover, from the top) */
 .page-race{container-type:size}.page-race .view{top:calc(max(107.3cqw,53.95cqh) - 34cqh * .97);height:34cqh}
+/* 2026-10-14 (the user: 商店的金額壓在圖片的右上角) */
+.shop-card{position:relative}.shop-card .foot .ui-price{position:absolute;top:calc(10 * var(--u));right:calc(10 * var(--u));z-index:1}
+/* 2026-10-14 the user's notes from the phone */
+.stage .diff{font-size:calc(14 * var(--u));padding:calc(5 * var(--u)) calc(11 * var(--u))}   /* the difficulty, larger */
+.next-race .ui-card-head .diff-tag{font-size:calc(15 * var(--u));font-weight:700;padding:calc(3 * var(--u)) calc(12 * var(--u));border-radius:99px;color:#000!important;background:var(--ui-green)}.next-race .diff-tag.d2{background:var(--ui-yellow)}.next-race .diff-tag.d3{background:#ff8a5c}
+.pick-card .rec{position:absolute;top:calc(6 * var(--u));right:calc(8 * var(--u));font-style:normal;font-size:calc(18 * var(--u))}   /* recommended for today's weather */
+.page-race .pick-panel{max-height:none}.pick-cards{scroll-snap-type:y mandatory}.pick-card{scroll-snap-align:start}
+.pick-cards{align-content:start;grid-auto-rows:max-content}.page-race .pick-panel{flex:none}

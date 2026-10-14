@@ -7,7 +7,7 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MVP} from './playable/slice-config.mjs?v=r745';
+import {MVP} from './playable/slice-config.mjs?v=r749';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
@@ -69,7 +69,7 @@ const dip=(v,to)=>v>=FORM.low?1:to+(1-to)*v/FORM.low;
 // to run): no numbers of the game's, only how many feeds or brushings put it right. `clean` is shown as 心情 (mood): brushed up,
 // worn by racing, low it charges slower. icon: the same one as its bar in the dorm (ui.js icon).
 export const fitness=r=>{const n=k=>r[k]>=FORM.low?0:Math.ceil((FORM.low-r[k])/30);return {feed:n('hunger'),brush:n('clean')};};
-export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return f.feed?[{icon:'fork',text:`${who}餓了，跑得慢，不能加碼。餵 ${f.feed} 次`}]:[];};   // 2026-10-14 (the user, after the reviewers: 狀態好 and 心情 hidden): only what needs doing is said
+export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return f.feed?[{icon:'fork',text:`${who}餓了，跑得慢，只能小押。餵 ${f.feed} 次`}]:[];};   // 2026-10-14 (the user, after the reviewers: 狀態好 and 心情 hidden): only what needs doing is said
 export function raceForm(r,base){
   const speed=dip(r.hunger,FORM.speed),combo=1,lv=level(r),grow=1+(lv-1)*LV_SPEED;
   const config={baseSpeed:+(base.baseSpeed*speed*grow).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)

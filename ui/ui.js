@@ -1,7 +1,7 @@
 // HOOFBEAT UI Guideline v1, markup side (styles: ui.css, rules: docs/UI_FRAMEWORK.md). One monochrome icon set and
 // the few builders every page repeats: brand, wallet, header, bottom nav, bars, toast. Builders return HTML strings; wire
 // clicks with data-go / data-back (the router in playable/home.js does it for the whole page).
-import {lang} from '../i18n.js?v=r745';
+import {lang} from '../i18n.js?v=r749';
 export const esc=s=>String(s).replace(/[&<>"']/g,c=>`&#${c.charCodeAt(0)};`);
 const P={
   arrow:'<path d="M5 12h13M13 6l6 6-6 6" stroke-width="2.6" stroke-linecap="round"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>',back:'<path d="M15 5l-7 7 7 7" stroke-width="3" stroke-linecap="round"/>',
