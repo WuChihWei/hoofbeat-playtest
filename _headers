@@ -1,0 +1,13 @@
+# Cloudflare Pages cache rules (2026-10-15, the user moved the playtest to Cloudflare: GitHub Pages answered in 0.5 to 34 s
+# and kept files 10 minutes). Pages and the first-opening checks are always asked again; everything else a day, so a
+# player coming back the next day does not fetch it all again. Scripts and models carry ?v= and change their address.
+/*
+  Cache-Control: public, max-age=86400
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/intro/
+  Cache-Control: no-cache
+/intro/index.html
+  Cache-Control: no-cache
