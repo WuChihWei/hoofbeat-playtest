@@ -10,6 +10,8 @@
 <meta property="og:image" content="../assets/ui/cover-wide.webp">
 <meta name="theme-color" content="#3cb043">
 <link rel="icon" href="../icon-192.png">
+<link rel="preload" as="image" href="../assets/ui/cover.webp" media="(max-width:759px)" fetchpriority="high">
+<link rel="preload" as="image" href="../assets/ui/cover-wide.webp" media="(min-width:760px)" fetchpriority="high">
 <!-- The game's one-page introduction (2026-10-12, the user's plan: one job, 「馬上玩」 opens the web game at ../).
      Clips and screens: recorded from the game in Chinese (archive/landing-src). Phone frames are CSS, no stock art. -->
 <style>
@@ -27,6 +29,7 @@ body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
 .notify input{font:inherit;font-size:18px;padding:14px 16px;border-radius:14px;border:2px solid #fff;background:#fff;color:var(--ink);width:100%}
 .notify input:focus-visible{outline:3px solid var(--green);outline-offset:2px}
 .notify .msg{min-height:1.4em;font-size:14px;color:#fff;margin:0;text-align:center}.notify.done input,.notify.done button{display:none}.notify.done .msg{font-size:18px;font-weight:700}
+.hero>.lang{position:absolute;z-index:2;top:calc(14px + env(safe-area-inset-top,0px));right:16px;font:inherit;font-size:15px;font-weight:700;color:#fff;background:#0007;border:1.5px solid #fff9;border-radius:20px;padding:6px 14px;cursor:pointer}.lang:focus-visible{outline:3px solid #fff;outline-offset:2px}
 /* hero: the cover; the wide one on wide screens */
 .hero{min-height:min(100svh,860px);background:#1c3a1c url(../assets/ui/cover.webp) center top/cover;position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:0 20px 34px;text-align:center}
 .hero:before{content:"";position:absolute;inset:auto 0 0 0;height:60%;background:linear-gradient(transparent,#0b1a0bd9 60%)}
@@ -45,7 +48,7 @@ body:not(.wait) .wait-only,body.wait .play-only{display:none!important}
 /* the three clips, each in a phone */
 .clip{margin:0;width:232px;text-align:center}.clip b{display:block;font-size:19px;margin-top:12px}
 /* the screen sits under the phone's top bar, so the island covers none of the game (2026-10-12, the user) */
-.phone{position:relative;border:8px solid #1b1b1d;border-radius:36px;background:#000;overflow:hidden;padding:30px 0 12px;box-shadow:0 10px 24px #0003}
+.phone{position:relative;border:8px solid #1b1b1d;border-radius:36px;background:#2e3a2a;overflow:hidden;padding:30px 0 12px;box-shadow:0 10px 24px #0003}
 .phone video,.phone img{width:100%;height:auto;aspect-ratio:9/16;object-fit:cover}
 .phone img.tall{aspect-ratio:360/755}
 .phone:before{content:"";position:absolute;z-index:1;left:50%;top:7px;width:30%;height:16px;margin-left:-15%;border-radius:10px;background:#1b1b1d}
@@ -72,67 +75,81 @@ footer{background:var(--ink);color:#b8ab97;font-size:13px;text-align:center;padd
 </style>
 </head>
 <!-- wait: the game is not open yet, the page takes an e-mail to tell when it is (2026-10-12, the user: 「介紹頁先改成email，遊戲確認後再換」).
-     To open the game: take `wait` off <body>; every 「馬上玩」 comes back and the forms go. -->
+     To open the game: take `wait` off the body tag; every 「馬上玩」 comes back and the forms go. -->
 <body>
 <header class="hero">
-  <img class="logo" src="../assets/ui/logo_zh.webp" alt="衝吧蹄蹄 ZOOMBUD" width="814" height="200">
-  <h1>按住、放開、衝！<br>帶你的夥伴跑遍世界</h1>
-  <a class="cta play-only" id="top-cta" href="../">馬上玩</a>
-  <small class="play-only">免下載 · 手機瀏覽器就能玩 · <a href="https://claude.ai/artifact/6fsg2V2HpPBKaYnwMKfNDW" target="_blank" rel="noopener" style="color:#fff">玩完填問卷</a></small>
+  <button class="lang" id="lang" type="button" aria-label="Switch language">EN</button>
+  <img class="logo" id="logo" src="../assets/ui/logo_zh.webp" alt="衝吧蹄蹄 ZOOMBUD" width="814" height="200" fetchpriority="high">
+  <h1 data-en="Hold, release, dash!<br>Race your buddy around the world">按住、放開、衝！<br>帶你的夥伴跑遍世界</h1>
+  <a class="cta play-only" id="top-cta" href="../" data-en="Play now">馬上玩</a>
+  <small class="play-only"><span data-en="No download · plays in your phone browser">免下載 · 手機瀏覽器就能玩</span> · <a href="https://claude.ai/artifact/6fsg2V2HpPBKaYnwMKfNDW" target="_blank" rel="noopener" style="color:#fff" data-en="Feedback form">玩完填問卷</a></small>
   <form class="notify wait-only" id="notify" novalidate><label class="sr" for="mail1">Email</label><input id="mail1" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form>
   <small class="wait-only">遊戲準備中 · 留下 email，開放時第一個通知你</small>
 </header>
 
 <section>
-  <div class="wrap" style="padding-bottom:14px"><h2>好玩在這裡</h2><p>三十秒一場，每一秒都有事做</p></div>
+  <div class="wrap" style="padding-bottom:14px"><h2 data-en="Why it's fun">好玩在這裡</h2><p data-en="Thirty seconds a race, something to do every second">三十秒一場，每一秒都有事做</p></div>
   <div class="swipe">
-    <figure class="clip"><div class="phone"><video src="clip-start.mp4" poster="clip-start.jpg" muted loop playsinline preload="none" aria-label="五隻夥伴一起起跑、超車的遊戲畫面"></video></div><b>起跑就開搶</b><p>按住集氣，放開衝刺，從對手中間鑽出去</p></figure>
-    <figure class="clip"><div class="phone"><video src="clip-hurdle.mp4?2" poster="clip-hurdle.jpg?2" muted loop playsinline preload="none" aria-label="雨天跳過欄架、閃開水窪的遊戲畫面"></video></div><b>跳欄、閃水窪</b><p>往上滑跳欄，左右滑換道，壓到極限放開最快</p></figure>
-    <figure class="clip"><div class="phone"><video src="clip-win.mp4" poster="clip-win.jpg" muted loop playsinline preload="none" aria-label="衝過終點、贏得獎金的遊戲畫面"></video></div><b>贏了拿獎金</b><p>前三名分獎金，押越多贏越多</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-start.mp4?3" poster="clip-start.jpg" muted loop playsinline preload="none" aria-label="五隻夥伴一起起跑、超車的遊戲畫面" data-en-alt="Five buddies leave the gate and overtake"></video></div><b data-en="Fight from the start">起跑就開搶</b><p data-en="Hold to charge, release to dash, slip between rivals">按住集氣，放開衝刺，從對手中間鑽出去</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-hurdle.mp4?3" poster="clip-hurdle.jpg?2" muted loop playsinline preload="none" aria-label="雨天跳過欄架、閃開水窪的遊戲畫面" data-en-alt="Jumping hurdles and dodging puddles in the rain"></video></div><b data-en="Hurdles and puddles">跳欄、閃水窪</b><p data-en="Swipe up to jump, sideways to change lanes. Release at the limit for the most speed">往上滑跳欄，左右滑換道，壓到極限放開最快</p></figure>
+    <figure class="clip"><div class="phone"><video src="clip-win.mp4?3" poster="clip-win.jpg" muted loop playsinline preload="none" aria-label="衝過終點、贏得獎金的遊戲畫面" data-en-alt="Crossing the line and winning the prize"></video></div><b data-en="Win the prize">贏了拿獎金</b><p data-en="The top three share the prize. Bet more, win more">前三名分獎金，押越多贏越多</p></figure>
   </div>
 </section>
 
-<section class="buds"><div class="wrap" style="padding-bottom:14px"><h2>比賽前，先想好三件事</h2><p>看天氣、挑夥伴、決定押多少</p></div>
+<section class="buds"><div class="wrap" style="padding-bottom:14px"><h2 data-en="Before the race, three choices">比賽前，先想好三件事</h2><p data-en="Check the weather, pick a buddy, choose your bet">看天氣、挑夥伴、決定押多少</p></div>
   <div class="swipe">
-    <figure class="clip"><div class="phone"><img class="tall" src="home.webp" alt="選關卡，看天氣預報" loading="lazy"></div><b>看天氣</b><p>每一關都有天氣預報，下雨路上會有水窪</p></figure>
-    <figure class="clip"><div class="phone"><img class="tall" src="pick.webp" alt="選夥伴，騎士和夥伴一起出場" loading="lazy"></div><b>挑夥伴</b><p>不怕水的、不怕雪的，挑最適合今天的那一隻</p></figure>
-    <figure class="clip"><div class="phone"><img class="tall" src="bet.webp" alt="看對手，選押多少" loading="lazy"></div><b>押多少</b><p>小押、中押、大押。看對手多強，再決定要不要賭大的</p></figure>
+    <figure class="clip"><div class="phone"><img class="tall" data-shot="home" src="home.webp" alt="選關卡，看天氣預報" data-en-alt="Pick a stage and read the forecast" decoding="async"></div><b data-en="Check the weather">看天氣</b><p data-en="Every stage has a forecast. Rain leaves puddles on the road">每一關都有天氣預報，下雨路上會有水窪</p></figure>
+    <figure class="clip"><div class="phone"><img class="tall" data-shot="pick" src="pick.webp" alt="選夥伴，騎士和夥伴一起出場" data-en-alt="Pick a buddy; rider and buddy step out together" decoding="async"></div><b data-en="Pick a buddy">挑夥伴</b><p data-en="Waterproof or snow-proof: pick the one that suits today">不怕水的、不怕雪的，挑最適合今天的那一隻</p></figure>
+    <figure class="clip"><div class="phone"><img class="tall" data-shot="bet" src="bet.webp" alt="看對手，選押多少" data-en-alt="See your rivals and choose a bet" decoding="async"></div><b data-en="Place your bet">押多少</b><p data-en="Small, medium or big. Size up your rivals, then decide how bold to be">小押、中押、大押。看對手多強，再決定要不要賭大的</p></figure>
   </div>
   <div style="height:30px"></div>
 </section>
 
 <section><div class="wrap">
-  <h2>只有三顆按鈕</h2><p>一隻手就能玩</p>
+  <h2 data-en="Just three buttons">只有三顆按鈕</h2><p data-en="Play with one hand">一隻手就能玩</p>
   <div class="keys">
-    <div><img src="key-ball.webp" alt="" width="200" height="200" loading="lazy"><span><b>圓球</b><p>按住集氣，放開衝刺。左右滑換道，往上滑跳</p></span></div>
-    <div><img src="key-sprint.webp" alt="" width="160" height="160" loading="lazy"><span><b>衝刺鈕</b><p>吃到蘋果存一段，按一下爆衝</p></span></div>
-    <div><img src="key-bump.webp" alt="" width="160" height="160" loading="lazy"><span><b>撞擊鈕</b><p>對手並排時亮起，按下去把牠撞開</p></span></div>
+    <div><img src="key-ball.webp?2" alt="" width="200" height="200" loading="lazy"><span><b data-en="The ball">圓球</b><p data-en="Hold to charge, release to dash. Swipe sideways to change lanes, up to jump">按住集氣，放開衝刺。左右滑換道，往上滑跳</p></span></div>
+    <div><img src="key-sprint.webp?2" alt="" width="160" height="160" loading="lazy"><span><b data-en="Sprint">衝刺鈕</b><p data-en="Apples store a sprint. Tap to burst ahead">吃到蘋果存一段，按一下爆衝</p></span></div>
+    <div><img src="key-bump.webp?2" alt="" width="160" height="160" loading="lazy"><span><b data-en="Bump">撞擊鈕</b><p data-en="Lights up when a rival is alongside. Tap to knock them aside">對手並排時亮起，按下去把牠撞開</p></span></div>
   </div>
 </div></section>
 
 <section class="buds"><div class="wrap">
-  <h2>每隻夥伴都有特長</h2><p>馬、駱馬、犀牛、狼、熊、牛、斑馬。牛不怕水窪，熊不怕雪，過關就送新夥伴</p>
+  <h2 data-en="Every buddy has a strength">每隻夥伴都有特長</h2><p data-en="Horse, llama, rhino, wolf, bear, cow, zebra. The cow shrugs off puddles, the bear shrugs off snow, and clearing stages brings new buddies">馬、駱馬、犀牛、狼、熊、牛、斑馬。牛不怕水窪，熊不怕雪，過關就送新夥伴</p>
   <div class="heads">
-    <img src="../assets/stable/buddy_0.webp" alt="馬" loading="lazy"><img src="../assets/stable/buddy_10.webp" alt="駱馬" loading="lazy"><img src="../assets/stable/buddy_11.webp" alt="犀牛" loading="lazy"><img src="../assets/stable/buddy_15.webp" alt="狼" loading="lazy"><img src="../assets/stable/buddy_12.webp" alt="熊" loading="lazy"><img src="../assets/stable/buddy_14.webp" alt="牛" loading="lazy"><img src="../assets/stable/buddy_13.webp" alt="斑馬" loading="lazy">
+    <img src="../assets/stable/buddy_0.webp" alt="馬" data-en-alt="Horse" loading="lazy"><img src="../assets/stable/buddy_10.webp" alt="駱馬" data-en-alt="Llama" loading="lazy"><img src="../assets/stable/buddy_11.webp" alt="犀牛" data-en-alt="Rhino" loading="lazy"><img src="../assets/stable/buddy_15.webp" alt="狼" data-en-alt="Wolf" loading="lazy"><img src="../assets/stable/buddy_12.webp" alt="熊" data-en-alt="Bear" loading="lazy"><img src="../assets/stable/buddy_14.webp" alt="牛" data-en-alt="Cow" loading="lazy"><img src="../assets/stable/buddy_13.webp" alt="斑馬" data-en-alt="Zebra" loading="lazy">
   </div>
 </div></section>
 
 <section>
-  <div class="wrap" style="padding-bottom:14px"><h2>比賽之外，還有一個家</h2><p>贏來的金幣帶回牧場</p></div>
+  <div class="wrap" style="padding-bottom:14px"><h2 data-en="Beyond the race, a home">比賽之外，還有一個家</h2><p data-en="Bring your winnings back to the ranch">贏來的金幣帶回牧場</p></div>
   <div class="swipe" id="cards">
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="ranch1.webp" alt="牧場全景" loading="lazy"></div><div class="phone"><img src="field.webp" alt="麥田" loading="lazy"></div></div><b>牧場和麥田</b><p>夥伴在院子散步，麥田種麥收成</p></figure>
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="dorm1.webp" alt="宿舍裡的馬" loading="lazy"></div><div class="phone"><img src="dorm2.webp" alt="宿舍裡的熊" loading="lazy"></div></div><b>宿舍</b><p>餵飽才跑得快，跑越多場升越多級</p></figure>
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="looks.webp" alt="幫夥伴換造型" loading="lazy"></div><div class="phone"><img src="shop.webp" alt="商店" loading="lazy"></div></div><b>造型和商店</b><p>換鞍座、上衣、頭盔，先試穿不用錢</p></figure>
-    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img src="house1.webp" alt="騎士的家" loading="lazy"></div><div class="phone"><img src="pick.webp" alt="騎士騎著夥伴" loading="lazy"></div></div><b>騎士的家</b><p>你就是這位騎士。看成績、換服裝</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img data-shot="ranch1" src="ranch1.webp" alt="牧場全景" data-en-alt="The ranch" decoding="async"></div><div class="phone"><img data-shot="field" src="field.webp" alt="麥田" data-en-alt="The wheat field" decoding="async"></div></div><b data-en="Ranch and field">牧場和麥田</b><p data-en="Buddies roam the yard; grow and harvest wheat in the field">夥伴在院子散步，麥田種麥收成</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img data-shot="dorm1" src="dorm1.webp" alt="宿舍裡的馬" data-en-alt="A horse in the dorm" decoding="async"></div><div class="phone"><img data-shot="dorm2" src="dorm2.webp" alt="宿舍裡的熊" data-en-alt="A bear in the dorm" decoding="async"></div></div><b data-en="The dorm">宿舍</b><p data-en="A fed buddy runs faster, and every race levels it up">餵飽才跑得快，跑越多場升越多級</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img data-shot="looks" src="looks.webp" alt="幫夥伴換造型" data-en-alt="Dressing up a buddy" decoding="async"></div><div class="phone"><img data-shot="shop" src="shop.webp" alt="商店" data-en-alt="The shop" decoding="async"></div></div><b data-en="Looks and shop">造型和商店</b><p data-en="Saddles, shirts, helmets. Try anything on for free">換鞍座、上衣、頭盔，先試穿不用錢</p></figure>
+    <figure class="card" style="margin:0"><div class="pair"><div class="phone"><img data-shot="house1" src="house1.webp" alt="騎士的家" data-en-alt="The rider's house" decoding="async"></div><div class="phone"><img data-shot="pick" src="pick.webp" alt="騎士騎著夥伴" data-en-alt="Rider on a buddy" decoding="async"></div></div><b data-en="The rider's house">騎士的家</b><p data-en="You are the rider. Check your results, change your outfit">你就是這位騎士。看成績、換服裝</p></figure>
   </div>
   <div class="dots" id="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
   <div style="height:36px"></div>
 </section>
 
-<section class="end"><div class="wrap"><h2 class="play-only">現在就開跑</h2><a class="cta play-only" href="../">馬上玩</a><p class="play-only survey">玩完了嗎？花 3 分鐘告訴我們感想</p><a class="cta alt play-only" href="https://claude.ai/artifact/6fsg2V2HpPBKaYnwMKfNDW" target="_blank" rel="noopener">填試玩問卷</a><h2 class="wait-only">開放時第一個通知你</h2><form class="notify wait-only" novalidate><label class="sr" for="mail2">Email</label><input id="mail2" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form><p class="wait-only" style="margin-top:14px;font-size:13px;color:#b8ab97">email 只用來通知遊戲開放，不會做其他用途</p></div></section>
+<section class="end"><div class="wrap"><h2 class="play-only" data-en="Off you go">現在就開跑</h2><a class="cta play-only" href="../" data-en="Play now">馬上玩</a><p class="play-only survey" data-en="Played it? Tell us what you think in 3 minutes (form in Chinese)">玩完了嗎？花 3 分鐘告訴我們感想</p><a class="cta alt play-only" href="https://claude.ai/artifact/6fsg2V2HpPBKaYnwMKfNDW" target="_blank" rel="noopener" data-en="Feedback form">填試玩問卷</a><h2 class="wait-only">開放時第一個通知你</h2><form class="notify wait-only" novalidate><label class="sr" for="mail2">Email</label><input id="mail2" type="email" inputmode="email" autocomplete="email" placeholder="你的 email" required><button class="cta" type="submit">通知我</button><p class="msg" role="status"></p></form><p class="wait-only" style="margin-top:14px;font-size:13px;color:#b8ab97">email 只用來通知遊戲開放，不會做其他用途</p></div></section>
 <footer>© 2026 ZOOMBUD 衝吧蹄蹄</footer>
-<div class="stick" id="stick"><a class="cta play-only" href="../">馬上玩</a><a class="cta wait-only" href="#notify">留 email，開放時通知我</a></div>
+<div class="stick" id="stick"><a class="cta play-only" href="../" data-en="Play now">馬上玩</a><a class="cta wait-only" href="#notify">留 email，開放時通知我</a></div>
 <script>
+// Language (2026-10-14, the user: 中英文版): ?lang=en|zh, then the visitor's last choice, then the browser's language.
+// Each text carries its English in data-en (its Chinese is kept the first time it is swapped); shots have an -en file.
+const T={zh:{title:'ZOOMBUD 衝吧蹄蹄｜按住、放開、衝！',logo:'../assets/ui/logo_zh.webp',play:'../',btn:'EN'},en:{title:'ZOOMBUD | Hold, release, dash!',logo:'../assets/ui/logo_en.webp',play:'../?lang=en',btn:'中文'}};
+function setLang(L){const t=T[L];document.documentElement.lang=L==='en'?'en':'zh-Hant';document.title=t.title;
+  document.querySelectorAll('[data-en]').forEach(el=>{if(el.dataset.zh==null)el.dataset.zh=el.innerHTML;el.innerHTML=L==='en'?el.dataset.en:el.dataset.zh;});
+  document.querySelectorAll('[data-en-alt]').forEach(el=>{const k=el.tagName==='VIDEO'?'aria-label':'alt';if(el.dataset.zhAlt==null)el.dataset.zhAlt=el.getAttribute(k);el.setAttribute(k,L==='en'?el.dataset.enAlt:el.dataset.zhAlt);});
+  document.querySelectorAll('img[data-shot]').forEach(el=>el.src=el.dataset.shot+(L==='en'?'-en':'')+'.webp');
+  document.getElementById('logo').src=t.logo;document.querySelectorAll('a.cta[href="../"],a.cta[href="../?lang=en"]').forEach(a=>a.href=t.play);
+  document.getElementById('lang').textContent=t.btn;try{localStorage.setItem('zoombud.intro.lang',L)}catch{}}
+let lang=new URLSearchParams(location.search).get('lang');try{lang=lang||localStorage.getItem('zoombud.intro.lang')}catch{}
+lang=lang==='en'||lang==='zh'?lang:(/^zh/i.test(navigator.language)?'zh':'en');
+if(lang==='en')setLang('en');
+document.getElementById('lang').onclick=()=>{lang=lang==='en'?'zh':'en';setLang(lang);};
 // clips play only while on screen; the following bar shows while neither of the page's own buttons is on screen; the dots follow the cards
 const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting)v.play().catch(()=>{});else v.pause();}),{threshold:.4});
 document.querySelectorAll('video').forEach(v=>io.observe(v));
