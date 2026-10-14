@@ -842,3 +842,27 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavi
 .cover-ticket .pot-base[hidden]{display:none}   /* 2026-10-14: the display above beat the attribute: 「對手最高 120」 showed under 「這場獎金最高 120」 */
 .res-money .amt.up{color:var(--ui-green)}.res-money li.you .amt.up{color:#0a7a2f}   /* 2026-10-14: the list is this run's money: a win green, a loss and nothing plain */
 .res-ticket.lost .ui-coin{filter:none}   /* 2026-10-14 (a reviewer took the grey horseshoe for a second money): the coin is the coin, the grey number says the loss */
+/* 2026-10-14 (the user, on a phone in English: 彩票長一點，popup 長一點，可以滑動，很多地方卡到了) */
+.cover-ticket{aspect-ratio:1000/560}.cover-ticket .print{top:35%;bottom:20%;gap:0}   /* taller: the three lines sit inside the dashed box */
+#slice-cover section{max-height:calc(100dvh - 110 * var(--u));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}   /* clears the back and ? buttons; scrolls when it is longer */
+.cover-stake .ui-btn{height:auto;min-height:var(--ui-h);padding-block:calc(6 * var(--u))}.cover-stake .ui-btn small{white-space:normal!important}   /* the raise's second line wraps instead of running out of the button */
+/* 2026-10-14 the ticket redone (the user: 太擠、重複說明): 第 1 名 and the pot on the ticket, the weather's bonus a tag under it,
+   2nd and 3rd under the ticket, the weather at the header's right; no field line, no weather box, the raise's line only when it says something */
+.cover-ticket .pot-base{display:inline-flex;align-items:center;gap:calc(4 * var(--u));margin-top:calc(4 * var(--u));padding:calc(2 * var(--u)) calc(9 * var(--u));border-radius:99px;background:#2f8a3e;color:#fff;font-size:calc(11 * var(--u));font-weight:700}
+.cover-ticket .pot-base svg{width:calc(12 * var(--u));height:calc(12 * var(--u))}
+.cover-ticket small{letter-spacing:.04em}
+#slice-cover section.has-stake>h1{display:flex;align-items:center;justify-content:flex-end;gap:calc(5 * var(--u));color:var(--ui-text-2)}#slice-cover section.has-stake>h1 svg{width:calc(16 * var(--u));height:calc(16 * var(--u))}
+.cover-stake .ui-btn small[hidden]{display:none}
+.cover-stake .ui-btn small{text-align:left}
+/* 2026-10-14 the bet page (the user: 場地資訊、玩家資訊、你的角色資訊，問你要壓多少錢) */
+.bet-row{display:flex;align-items:center;gap:calc(12 * var(--u));margin:0 0 calc(8 * var(--u))!important;font-size:calc(14 * var(--u))!important}
+.bet-row>span{flex:none;width:calc(36 * var(--u));color:var(--ui-grey)}.bet-row>b{display:inline-flex;align-items:center;gap:calc(5 * var(--u));font-weight:600;color:#fff}.bet-row>b svg{width:calc(16 * var(--u));height:calc(16 * var(--u))}
+.bet-ask{margin:calc(10 * var(--u)) 0 calc(8 * var(--u))!important;font-size:calc(16 * var(--u))!important;font-weight:700;color:#fff!important}
+.bet-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(8 * var(--u))}
+.bet-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(2 * var(--u));min-height:calc(56 * var(--u));padding:calc(6 * var(--u));border:0;border-radius:calc(16 * var(--u));background:rgb(255 255 255 / .12);color:#fff;font:inherit;cursor:pointer}
+.bet-btn b{font-size:calc(16 * var(--u));font-weight:700}.bet-btn small{display:inline-flex;align-items:center;gap:calc(3 * var(--u));font-size:calc(12 * var(--u))!important;letter-spacing:0!important;color:inherit!important;opacity:.85}.bet-btn small .ui-coin{width:calc(11 * var(--u));height:calc(11 * var(--u))}
+.bet-btn[aria-pressed=true]{background:var(--ui-yellow);color:#000}.bet-btn.short{opacity:.45}
+#slice-cover .cover-have{margin:0 0 calc(10 * var(--u));font-size:calc(13 * var(--u));color:var(--ui-text-2);text-align:center}
+#slice-cover section.has-stake .cover-who{margin-top:0}
+#slice-cover section.has-stake>small{margin-bottom:calc(10 * var(--u))}
+.bet-row .wx{width:calc(24 * var(--u));height:auto}   /* the user's weather icons */

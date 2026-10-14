@@ -622,3 +622,41 @@ i.gem{display:inline-grid;width:1.15em;height:1.15em;vertical-align:-.15em}i.gem
 /* 2026-10-14: the buddy last ridden is hungry: said on the home card, a tap opens the dorm on it */
 .next-race .hungry{display:flex;align-items:center;gap:calc(8 * var(--u));width:100%;margin:calc(-6 * var(--u)) 0 calc(14 * var(--u));padding:calc(10 * var(--u)) calc(14 * var(--u));border:0;border-radius:var(--ui-r-md,14px);background:rgb(255 200 60 / .16);color:var(--ui-yellow);font:inherit;font-size:calc(14 * var(--u));text-align:left;cursor:pointer}
 .next-race .hungry svg{flex:none;width:1.1em;height:1.1em}.next-race .hungry span{flex:1;min-width:0}.next-race .hungry b{flex:none;font-weight:700}
+/* 2026-10-14: the stage card's forecast and field */
+.next-race .stage-facts{margin:calc(-8 * var(--u)) 0 calc(14 * var(--u));display:flex;flex-direction:column;gap:calc(6 * var(--u));font-size:calc(14 * var(--u))}
+.next-race .stage-facts div{display:flex;align-items:center;gap:calc(10 * var(--u))}.next-race .stage-facts dt{flex:none;width:calc(64 * var(--u));color:var(--ui-grey)}.next-race .stage-facts dd{margin:0;display:flex;flex-wrap:wrap;gap:calc(4 * var(--u)) calc(8 * var(--u));color:#fff}
+.next-race .tier-chip{display:inline-flex;align-items:center;gap:calc(3 * var(--u))}.next-race .tier-chip img{height:calc(18 * var(--u))}
+/* 2026-10-14 the user's weather icons */
+.wx{width:calc(20 * var(--u));height:auto;vertical-align:middle}
+.next-race .stage-facts dd span{display:inline-flex;align-items:center;gap:calc(4 * var(--u))}
+.pick-sky .wx{width:calc(26 * var(--u))}
+/* 2026-10-14 the picker: the rider on the chosen buddy in 3D above, the buddies as cards below (the user: 卡牌方式顯示) */
+.page-race .view{position:absolute;left:0;right:0;top:4%;height:62%;opacity:0;transition:opacity .3s;pointer-events:auto}.page-race.has-view .view{opacity:1}.page-race .view canvas{display:block;width:100%;height:100%}
+.page-race [data-for=solo]{display:flex;flex-direction:column;min-height:0;flex:1}
+.page-race .pick-panel{margin-top:auto;position:relative;z-index:2;display:flex;flex-direction:column;gap:var(--ui-gap);max-height:52vh;padding:calc(12 * var(--u))}
+.pick-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:calc(8 * var(--u));overflow-y:auto;min-height:0;padding:2px}
+.pick-card{position:relative;display:grid;grid-template-columns:calc(44 * var(--u)) 1fr;grid-template-rows:auto auto auto;column-gap:calc(8 * var(--u));align-items:center;text-align:left;padding:calc(8 * var(--u));border:2px solid transparent;border-radius:calc(16 * var(--u));background:rgb(255 255 255 / .1);color:#fff;font:inherit;cursor:pointer}
+.pick-card>img{grid-row:1/3;width:calc(44 * var(--u));height:calc(44 * var(--u));border-radius:50%;object-fit:cover;background:#000}
+.pick-card>b{font-size:calc(15 * var(--u));font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pick-card>small{font-size:calc(12 * var(--u));color:var(--ui-grey)}
+.pick-card .perks{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:calc(4 * var(--u));margin-top:calc(6 * var(--u))}
+.pick-card .perks i{font-style:normal;font-size:calc(11 * var(--u));font-weight:600;padding:calc(2 * var(--u)) calc(7 * var(--u));border-radius:99px;background:var(--ui-yellow);color:#000}.pick-card .perks i.shut{background:rgb(255 255 255 / .12);color:var(--ui-grey)}
+.pick-card em{grid-column:1/-1;display:inline-flex;align-items:center;gap:calc(4 * var(--u));margin-top:calc(5 * var(--u));font-style:normal;font-size:calc(12 * var(--u));font-weight:700}.pick-card em.ok{color:var(--ui-green)}.pick-card em.bad{color:var(--ui-yellow)}.pick-card em svg{width:1em;height:1em}.pick-card em .wx{width:calc(18 * var(--u))}
+.pick-card.is-selected{border-color:#fff;background:rgb(255 255 255 / .2)}.pick-card.locked>img{filter:grayscale(1) brightness(.6)}.pick-card.locked{opacity:.75}
+.page-race section.pick-panel{display:flex}   /* not display:contents like the page's own sections */
+.page-race .view{top:15%;height:44%}.page-race .pick-panel{max-height:46vh}   /* the pair between the weather bar and the cards */
+.pick-card>small{color:rgb(255 255 255 / .65)}.pick-card .perks i.shut{color:rgb(255 255 255 / .55)}.pick-card small .ui-coin{width:calc(12 * var(--u));height:calc(12 * var(--u))}.pick-card>small{display:inline-flex;align-items:center;gap:calc(3 * var(--u))}
+/* 2026-10-14 (the user: 下面 2×n，上面空間大一點): smaller cards, about two rows in view, the pair bigger above */
+.page-race .pick-panel{max-height:36vh;padding:calc(10 * var(--u))}.page-race .view{top:12%;height:56%}
+.pick-card{grid-template-columns:calc(36 * var(--u)) 1fr;padding:calc(6 * var(--u)) calc(8 * var(--u));border-radius:calc(14 * var(--u))}.pick-card>img{width:calc(36 * var(--u));height:calc(36 * var(--u))}
+.pick-card>b{font-size:calc(14 * var(--u))}.pick-card .perks{margin-top:calc(4 * var(--u))}.pick-card .perks i{font-size:calc(10.5 * var(--u));padding:calc(1 * var(--u)) calc(6 * var(--u))}.pick-card em{margin-top:calc(3 * var(--u));font-size:calc(11 * var(--u))}
+/* 2026-10-14 the user's perk icons (references/perks/sheet-perks.png) on the cards; the paddock stage behind the picker */
+.pick-card .perks i{display:inline-flex;align-items:center;gap:calc(3 * var(--u));padding-left:calc(3 * var(--u))!important}.pick-card .perks i img{height:calc(16 * var(--u));width:auto}.pick-card .perks i.shut img{filter:grayscale(1);opacity:.6}
+.page-race{background-size:cover;background-position:50% 0}.page-race::before{display:none}
+.page-race .pick-panel{background:rgb(24 16 8 / .78);backdrop-filter:blur(8px)}   /* readable over the paddock's dirt */
+.page-race .view{top:17%;height:31%}   /* the picture is the pair, fitted (stable-view center): its feet on the paddock's stage, its head under the weather bar */
+.page-race .view{top:16%;height:34%}
+.page-race .view{top:18%}
+/* 2026-10-14 (the user: 天空往上多一點，圖可以下移；下面改回原設計): the paddock's sky drawn 200 px higher (references/backdrops/paddock-stage-tall.png),
+   so its stage sits lower; the picture of the pair is placed from it: the stage's middle is 107.3% of the width down when the
+   picture is fitted by width, 54% of the height when by height (cover, from the top) */
+.page-race{container-type:size}.page-race .view{top:calc(max(107.3cqw,53.95cqh) - 34cqh * .97);height:34cqh}

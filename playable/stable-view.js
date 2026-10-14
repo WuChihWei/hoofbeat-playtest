@@ -7,8 +7,8 @@
 // Between acts the horse has moods (MOOD below): it lies down when left alone, gets up on wake(), rears on cheer().
 import * as THREE from '../vendor/three.module.min.js';
 import {GLTFLoader} from '../vendor/GLTFLoader.js';
-import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r723';
-import {applyLook,LOOK} from '../visual-style.js?v=r723';
+import {preloadKeys,preloadBuddies,COATS,createApprovedHorse,livingEyes,MODEL_VERSION,PLAYER_LOOK} from '../approved-assets.js?v=r744';
+import {applyLook,LOOK} from '../visual-style.js?v=r744';
 
 // Stable-only models, loaded on first visit: the rigged standing rider (rider_showcase_rig.py: Stand / Pickup / Comb /
 // Offer) and what it picks up.
@@ -53,6 +53,7 @@ const BRUSH={scale:.8,strap:.3,bone:'Chest',at:[-.15,.1,.62],stroke:.3,dir:[0,-.
 // Later that day (the user, from a phone whose browser bars leave 655 pt of height: the row of heads lay over the
 // buddy's ears): everything 7.5% of the page lower. The camera looks 2.25° less down (tilt was 9.3), the plate is drawn
 // 115% tall from its top, the door stands lower (home.css).
+const CENTER_X=2.1,FIT={h:.84,w:.94};   // the camera's x when the pair is centred (HORSE.x: the buddy's own middle)
 const CAM={x:1.5,fill:8.44,dist:[12,22],floor:.22,tilt:7.05,fov:30,bg:.5};
 // After the 1 s Pickup: the rider clip, how long it runs, and the horse's extra neck/head pose meanwhile (radians).
 // Brush: the horse bows its forelock to the brush. Feed: neck down, head stretched out so its mouth meets the carrot.
@@ -220,7 +221,7 @@ function findMuzzle(root){
 
 // What the ranch needs, asked for ahead of time (home.js: as soon as the game is open).
 export const preloadStable=()=>Promise.all([loadStable(),preloadKeys(needs()),preloadBuddies([PLAYER_LOOK.coat],[PLAYER_LOOK.stage])]);
-export async function mountStableView(host,{rider=false}={}){   // rider: she sits on the buddy (the shop's 造型 page tries her clothes and its tack on at once)
+export async function mountStableView(host,{rider=false,center=false}={}){   // center: the pair in the middle of the picture and no shadow (the picker, 2026-10-14, the user: 角色置中不用陰影)   // rider: she sits on the buddy (the shop's 造型 page tries her clothes and its tack on at once)
   const keys=()=>rider?[...needs(),'rider']:needs();
   const [assets]=await Promise.all([loadStable(),preloadKeys(keys()),preloadBuddies([PLAYER_LOOK.coat],[PLAYER_LOOK.stage])]);   // the buddy on show (home.js applyLook, set before the page mounts this)
   const r=new THREE.WebGLRenderer({antialias:true,alpha:true});
@@ -244,7 +245,7 @@ export async function mountStableView(host,{rider=false}={}){   // rider: she si
   Object.assign(sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:1,far:40});scene.add(sun,sun.target);
   const rim=new THREE.DirectionalLight();rim.position.set(5,6,-8);scene.add(rim);
   applyLook(r,scene,{sun,rim,shadowMap:LOOK.shadow.stableMap});
-  const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({opacity:.28}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({opacity:.28}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;floor.visible=!center;scene.add(floor);
 
   const shadow=o=>{o.traverse(m=>{if(m.isMesh)m.castShadow=m.receiveShadow=true;});return o;};
   const brush=shadow(assets.brush.clone());brush.scale.setScalar(BRUSH.scale);brush.visible=false;scene.add(brush);
@@ -271,7 +272,7 @@ export async function mountStableView(host,{rider=false}={}){   // rider: she si
   const hp=new THREE.Vector3(),eyeAt=new THREE.Vector3(),hq=new THREE.Quaternion();
 
   const cam=new THREE.PerspectiveCamera(CAM.fov,1,.3,60),page=host.closest('.page-stable');
-  let model=null,bones=[],muzzle=null,raf=0,last=performance.now(),nod=0,job=null,w=0;   // w: act's neck pose weight
+  let span=null,camOff=new THREE.Vector3(),model=null,bones=[],muzzle=null,raf=0,last=performance.now(),nod=0,job=null,w=0;   // w: act's neck pose weight
   // It comes to you (2026-10-10, SPEC 11 P1): opened, the dorm shows the buddy walking in from ARRIVE.from m back along
   // its own line, ARRIVE.time s, and then, by how it is (home.js show(mood)): hungry, its head goes down to the trough
   // once; fed and clean, two glad nods; else it just stands and looks at you.
@@ -302,6 +303,8 @@ export async function mountStableView(host,{rider=false}={}){   // rider: she si
     // Its four feet on the floor, from its own middle (turned by nothing): where the far one stands as it is turned (far()).
     model.root.updateMatrixWorld(true);feet=['ForeHoofL','ForeHoofR','HindHoofL','HindHoofR'].map(n=>model.content.getObjectByName(n)).filter(Boolean).map(b=>b.getWorldPosition(new THREE.Vector3()).sub(model.root.position));
     model.root.rotation.y=HORSE.yaw;home=null;
+    if(center){model.root.updateMatrixWorld(true);const bb=new THREE.Box3(),one=new THREE.Box3();model.root.traverseVisible(o=>{if(o.isMesh&&!o.children.some(c=>c.isMesh))bb.union(one.setFromObject(o,true));});   // precise: the skinned vertices as posed, only what is drawn
+      span={x:(bb.min.x+bb.max.x)/2,z:(bb.min.z+bb.max.z)/2,top:bb.max.y,w:bb.max.x-bb.min.x,rx:model.root.position.x,rz:model.root.position.z};}   /* the pair as it stands, rider and all, nose to tail (a grown horse is twice a foal's size, 2026-10-14) */   // centred: the pair as it stands, rider and all (a grown horse is twice a foal's size, 2026-10-14)
     if(arrive){const sh=model.content.getObjectByName('ForeUpperL');if(sh)arrive.from=ARRIVE.from*sh.getWorldPosition(new THREE.Vector3()).y/ARRIVE.leg;}   // as far as its own legs walk in that time: the clip's stride is the horse's × its leg length (ARRIVE.leg: the horse's shoulder, m), and at the horse's pace a wolf's feet slid (2026-10-11, the user: 「狼的動畫腳有點怪」)
     bones=NECK.map(n=>model.content.getObjectByName(n)).filter(Boolean).map(b=>[b,b.quaternion.clone()]);
     muzzle=findMuzzle(model.content);
@@ -393,7 +396,10 @@ export async function mountStableView(host,{rider=false}={}){   // rider: she si
     tv.copy(Y).addScaledVector(f,-f.y).normalize();turn(head,yq.setFromAxisAngle(f,Math.atan2(f.dot(mz.crossVectors(u,tv)),u.dot(tv))*k));
   }
   function fit(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;r.setSize(w,h,false);r.domElement.style.cssText='width:100%;height:100%;display:block';
-    const d=Math.min(CAM.dist[1],Math.max(CAM.dist[0],CAM.fill*h/w));basePos.set(CAM.x,CAM.floor*d,HORSE.z+d);cam.position.copy(basePos);
+    const d=Math.min(CAM.dist[1],Math.max(CAM.dist[0],CAM.fill*h/w));basePos.set(center?CENTER_X:CAM.x,CAM.floor*d,HORSE.z+d);
+    if(center&&span){const t=CAM.tilt*Math.PI/180,tan=Math.tan(CAM.fov*Math.PI/360),dd=Math.max(span.top/(FIT.h*2*tan),span.w/(FIT.w*2*tan*w/h));const aim=2*dd*tan*(.5-(1-FIT.h)/2);basePos.set(span.x,aim+dd*Math.sin(t),span.z+dd*Math.cos(t));}   /* whatever its size, the pair fills the picture: FIT.h of its height, at most FIT.w of its width; its feet always the same way up from the bottom (on the stage), its middle across */
+    if(center&&span)camOff.set(basePos.x-span.rx,basePos.y,basePos.z-span.rz);   /* the camera keeps this offset from the buddy wherever it walks or settles */
+    cam.position.copy(basePos);
     cam.fov=CAM.fov;cam.aspect=w/h;cam.updateProjectionMatrix();}
   const ro=new ResizeObserver(fit);ro.observe(host);
   const q=new THREE.Quaternion(),e=new THREE.Euler();
@@ -415,6 +421,7 @@ export async function mountStableView(host,{rider=false}={}){   // rider: she si
     model.eyes.update(dt,cam.position);   // it looks at whoever is looking at it
     if(brush.visible)aimProps();
     food.quaternion.copy(cam.quaternion);
+    if(center&&span&&model)basePos.set(model.root.position.x+camOff.x,camOff.y,model.root.position.z+camOff.z);
     cam.position.lerpVectors(basePos,topPos,camW);cam.quaternion.slerpQuaternions(baseQ,topQ,camW);if(cam.fov!==(cam.fov=CAM.fov+(TROUGH.fov-CAM.fov)*camW)){cam.near=camW>0?.05:.3;cam.updateProjectionMatrix();}ground.visible=camW>0;ground.material.opacity=Math.min(1,camW*1.6);
     r.render(scene,cam);raf=requestAnimationFrame(frame);}
   // The brush works by itself on the flank the camera sees: back and forth along the body, bristles (its −Y) to the coat.

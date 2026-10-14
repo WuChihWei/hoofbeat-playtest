@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r723';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r723';
-import {WEATHER,STAR_MAX} from './progress.mjs?v=r723';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r723';
-import {compositionRank} from '../race-composition.mjs?v=r723';
-import {ChaseRenderer} from '../race-scene.js?v=r723';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r723';
-import {cityModels} from '../approved-environment.js?v=r723';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r744';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r744';
+import {WEATHER,STAR_MAX} from './progress.mjs?v=r744';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r744';
+import {compositionRank} from '../race-composition.mjs?v=r744';
+import {ChaseRenderer} from '../race-scene.js?v=r744';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r744';
+import {cityModels} from '../approved-environment.js?v=r744';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r723';
-import {RaceAudio} from '../audio.js?v=r723';
-import {addLog,raceEntry} from '../playtest.js?v=r723';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r723';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r744';
+import {RaceAudio} from '../audio.js?v=r744';
+import {addLog,raceEntry} from '../playtest.js?v=r744';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r744';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -44,13 +44,13 @@ const APPLE='<svg class="apple-ico" viewBox="0 0 24 24" aria-hidden="true"><path
 const BUZZ={tap:['impact',{style:'LIGHT'},12],hit:['impact',{style:'MEDIUM'},22],strong:['impact',{style:'HEAVY'},[25,30,25]],good:['notification',{type:'SUCCESS'},[10,20,10]],bad:['notification',{type:'ERROR'},30]};
 const buzz=kind=>{const [method,options,pattern]=BUZZ[kind],native=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.nativePromise;
   if(native)native('Haptics',method,options).catch(()=>{});else navigator.vibrate?.(pattern);};
-export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,sky=null,tiers=null,arrows=null,perks=null,rivalCount=0,rivalGrow=1,rivalStep=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
+export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,sky=null,tiers=null,you=null,arrows=null,perks=null,rivalCount=0,rivalGrow=1,rivalStep=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
   const TEMPO=level?.tempo??SLICE_CONFIG.tempo,BALL=/[?&]ball=([\d.,]+)/.exec(location.search)?.[1].split(',').map(Number)||[1],   // 2026-10-07 (the user: 「就改成這遊戲方法」): the ball is the game; ?ball=1,fill,fall,pop (real seconds) tunes it
   locks={...level?.locks};
   const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1,level?.field),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r723',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r744',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
@@ -60,9 +60,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     ${raceControlsMarkup()}
     <div id="slice-result" hidden></div><div id="slice-cover"><button id="slice-back" class="ui-icon-btn cover-back" aria-label="返回">${icon('back','')}</button><button id="slice-help" class="ui-icon-btn cover-help" aria-label="玩法說明" aria-expanded="false">?</button>
       <section class="${stake?'has-stake':''}"><small>${esc(info?.title??tag)}</small><h1>${esc(info?.goal??(relay?'三棒接力':'單騎練跑'))}</h1>
-        ${info&&solo&&!relay?`<p class="cover-stars" role="img" aria-label="${info.stars} 顆星">${[0,1,2].slice(0,STAR_MAX).map(k=>`<i class="${k<info.stars?'on':''}">★</i>`).join('')}</p>`:''}
-        ${stake?`<div class="cover-ticket" id="slice-ticket"><img class="stamp" src="assets/ui/money/stamp_red.webp" alt="" hidden><div class="print"><small data-pot-what>這場獎金最高</small><b>${coin}<span data-purse></span></b><em class="pot-base" hidden></em></div></div><p class="cover-split" data-share></p>
-          <p class="cover-field"></p>${tiers&&rivals.length?`<ul class="cover-who">${[{name:tiers.you,t:tiers.me,you:true},...rivals.map((x,i)=>({name:x.name,t:x.tier??0}))].sort((a,b)=>b.t-a.t).map(x=>`<li class="${x.you?'you':''}"><img src="assets/ui/tier/${tiers.list[x.t].img}.webp" alt="${tiers.list[x.t].name}"><b class="tn">${tiers.list[x.t].name}</b><span>${esc(x.name)}</span></li>`).join('')}</ul>`:''}<p class="cover-why" hidden></p><p class="cover-stake"><span>報名費<b>${coin}<span data-fee></span></b><small class="cover-have">你有 <span data-have></span></small></span><button id="slice-double" class="ui-btn" aria-pressed="false"><img src="assets/ui/money/bag.webp" alt=""><span>加碼押注 ×${stake.double.purse}<small data-raise>報名費和獎金都變 ${stake.double.purse} 倍</small></span></button></p>`:''}
+        ${info&&solo&&!relay&&!stake?`<p class="cover-stars" role="img" aria-label="${info.stars} 顆星">${[0,1,2].slice(0,STAR_MAX).map(k=>`<i class="${k<info.stars?'on':''}">★</i>`).join('')}</p>`:''}
+        ${stake?`<p class="bet-row"><span>場地</span><b data-ground></b></p>${rivals.length?`<p class="bet-row"><span>對手</span></p>`:''}${tiers&&rivals.length?`<ul class="cover-who">${[{name:tiers.you,t:tiers.me,you:true},...rivals.map((x,i)=>({name:x.name,t:x.tier??0}))].sort((a,b)=>b.t-a.t).map(x=>`<li class="${x.you?'you':''}"><img src="assets/ui/tier/${tiers.list[x.t].img}.webp" alt="${tiers.list[x.t].name}"><b class="tn">${tiers.list[x.t].name}</b><span>${esc(x.name)}</span></li>`).join('')}</ul>`:''}${you?`<p class="bet-row"><span>你的</span><b>${esc(you)}</b></p>`:''}<p class="bet-ask">壓多少？</p><div class="bet-pick">${stake.bets.map((k,i)=>`<button class="bet-btn" data-bet="${k}" aria-pressed="false"><b>${stake.betName[i]}</b><small></small></button>`).join('')}</div><div class="cover-ticket" id="slice-ticket"><img class="stamp" src="assets/ui/money/stamp_red.webp" alt="" hidden><div class="print"><small data-pot-what>第 1 名</small><b>${coin}<span data-purse></span></b></div></div><p class="cover-split" data-share></p><p class="cover-have">你有 <span data-have></span></p><p class="cover-why" hidden></p>`:''}
         ${info?.missions?`<details class="cover-fold" ${lean?'':'open'}><summary>這場的任務 ×${info.missions.length}</summary><ul class="cover-missions">${info.missions.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></details>`:''}
         <div class="how-wrap" hidden>${howTo()}${touch?'':'<p class="slice-keys">鍵盤：空白鍵 衝刺 · Esc 暫停</p>'}</div><p class="slice-form" hidden></p>
         <button id="slice-start" class="ui-btn primary block" disabled>準備中…</button></section></div></main>`;
@@ -124,17 +123,17 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // button that doubles the pot for three times the fee (a red stamp on the ticket). The fee is paid as the run starts (newRun); without the coins the
   // run is free and has no pot. staked: this run's {fee, purse}, or null. In the race the place card says what the place
   // is worth now (#slice-purse).
-  let doubled=false,staked=null;const N=v=>Number(v).toLocaleString('en-US'),has=k=>[].concat(perks?.[0]||[]).includes(k),match=()=>SKY==='rain'&&has('water')||SKY==='snow'&&has('snow'),potNow=()=>stake?Math.round(stake.purse*(doubled?stake.double.purse:1)*(match()?stake.pot.match:1)):0,feeNow=()=>stake?stake.fee*(doubled?stake.double.fee:1):0;
-  function paintStake(){if(!stake)return;const t=$('slice-ticket'),of=rivals.length+1,pot=potNow();if(!t)return;if(doubled&&(!stake.can(true)||stake.hungry()))doubled=false;
-    t.querySelector('[data-purse]').textContent=N(potNow());{const own=potNow()!==stake.purse,w=t.querySelector('[data-pot-what]'),b=t.querySelector('.pot-base');w.textContent=own?'你最高拿':'這場獎金最高';b.hidden=!own;b.textContent=`對手最高 ${N(stake.purse)}`;}   /* the raise and the weather's buddy are the player's own: the rivals run for the plain pot (2026-10-14: 最高 360 and the winner took 240) */document.querySelector('.cover-split').innerHTML=[1,2,3].filter(k=>stake.won(pot,k,of)>0).map(k=>`<span><img src="assets/ui/money/medal_${['gold','red','blue'][k-1]}.webp?v=4" alt="第 ${k} 名">${coin}${N(stake.won(pot,k,of))}</span>`).join('');
-    t.classList.toggle('doubled',doubled);t.querySelector('.stamp').hidden=!doubled;{const paid=[1,2,3,4,5].filter(k=>k<=of&&stake.won(pot,k,of)>0).length,f=document.querySelector('.cover-field');if(f)f.textContent=`${of} 位出賽，前 ${paid} 名有獎金`;}document.querySelector('.cover-stake [data-fee]').textContent=N(feeNow());
-    {const have=stake.coins(),need=stake.fee*stake.double.fee,r=document.querySelector('[data-raise]'),hv=document.querySelector('[data-have]');if(hv)hv.textContent=N(have);if(r)r.textContent=stake.hungry()?'餓了，不能加碼':have<need?`還差 ${N(need-have)}`:`報名費和獎金都變 ${stake.double.purse} 倍`;}
-    const d=$('slice-double');d.setAttribute('aria-pressed',String(doubled));d.classList.toggle('short',!stake.can(true)||stake.hungry());const b=$('slice-start');if(!b.disabled)b.innerHTML=startLabel();}
+  let bet=1,staked=null;   /* 2026-10-14 (the user: 問你要壓多少錢): the stake picked, × 1, 2 or 4 (stake.bets); the weather pays nothing extra */const N=v=>Number(v).toLocaleString('en-US'),has=k=>[].concat(perks?.[0]||[]).includes(k),match=()=>SKY==='rain'&&has('water')||SKY==='snow'&&has('snow'),potNow=()=>stake?stake.purse*bet:0,feeNow=()=>stake?stake.fee*bet:0,okBet=k=>k===1||!stake.hungry()&&stake.can(k);
+  function paintStake(){if(!stake)return;const t=$('slice-ticket'),of=rivals.length+1;if(!t)return;if(!okBet(bet))bet=1;const pot=potNow(),have=stake.coins();
+    t.querySelector('[data-purse]').textContent=N(pot);document.querySelector('.cover-split').innerHTML=[2,3].filter(k=>stake.won(pot,k,of)>0).map(k=>`<span><img src="assets/ui/money/medal_${['gold','red','blue'][k-1]}.webp?v=4" alt="第 ${k} 名">${coin}${N(stake.won(pot,k,of))}</span>`).join('');
+    t.classList.toggle('doubled',bet>1);t.querySelector('.stamp').hidden=bet<2;const hv=document.querySelector('[data-have]');if(hv)hv.textContent=N(have);
+    document.querySelectorAll('[data-bet]').forEach(el=>{const k=+el.dataset.bet,f=stake.fee*k,no=k>1&&stake.hungry()?'餓了':have<f?`還差 ${N(f-have)}`:'';el.setAttribute('aria-pressed',String(k===bet));el.classList.toggle('short',!!no);el.querySelector('small').innerHTML=no||`${coin}${N(f)}`;});   /* each stake says its fee, or why it cannot be had */
+    const b=$('slice-start');if(!b.disabled)b.innerHTML=startLabel();}
   // One reason to double, the strongest there is (2026-10-13, the user: three, the most persuasive): the weather meets what this
   // buddy is good at · it won here last time · it is fed and happy. None: nothing is said.
   function why(){const el=document.querySelector('.cover-why');if(!el||!stake)return;const name=team[0].name;
-    el.textContent=SKY==='rain'&&has('water')?`雨天，${name} 不怕水，獎金 ×${stake.pot.match}`:SKY==='snow'&&has('snow')?`雪天，${name} 不怕雪，獎金 ×${stake.pot.match}`:stake.lastWon()?'上次這關你第 1 名':'';   /* 狀態好 is no longer said (2026-10-14) */el.classList.remove('no');el.hidden=!el.textContent;}
-  const startLabel=()=>!stake||stake.can(doubled)?'起跑':'免費跑（金幣不夠，沒有獎金）';   // the fee is said once, on its own line above (2026-10-13, the user)
+    el.textContent='';   /* 2026-10-14: the weather's bonus is on the ticket; this line only says why a raise was refused */el.classList.remove('no');el.hidden=!el.textContent;}
+  const startLabel=()=>!stake||stake.can(bet)?'起跑':'免費跑（金幣不夠，沒有獎金）';   // the fee is said once, on its own line above (2026-10-13, the user)
   // An overtake is an event (2026-10-13, the user: 超車做成事件): the one passed is named big in the middle of the view, the
   // place under it; overtakes within PASS_CHAIN s of the last count up (連超 ×N). Being passed: the same in red, the count reset.
   const PASS_CHAIN=4;let passes=0,passTime=-9;
@@ -265,7 +264,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   const stage=()=>{settle=20;renderer=new ChaseRenderer($('slice-canvas'),{slice:true,city:level?.random&&SKY!=='sun'?`${city}~${SKY}`:city});renderer.camera.setViewOffset(1,1,0,.08,1,1);   // the ball game: the whole view 8% of the screen higher, so the buddy stands clear of the ring at the foot (2026-10-08, the user: 「按鈕下移，騎士上移一點，不要疊在一起」)
     renderer.prepare(game);$('slice-canvas').addEventListener('race-render-error',pause);$('slice-canvas').addEventListener('coin-burst',e=>coinFly(e.detail));};
   async function newRun(){
-    if(phase==='loading')return;if(midRace())logRun('restart');phase='loading';staked=stake&&stake.pay(doubled)?{fee:feeNow(),purse:potNow(),doubled}:null;document.querySelector('.slice-shell')?.classList.remove('finish-shot');
+    if(phase==='loading')return;if(midRace())logRun('restart');phase='loading';staked=stake&&stake.pay(bet)?{fee:feeNow(),purse:potNow(),doubled:bet>1,bet}:null;document.querySelector('.slice-shell')?.classList.remove('finish-shot');
     sound.stop();cancelAnimationFrame(frameId);clearTimeout(resultTimer);clearTimeout(resumeTimer);resumeTimer=0;
     await sound.prepare();
     $('slice-result').hidden=true;document.querySelector('.slice-shell').classList.remove('is-result');
@@ -483,8 +482,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     const off=bank.best?(r.finishTime-bank.best)/tempo:null,gems=MVP.gems?(r.gems||0)+(bank.newStars||0)+(bank.daily?.gems||0):0;
     // What happened in the run, in one line (2026-10-14, two first-look reviews put 輸了不知道為什麼輸 first): hits taken and given, the gap to the winner or to the next. No count of releases or pops (a third review: 爆掉 4 次 reads as a telling-off).
     const how=r.solo&&r.releases!=null?   /* 2026-10-14 (two reviewers saw only 「被撞 2 次」 and felt picked on): against rivals both counts are said, 0 too */`<p class="res-how">${[field?`撞人 ${r.bumps||0} 次`:'',field?`被撞 ${r.rammed||0} 次`:'',r.gap!=null?(r.rank===1?`領先第 2 名 ${r.gap.toFixed(1)} 秒`:`差第 1 名 ${r.gap.toFixed(1)} 秒`):''].filter(Boolean).map(t=>`<span>${t}</span>`).join('')}</p>`:'';
-    if(doubled&&stake&&(!stake.can(true)||stake.hungry()))doubled=false;   /* 2026-10-14 (a reviewer: raised for 80, the button said 40): the run again is at this run's stake, raised or not, and the raise is dropped when it can no longer be paid */
-    let again=r.solo?(stake?.can(doubled)?`再跑一次 · 付 <span class="amt">${N(feeNow())}${coin}</span>`:'再跑一次'):'再來一場',near='',board='';
+    if(stake&&!okBet(bet))bet=1;   /* 2026-10-14 (a reviewer: raised for 80, the button said 40): the run again is at this run's stake, raised or not, and the raise is dropped when it can no longer be paid */
+    let again=r.solo?(stake?.can(bet)?`再跑一次 · 付 <span class="amt">${N(feeNow())}${coin}</span>`:'再跑一次'):'再來一場',near='',board='';
     if(!r.solo){
       const rows=[{name:`You · ${team.map(h=>h.name).join(' / ')}`,coat:team.at(-1).coat,time:r.finishTime,you:true},
         ...m.rivals.map(x=>({name:`Team ${x.name}`,coat:x.horses.at(-1).coat,time:x.finishTime}))].sort((a,b)=>a.time-b.time);
@@ -594,11 +593,13 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   async function load(){
     startHow();
     $('slice-back').onclick=toSetup;
-    if(stake){$('slice-double').onclick=()=>{if(!doubled&&(stake.hungry()||!stake.can(true))){const w=document.querySelector('.cover-why');w.textContent=stake.hungry()?`${team[0].name} 餓了，不能加碼押注`:'金幣不夠加碼';w.classList.add('no');w.hidden=false;buzz('bad');return;}doubled=!doubled;sound.cue('click');buzz(doubled?'strong':'tap');const st=$('slice-ticket').querySelector('.stamp');paintStake();if(doubled&&!still)st.animate([{scale:2.4,opacity:0,rotate:'-30deg'},{scale:.9,opacity:1,rotate:'-12deg',offset:.6},{scale:1,rotate:'-12deg'}],{duration:320,easing:'ease-in'});};paintStake();}
+    if(stake){document.querySelectorAll('[data-bet]').forEach(el=>el.onclick=()=>{const k=+el.dataset.bet;if(!okBet(k)){const w=document.querySelector('.cover-why');w.textContent=stake.hungry()?`${team[0].name} 餓了，只能小押`:'金幣不夠';w.classList.add('no');w.hidden=false;buzz('bad');return;}
+      const up=k>bet;bet=k;sound.cue('click');buzz(k>1?'strong':'tap');document.querySelector('.cover-why').hidden=true;paintStake();if(up&&k>1&&!still)$('slice-ticket').querySelector('.stamp').animate([{scale:2.4,opacity:0,rotate:'-30deg'},{scale:.9,opacity:1,rotate:'-12deg',offset:.6},{scale:1,rotate:'-12deg'}],{duration:320,easing:'ease-in'});});paintStake();}
     $('slice-help').onclick=e=>{const w=cover.querySelector('.how-wrap');w.hidden=!w.hidden;e.currentTarget.setAttribute('aria-expanded',String(!w.hidden));};
     const form=getForm?.();if(form||level?.weather){const p=cover.querySelector('.slice-form');p.hidden=false;const sky={sun:null,rain:{icon:'rain',text:'雨天：水窪多'},snow:{icon:'cloud',text:'雪天：有雪堆'}}[SKY];
-      p.innerHTML=[...(level?.weather&&sky?[sky]:[]),...(form?.notes||[])].map(n=>typeof n==='string'?`<span>${esc(n)}</span>`:`<span class="fit ${n.ok?'ok':'bad'} ${n.icon}">${icon(n.icon)}${esc(n.text)}</span>`).join('');why();
+      p.innerHTML=[...(level?.weather&&sky&&!stake?[sky]:[]),...(form?.notes||[])].map(n=>typeof n==='string'?`<span>${esc(n)}</span>`:`<span class="fit ${n.ok?'ok':'bad'} ${n.icon}">${icon(n.icon)}${esc(n.text)}</span>`).join('');why();p.hidden=!p.innerHTML;
     }
+    if(stake){cover.querySelector('section>h1').textContent='';const g=cover.querySelector('[data-ground]'),w={rain:['rain','下雨，路上水窪多'],snow:['cloud','下雪，路上有雪堆']}[SKY];if(g)g.innerHTML=`<img class="wx" src="assets/ui/weather/${w?SKY:'sun'}.webp" alt=""><span>${w?w[1]:'晴天'}</span>`;}   /* the ground: the day's weather and what it puts on the road (the header no longer says it) */
     // While it waits the button counts the model files in (2026-10-05: a player on the live site sat on 準備中… with no
     // sign of anything happening); nothing new for 25 s (a stalled download never fails by itself) → the button reloads
     // the page (what did arrive is in the browser's cache).
