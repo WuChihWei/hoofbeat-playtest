@@ -1,16 +1,16 @@
-import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r722';
-import {relayCourse,soloCourse} from '../course/courses.mjs?v=r722';
-import {WEATHER} from './progress.mjs?v=r722';
-import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r722';
-import {compositionRank} from '../race-composition.mjs?v=r722';
-import {ChaseRenderer} from '../race-scene.js?v=r722';
-import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r722';
-import {cityModels} from '../approved-environment.js?v=r722';
+import {raceHudMarkup,raceControlsMarkup,updateEnergyControls} from '../race-hud.js?v=r723';
+import {relayCourse,soloCourse} from '../course/courses.mjs?v=r723';
+import {WEATHER,STAR_MAX} from './progress.mjs?v=r723';
+import {esc,icon,brand,wallet,chest,coin} from '../ui/ui.js?v=r723';
+import {compositionRank} from '../race-composition.mjs?v=r723';
+import {ChaseRenderer} from '../race-scene.js?v=r723';
+import {preloadPresentation,preloadModels,preloadBuddies,loadState,loadsSettled} from '../approved-assets.js?v=r723';
+import {cityModels} from '../approved-environment.js?v=r723';
 import {RaceClock} from '../race-session.js';
-import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r722';
-import {RaceAudio} from '../audio.js?v=r722';
-import {addLog,raceEntry} from '../playtest.js?v=r722';
-import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r722';
+import {SliceGame,DEFAULT_TEAM} from './slice-game.mjs?v=r723';
+import {RaceAudio} from '../audio.js?v=r723';
+import {addLog,raceEntry} from '../playtest.js?v=r723';
+import {SLICE_CONFIG,EASY_CHART,TERRAIN_NAME,SOLO,fieldRivals,sectionAt,MVP,sliceApples,RIVAL_AGES,RIVAL_AGES_FIELD} from './slice-config.mjs?v=r723';
 
 // onExit(result|null, dest) returns to the app shell: dest 'home', 'race' (the horse step), 'stable', or {city} (the
 // level this run opened). `tag` labels the covers. getBrief() → {title, goal, stars, missions: [text], target} for the
@@ -47,20 +47,20 @@ const buzz=kind=>{const [method,options,pattern]=BUZZ[kind],native=window.Capaci
 export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TEAM.map(h=>({...h,name:'Buddy'})),getForm=null,onFinish=null,getBest=null,getBrief=null,getGhost=null,lean=false,relay=false,ease=false,intro=false,stake=null,thumb=false,sky=null,tiers=null,arrows=null,perks=null,rivalCount=0,rivalGrow=1,rivalStep=0,stage:level=null}={}){   // getBest() → the record to beat on this track (simulation s) or null
   const TEMPO=level?.tempo??SLICE_CONFIG.tempo,BALL=/[?&]ball=([\d.,]+)/.exec(location.search)?.[1].split(',').map(Number)||[1],   // 2026-10-07 (the user: 「就改成這遊戲方法」): the ball is the game; ?ball=1,fill,fall,pop (real seconds) tunes it
   locks={...level?.locks};
-  const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
+  const solo=true,rivals=relay?RIVALS:fieldRivals(rivalCount+1,level?.field),field=rivals.length>0,   // solo (單騎): team is the one horse [{id, name, coat, type, stats}], the SOLO rules, rivalCount (0, 1, 2 or 4) rivals on one buddy each by the same rules; field: there is a place to run for
     rivalName=id=>rivals.find(r=>r.id===id)?.name??'你';
   const ac=new AbortController(),on={signal:ac.signal};
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r722',import.meta.url);document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('./slice.css?v=r723',import.meta.url);document.head.append(css);
   await new Promise(r=>{css.onload=css.onerror=r;});   // the page is swapped only once the race's styles are in: without them it was one black frame between the pick page and the race (2026-10-06, seen in a screen recording)
   const app=document.querySelector('#app');
   const lefty=(()=>{try{return localStorage.getItem(HAND)==='left'}catch{return false}})(),touch=matchMedia('(pointer: coarse)').matches,info=getBrief?.()??null;
   app.innerHTML=`<main class="slice-shell ui-root ui-live is-ready${solo?' is-solo':''}${lefty?' lefty':''}${lean?' lean':''}${locks.lane?' no-lanes':''}${arrows?.lane?' hint-lane':''}${arrows?.jump?' hint-jump':''}${arrows?.skill?' hint-skill':''}${arrows?.sprint?' hint-sprint':''}${locks.sprint?' no-sprint':''}${BALL?' is-ball':''}" style="background-image:url(assets/backdrops/${city||'taipei'}.webp${new URL(import.meta.url).search})"><canvas id="slice-canvas" aria-label="ZOOMBUD 三車道賽道"></canvas>
     ${raceHudMarkup(rivals)}
-    <i id="slice-flash" aria-hidden="true"></i><i id="slice-hurt" aria-hidden="true"></i><i id="slice-dizzy" aria-hidden="true" hidden><b>⭐</b><b>💫</b><b>⭐</b></i><div id="slice-feedback" aria-live="polite"></div><div id="slice-pass" aria-live="polite"></div><div id="slice-count" aria-live="assertive"></div>${field?`<div id="slice-rank"><b></b><small></small></div><div id="slice-purse" hidden><small>現在領</small><span>${coin}<b></b></span></div>`:''}<div id="slice-goal" hidden></div>${solo?`<div id="slice-apples" hidden>${APPLE}<b>0</b></div>`:''}<div id="slice-final-call" hidden></div><div id="slice-chase" hidden></div><i id="chase-left" class="chase-edge" hidden>‹</i><i id="chase-right" class="chase-edge" hidden>›</i><div id="slice-jump-hint"></div>
+    <i id="slice-flash" aria-hidden="true"></i><i id="slice-hurt" aria-hidden="true"></i><i id="slice-dizzy" aria-hidden="true" hidden><b>⭐</b><b>💫</b><b>⭐</b></i><div id="slice-feedback" aria-live="polite"></div><div id="slice-pass" aria-live="polite"></div><div id="slice-count" aria-live="assertive"></div>${field?`<div id="slice-rank"><b></b><small></small></div><div id="slice-purse" hidden><small></small></div>`:''}<div id="slice-goal" hidden></div>${solo?`<div id="slice-apples" hidden>${APPLE}<b>0</b></div>`:''}<div id="slice-final-call" hidden></div><div id="slice-chase" hidden></div><i id="chase-left" class="chase-edge" hidden>‹</i><i id="chase-right" class="chase-edge" hidden>›</i><div id="slice-jump-hint"></div>
     ${raceControlsMarkup()}
     <div id="slice-result" hidden></div><div id="slice-cover"><button id="slice-back" class="ui-icon-btn cover-back" aria-label="返回">${icon('back','')}</button><button id="slice-help" class="ui-icon-btn cover-help" aria-label="玩法說明" aria-expanded="false">?</button>
       <section class="${stake?'has-stake':''}"><small>${esc(info?.title??tag)}</small><h1>${esc(info?.goal??(relay?'三棒接力':'單騎練跑'))}</h1>
-        ${info&&solo&&!relay?`<p class="cover-stars" role="img" aria-label="${info.stars} 顆星">${[0,1,2].map(k=>`<i class="${k<info.stars?'on':''}">★</i>`).join('')}</p>`:''}
+        ${info&&solo&&!relay?`<p class="cover-stars" role="img" aria-label="${info.stars} 顆星">${[0,1,2].slice(0,STAR_MAX).map(k=>`<i class="${k<info.stars?'on':''}">★</i>`).join('')}</p>`:''}
         ${stake?`<div class="cover-ticket" id="slice-ticket"><img class="stamp" src="assets/ui/money/stamp_red.webp" alt="" hidden><div class="print"><small data-pot-what>這場獎金最高</small><b>${coin}<span data-purse></span></b><em class="pot-base" hidden></em></div></div><p class="cover-split" data-share></p>
           <p class="cover-field"></p>${tiers&&rivals.length?`<ul class="cover-who">${[{name:tiers.you,t:tiers.me,you:true},...rivals.map((x,i)=>({name:x.name,t:x.tier??0}))].sort((a,b)=>b.t-a.t).map(x=>`<li class="${x.you?'you':''}"><img src="assets/ui/tier/${tiers.list[x.t].img}.webp" alt="${tiers.list[x.t].name}"><b class="tn">${tiers.list[x.t].name}</b><span>${esc(x.name)}</span></li>`).join('')}</ul>`:''}<p class="cover-why" hidden></p><p class="cover-stake"><span>報名費<b>${coin}<span data-fee></span></b><small class="cover-have">你有 <span data-have></span></small></span><button id="slice-double" class="ui-btn" aria-pressed="false"><img src="assets/ui/money/bag.webp" alt=""><span>加碼押注 ×${stake.double.purse}<small data-raise>報名費和獎金都變 ${stake.double.purse} 倍</small></span></button></p>`:''}
         ${info?.missions?`<details class="cover-fold" ${lean?'':'open'}><summary>這場的任務 ×${info.missions.length}</summary><ul class="cover-missions">${info.missions.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></details>`:''}
@@ -133,7 +133,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // One reason to double, the strongest there is (2026-10-13, the user: three, the most persuasive): the weather meets what this
   // buddy is good at · it won here last time · it is fed and happy. None: nothing is said.
   function why(){const el=document.querySelector('.cover-why');if(!el||!stake)return;const name=team[0].name;
-    el.textContent=SKY==='rain'&&has('water')?`雨天，${name} 不怕水，獎金 ×${stake.pot.match}`:SKY==='snow'&&has('snow')?`雪天，${name} 不怕雪，獎金 ×${stake.pot.match}`:stake.lastWon()?'上次這關你第 1 名':stake.fit()?`${name} 狀態好`:'';el.classList.remove('no');el.hidden=!el.textContent;}
+    el.textContent=SKY==='rain'&&has('water')?`雨天，${name} 不怕水，獎金 ×${stake.pot.match}`:SKY==='snow'&&has('snow')?`雪天，${name} 不怕雪，獎金 ×${stake.pot.match}`:stake.lastWon()?'上次這關你第 1 名':'';   /* 狀態好 is no longer said (2026-10-14) */el.classList.remove('no');el.hidden=!el.textContent;}
   const startLabel=()=>!stake||stake.can(doubled)?'起跑':'免費跑（金幣不夠，沒有獎金）';   // the fee is said once, on its own line above (2026-10-13, the user)
   // An overtake is an event (2026-10-13, the user: 超車做成事件): the one passed is named big in the middle of the view, the
   // place under it; overtakes within PASS_CHAIN s of the last count up (連超 ×N). Being passed: the same in red, the count reset.
@@ -427,7 +427,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     // Relay: the place, alone (2026-10-04, the user: the metres to the horses ahead and behind meant nothing).
     if(field){const card=$('slice-rank'),rank=compositionRank(game,game.metrics());
       put(card.firstChild,'text',String(rank));put(card.lastChild,'text','/'+(others.length+1));put(card,'className',rank===1?'first':'');
-      const p=$('slice-purse');if(p){const now=staked?stake.won(staked.purse,rank,others.length+1):0;p.hidden=!staked;put(p.querySelector('b'),'text',N(now));put(p,'className',now?'':'none');if(staked)put(p.querySelector('small'),'text',now?'現在領':`前 ${[1,2,3,4,5].filter(k=>k<=others.length+1&&stake.won(staked.purse,k,others.length+1)>0).length} 名有獎金`);}}
+      const p=$('slice-purse');if(p){const of=others.length+1,paid=staked?[1,2,3,4,5].filter(k=>k<=of&&stake.won(staked.purse,k,of)>0).length:0;p.hidden=!staked;put(p,'className',rank<=paid?'':'none');if(staked)put(p.querySelector('small'),'text',`前 ${paid} 名有獎金`);}}   /* 2026-10-14 (two reviewers: 「現在領 180」 mid-race, then 0 at the line, read as a con): no money until the result; the chip lights while the place is a paid one */
     if(phase==='running'||phase==='countdown')sound.speedFeedback(game.speed/game.config.baseSpeed,game.surge(),game.rush());   // not once the race is over: this brought the wind back every frame after stop() (2026-10-06, the user: the sound should end with the race)
     if(BALL)ballHud(t);
     shell.classList.toggle('is-rush',phase==='running'&&(game.boostActive()||DEV_RUSH));   // the picture's edge glows for as long as the sprint lasts (slice.css)
@@ -482,8 +482,9 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     const tempo=TEMPO,n=v=>Number(v).toLocaleString('en-US'),total=bank.total??0,parts=bank.parts??[['名次',r.bonus||0],['路上撿的',r.coins-(r.bonus||0)],['其他',bank.extra||0]].filter(x=>x[1]),gain=parts.reduce((a,x)=>a+x[1],0);   // parts: [what for, coins] (home.js); gain: what the run made, the entry fee taken off
     const off=bank.best?(r.finishTime-bank.best)/tempo:null,gems=MVP.gems?(r.gems||0)+(bank.newStars||0)+(bank.daily?.gems||0):0;
     // What happened in the run, in one line (2026-10-14, two first-look reviews put 輸了不知道為什麼輸 first): hits taken and given, the gap to the winner or to the next. No count of releases or pops (a third review: 爆掉 4 次 reads as a telling-off).
-    const how=r.solo&&r.releases!=null?`<p class="res-how">${[r.rammed?`被撞 ${r.rammed} 次`:'',r.bumps?`撞人 ${r.bumps} 次`:'',r.gap!=null?(r.rank===1?`領先第 2 名 ${r.gap.toFixed(1)} 秒`:`差第 1 名 ${r.gap.toFixed(1)} 秒`):''].filter(Boolean).map(t=>`<span>${t}</span>`).join('')}</p>`:'';
-    let again=r.solo?(stake?.can(false)?`再跑一次 · 付 <span class="amt">${N(stake.fee)}${coin}</span>`:'再跑一次'):'再來一場',near='',board='';
+    const how=r.solo&&r.releases!=null?   /* 2026-10-14 (two reviewers saw only 「被撞 2 次」 and felt picked on): against rivals both counts are said, 0 too */`<p class="res-how">${[field?`撞人 ${r.bumps||0} 次`:'',field?`被撞 ${r.rammed||0} 次`:'',r.gap!=null?(r.rank===1?`領先第 2 名 ${r.gap.toFixed(1)} 秒`:`差第 1 名 ${r.gap.toFixed(1)} 秒`):''].filter(Boolean).map(t=>`<span>${t}</span>`).join('')}</p>`:'';
+    if(doubled&&stake&&(!stake.can(true)||stake.hungry()))doubled=false;   /* 2026-10-14 (a reviewer: raised for 80, the button said 40): the run again is at this run's stake, raised or not, and the raise is dropped when it can no longer be paid */
+    let again=r.solo?(stake?.can(doubled)?`再跑一次 · 付 <span class="amt">${N(feeNow())}${coin}</span>`:'再跑一次'):'再來一場',near='',board='';
     if(!r.solo){
       const rows=[{name:`You · ${team.map(h=>h.name).join(' / ')}`,coat:team.at(-1).coat,time:r.finishTime,you:true},
         ...m.rivals.map(x=>({name:`Team ${x.name}`,coat:x.horses.at(-1).coat,time:x.finishTime}))].sort((a,b)=>a.time-b.time);
@@ -496,8 +497,8 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
       // comes up as things stood before the run and then moves (moneyMove): the coins count to what they are now, what each made
       // shows, and the rows slide to their new places.
       (bank.money?(()=>{const rows=bank.money.map(x=>({...x,was:x.coins-(x.made||0),place:x.you?r.rank:r.field?.find(f=>f.id===x.id)?.rank??9})).sort((a,b)=>a.place-b.place);   // in this run's order, its places as the numbers (2026-10-14: it was ordered by wealth, so the top said 4th and the list put the player 5th)
-        return `<ol class="res-money">${rows.map((x,i)=>`<li class="${x.you?'you':''}" data-before="${x.was}" data-after="${x.coins}"><b class="rk">${x.place}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span>${x.made?`<i class="${x.made>0?'up':'down'}">${x.made>0?'+':'−'}${n(Math.abs(x.made))}</i>`:''}<b class="amt"><span>${n(x.was)}</span>${coin}</b></li>`).join('')}</ol>`;})():'')+
-      `<ol class="res-rank">${MVP.levels&&bank.age?`<li class="ui-pillrow glass res-age">${icon('horse')}<span>${esc(team[0].name)} · ${bank.age}</span><b>${bank.nextAge?`再 ${bank.runs} 場長成${bank.nextAge}`:'長到最大了'}</b></li>`:''}${
+        return `<ol class="res-money">${rows.map((x,i)=>`<li class="${x.you?'you':''}" data-before="0" data-after="${x.made||0}"><b class="rk">${x.place}</b><img src="assets/stable/buddy_${x.coat}.webp?v=coats-4" alt=""><span>${esc(x.name)}</span><b class="amt ${x.made>0?'up':x.made<0?'down':''}"><span>0</span>${coin}</b></li>`).join('')}</ol>`;})():'')+   /* 2026-10-14 (two reviewers felt crushed by the rivals' 2,560 against their 165): what each made this run, not what each has */
+      `<ol class="res-rank">${MVP.levels&&bank.age?`<li class="ui-pillrow glass res-age">${icon('horse')}<span>${esc(team[0].name)} · ${bank.age}</span><b>${bank.nextAge?`再 ${bank.runs} 場升 ${bank.nextAge}`:'長到最大了'}</b></li>`:''}${
       bank.starHint?`<li class="ui-pillrow glass res-gap" style="--p:${bank.starGap??0}">${icon('star')}<span>下一顆星</span><b>${bank.starHint}</b></li>`:''}${
       bank.hot>1?`<li class="ui-pillrow glass">${icon('bolt')}<span>連續進步 ×${bank.hot}</span><b>+${bank.hotCoins}</b></li>`:''}${
       bank.tip?`<li class="ui-pillrow glass res-tip">${icon('info')}<span>${esc(bank.tip)}</span></li>`:''}</ol>`;
@@ -507,7 +508,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
     const tag='<span class="ui-tag yellow">新紀錄</span>',el=$('slice-result');
     el.innerHTML=`<header class="ui-top">${brand()}<div class="res-wallets">${wallet(total-Math.max(0,gain),{gems:bank.gems??null})}</div></header>
       <div class="res-banner ui-glass ui-enter${!r.rank||r.rank===1||r.stake?.won?'':' plain'}"><img src="assets/ui/res_laurel_l.webp" alt=""><div><small>${small}</small><b class="res-big">${r.solo?wall(r.finishTime):`第 ${r.rank} 名`}</b></div><img src="assets/ui/res_laurel_r.webp" alt=""></div>${how}${bank.tierLine?`<p class="res-tier"><img src="assets/ui/tier/${bank.tierLine.img}.webp" alt=""><span>${esc(bank.tierLine.text)}</span></p>`:''}
-      ${r.solo&&bank.stars!=null?`<p class="res-stars" role="img" aria-label="${bank.stars} 顆星">${[0,1,2].map(k=>`<i class="${k<bank.stars?'on':''}${k>=bank.stars-bank.newStars&&k<bank.stars?' new':''}">★</i>`).join('')}</p>`:''}
+      ${r.solo&&bank.stars!=null?`<p class="res-stars" role="img" aria-label="${bank.stars} 顆星">${[0,1,2].slice(0,STAR_MAX).map(k=>`<i class="${k<bank.stars?'on':''}${k>=bank.stars-bank.newStars&&k<bank.stars?' new':''}">★</i>`).join('')}</p>`:''}
       <div class="res-ticket ${gain<0?'lost':'won'}"><img class="art" src="assets/ui/money/${gain<0?'bag_empty':'pile'}.webp" alt=""><div><b><span data-count>${gain<0?'−':'+'}0</span>${coin}</b>
         <span class="parts">${parts.map(([k,v])=>`<i>${esc(k)} ${v<0?'−':'+'}${n(Math.abs(v))}</i>`).join('')}</span></div>${r.stake?.won?'<img class="stamp" src="assets/ui/money/stamp_gold.webp" alt="">':''}</div>
       <div class="res-mid">${award?`<img class="res-award" src="assets/ui/award_${award}.webp?v=5" alt="">`:''}
@@ -540,7 +541,7 @@ export async function startSlice({onExit,tag='ZOOMBUD',city=null,team=DEFAULT_TE
   // motion: the final numbers at once.
   // The list of who has how much comes alive `after` ms on: every purse counts from what it was to what it is, the gains and losses
   // show, then the rows slide to their new order (the player passing someone: a buzz and the overtake sound).
-  function moneyMove(el,after=1500){const ol=el.querySelector('.res-money');if(!ol)return;const rows=[...ol.children],n=v=>Number(v).toLocaleString('en-US');let done=false;
+  function moneyMove(el,after=1500){const ol=el.querySelector('.res-money');if(!ol)return;const rows=[...ol.children],n=v=>(v>0?'+':v<0?'−':'')+Math.abs(Number(v)).toLocaleString('en-US');let done=false;
     const fin=()=>{if(done||!ol.isConnected)return;done=true;rows.forEach(r=>{r.querySelector('.amt span').textContent=n(r.dataset.after);r.classList.add('shown');});
       };   // the rows stay in the run's order (they were sorted again by wealth and slid there)
     if(still){fin();return;}

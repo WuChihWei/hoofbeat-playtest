@@ -7,11 +7,11 @@
 // MVP: `hidden` items are not sold and not shown (the care items, the one-race buffs, most foods); what a save holds of
 // them stays in the bag, unused. Everything lives in localStorage (hoofbeat.care.v2 / hoofbeat.items.v1).
 // Icons: assets/stable/item_<id>.webp.
-import {MVP} from './playable/slice-config.mjs?v=r722';
+import {MVP} from './playable/slice-config.mjs?v=r723';
 export const ITEMS=[
   // the ranch's crop (farm.mjs): wheat is reaped from the field, not sold; its seed is bought with coins or brought home
   // from a race
-  {id:'wheat',name:'小麥',kind:'food',food:30,xp:2,sell:5},{id:'seed',name:'小麥種子',kind:'seed',price:10,note:'種在麥田，長成小麥'},
+  {id:'wheat',name:'小麥',kind:'food',food:30,xp:2,sell:5},{id:'seed',name:'小麥種子',kind:'seed',price:10,note:'種在麥田，收 3 束小麥'}   /* farm.mjs FARM.yield; 2026-10-14 (a reviewer: a seed 10, wheat sells 5, so farming loses): what one seed gives is said */,
   // the pond's catch (farm.mjs, 2026-10-11: the field's rules again): fish, and the bait that is cast for it. sell: what one
   // of a harvest brings in the shop (4 while a crop takes 45 s in the playtest build: 3 a plot less the 10 of its seed is
   // about what a race pays for the same time; meant: 5, with a crop that takes hours)
@@ -63,13 +63,13 @@ export const recover=r=>r;   // nothing comes back by itself any more (it was th
 //   hunger   start energy = FORM.energy of it; under FORM.low the speed falls, to ×FORM.speed at 0
 //   clean    shown as 心情 (mood). 2026-10-13 (the user: 刷毛純互動): it costs nothing in a race any more; at FORM.low or over a
 //            run's xp is × MOOD_XP (afterSolo, afterRace). Brushing is play, never a chore before a run.
-export const FORM={low:50,speed:.9,energy:.3},MOOD_XP=1.1;
+export const FORM={low:50,speed:.9,energy:.3},MOOD_XP=MVP.mood?1.1:1;   // hidden mood gives nothing (MVP.mood)
 const dip=(v,to)=>v>=FORM.low?1:to+(1-to)*v/FORM.low;
 // What the player is told (2026-10-13, the user: as little as will do; when to feed, with what follows, and whether the buddy is fit
 // to run): no numbers of the game's, only how many feeds or brushings put it right. `clean` is shown as 心情 (mood): brushed up,
 // worn by racing, low it charges slower. icon: the same one as its bar in the dorm (ui.js icon).
 export const fitness=r=>{const n=k=>r[k]>=FORM.low?0:Math.ceil((FORM.low-r[k])/30);return {feed:n('hunger'),brush:n('clean')};};
-export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return [f.feed?{icon:'fork',text:`${who}餓了，跑得慢，不能加碼。餵 ${f.feed} 次`}:{icon:'star',ok:true,text:`${who}狀態好`},...(f.brush?[]:[{icon:'smile',ok:true,text:`${who}心情好，經驗 ×${MOOD_XP}`}])];};
+export const fitNotes=(r,name='')=>{const f=fitness(r),who=name?name+' ':'';return f.feed?[{icon:'fork',text:`${who}餓了，跑得慢，不能加碼。餵 ${f.feed} 次`}]:[];};   // 2026-10-14 (the user, after the reviewers: 狀態好 and 心情 hidden): only what needs doing is said
 export function raceForm(r,base){
   const speed=dip(r.hunger,FORM.speed),combo=1,lv=level(r),grow=1+(lv-1)*LV_SPEED;
   const config={baseSpeed:+(base.baseSpeed*speed*grow).toFixed(3),rhythmGain:base.rhythmGain*combo,goodRhythmGain:base.goodRhythmGain*combo,accel:+((base.accel??0)*combo).toFixed(4),charge:combo,   // charge: how fast the ball fills (slice-game ballStep; 2026-10-11: a dusty coat slowed `accel`, which the ball game never reads)

@@ -14,7 +14,7 @@ const T=1.95;
 // 2026-10-12: two each, in the order they open: the first at LV 2, the second at LV 3 (home.js perkOf). 'charge' the ball fills
 // faster · 'clean' a dropping does not trip it.
 export const BUDDY_PERK=Object.freeze({horse:['charge','quick'],zebra:['quick','charge'],cow:['water','clean'],llama:['clean','snow'],rhino:['water','tough'],wolf:['snow','quick'],bear:['snow','tough']});   // 'snow' (2026-10-12): snow on the road does not slow the bear and the wolf, as water does not the rhino and the cow
-export const MVP=Object.freeze({gems:false,treats:false,levels:true,missions:false,daily:false,perks:false,decor:false,types:false,relay:false});
+export const MVP=Object.freeze({gems:false,treats:false,levels:true,missions:false,daily:false,perks:false,decor:false,types:false,relay:false,mood:false});   // mood: the 心情 bar, the brush and the xp it gives (2026-10-14, the user: hidden for the playtest; no reviewer could say what it did)
 export const SLICE_CONFIG = Object.freeze({
   // Three-leg relay, about 75 wall seconds: one horse per leg (SLICE_LEGS), handoffs and the finish by distance.
   legLength:540, baseSpeed:12, countdown:3, tempo:T, fixedStep:1/120,
@@ -102,6 +102,7 @@ export const SLICE_RIVALS = Object.freeze([
   {id:'hazel',name:'Hazel',tier:2,types:['curve','mud','curve'],coats:[4,5,7],edge:.05,lane:0,start:-7,sprintAt:.35},
   {id:'rio',name:'Rio',tier:1,types:['mud','straight','mud'],coats:[6,8,6],lane:1,start:-7,sprintAt:.65},
   {id:'sage',name:'Sage',tier:0,types:['straight','mud','curve'],coats:[5,3,4],lane:-1,start:-7,sprintAt:.45},   // the sixth runner (2026-10-05: stages 4 and 5 are run against five); the relay keeps the first four
+  {id:'poppy',name:'Poppy',tier:1,types:['curve','straight','curve'],coats:[7,4,7],lane:1,start:-7,sprintAt:.5},   // 2026-10-14: stage 4 is four rivals, none over 高手 (progress LEVELS field)
 ]);
 export const STALLS=[-1,1,-2,2,3].map(k=>k*.75);   // the rivals' start stalls, in lanes (the player's is 0): 2.25 m apart, across the 16 m of dirt (the three lanes are its middle 6 m)
 // 2026-10-13 (the user: 對手有可能會贏): the rivals of a solo race are not all as fast. By how many there are, each one's
@@ -112,8 +113,10 @@ export const RIVAL_AGES=Object.freeze({1:[0],2:[.5,-.5]}),RIVAL_AGES_FIELD=Objec
 // stage 4): `tier` (progress TIERS, 0–4) is how fast it rides against the stage (slice-game ageOff = (tier − 2) / 2), and a stage's
 // difficulty is who is sent: one rival is the middle one, two are one over and one under it, four are the top four. Each rival
 // takes the start stall (lane, start) of its place in the list, so the starts are as they were.
+// 2026-10-14 (two reviewers would not raise against 傳奇 and 大師 as a 新手): a stage names who it sends (progress LEVELS
+// `field`), the tiers climbing with the stages; the stage's pace (RIVAL_PACE) keeps it as hard as it was.
 const FIELD_PICK={1:['hazel'],2:['chaser','rio']};
-export const fieldRivals=size=>{const n=size-1,ids=FIELD_PICK[n],picked=ids?ids.map(id=>SLICE_RIVALS.find(r=>r.id===id)):SLICE_RIVALS.slice(0,n);return picked.map((r,i)=>({...r,lane:SLICE_RIVALS[i].lane,start:SLICE_RIVALS[i].start}));};   // size: runners with the player (a solo race: 2, 3 or 5; the relay: 5, or 3 with ?field=3)
+export const fieldRivals=(size,field=null)=>{const n=size-1,ids=field||FIELD_PICK[n],picked=ids?ids.map(id=>SLICE_RIVALS.find(r=>r.id===id)):SLICE_RIVALS.slice(0,n);return picked.map((r,i)=>({...r,lane:SLICE_RIVALS[i].lane,start:SLICE_RIVALS[i].start}));};   // size: runners with the player (a solo race: 2, 3 or 5; the relay: 5, or 3 with ?field=3)
 // The ladder, by the course's difficulty (city pack `difficulty`, the ★ on the track cards; none, the template course,
 // is 3): the level of the rivals' buddies, which is also the level the city expects of the player's, and their riders'
 // skill. A player who hits more of the notes than that, on buddies of that level, wins.

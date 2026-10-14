@@ -730,4 +730,6 @@ export const STRINGS=[
   {zh:"綠盾",en:"Green shield"},  {zh:"藍盾",en:"Blue shield"},  {zh:"紫盾",en:"Purple shield"},  {zh:"紅盾",en:"Red shield"},  {zh:"翼盾",en:"Winged shield"},  {zh:"金冠盾",en:"Crowned shield"},
   {zh:"你最高拿",en:"You can win up to"},  {zh:"對手最高 {0}",en:"Rivals up to {0}",p:1},  {zh:"升上{0}！",en:"Up to {0}!",p:1},  {zh:"牌位積分 +{0}，再 {1} 分升{2}",en:"Tier points +{0}, {1} more for {2}",p:1},  {zh:"牌位積分 +{0}",en:"Tier points +{0}",p:1},
   {zh:"新手",en:"Rookie"},  {zh:"好手",en:"Rider"},  {zh:"高手",en:"Ace"},  {zh:"大師",en:"Master"},  {zh:"傳奇",en:"Legend"},
+  {zh:"LV {0}",en:"LV {0}",p:1},  {zh:"再 {0} 場升 {1}",en:"{0} more runs to {1}",p:1},  {zh:"再 {0} 場升 {1}，解鎖「{2}」",en:"{0} more runs to {1}: unlocks {2}",p:1},  {zh:"{0} 升上 {1} 了！",en:"{0} is now {1}!",p:1},
+  {zh:"{0} 升上 {1} 了！速度 +{2}%",en:"{0} is now {1}! Speed +{2}%",p:1},  {zh:"升上 {0} 學會「{1}」",en:"At {0} it learns “{1}”",p:1},  {zh:"{0} 餓了，跑得慢，不能加碼",en:"{0} is hungry: slower, no doubling",p:1},  {zh:"去餵",en:"Feed"},  {zh:"種在麥田，收 3 束小麥",en:"Sow it in the field: 3 wheat"},  {zh:"過關了",en:"Cleared"},
 ];

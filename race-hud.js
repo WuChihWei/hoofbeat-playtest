@@ -1,6 +1,6 @@
-import {compositionRivals} from './race-composition.mjs?v=r722';
-import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r722';
-import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r722';
+import {compositionRivals} from './race-composition.mjs?v=r723';
+import {PRESENTATION as P,CONTROL_LAYOUT} from './presentation-config.mjs?v=r723';
+import {SLICE_RIVALS,sectionAt} from './playable/slice-config.mjs?v=r723';
 const anchor=a=>`left:${a.center[0]*100}%;top:${a.center[1]*100}%;width:${a.size[0]*100}%;height:${a.size[1]*100}%;transform:translate(-50%,-50%);right:auto;min-width:0;`;
 // Five rows: two lines each (name, gap), growing down from the same top edge.
 const top=a=>`left:${a.center[0]*100}%;top:${(a.center[1]-a.size[1]/2)*100}%;width:${a.size[0]*100}%;transform:translateX(-50%);right:auto;min-width:0;`;

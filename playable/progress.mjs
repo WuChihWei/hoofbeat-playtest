@@ -1,8 +1,8 @@
 // Progress and economy: the five levels and their stars, which horses the player owns and what the others cost, the
 // three small missions of a run, the daily first-run bonus. Pure rules (no storage, no DOM): home.js keeps the state
 // in localStorage ('hoofbeat.progress.v1') and calls these. Run `node dist/playable/progress.mjs` for the self-check.
-import {MVP} from './slice-config.mjs?v=r722';
-import {COURSES} from '../course/courses.mjs?v=r722';
+import {MVP} from './slice-config.mjs?v=r723';
+import {COURSES} from '../course/courses.mjs?v=r723';
 //
 // The loop it builds: a run pays coins (picked up, missions, the day's first run) and stars (by time); stars open the
 // next level and the relay, and gift horses; coins or diamonds buy a horse sooner; a faster horse makes the next star
@@ -37,15 +37,15 @@ import {COURSES} from '../course/courses.mjs?v=r722';
 // times above ÷ 1.08, stages 8–10 ÷ 1.16 (stable-care LV_SPEED .08 an age).
 export const LEVELS=Object.freeze([
   {city:'taipei',rivals:0,tempo:1.4,plain:true,locks:{lane:1,hurdle:1,sprint:1},silver:26.5,gold:23},
-  {city:'tokyo',rivals:1,tempo:1.6,locks:{hurdle:1,sprint:1},silver:27.2,gold:24.3,ram:[1.4,.4,14,1.5]},   // the one rival bumps here too (2026-10-13, the user: 第二關就會被撞): the fourth number is the first one's earliest time, while it is still alongside off the start,
-  {city:'paris',rivals:2,tempo:1.75,locks:{},silver:46.5,gold:40.6,ram:[1.4,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two, (s before the first: 4, or 15 the first time it is met)], real seconds
-  {city:'seoul',rivals:4,tempo:1.85,locks:{},silver:40.8,gold:34.9,ram:[1.4,.4,11],weather:['rain'],hazards:{poop:0}},   // 2026-10-14 (the user: six stages for the playtest, the weather inside them): stage 4 is rain, stage 5 snow, stage 6 any of the three
+  {city:'tokyo',rivals:1,field:['rio'],tempo:1.6,locks:{hurdle:1,sprint:1},silver:27.2,gold:24.3,ram:[1.4,.4,14,1.5]},   // the one rival bumps here too (2026-10-13, the user: 第二關就會被撞): the fourth number is the first one's earliest time, while it is still alongside off the start,
+  {city:'paris',rivals:2,field:['hazel','rio'],tempo:1.75,locks:{},silver:46.5,gold:40.6,ram:[1.4,.4,14]},   // ram: a rival beside the player comes over at it (slice-game ramStep): [s from its first lean to the hit, s until it is across its line, s between two, (s before the first: 4, or 15 the first time it is met)], real seconds
+  {city:'seoul',rivals:4,field:['hazel','rio','poppy','sage'],tempo:1.85,locks:{},silver:40.8,gold:34.9,ram:[1.4,.4,11],weather:['rain'],hazards:{poop:0}},   // 2026-10-14 (the user: six stages for the playtest, the weather inside them): stage 4 is rain, stage 5 snow, stage 6 any of the three
  
-  {city:'stockholm',rivals:4,tempo:1.95,locks:{},silver:40.8,gold:34.9,ram:[1.4,.4,9],back:true,weather:['snow'],hazards:{poop:0}},
+  {city:'stockholm',rivals:4,field:['chaser','hazel','rio','poppy'],tempo:1.95,locks:{},silver:40.8,gold:34.9,ram:[1.4,.4,9],back:true,weather:['snow'],hazards:{poop:0}},
   // 2026-10-11, stages 6 and 7: what lies on the road. hazards: a puddle every [first, step] m and a dropping every
   // [first, step] m, lane after lane (slice-app levelHazards; slice-game wet, hazardStep). Stage 6 is the puddles,
   // stage 7 both. The cities are Taipei and Paris again (course/cities/taipei2.mjs, paris2.mjs) until they have their own art.
-  {city:'taipei2',rivals:4,tempo:1.95,locks:{},silver:34.6,gold:29.6,ram:[1.4,.4,9],back:true,weather:['sun','rain','snow'],hazards:{poop:0}},
+  {city:'taipei2',rivals:4,field:['pacer','chaser','hazel','rio'],tempo:1.95,locks:{},silver:34.6,gold:29.6,ram:[1.4,.4,9],back:true,weather:['sun','rain','snow'],hazards:{poop:0}},
   // 2026-10-12, stages 7–10 (the user: ten stages; the first six are set, the last four draw their weather): the five
   // Droppings are on the last stage only (2026-10-14, the user: 太難了，大便第十關再出現; stages 7–9 had one every 75 / 65 / 55 m). A rival's lean before its
   // ram is 1.4 s (.8 until then: the user could not tell when one was coming), and its rider's arm goes up for it (race-scene REACT.raise).
@@ -73,7 +73,8 @@ export const STAR_REWARD={coins:10,gems:1};   // each star, the first time it is
 // early ones can also be bought sooner. PERKS: what is not a buddy.
 export const STARTERS=Object.freeze([1]);
 // MVP (slice-config MVP.gems off): every buddy has a coin price, the diamond one waits (a race pays 20–40 coins).
-export const HORSE_PRICE=Object.freeze({0:{coins:300,gems:2},2:{coins:600,gems:3},5:{coins:400,gems:2,stars:5},6:{coins:1000,gems:3},7:{coins:800,gems:4,stars:9},4:{coins:1200,gems:5},
+export const HORSE_PRICE=Object.freeze({0:{coins:300,gems:2},2:{coins:600,gems:3},5:{coins:400,gems:2,stars:3},   /* 2026-10-14 (the user: 送的夥伴第三關要到): one star a stage now (STAR_MAX), so 3 stars is stage 3 as 5 was */
+  6:{coins:1000,gems:3},7:{coins:800,gems:4,stars:9},4:{coins:1200,gems:5},
   3:{coins:1400,gems:7,stars:12},8:{coins:1800,gems:9},9:{coins:2400,gems:12,stars:15},10:{coins:1600,gems:12,stage:5},11:{coins:2000,gems:10,stage:6},12:{coins:2200,gems:8,stage:4},13:{coins:2600,gems:10,stage:1},14:{coins:2000,gems:8,stage:3},15:{coins:2400,gems:9,stage:7}});   // 2026-10-11: clearing stage 6 gives the rhino (water does not slow it), stage 7 the wolf · 2026-10-14: stage 3 gives the cow (14, water) for stage 4's rain and stage 4 the bear (12, snow) for stage 5's snow; the black horse (2) is bought · later that day: stage 1 gives the zebra (13: its bump lands sooner) and not a second horse with the first one's own traits (0, bought now): a choice to make on stage 2
 // 2026-10-12 (the user's reward table): what clearing a stage gives besides a buddy (HORSE_PRICE `stage`) or the rider's
 // colours (PERKS.rider): stage 2 seeds and bait, stage 8 coins, the last stage the trophy on the shelf of the rider's house.
@@ -102,7 +103,9 @@ export const DOUBLE=Object.freeze({fee:2,purse:2});
 // By stage since the same evening (the user: 難易度隨著 1–10 關去調整): a stage's own number, picked off the tool's table so that the
 // casual rider places 1, 1, 1, 2, 3, 3, 3, 4, 4 on stages 2 to 10 and the good one 1, 1, 1, 1, 1, 1, 2, 1, 2. (Stage 4 is slower than 3:
 // the field grows from three to five and its rivals are a year older.)
-export const RIVAL_PACE=Object.freeze([1,.88,.92,.88,.88,.88,.9,.92,.92,.94]),rivalPace=city=>RIVAL_PACE[levelOf(city)]??1;
+// 2026-10-14: stages 2–5 send lower tiers now (LEVELS field), so their pace went up to keep the places the sweep had (S4 rain:
+// the right buddy about 1st, the wrong one about 3rd, riding casually).
+export const RIVAL_PACE=Object.freeze([1,.9,1,.94,.91,.88,.9,.92,.92,.94]),rivalPace=city=>RIVAL_PACE[levelOf(city)]??1;
 export const rivalAge=city=>{const n=levelOf(city)+1;return n<=3?1:n<=7?2:3;},POT=Object.freeze({match:1.5});   // (× .8 for a low mood was dropped the same day: mood costs nothing, stable-care MOOD_XP)
 export const purseWon=(pot,rank,of)=>!(rank&&of>1)?0:rank===1?pot:rank>=of?0:Math.round(pot*(PURSE_SHARE[rank-1]??0));
 export const PERK_COINS=100;   // MVP.perks off: a stage that gave a perk pays this instead
@@ -140,11 +143,14 @@ export const unlocked=(p,city)=>{const i=levelOf(city);return i===0||i>0&&i<STAG
 export const relayOpen=p=>p.owned.length>=RELAY_BUDDIES;
 export const owns=(p,id)=>p.owned.includes(id);
 // Stars for a finished solo run of `seconds` (wall clock) on a level.
-export function starsFor(city,seconds){const l=LEVELS[levelOf(city)];return !l?0:seconds<=l.gold?3:seconds<=l.silver?2:1;}
+// 2026-10-14 (the user, after the reviewers: the place and the stars were two scores): the playtest gives the first star only,
+// for finishing; the time goals (silver, gold) come back with STAR_MAX 3.
+export const STAR_MAX=1;
+export function starsFor(city,seconds,max=STAR_MAX){const l=LEVELS[levelOf(city)];return !l?0:Math.min(max,seconds<=l.gold?3:seconds<=l.silver?2:1);}
 // The time the next star on this level needs, or null when it has all three.
-export const nextStarTime=(city,have)=>{const l=LEVELS[levelOf(city)];return !l||have>=3?null:have>=2?l.gold:have>=1?l.silver:null;};
+export const nextStarTime=(city,have,max=STAR_MAX)=>{const l=LEVELS[levelOf(city)];return !l||have>=max?null:have>=2?l.gold:have>=1?l.silver:null;};
 // The level to play next: the first open one short of three stars (else the last).
-export const currentLevel=p=>SHOWN.find(l=>unlocked(p,l.city)&&(p.stars[l.city]||0)<3)??SHOWN.at(-1);
+export const currentLevel=p=>SHOWN.find(l=>unlocked(p,l.city)&&(p.stars[l.city]||0)<STAR_MAX)??SHOWN.at(-1);
 
 // Missions: three per run, taken in turn from the pool (run n takes n, n+1, n+2: two carry over, one is new). test(r)
 // reads the run's result (slice-app). MISSION_COINS each, MISSION_ALL more for all three.
@@ -222,14 +228,14 @@ function demo(){
   const ok=(c,m)=>{if(!c)throw new Error('progress: '+m);},finish=(p,o)=>finish0(p,{...o,all:true});   // the rules with every system on
   let p=fresh();ok(unlocked(p,'taipei')&&!unlocked(p,'tokyo')&&!relayOpen(p)&&p.owned.join()==='1','only the first level is open; one buddy, no relay');
   ok(!maneOpen(p,'long')&&maneOpen(p,'classic')&&maneOpen(p,'short')&&!riderColors(p),'the long mane and the rider colours are closed at first');
-  ok(starsFor('taipei',40)===1&&starsFor('taipei',26.5)===2&&starsFor('taipei',23)===3,'stars by time');
+  ok(starsFor('taipei',40,3)===1&&starsFor('taipei',26.5,3)===2&&starsFor('taipei',23,3)===3&&starsFor('taipei',23)===STAR_MAX,'stars by time, up to STAR_MAX');const s2=Math.min(2,STAR_MAX);
   const run={bestCombo:25,releases:8,limits:3,pops:0,pickups:12,stumbles:0,boosts:3,perfect:31,apples:4,hits:50,notes:55,seconds:24};
   let f=finish(p,{city:'taipei',solo:true,result:run,today:'2026-10-04'});
-  ok(f.newStars===2&&f.stars===2&&f.missionCoins===100&&f.daily.coins===50&&f.coins===2*STAR_REWARD.coins+100+50&&f.gems===2,'first run pays stars, missions and the day');
-  ok(entryFee('taipei')===0&&entryFee('tokyo')===40&&entryFee('paris')===40&&entryFee('seoul')===80&&entryFee('stockholm')===80&&entryFee('taipei2')===160&&entryFee('seoul2')===80&&purseWon(240,1,5)===240&&purseWon(240,2,5)===120&&purseWon(240,3,5)===80&&purseWon(240,4,5)===0&&purseWon(120,2,2)===0&&purseWon(120,1,2)===120&&purseWon(180,3,3)===0&&purseWon(180,2,3)===90&&[1,2,3,4,5].reduce((a,k)=>a+purseWon(240,k,5),0)/5<100&&DOUBLE.fee===2&&DOUBLE.purse===2&&rivalAge('paris')===1&&rivalAge('seoul')===2&&rivalAge('tokyo2')===2&&rivalAge('stockholm2')===3&&RIVAL_PACE.length===LEVELS.length&&rivalPace('seoul')===.88&&rivalPace('seoul2')===.94&&RIVAL_PACE.every(p=>p>.8&&p<=1),'the stake: a fee by stage, the pot shared by place, nothing for the last');
+  ok(f.newStars===s2&&f.stars===s2&&f.missionCoins===100&&f.daily.coins===50&&f.coins===s2*STAR_REWARD.coins+100+50&&f.gems===s2,'first run pays stars, missions and the day');
+  ok(entryFee('taipei')===0&&entryFee('tokyo')===40&&entryFee('paris')===40&&entryFee('seoul')===80&&entryFee('stockholm')===80&&entryFee('taipei2')===160&&entryFee('seoul2')===80&&purseWon(240,1,5)===240&&purseWon(240,2,5)===120&&purseWon(240,3,5)===80&&purseWon(240,4,5)===0&&purseWon(120,2,2)===0&&purseWon(120,1,2)===120&&purseWon(180,3,3)===0&&purseWon(180,2,3)===90&&[1,2,3,4,5].reduce((a,k)=>a+purseWon(240,k,5),0)/5<100&&DOUBLE.fee===2&&DOUBLE.purse===2&&rivalAge('paris')===1&&rivalAge('seoul')===2&&rivalAge('tokyo2')===2&&rivalAge('stockholm2')===3&&RIVAL_PACE.length===LEVELS.length&&rivalPace('seoul')===.94&&rivalPace('seoul2')===.94&&RIVAL_PACE.every(p=>p>.8&&p<=1),'the stake: a fee by stage, the pot shared by place, nothing for the last');
   ok(f.opened.join()==='tokyo'&&!f.relayOpened&&f.gifts.join()==='13'&&owns(f.p,13)&&!f.perks.length,'a finished run opens level 2; clearing stage 1 gives the second buddy');p=f.p;
-  f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:70},today:'2026-10-04'});ok(f.newStars===0&&f.stars===2&&!f.daily&&f.p.runs===2,'a slower run keeps the stars; one daily bonus a day');p=f.p;
-  f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:18},today:'2026-10-05'});ok(f.newStars===1&&!f.relayOpened&&!f.gifts.length&&f.daily.streak===2&&f.daily.coins===60,'a third star: no relay yet (two buddies); day 2 pays more');p=f.p;
+  f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:70},today:'2026-10-04'});ok(f.newStars===0&&f.stars===s2&&!f.daily&&f.p.runs===2,'a slower run keeps the stars; one daily bonus a day');p=f.p;
+  f=finish(p,{city:'taipei',solo:true,result:{...run,seconds:18},today:'2026-10-05'});ok(f.newStars===(STAR_MAX>2?1:0)&&!f.relayOpened&&!f.gifts.length&&f.daily.streak===2&&f.daily.coins===60,'a third star: no relay yet (two buddies); day 2 pays more');p=f.p;
   {let q=finish(p,{city:'tokyo',solo:true,result:{...run,seconds:60},today:'2026-10-05'});ok(q.perks.join()==='mane'&&cleared(q.p,PERKS.mane.stage)&&!q.gifts.length,'clearing stage 2 gives the long mane');
    q.p.stars.paris=0;q=finish(q.p,{city:'paris',solo:true,result:{...run,seconds:90},today:'2026-10-05'});ok(q.gifts.includes(14)&&q.relayOpened&&relayOpen(q.p),'clearing stage 3 gives the third buddy (the cow, for the rain of stage 4): the relay opens');
    q=finish(q.p,{city:'seoul',solo:true,result:{...run,seconds:90},today:'2026-10-05'});ok(q.perks.join()==='rider'&&cleared(q.p,PERKS.rider.stage),'clearing stage 4 opens the rider colours');
@@ -237,14 +243,14 @@ function demo(){
    ok(buy(fresh(),0,'coins',300).cost===300&&relayOpen({...fresh(),owned:[1,5,6]}),'the early buddies can be bought sooner; any three buddies open the relay');}
   {let q=fresh();const lose=()=>q=finish(q,{city:'seoul',solo:true,result:{...run,seconds:90,rank:3},today:'2026-10-05'}).p;lose();lose();ok(!eased(q,'seoul'),'two losses: as tuned');lose();ok(eased(q,'seoul')&&!eased(q,'seoul',false)&&!eased(q,'paris'),'three losses in a row: that stage is a step easier');
    q=finish(q,{city:'seoul',solo:true,result:{...run,seconds:90,rank:1},today:'2026-10-05'}).p;ok(!eased(q,'seoul'),'a win: as tuned again');}
-  {let q=finish0(fresh(),{city:'taipei',solo:true,result:{...run,seconds:20},today:'2026-10-12'});ok(q.first&&q.threeStars===THREE_STARS&&q.coins===3*STAR_REWARD.coins+THREE_STARS,'three stars pay 100 more; the first run of a day says so');
+  {let q=finish0(fresh(),{city:'taipei',solo:true,result:{...run,seconds:20},today:'2026-10-12'});ok(q.first&&(STAR_MAX<3?!q.threeStars&&q.coins===STAR_MAX*STAR_REWARD.coins:q.threeStars===THREE_STARS&&q.coins===3*STAR_REWARD.coins+THREE_STARS),'three stars pay 100 more; the first run of a day says so');
    q=finish0(q.p,{city:'tokyo',solo:true,result:{...run,seconds:60},today:'2026-10-12'});ok(!q.first&&q.items.seed===5&&q.items.fish===15&&!q.perks.length,'stage 2 gives seeds and bait; one first run a day');
    const end=fresh();SHOWN.forEach(l=>end.stars[l.city]=1);end.stars.taipei2=0;q=finish0(end,{city:'taipei2',solo:true,result:{...run,seconds:90},today:'2026-10-12'});ok(q.trophy&&trophy(q.p)&&!trophy(end)&&!unlocked(q.p,'tokyo2'),'the last shown stage (6) gives the trophy; stage 7 does not open');}
-  ok(nextStarTime('taipei',2)===23&&nextStarTime('taipei',3)===null,'next star time');
+  ok(nextStarTime('taipei',2,3)===23&&nextStarTime('taipei',3,3)===null&&nextStarTime('taipei',1)===(STAR_MAX>1?26.5:null),'next star time');
   ok(buy(p,5,'coins',399).fail&&buy(p,5,'coins',400).cost===400&&buy(p,1,'coins',9999).fail,'buying');
   ok(buy(p,6,'coins',999).fail&&buy(p,6,'coins',1000).cost===1000&&owns(buy(p,6,'coins',1000).p,6)&&buy(p,6,'gems',3).cost===3,'a special coat: coins now, diamonds kept for later');
   ok(Object.values(HORSE_PRICE).every(c=>c.coins>0&&c.gems>0),'five diamond-only buddies (three special coats, the llama, the rhino), none of them a gift by stars');
-  p.stars.tokyo=2;f=finish(p,{city:'tokyo',solo:true,result:{...run,seconds:60},today:'2026-10-05'});ok(f.gifts.join()==='5'&&owns(f.p,5),'five stars gift Buckskin');
+  if(STAR_MAX<3){p.stars.tokyo=0;p.stars.paris=1;}else{p.stars.tokyo=1;p.stars.paris=0;}f=finish(p,{city:'tokyo',solo:true,result:{...run,seconds:60},today:'2026-10-05'});ok(f.gifts.join()==='5'&&owns(f.p,5),'three stars gift Buckskin');
   ok(tierOf(0)===0&&tierOf(14)===0&&tierOf(15)===1&&tierOf(160)===4&&tierOf(9999)===4&&finish0(fresh(),{city:'tokyo',solo:true,result:{rank:1,of:2,seconds:99},today:'2026-10-14'}).p.points===10,'tiers: points by place');
   ok(restore({owned:[9,77],stars:{taipei:9}}).owned.join()==='1,9,13'&&restore({owned:[1,0,2]}).owned.join()==='1,0,2'&&restore(null).stars.taipei===0&&restore({stars:{taipei:9}}).stars.taipei===3,'restore');
   ok(nextGoal(fresh(),0).kind==='level'&&nextGoal(fresh(),0).city==='tokyo','the next goal of a new player is level 2');

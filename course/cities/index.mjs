@@ -1,16 +1,16 @@
 // City packs: everything one city needs, in one file each (see taipei.mjs for the annotated format).
 // Add a city: copy a pack to cities/<id>.mjs and edit its four parts (1 track · 2 weather · 3 dressing · 4 backdrop),
 // put the backdrop at assets/backdrops/<id>.webp, and list the pack below. `node dist/course/check.mjs` validates it.
-import taipei from './taipei.mjs?v=r722';
-import tokyo from './tokyo.mjs?v=r722';
-import paris from './paris.mjs?v=r722';
-import stockholm from './stockholm.mjs?v=r722';
-import seoul from './seoul.mjs?v=r722';
-import taipei2 from './taipei2.mjs?v=r722';
-import paris2 from './paris2.mjs?v=r722';
-import tokyo2 from './tokyo2.mjs?v=r722';
-import stockholm2 from './stockholm2.mjs?v=r722';
-import seoul2 from './seoul2.mjs?v=r722';
+import taipei from './taipei.mjs?v=r723';
+import tokyo from './tokyo.mjs?v=r723';
+import paris from './paris.mjs?v=r723';
+import stockholm from './stockholm.mjs?v=r723';
+import seoul from './seoul.mjs?v=r723';
+import taipei2 from './taipei2.mjs?v=r723';
+import paris2 from './paris2.mjs?v=r723';
+import tokyo2 from './tokyo2.mjs?v=r723';
+import stockholm2 from './stockholm2.mjs?v=r723';
+import seoul2 from './seoul2.mjs?v=r723';
 
 export const CITIES=Object.freeze([taipei,tokyo,paris,stockholm,seoul,taipei2,tokyo2,stockholm2,paris2,seoul2]);
 // A run's weather (2026-10-12, the user: a city's track and its surroundings are fixed, the weather is drawn): three
